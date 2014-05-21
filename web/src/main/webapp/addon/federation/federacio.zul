@@ -1,0 +1,1749 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><?page id="federacioIdentitats" title="Federació d'identitats"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?init class="es.caib.seycon.ng.web.CheckPermisos" arg0="federacioIdentitats" ?>
+<?component name="input_criteri" macro-uri="/comu/input_criteri.zul"?>
+<?component name="input_dada" macro-uri="/comu/input_dada.zul"?>
+<?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
+<zk xmlns:h="http://www.w3.org/1999/xhtml"> 
+
+	<style src="~./styles/estil.css"/>
+
+	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml"/>
+	
+	<zscript src="/comu/netejaCriteris.zul"/>
+
+	<zscript>
+	<![CDATA[
+      	try {es.caib.zkib.zkiblaf.Application.setTitle(org.zkoss.util.resource.Labels.getLabel("federacio.Titol"));} catch (Exception ex){}
+      	fileres = es.caib.seycon.ng.web.Custom.FILERES_ESQUEMA;
+      	
+		queryWindowMin="30px";
+		queryWindowMax="110px";
+      	
+		mode = "query"; 
+		view_altres = false;
+		
+		// Autoritzacions
+		import es.caib.seycon.ng.utils.AutoritzacionsUsuari;
+		import com.soffid.iam.addons.federation.common.*;
+		import es.caib.seycon.ng.comu.*;
+		
+		canQueryFederacions = AutoritzacionsUsuari.canQueryAllIdentityFederation();
+		canCreateFI = AutoritzacionsUsuari.canCreateAllIdentityFederation();
+		canUpdateFI = AutoritzacionsUsuari.canUpdateAllIdentityFederation();
+		canDeleteFI = AutoritzacionsUsuari.canDeleteAllIdentityFederation();	
+		
+		canModifyFI = canCreateFI || canUpdateFI;
+		
+		model.getVariables().declareVariable("queryEnabled", canQueryFederacions);
+		model.getVariables().declareVariable("name", "-ARREL-");
+		
+		
+				
+		void populateDetails ()
+		{
+			mode="query";
+		}
+             
+		void search () 
+		{ 
+			treebox =	esquema.getFellow("lista").getFellow("treebox"); 
+			name = esquema.getFellow("queryWindow").getFellow("queryName").getFellow("textbox");
+				
+			queryEnabled = false;				
+			if(name.value.trim().length() == 0){
+				model.getVariables().declareVariable("name", "%");
+			}else{
+				queryEnabled = true;
+				model.getVariables().declareVariable("name", name.value);
+			}
+			model.getVariables().declareVariable("queryEnabled", queryEnabled);				
+			if(queryEnabled){
+				model.getJXPathContext().getValue("/entitygroupmember").refresh();
+				treebox.dataPath = "/model:/entitygroupmember"; 
+			} 
+		}
+	
+		void showAltres () 
+		{
+			if (view_altres==false) {
+				esquema.getFellow("queryWindow").setHeight(queryWindowMax); 
+				esquema.getFellow("queryWindow").getFellow("queryWindowAltres").setVisible(true);
+				esquema.getFellow("queryWindow").getFellow("img_altres").setSrc("~./img/fletxa-baix.gif");
+				view_altres = true;
+			} else {
+				esquema.getFellow("queryWindow").setHeight(queryWindowMin); 
+				esquema.getFellow("queryWindow").getFellow("queryWindowAltres").setVisible(false);
+				esquema.getFellow("queryWindow").getFellow("img_altres").setSrc("~./img/fletxa.gif");		  	
+				view_altres = false;
+			}
+		}
+		
+		void select() 
+		{
+			arbre = esquema.getFellow("lista").getFellow("treebox");
+			b_inserir = esquema.getFellow("lista").getFellow("b_inserir");
+			b_esborrar = esquema.getFellow("lista").getFellow("b_esborrar");
+			if (arbre.selectedItem != null && 
+				arbre.selectedItem.value != null)
+				{
+					// Obtenim el node sel·leccionat
+					EntityGroupMember nodeActual = arbre.selectedItem.getValue().getInstance();
+					tipus = nodeActual.getTipus();
+					//Missatgebox.info ("select tipus "+tipus);
+					disable = false;
+					if (!"ARREL".equals(tipus) && !"SP_ROOT".equals(tipus) && 
+						!"IDP_ROOT".equals(tipus) && !"IDP".equals(tipus)) { 
+						disable = true;
+					}
+					b_inserir.setDisabled(disable);
+					
+					disableEsborra = false;
+					if ("ARREL".equals(tipus)) {
+						disableEsborra = true;
+					}
+					b_esborrar.setDisabled(disableEsborra);			
+				
+					populateDetails ();
+					showDetall ();
+				}
+		}						
+		
+		void showLista ()  
+		{
+			  esquema.getFellow("lista").getFellow("treebox").clearSelection();
+		}
+		
+		void showDetall () 
+		{
+			esquema.showFormulari();
+		}
+		
+		void onInserir () {
+			arbre = esquema.getFellow("lista").getFellow("treebox");
+			if (arbre.getSelectedCount()!=0) {// si no dóna error mostrem detalls
+				Object pare = arbre.getSelectedItem().getValue().getInstance(); 
+				if (pare instanceof EntityGroupMember) {
+					EntityGroupMember mpare = (EntityGroupMember) pare;
+					tipusP = mpare.getTipus();
+					// Restricció perquè nomes els IDP interns tinguen fills
+					FederationMember fm = mpare.getFederationMember();
+					if ("IDP".equals(tipusP) && ! Boolean.TRUE.equals( fm.getInternal())) {
+						throw new Exception ("Error: Només els Identity Providers marcats com a Internal poden tindre Virtual Identity Provider fills.");
+					}
+					if (!"ARREL".equals(tipusP) && !"IDP_ROOT".equals(tipusP) 
+						&& !"SP_ROOT".equals(tipusP) &&  !"IDP".equals(tipusP) ) {
+						throw new Exception ("Error: Aquest tipus de node no admet fills");
+					}
+				}
+			showDetall();		
+			}
+			
+		}
+		
+		imgFM = new String[][] {
+			{"IDP","/addon/federation/img/document-i.png"},
+			{"EG","/addon/federation/img/document-g.png"},
+			{"VIP","/addon/federation/img/document-v.png"},
+			{"SP","/addon/federation/img/document-s.png"}};
+			
+		mostraPanel (tipus){
+			//Missatgebox.info ("mostrant panel per tipus "+tipus);
+			p  = esquema.getFellow("dades").getFellow("form").getFellow("panels");
+			
+			boolean egVis = "EG".equals(tipus);
+			boolean idpVis = "IDP".equals(tipus);
+			boolean vipVis = "VIP".equals(tipus);
+			boolean spVis = "SP".equals(tipus);
+			
+			p.getFellow("p_eg").setVisible(egVis);
+			p.getFellow("tp_eg").setVisible(egVis);
+
+			p.getFellow("p_idp").setVisible(idpVis);
+			p.getFellow("tp_idp").setVisible(idpVis);
+
+			p.getFellow("p_vip").setVisible(vipVis);
+			p.getFellow("tp_vip").setVisible(vipVis);
+			
+			p.getFellow("p_sp").setVisible(spVis);
+			p.getFellow("tp_sp").setVisible(spVis);
+			
+			p.getFellow("p_prof").setVisible(idpVis || vipVis);
+			p.getFellow("tp_prof").setVisible(idpVis || vipVis);
+			
+			p.getFellow("p_rel").setVisible(vipVis || spVis);
+			p.getFellow("tp_rel").setVisible(vipVis || spVis);
+			
+
+			p.getFellow("p_prof").setSelected(idpVis || vipVis);
+			p.getFellow("p_rel").setSelected(vipVis || spVis);
+			p.getFellow("p_idp").setSelected(idpVis);
+			p.getFellow("p_vip").setSelected(vipVis);
+			p.getFellow("p_sp").setSelected(spVis);
+			p.getFellow("p_eg").setSelected(egVis);
+		}
+		
+		void refrescaArbre() {
+			model.getJXPathContext().getValue("/entitygroupmember").refresh();
+			treebox.dataPath = "/model:/";
+			mostraPanel("cap");
+		}
+		
+		void refrescaArbreComprova() {
+			if (esquema.isCommitPending()) {
+				Missatgebox.avis (org.zkoss.util.resource.Labels.getLabel("federacio.Refrescar"));
+				return;
+			}
+			refrescaArbre();
+		}
+		
+		void generaClaus(Component filera, Component campCertificateChain) {
+			// Demanem confirmació:
+			arbre = esquema.getFellow("lista").getFellow("treebox");
+			obj = arbre.selectedItem;
+			if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+				ins = obj.value.instance;
+				if (ins instanceof EntityGroupMember) {
+					FederationMember fm = ins.getFederationMember();
+					boolean teclau = fm.getPublicKey()!=null && !"".equals(fm.getPublicKey()); 
+					if (!teclau || es.caib.zkib.zkiblaf.Missatgebox.confirmaYES_NO(org.zkoss.util.resource.Labels.getLabel("federacio.SegurCanvi"),
+																					org.zkoss.util.resource.Labels.getLabel("federacio.Confirmacio"))) {
+					
+						javax.naming.Context context = new javax.naming.InitialContext();		
+						Object objEjb = context.lookup(com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.JNDI_NAME);
+						com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome federarcioHome = (com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome) javax.rmi.PortableRemoteObject.narrow(
+							objEjb, com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.class);
+						com.soffid.iam.addons.federation.service.ejb.FederacioService federacioService = federarcioHome.create();
+						String[] res = federacioService.generateKeys();
+		
+						
+						ds = form.getDataSource();
+						ctx = ds.getJXPathContext();
+						//registre = ctx.getValue("/");
+						// 0 = publica, 1 = privada
+						fm.setPublicKey(res[0]);
+						fm.setPrivateKey(res[1]);
+						fm.setCertificateChain(null);
+						ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
+						ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
+						ctx.setValue("@federationMember/certificateChain",null);
+						campCertificateChain.getFellow("dada").setValue("");
+						//pointer = ctx.getPointer(obj.value.getXPath());
+						//pointer.invalidate();
+						
+						if (filera instanceof Vbox) {
+							Vbox r = (Vbox) filera;
+							List fills = r.getChildren();
+							if (fills!=null) for (Iterator it= fills.iterator(); it.hasNext(); ) {
+								Component c = it.next();
+								if (c instanceof Div) {
+									divv = (Div) c;
+									// Lo rebindeamos i voilà...
+									divv.setBind("@federationMember/publicKey");
+								}
+							}
+						}
+						Missatgebox.info (org.zkoss.util.resource.Labels.getLabel("federacio.GeneradoOK"));	
+						
+					}	
+				}
+			}
+			
+		}
+		
+		void openPkcs12 (Component filera, Component certificateChain)
+		{
+			page.setAttribute("pkcs12row", filera);
+			page.setAttribute("pkcs12chain", certificateChain);
+			pkcs12window.getFellow("pkcs12pin").setValue("");
+			pkcs12window.doHighlighted();
+		}
+		
+		void parsePkcs12(org.zkoss.util.media.Media m) {
+			pkcs12window.setVisible(false);
+			Component filera = page.getAttribute("pkcs12row");
+			Component certificateChain = page.getAttribute("pkcs12chain");
+			String password = pkcs12pin.getValue();
+			pkcs12pin.setValue("");
+			byte [] data;
+			if (m.isBinary())
+			{
+				if (m.inMemory())
+					data = m.getByteData();
+				else
+				{
+					java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+					java.io.InputStream in = m.getStreamData();
+					byte [] buffer = new byte[4096];
+					int read = in.read(b);
+					while (read > 0)
+					{
+						out.write (b, 0, read);
+						read = in.read(b);
+					}
+					in.close ();
+					out.close();
+					data = out.toByteArray();
+				}
+			} else {
+				StringBuffer b = new StringBuffer();
+				if (m.inMemory())
+					b .append(m.getStringData());
+				else
+				{
+					java.io.Reader r = m.getReaderData();
+					int read = r.read();
+					while (read >= 0)
+					{
+						b.append ((char) read);
+						raed = r.read();
+					}
+				}
+				data = b.toString().getBytes("UTF-8");
+			}
+			// Demanem confirmació:
+			arbre = esquema.getFellow("lista").getFellow("treebox");
+			obj = arbre.selectedItem;
+			if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+				ins = obj.value.instance;
+				if (ins instanceof EntityGroupMember) {
+					FederationMember fm = ins.getFederationMember();
+					boolean teclau = fm.getPublicKey()!=null && !"".equals(fm.getPublicKey()); 
+					if (!teclau || es.caib.zkib.zkiblaf.Missatgebox.confirmaYES_NO(org.zkoss.util.resource.Labels.getLabel("federacio.SegurCanvi"),
+																					org.zkoss.util.resource.Labels.getLabel("federacio.Confirmacio"))) {
+					
+						javax.naming.Context context = new javax.naming.InitialContext();		
+						Object objEjb = context.lookup(com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.JNDI_NAME);
+						com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome federarcioHome = (com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome) javax.rmi.PortableRemoteObject.narrow(
+							objEjb, com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.class);
+						com.soffid.iam.addons.federation.service.ejb.FederacioService federacioService = federarcioHome.create();
+						String[]  res;
+						try {
+							res = federacioService.parsePkcs12(data, password);
+						} catch (Exception e) {
+							es.caib.zkib.zkiblaf.Missatgebox.info(org.zkoss.util.resource.Labels.getLabel("federacio.zul.wrongPin"));
+							return;
+						}
+		
+						form = esquema.getFellow("dades").getFellow("form");
+						
+						ds = form.getDataSource();
+						ctx = ds.getJXPathContext();
+						//registre = ctx.getValue("/");
+						// 0 = publica, 1 = privada
+						fm.setPublicKey(res[1]);
+						fm.setPrivateKey(res[0]);
+						fm.setCertificateChain(res[2]);
+						ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
+						ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
+						ctx.setValue("@federationMember/certificateChain",fm.getCertificateChain());
+						certificateChain.getFellow("dada").setValue(res[2]);
+						//pointer = ctx.getPointer(obj.value.getXPath());
+						//pointer.invalidate();
+						
+						if (filera instanceof Vbox) {
+							Vbox r = (Vbox) filera;
+							List fills = r.getChildren();
+							if (fills!=null) for (Iterator it= fills.iterator(); it.hasNext(); ) {
+								Component c = it.next();
+								if (c instanceof Div) {
+									divv = (Div) c;
+									// Lo rebindeamos i voilà...
+									divv.setBind("@federationMember/publicKey");
+								}
+							}
+						}
+						Missatgebox.info (org.zkoss.util.resource.Labels.getLabel("federacio.GeneradoOK"));	
+						
+					}	
+				}
+			}
+			
+		}
+		
+		
+		void esborraClaus(Component filera, Component campCertificateChain) {
+			// Demanem confirmació:
+			arbre = esquema.getFellow("lista").getFellow("treebox");
+			obj = arbre.selectedItem;
+			if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+				ins = obj.value.instance;
+				if (ins instanceof EntityGroupMember) {
+					FederationMember fm = ins.getFederationMember();
+
+					ds = form.getDataSource();
+					ctx = ds.getJXPathContext();
+					fm.setPublicKey(null);
+					fm.setPrivateKey(null);
+					fm.setCertificateChain(null);
+					ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
+					ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
+					ctx.setValue("@federationMember/certificateChain",null);
+					campCertificateChain.getFellow("dada").setValue("");
+					//pointer = ctx.getPointer(obj.value.getXPath());
+					//pointer.invalidate();
+					
+					if (filera instanceof Vbox) {
+						Vbox r = (Vbox) filera;
+						List fills = r.getChildren();
+						if (fills!=null) for (Iterator it= fills.iterator(); it.hasNext(); ) {
+							Component c = it.next();
+							if (c instanceof Div) {
+								divv = (Div) c;
+								// Lo rebindeamos i voilà...
+								divv.setBind("@federationMember/publicKey");
+							}
+						}
+					}
+					
+					Missatgebox.info (org.zkoss.util.resource.Labels.getLabel("federacio.BorratOK"));	
+						
+					}	
+				}
+		}		
+		
+		void generaPKCS10() {
+			arbre = esquema.getFellow("lista").getFellow("treebox");
+			obj = arbre.selectedItem;
+			if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+				ins = obj.value.instance;
+				if (ins instanceof EntityGroupMember) {
+					FederationMember fm = ins.getFederationMember();
+				
+					javax.naming.Context context = new javax.naming.InitialContext();		
+					Object objEjb = context.lookup(com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.JNDI_NAME);
+					com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome federarcioHome = (com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome) javax.rmi.PortableRemoteObject.narrow(
+						objEjb, com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.class);
+					com.soffid.iam.addons.federation.service.ejb.FederacioService federacioService = federarcioHome.create();
+					
+					String res = federacioService.generatePKCS10(fm);
+					String nom = fm.getName();
+					if (nom==null || "".equals(nom.trim())) nom = "pkcs10"; else nom = nom+".pkcs10"; 
+					org.zkoss.util.media.AMedia pkcs = new org.zkoss.util.media.AMedia(nom,"txt","binary/octet-stream",res);
+					pkcs10window.setContent(pkcs);
+					pkcs10window.invalidate();					
+				}
+			}
+		}
+
+		]]>
+	</zscript>
+	
+	<tabbox id="tabmain" width="100%">
+		<tabs>
+			<tab id="p_federationMembers" label="${c:l('federacio.zul.FederationMembers')}" width="180px"/>
+			<tab id="p_politiques" label="${c:l('federacio.zul.Polatiques')}"/>
+		</tabs>
+		<tabpanels>
+			<tabpanel id="tp_federationMembers">
+	
+	<esquema ample="${amplaria}" datamodel="/model" focusCriteri="queryName" id="esquema" onHideFormulari="showLista()" senseCriteris="true">
+
+		<criteris height="${queryWindowMin}" id="queryWindow" onOK="search()" width="${amplaria}">
+
+			<hbox>
+				<input_criteri etiqueta="${c:l('federacio.zul.Nom')}" id="queryName"/>
+				<imageclic onClick="search()" src="~./img/fletxa_cerca.gif"/>
+			</hbox>
+			<separator spacing="17px"/>
+			<vbox align="right" width="100%">
+				<label onClick="netejaCriteris()" sclass="label_link" value="${c:l('federacio.zul.Esborra')}"/>
+			</vbox>
+
+		</criteris>
+
+		<navegador id="lista" width="${amplaria}">
+			<toolbar style="border-top:0.1px solid white;">
+				<inserttreebutton acces="${canCreateFI}" id="b_inserir" onClick="onInserir()" path="/entitygroupmember" tree="/esquema/lista/treebox"/>
+				<deletetreebutton acces="${canDeleteFI}" id="b_esborrar" potEsborrarBranquesAmbFills="true" tree="/esquema/lista/treebox"/>
+				<commitbutton datamodel="/model" id="btcommit"/>
+				<undotreebutton datamodel="/model" tree="/esquema/lista/treebox"/>
+				<toolbarbutton image="~./img/reload-petit16b.png" label="${c:l('federacio.zul.Refrescaarbre')}" onClick="refrescaArbreComprova()"/>
+			</toolbar>
+			<zscript>
+				btcommit.addEventListener(Events.ON_CLICK, new org.zkoss.zk.ui.event.EventListener() {
+					public boolean isAsap() {return true;}
+					public void onEvent(org.zkoss.zk.ui.event.Event event) {
+						// refresquem l'arbre
+						refrescaArbre();
+					}
+				});			
+			</zscript>
+			
+			<tree autocommit="false" dataPath="/model:/" fixedLayout="true" height="96%" id="treebox" imageBinding="${imgFM}" onSelect="select()" pageSize="19" rows="${fileres}">
+				<treeitemfinder bind="." open="true" path="/entitygroupmember">
+					<treerow>
+						<treecellimage bind="@descripcio" imageBind="@tipus"/>
+					</treerow>
+				</treeitemfinder>
+			</tree>
+
+		</navegador>
+
+		<detalls id="dades">
+			<zscript>
+			<![CDATA[
+				void onChangeDades() {
+					try {
+						ds = form.getDataSource();
+						ctx = ds.getJXPathContext();
+						registre = ctx.getValue("/");
+						if (!registre.isNew()) {
+							// Obtenim el tipus de node actual
+							Object obj = registre.getInstance();
+							//Missatgebox.info ("no nou");
+							if (obj instanceof EntityGroupMember) {
+								EntityGroupMember nodeActual = (EntityGroupMember) obj;
+								tipus = nodeActual.getTipus();
+								//Missatgebox.info ("tipus #"+tipus+"# pare="+registre.getParent());
+								// Deshabilitem els camps si correspon de hostname-related
+								// sinó és internal (i es Idp)
+								if ("IDP".equals(tipus)) {
+									marcat = nodeActual.getFederationMember().getInternal();
+									hostname.getFellow("dada").setDisabled(!marcat);
+									port1.getFellow("dada").setDisabled(!marcat);
+									port2.getFellow("dada").setDisabled(!marcat);
+									certificatechain.getFellow("dada").setDisabled(!marcat);
+									metadades.getFellow("dada").setDisabled(marcat);
+									organization.getFellow("dada").setDisabled(!marcat);
+									contact.getFellow("dada").setDisabled(!marcat);
+									id_allowCertificate1.setDisabled(!marcat);
+									id_allowRecover1.setDisabled(!marcat);
+									id_allowRegister1.setDisabled(!marcat);
+									Vbox pbox = r_publicKey;
+									for (Iterator it = pbox.getChildren().iterator(); it.hasNext(); ) { 
+										Component c = (Component) it.next();
+										if (c instanceof Button) {
+											Button b = (Button) c;
+											b.setDisabled(!marcat);
+										} else if (c instanceof Div) {
+											Div d = (Div) c;
+											for (Iterator dit = d.getChildren().iterator(); dit.hasNext(); ) {
+												Component cd = (Component) dit.next();
+												if (cd instanceof Button) {
+													Button b = (Button) cd;
+													b.setDisabled(!marcat);
+												}		
+											}
+										}
+									}									
+								}
+								mostraPanel(tipus);
+							}
+						} else {
+							// Obtenim el pare mitjançant botó d'inserir
+							b_inserir = esquema.getFellow("lista").getFellow("b_inserir");
+							//Nou registre grup, obtenim el seu pare
+							// de tipus EntityGroupMember
+                            arbre = esquema.getFellow("lista").getFellow("treebox");
+
+                            Object pare = arbre.getSelectedItem().getParent().getParent().getValue().getInstance();
+							
+							//Object pare = registre.getParent().getInstance();
+							if (pare instanceof EntityGroupMember) {
+								EntityGroupMember mpare = (EntityGroupMember) pare;
+								tipusP = mpare.getTipus();
+								//Missatgebox.info ("pare de tipus :"+tipusP);
+								// Hem de crear el membre del entitygroupmember segons
+								// corresponga
+								Object obj = registre.getInstance();
+								if (obj instanceof EntityGroupMember) {
+									EntityGroupMember nodeActual = (EntityGroupMember) obj;
+									
+									if (nodeActual.getTipus()==null) {
+									
+										// Posem el mateix EG que el pare
+										EGPare = mpare.getEntityGrupPare();
+										//Missatgebox.info ("tipus PARE = "+tipusP + " amb eg="+EGPare);
+										nodeActual.setEntityGrupPare(EGPare);
+										ctx.setValue("@entityGrupPare",EGPare);
+										if ("SP_ROOT".equals(tipusP) || "IDP_ROOT".equals(tipusP) 
+											||"IDP".equals(tipusP) ||"SP".equals(tipusP) ) {
+											
+											FederationMember fmn = new FederationMember();
+											fmn.setEntityGroup(EGPare); //el mateix q el pare
+											//ctx.setValue("@federationMember/entityGroup",EGPare);
+											
+											classe="I"; //idp per defecte
+											if ( "SP_ROOT".equals(tipusP) || "SP".equals(tipusP) ) {
+												classe= "S";
+												tipusN = "SP";
+											} else if ("IDP_ROOT".equals(tipusP)) {
+												classe="I";
+												tipusN = "IDP";
+											} else if ("IDP".equals(tipusP)) {
+												classe="V";
+												tipusN = "VIP";
+												// li posem el seu IDP pare
+												fmn.setDefaultIdentityProvider(mpare.getFederationMember());
+											}
+											nodeActual.setTipus(tipusN);
+											fmn.setClasse(classe);
+											nodeActual.setFederationMember(fmn);
+											ctx.setValue("@federationMember",fmn);
+											mostraPanel(tipusN);
+										} else if ("ARREL".equals(tipusP)){ // la resta (incloent ARREL)
+											// Crearem un fill de tipus entitygroup
+											//Missatgebox.info (tipus+" ARREL eg pare = "+(EGPare!=null?EGPare.getName():"ARREL"));
+											EntityGroup egn = new EntityGroup();
+											nodeActual.setTipus("EG");
+											// Aquí sempre es NOU EG (!!)
+											nouEG = new EntityGroup();
+											nodeActual.setEntityGrupPare(nouEG);
+											ctx.setValue("@entityGrupPare",nouEG);
+											
+											mostraPanel("EG");																				
+										} 
+									} else {
+										mostraPanel(nodeActual.getTipus());
+									}
+								}
+								//Missatgebox.info ("tipus pare "+tipusP);
+							} //else Missatgebox.info ("Pare de tipus no catalogat: classe "+pare.getClass()+ " pare="+pare);
+							
+						}		
+						enableIDPComponents();
+						enableVIPComponents();
+					} catch (Throwable th) {
+						//Missatgebox.error ("Error "+th.getMessage());
+						th.printStackTrace();
+					}
+				}
+				
+				void canviaDescripcioEG(){
+					arbre = esquema.getFellow("lista").getFellow("treebox");
+					obj = arbre.selectedItem;
+					if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+						ins = obj.value.instance;
+						if (ins instanceof EntityGroupMember) {
+							ds = form.getDataSource();
+							ctx = ds.getJXPathContext();
+							EntityGroupMember eg = (EntityGroupMember) ins;
+							FederationMember fm = eg.getFederationMember();
+							eg.setDescripcio(fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""));
+							ctx.setValue("@descripcio",eg.getDescripcio());
+						}
+					}			
+						
+				}
+			
+				void enableIDPComponents ()
+				{
+					visible = id_internal1.isChecked();
+					c = firstRowToHide;
+					while (c != null)
+					{
+						c.setVisible(visible);
+						c = c.getNextSibling();
+					}
+					if (id_allowRegister1.isChecked() && id_internal1.isChecked())
+					{
+						id_groupToRegister1.getFellow("dada").disabled = false;
+						id_groupToRegister1.getFellow("dada").setConstraint( "no empty" );
+						id_groupToRegisterButton1.visible = true;
+						id_userTypeToRegister1.disabled = false;
+					} else {
+						id_groupToRegister1.getFellow("dada").disabled = true;
+						id_groupToRegister1.getFellow("dada").setConstraint( "");
+						id_groupToRegisterButton1.visible = false;
+						id_userTypeToRegister1.disabled = true;
+					}
+					if ((id_allowRegister1.isChecked() || id_allowRecover1.isChecked()) && id_internal1.isChecked())
+					{
+						id_mailHost1.getFellow("dada").disabled = false;
+						id_mailHost1.getFellow("dada").setConstraint( "no empty" );
+						id_mailSender1.getFellow("dada").disabled = false;
+						id_mailSender1.getFellow("dada").setConstraint( "no empty" );
+					} else {
+						id_mailHost1.getFellow("dada").disabled = true;
+						id_mailHost1.getFellow("dada").setConstraint( "" );
+						id_mailSender1.getFellow("dada").disabled = true;
+						id_mailSender1.getFellow("dada").setConstraint( "" );
+					}
+				}	
+
+				void enableVIPComponents ()
+				{
+					visible = id_internal1.isChecked();
+					c = firstRowToHide;
+					while (c != null)
+					{
+						c.setVisible(visible);
+						c = c.getNextSibling();
+					}
+					if (id_allowRegister1.isChecked() && id_internal1.isChecked())
+					{
+						id_groupToRegister1.getFellow("dada").disabled = false;
+						id_groupToRegister1.getFellow("dada").setConstraint( "no empty" );
+						id_groupToRegisterButton1.visible = true;
+						id_userTypeToRegister1.disabled = false;
+					} else {
+						id_groupToRegister1.getFellow("dada").disabled = true;
+						id_groupToRegister1.getFellow("dada").setConstraint( "");
+						id_groupToRegisterButton1.visible = false;
+						id_userTypeToRegister1.disabled = true;
+					}
+					if ((id_allowRegister1.isChecked() || id_allowRecover1.isChecked()) && id_internal1.isChecked())
+					{
+						id_mailHost1.getFellow("dada").disabled = false;
+						id_mailHost1.getFellow("dada").setConstraint( "no empty" );
+						id_mailSender1.getFellow("dada").disabled = false;
+						id_mailSender1.getFellow("dada").setConstraint( "no empty" );
+					} else {
+						id_mailHost1.getFellow("dada").disabled = true;
+						id_mailHost1.getFellow("dada").setConstraint( "" );
+						id_mailSender1.getFellow("dada").disabled = true;
+						id_mailSender1.getFellow("dada").setConstraint( "" );
+					}
+				}	
+
+				]]>
+			</zscript>
+			<form dataPath="/esquema/lista/treebox:/." id="form" onChangeXPath="onChangeDades()" width="100%">
+			
+				<tabbox id="panels" width="100%">
+					<tabs>
+						<tab id="p_eg" label="${c:l('federacio.zul.EntityGroup')}" visible="false"/>
+						<tab id="p_idp" label="${c:l('federacio.zul.IdentityProvider')}" visible="false"/>
+						<tab id="p_sp" label="${c:l('federacio.zul.ServiceProvider')}" visible="false"/>
+						<tab id="p_vip" label="${c:l('federacio.zul.VirtualIdentityProvi')}" visible="false"/>
+						<tab id="p_prof" label="${c:l('federacio.zul.Profiles')}" visible="false"/>
+						<tab id="p_rel" label="${c:l('federacio.zul.Relyingparties')}" visible="false"/>
+					</tabs>
+					<tabpanels>
+						<tabpanel id="tp_eg">
+							<hbox width="99%">
+								<grid id="g_eg">
+									<rows>
+										<row>
+											<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
+											<input_dada bind="@descripcio" id="detall_name" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+										</row>
+										<row>
+											<input_etiqueta value="${c:l('federacio.zul.MetatadaUrl')}"/>
+											<input_dada bind="@entityGrupPare/metadataUrl" id="detall_metadataUrl" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+										</row>
+									</rows>
+								</grid>
+							</hbox>
+						</tabpanel>
+						<tabpanel id="tp_idp">
+						<hbox width="99%">
+						<grid id="g_idp">
+							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
+							<rows>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Tipus')}"/>
+									<listbox bind="@federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
+										<listitem label="${c:l('federacio.zul.VirtualIdentityProvi')}" value="V"/>												
+										<listitem label="${c:l('federacio.zul.IdentityProvider')}" value="I"/>
+										<listitem label="${c:l('federacio.zul.ServiceProvider')}" value="S"/>
+										<listitem label="${c:l('federacio.zul.')}" value=""/>
+									</listbox>											
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.EntityGroup')}"/>
+									<input_dada bind="@entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
+									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
+									<textbox bind="@federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Internal?')}"/>
+									<checkbox bind="@federationMember/internal" disabled="${!canModifyFI}" id="id_internal1">
+										<attribute name="onCheck">
+											hostname.getFellow("dada").setDisabled(!self.isChecked());
+											port1.getFellow("dada").setDisabled(!self.isChecked());
+											port2.getFellow("dada").setDisabled(!self.isChecked());
+											certificatechain.getFellow("dada").setDisabled(!self.isChecked());
+											metadades.getFellow("dada").setDisabled(self.isChecked());
+											organization.getFellow("dada").setDisabled(!self.isChecked());
+											contact.getFellow("dada").setDisabled(!self.isChecked());
+											id_allowCertificate1.setDisabled(!self.isChecked());
+											id_allowRecover1.setDisabled(!self.isChecked());
+											id_allowRegister1.setDisabled(!self.isChecked());
+											
+											Vbox pbox = r_publicKey;
+											for (Iterator it = pbox.getChildren().iterator(); it.hasNext(); ) { 
+												Component c = (Component) it.next();
+												if (c instanceof Button) {
+													Button b = (Button) c;
+													b.setDisabled(!self.isChecked());
+												} else if (c instanceof Div) {
+													Div d = (Div) c;
+													for (Iterator dit = d.getChildren().iterator(); dit.hasNext(); ) {
+														Component cd = (Component) dit.next();
+														if (cd instanceof Button) {
+															Button b = (Button) cd;
+															b.setDisabled(!self.isChecked());
+														}		
+													}
+												}
+											}
+											enableIDPComponents ();
+										</attribute>
+									</checkbox>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
+									<input_dada bind="@federationMember/metadades" id="metadades" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+								</row>
+								<row  id="firstRowToHide">
+									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
+									<input_dada bind="@federationMember/organization" id="organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.contact')}"/>
+									<input_dada bind="@federationMember/contact" id="contact" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Hostname')}"/>
+									<input_dada bind="@federationMember/hostName" disabled="true" id="hostname" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.PortStandard')}"/>
+									<input_dada bind="@federationMember/standardPort" disabled="true" id="port1" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.PortCertificatClient')}"/>
+									<input_dada bind="@federationMember/clientCertificatePort" disabled="true" id="port2" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.certificateChain')}"/>
+									<input_dada bind="@federationMember/certificateChain" disabled="true" id="certificatechain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+								</row>								
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.publicKey')}"/>
+									<vbox id="r_publicKey">
+										<divVisible bind="@federationMember/publicKey" valorVisible="null">
+											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
+											<separator/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, certificatechain)" width="200px"/>
+										</divVisible>
+										<divVisible bind="@federationMember/publicKey" valorNoVisible="null">
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
+										</divVisible>
+									</vbox>
+								</row>
+								<row>
+									<space/>
+									<hbox>
+									<checkbox bind="@federationMember/allowRecover" disabled="${!canModifyFI}"
+												id="id_allowRecover1"  onCheck="enableIDPComponents()">
+									</checkbox>
+									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
+									</hbox>
+								</row>
+								<row>
+									<space></space>
+									<hbox>
+									<checkbox bind="@federationMember/allowCertificate" disabled="${!canModifyFI}"
+												id="id_allowCertificate1"  onCheck="enableIDPComponents()">
+									</checkbox>
+									<input_etiqueta value="${c:l('federacio.zul.allowCertificate')}"/>
+									</hbox>
+								</row>
+								<row>
+									<space></space>
+									<vbox>
+										<hbox>
+											<checkbox bind="@federationMember/allowRegister" disabled="${!canModifyFI}"
+													id="id_allowRegister1"  onCheck="enableIDPComponents()">
+											</checkbox>
+											<input_etiqueta value="${c:l('federacio.zul.allowRegister')}"/>
+										</hbox>	
+										<hbox>
+											<input_etiqueta value="${c:l('usuaris.zul.Tipus')}" width_custom="8em"/>
+											<listbox 
+												dataPath="/model:/userType" id="id_userTypeToRegister1"
+												mold="select"
+												bind="@federationMember/userTypeToRegister" disabled="${!canModifyFI}">
+												<dataitem bind="@codi">
+													<listcelllabel
+														bind="@codi" labelBind="@descripcio" />
+												</dataitem>
+											</listbox>
+										</hbox>
+										<hbox>
+											<input_etiqueta value="${c:l('usuaris.zul.Grupprimari-2')}" width_custom="8em"/>
+											<input_dada id="id_groupToRegister1"
+													bind="@federationMember/groupToRegister" mascara="no empty"
+													lectura="${!canModifyFI}"
+													width_custom="8em" />
+											<separator width="0px" />
+											<imageclic id="id_groupToRegisterButton1" src="~./img/grup.gif" visible="${canModifyFI}">
+												<attribute name="onActualitza"><![CDATA[
+		id_groupToRegister1.getFellow("dada").setValue(event.getData()[0]);
+											]]>
+												</attribute>
+												<attribute name="onClick">
+											<![CDATA[
+		desktop.getPage("grupsLlista").setAttribute("tipus", "");
+		desktop.getPage("grupsLlista").setAttribute("llistaObsolets", false);
+		Events.postEvent("onInicia",
+				desktop.getPage("grupsLlista").getFellow("esquemaLlista"), self);
+]]>		
+												</attribute>
+											</imageclic>
+										</hbox>
+									</vbox>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.mailHost')}" width_custom="8em"/>
+									<input_dada 
+											id = "id_mailHost1"
+											bind="@federationMember/mailHost" mascara="no empty"
+											lectura="${!canModifyFI}"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.mailSender')}" width_custom="8em"/>
+									<input_dada 
+											id = "id_mailSender1"
+											bind="@federationMember/mailSenderAddress" mascara="no empty"
+											lectura="${!canModifyFI}"/>
+								</row>
+							</rows>
+						</grid>
+						</hbox>						
+						</tabpanel>
+						<tabpanel id="tp_sp">
+						<hbox width="99%">
+						<grid id="g_sp">
+							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
+							<rows>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Tipus')}"/>
+									<!-- <input_dada bind="@federationMember/classe" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/> -->
+									<listbox bind="@federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
+										<listitem label="${c:l('federacio.zul.VirtualIdentityProvi')}" value="V"/>												
+										<listitem label="${c:l('federacio.zul.IdentityProvider')}" value="I"/>
+										<listitem label="${c:l('federacio.zul.ServiceProvider')}" value="S"/>
+										<listitem label="${c:l('federacio.zul.')}" value=""/>
+									</listbox>											
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.EntityGroup')}"/>
+									<input_dada bind="@entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
+									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
+									<textbox bind="@federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+								</row>
+								<!--row>
+									<input_etiqueta value="Organization" />
+									<input_dada bind="@federationMember/organization" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/>
+								</row>
+								<row>
+									<input_etiqueta value="contact" />
+									<input_dada bind="@federationMember/contact" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/>
+								</row-->
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
+									<input_dada bind="@federationMember/metadades" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+								</row>
+								<!--row>
+									<input_etiqueta value="nameIdFormat" />
+									<input_dada bind="@federationMember/nameIdFormat" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/>
+								</row>
+								<row>
+									<input_etiqueta value="certificateChain" />
+									<input_dada bind="@federationMember/certificateChain" rows_custom="4" width_custom="98%" lectura="${!canModifyFI}"/>
+								</row-->
+							</rows>
+						</grid>
+						</hbox>						
+						</tabpanel>
+						<tabpanel id="tp_vip">
+						<hbox width="99%">
+						<grid id="g_vip">
+							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
+							<rows>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Classe')}"/>
+									<!-- <input_dada bind="@federationMember/classe" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/> -->
+									<listbox bind="@federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
+										<listitem label="${c:l('federacio.zul.VirtualIdentityProvi')}" value="V"/>												
+										<listitem label="${c:l('federacio.zul.IdentityProvider')}" value="I"/>
+										<listitem label="${c:l('federacio.zul.ServiceProvider')}" value="S"/>
+										<listitem label="${c:l('federacio.zul.')}" value=""/>
+									</listbox>											
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.EntityGroup')}"/>
+									<input_dada bind="@entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
+									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
+									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
+									<textbox bind="@federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
+									<input_dada bind="@federationMember/metadades" lectura="true" rows_custom="4" width_custom="98%"/>
+								</row>
+								<row id = "firstRowToHide2">
+									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
+									<input_dada bind="@federationMember/organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.contact')}"/>
+									<input_dada bind="@federationMember/contact" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.certificateChain')}"/>
+									<input_dada bind="@federationMember/certificateChain" id="vip_certificateChain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.publicKey')}"/>
+									<vbox>
+										<divVisible bind="@federationMember/publicKey" valorVisible="null">
+											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
+											<separator/>
+											<button disabled="${!canModifyFI}" image="img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
+										</divVisible>
+										
+										<divVisible bind="@federationMember/publicKey" valorNoVisible="null">
+											<button disabled="${!canModifyFI}" image="img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain)" style="margin-right:10px" width="200px"/>
+											<button disabled="${!canModifyFI}" image="img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
+										</divVisible>										
+									</vbox>
+								</row>
+								<row>
+									<space/>
+									<hbox>
+									<checkbox bind="@federationMember/allowRecover" disabled="${!canModifyFI}"
+												id="id_allowRecover2"  onCheck="enableVIPComponents()">
+									</checkbox>
+									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
+									</hbox>
+								</row>
+								<row>
+									<space></space>
+									<hbox>
+									<checkbox bind="@federationMember/allowCertificate" disabled="${!canModifyFI}"
+												id="id_allowCertificate2"  onCheck="enableVIPComponents()">
+									</checkbox>
+									<input_etiqueta value="${c:l('federacio.zul.allowCertificate')}"/>
+									</hbox>
+								</row>
+								<row>
+									<space></space>
+									<vbox>
+										<hbox>
+											<checkbox bind="@federationMember/allowRegister" disabled="${!canModifyFI}"
+													id="id_allowRegister2"  onCheck="enableVIPComponents()">
+											</checkbox>
+											<input_etiqueta value="${c:l('federacio.zul.allowRegister')}"/>
+										</hbox>	
+										<hbox>
+											<input_etiqueta value="${c:l('usuaris.zul.Tipus')}" width_custom="8em"/>
+											<listbox 
+												dataPath="/model:/userType" id="id_userTypeToRegister2"
+												mold="select"
+												bind="federationMember/userTypeToRegister" disabled="${!canModifyFI}">
+												<dataitem bind="@codi">
+													<listcelllabel
+														bind="@codi" labelBind="@descripcio" />
+												</dataitem>
+											</listbox>
+										</hbox>
+										<hbox>
+											<input_etiqueta value="${c:l('usuaris.zul.Grupprimari-2')}" width_custom="8em"/>
+											<input_dada id="id_groupToRegister2"
+													bind="federationMember/groupToRegister" mascara="no empty"
+													lectura="${!canModifyFI}"
+													width_custom="8em" />
+											<separator width="0px" />
+											<imageclic id="id_groupToRegisterButton2" src="~./img/grup.gif" visible="${canModifyFI}">
+												<attribute name="onActualitza"><![CDATA[
+		id_groupToRegister2.getFellow("dada").setValue(event.getData()[0]);
+											]]>
+												</attribute>
+												<attribute name="onClick">
+											<![CDATA[
+		desktop.getPage("grupsLlista").setAttribute("tipus", "");
+		desktop.getPage("grupsLlista").setAttribute("llistaObsolets", false);
+		Events.postEvent("onInicia",
+				desktop.getPage("grupsLlista").getFellow("esquemaLlista"), self);
+]]>		
+												</attribute>
+											</imageclic>
+										</hbox>
+									</vbox>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.mailHost')}" width_custom="8em"/>
+									<input_dada 
+											id = "id_mailHost2"
+											bind="federationMember/mailHost" mascara="no empty"
+											lectura="${!canModifyFI}"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.mailSender')}" width_custom="8em"/>
+									<input_dada 
+											id = "id_mailSender2"
+											bind="federationMember/mailSenderAddress" mascara="no empty"
+											lectura="${!canModifyFI}"/>
+								</row>
+							</rows>
+						</grid>
+						</hbox>						
+						</tabpanel>						
+						<tabpanel id="tp_prof" visible="false">
+							<label sclass="etiqueta" value="${c:l('federacio.zul.Tipusdeprofile')}"/>
+							<separator height="5px"/>
+							<grid dataPath="/esquema/lista/treebox:/profile" id="g_profiles">
+								<attribute name="onActualitza">
+								<![CDATA[
+									SAMLProfile nprofile = (SAMLProfile)event.getData(); // profile nou
+									//Missatgebox.info ("rebut " + nprofile);
+									modelProxy = (es.caib.zkib.binder.list.ModelProxy) g_profiles.getModel();
+									// No es comprova l'existencia
+									/*ds = g_pol.getDataSource(); 
+									ctx =  ds.getJXPathContext();
+									xpath = g_pol.getXPath() + "[@name = '" + nprofile.getName() + "']";
+									boolean jaExisteix = true;
+									try {
+										valor = ctx.getValue(xpath);
+									} catch(Exception e) {
+										jaExisteix = false;
+									}	
+									if (jaExisteix) {
+										Missatgebox.avis(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.PoliticaExisteix"), new Object [] {npolicy.getName()}),
+														org.zkoss.util.resource.Labels.getLabel("federacio.ErrorPolitica"));
+									} else {*/
+										position = modelProxy.newInstance();
+										ds = g_profiles.getDataSource(); 
+										ctx =  ds.getJXPathContext(); 
+										xpath = g_profiles.getXPath() + modelProxy.getBind(position); //Missatgebox.info ("nou xpath "+xpath);
+										pointer =ctx.createPath (xpath);
+										ctx2 = ctx.getRelativeContext(pointer);
+										ctx2.setValue("@id", nprofile.getId());
+										ctx2.setValue("@classe", nprofile.getClasse());
+										ctx2.setValue("@signResponses", nprofile.getSignResponses());
+										ctx2.setValue("@signAssertions", nprofile.getSignAssertions());
+										ctx2.setValue("@signRequests", nprofile.getSignRequests());
+										ctx2.setValue("@enabled", nprofile.getEnabled());
+										ctx2.setValue("@outboundArtifactType", nprofile.getOutboundArtifactType());
+										ctx2.setValue("@assertionLifetime", nprofile.getAssertionLifetime());
+										ctx2.setValue("@encryptAssertions", nprofile.getEncryptAssertions());
+										ctx2.setValue("@encryptNameIds", nprofile.getEncryptNameIds());
+										ctx2.setValue("@assertionProxyCount", nprofile.getAssertionProxyCount());
+										ctx2.setValue("@includeAttributeStatement", nprofile.getIncludeAttributeStatement());
+										ctx2.setValue("@localityAddress", nprofile.getLocalityAddress());
+										ctx2.setValue("@localityDNSName", nprofile.getLocalityDNSName());
+										ctx2.setValue("@maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
+										
+										// Guardem el id del identityprovider
+										dsForm = form.getDataSource(); 
+										ctxIdp =  dsForm.getJXPathContext(); 
+										idp = ctxIdp.getValue("@federationMember"); //Missatgebox.info ("IDP "+idp);
+										ctx2.setValue("@identityProvider", idp);
+								    //}										
+										pointer.invalidate ();
+									]]>
+								</attribute>
+								<attribute name="onUpdate"><![CDATA[
+									SAMLProfile nprofile = (SAMLProfile) event.getData()[0];
+									// profile modficat
+									xpath = (String) event.getData()[1];
+									//Missatgebox.info ("profile " + nprofile + " xp "+xpath);
+									modelProxy = (es.caib.zkib.binder.list.ModelProxy) g_profiles.getModel();
+									ds = g_profiles.getDataSource(); 
+									ctx =  ds.getJXPathContext(); 
+									jaExisteix = true;
+									try {
+										valor = ctx.getValue(xpath);
+									} catch(Exception e) {
+										jaExisteix = false;
+									}	
+									if (jaExisteix) {
+										pointer = ctx.getPointer(xpath);	
+										ctx2 = ctx.getRelativeContext(pointer);
+										// Atributs
+										// El id el mantenim..
+										ctx2.setValue("@classe", nprofile.getClasse());
+										ctx2.setValue("@signResponses", nprofile.getSignResponses());
+										ctx2.setValue("@signAssertions", nprofile.getSignAssertions());
+										ctx2.setValue("@signRequests", nprofile.getSignRequests());
+										ctx2.setValue("@enabled", nprofile.getEnabled());
+										ctx2.setValue("@outboundArtifactType", nprofile.getOutboundArtifactType());
+										ctx2.setValue("@assertionLifetime", nprofile.getAssertionLifetime());
+										ctx2.setValue("@encryptAssertions", nprofile.getEncryptAssertions());
+										ctx2.setValue("@encryptNameIds", nprofile.getEncryptNameIds());
+										ctx2.setValue("@assertionProxyCount", nprofile.getAssertionProxyCount());
+										ctx2.setValue("@includeAttributeStatement", nprofile.getIncludeAttributeStatement());
+										ctx2.setValue("@localityAddress", nprofile.getLocalityAddress());
+										ctx2.setValue("@localityDNSName", nprofile.getLocalityDNSName());
+										ctx2.setValue("@maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
+										
+										// Guardem el identityprovider (no cal..)
+										dsForm = form.getDataSource(); 
+										ctxIdp =  dsForm.getJXPathContext(); 
+										idp = ctxIdp.getValue("@federationMember"); //Missatgebox.info ("IDP "+idp);
+										ctx2.setValue("@identityProvider", idp);
+										pointer.invalidate ();
+									} else {
+										Missatgebox.avis(String.format(
+												org.zkoss.util.resource.Labels.getLabel("federacio.ErrorModificar"), 
+												new Object [] {nprofile.getClasse()},
+												org.zkoss.util.resource.Labels.getLabel("federacio.ErrorModificar2")));															
+									}									
+								]]>
+								</attribute>
+								<columns visible="false">
+									<column width="*"/>
+									<column width="25px"/>
+									<column width="25px"/>
+								</columns>
+								<datarow>
+									<input_dada bind="@classe" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<imageclic src="~./img/vincula.gif" tooltip="vincula">
+										<attribute name="onClick">
+											if (canModifyFI) {
+												dataRow = self.getParent();
+												xpath = dataRow.getXPath();	
+												dataSource = g_profiles.getDataSource();
+												context = dataSource.getJXPathContext();
+												dada = context.getValue(xpath);	
+												desktop.getPage("federationProfile").setAttribute("profile",dada.instance);
+												desktop.getPage("federationProfile").setAttribute("xpath", xpath);
+												desktop.getPage("federationProfile").setAttribute("modificar", true);
+												Events.postEvent	("onInicia",desktop.getPage("federationProfile").getFellow("esquema"), g_profiles);
+											}
+										</attribute>
+									</imageclic>
+									<imageclic src="~./img/list-remove.gif" tooltip="vincula">
+										<attribute name="onClick">
+											if (canDeleteFI) {
+												dataRow = self.getParent();
+												xpath = dataRow.getXPath();	
+												dataSource = g_profiles.getDataSource();
+												context = dataSource.getJXPathContext();
+												dada = context.getValue(xpath+"/@classe");
+												Missatgebox.confirmaOK_CANCEL(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.SegurBorrar"), new Object [] {dada}),
+													org.zkoss.util.resource.Labels.getLabel("federacio.Borra"),
+													new EventListener() {
+														public void onEvent(Event evt) {
+															if ("onOK".equals(evt.getName())) {
+																context.removePath(xpath);
+															}
+													    }
+													});															
+											}
+										</attribute>
+									</imageclic>
+								</datarow>
+							</grid>
+							<separator/>
+							<button id="btAfegirProf" image="~./img/list-add.gif" label="${c:l('federacio.zul.AfegeixProfile')}" visible="${canModifyFI}">
+							<attribute name="onClick"><![CDATA[
+								if (canModifyFI) {
+									desktop.getPage("federationProfile").setAttribute("profile",null);
+									desktop.getPage("federationProfile").setAttribute("xpath", null);
+									desktop.getPage("federationProfile").setAttribute("modificar", false);
+									Events.postEvent	("onInicia",desktop.getPage("federationProfile").getFellow("esquema"), g_profiles);
+								}
+							]]>
+							</attribute>
+							</button>							
+						</tabpanel>
+						<tabpanel id="tp_rel" visible="false">
+							<divVisible bind="@federationMember/@classe" valorVisible="S">
+							<!-- en els SP està a modo lectura -->
+							<grid dataPath="@federationMember/@virtualIdentityProvider" id="g_vipProvider">
+								<columns visible="false">
+									<column width="*"/>
+								</columns>
+								<datarow>
+									<input_dada bind="@publicId" lectura="true" width_custom="98%"/>
+								</datarow>
+							</grid>
+							</divVisible>
+						
+							<divVisible bind="@federationMember/@classe" valorVisible="V">
+							<!-- NOMES PER ALS VIRTUAL IDENTITY PROVIDERS -->
+							<grid id="g_defaultIDP">
+								<attribute name="onActualitza">
+								<![CDATA[
+									if (canModifyFI) {
+										FederationMember defaultIDP = (FederationMember)event.getData();
+										//Missatgebox.info ("federa "+defaultIDP); 
+										//Triem l'element seleccionat de l'arbre
+										treebox = esquema.getFellow("lista").getFellow("treebox");
+										obj = treebox.selectedItem;
+										if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+											EntityGroupMember ins = obj.value.instance; 
+											ins.getFederationMember().setDefaultIdentityProvider(defaultIDP);
+											tb_defaultIDP.getFellow("dada").setValue(defaultIDP.getPublicId());
+											Missatgebox.avis (org.zkoss.util.resource.Labels.getLabel("federacio.AvisIdentity"));
+										}
+									}	
+									]]>								
+								</attribute>								
+								<columns visible="false">
+									<column width="150px"/>
+									<column width="*"/>
+									<column width="25px"/>
+								</columns>
+								<rows>
+									<row>
+										<input_etiqueta value="${c:l('federacio.zul.IdentityProviderPare')}"/>
+										<input_dada bind="@federationMember/@defaultIdentityProvider/publicId" id="tb_defaultIDP" lectura="true" width_custom="98%"/>
+										<imageclic src="~./img/vincula.gif" tooltip="vincula">
+											<attribute name="onClick"><![CDATA[
+												if (canModifyFI) {
+													//Triem l'element seleccionat de l'arbre
+													treebox = esquema.getFellow("lista").getFellow("treebox");
+													obj = treebox.selectedItem;
+													if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+														ins = obj.value.instance;
+														if (ins instanceof EntityGroupMember) {
+															FederationMember fm = ins.getFederationMember();
+															if ("V".equals(fm.getClasse())) {
+																desktop.getPage("federationMember").setAttribute("tipusFM","I");											
+																Events.postEvent	("onInicia",desktop.getPage("federationMember").getFellow("esquema"), g_defaultIDP);
+															}
+														}
+													}
+												}
+												]]>
+											</attribute>
+										</imageclic>
+									</row>
+								</rows>
+							</grid>
+							<separator height="10px"/>
+							<input_etiqueta value="${c:l('federacio.zul.ServiceProviders')}"/>
+							<separator height="3px"/>
+							<grid dataPath="@federationMember/@serviceProvider" id="g_serviceProvider">
+								<attribute name="onActualitza"><![CDATA[
+									if (canModifyFI) {
+										FederationMember nouSP = (FederationMember)event.getData();
+										//Missatgebox.info ("federa "+nouSP);
+										treebox = esquema.getFellow("lista").getFellow("treebox");
+										obj = treebox.selectedItem;
+										if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+											EntityGroupMember ins = obj.value.instance;
+											Collection sps = ins.getFederationMember().getServiceProvider();
+											if (sps ==null) {
+												sps = new ArrayList();
+												ins.getFederationMember().setServiceProvider(sps);
+											}
+											for (Iterator it = sps.iterator(); it.hasNext(); ) {
+												FederationMember f = (FederationMember) it.next();
+												if (f.getId().equals(nouSP.getId())) {
+													Missatgebox.error (String.format(org.zkoss.util.resource.Labels.getLabel("federacio.ExisteixService"), new Object [] {nouSP.getPublicId()}));
+													return;												
+												}
+											}
+											sps.add(nouSP);
+											ds = treebox.getDataSource();
+											ctx = ds.getJXPathContext();
+											xpath = obj.value.getXPath();
+											pointer = ctx.getPointer(xpath);	
+											ctx2 = ctx.getRelativeContext(pointer);
+											// Valor
+											ctx2.setValue("@federationMember/@serviceProvider", sps);
+											//pointer.invalidate();																
+
+											g_serviceProvider.clear();
+											g_serviceProvider.setDataPath("@federationMember/@serviceProvider");
+										}										
+									}									
+								]]></attribute>								
+								<columns visible="false">
+									<column width="*"/>
+									<column width="25px"/>
+								</columns>
+								<datarow>
+									<input_dada bind="@publicId" lectura="true" width_custom="98%"/>
+									<imageclic src="~./img/list-remove.gif">
+									<attribute name="onClick"><![CDATA[
+										if (canDeleteFI) {
+											//Triem l'element seleccionat de l'arbre
+											treebox = esquema.getFellow("lista").getFellow("treebox");
+											obj = treebox.selectedItem;
+											if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+												ins = obj.value.instance;
+												if (ins instanceof EntityGroupMember) {
+													FederationMember fm = ins.getFederationMember();
+													Collection sps = fm.getServiceProvider();
+													if (sps==null) { 
+														Missatgebox.error (org.zkoss.util.resource.Labels.getLabel("federacio.NoTrobatService"));
+														return;
+													} else {
+														// Obtenim la filera seleccionada
+														dataRow = self.getParent();
+														xpath = dataRow.getXPath();	
+														dataSource = g_serviceProvider.getDataSource();
+														context = dataSource.getJXPathContext();
+														dada = context.getValue(xpath);
+														
+														//no mirem el tipus
+														if (sps.contains(dada))  {
+															context.removePath(xpath);
+															sps.remove(dada);
+															// l'esborrem (obtenint el xpath sencer)
+															ds = treebox.getDataSource();
+															ctx = ds.getJXPathContext();
+															xpath = obj.value.getXPath();
+															pointer = ctx.getPointer(xpath);	
+															ctx2 = ctx.getRelativeContext(pointer);
+															// Valor
+															ctx2.setValue("@federationMember/@serviceProvider",sps);
+															g_serviceProvider.clear();
+															g_serviceProvider.setDataPath("@federationMember/@serviceProvider");
+														} else {
+															Missatgebox.error (org.zkoss.util.resource.Labels.getLabel("federacio.NoTrobatService2"));
+															return;		
+														}
+													}
+												}
+											}										
+										}	
+										]]>
+									</attribute>
+								</imageclic>										
+							</datarow>
+							</grid>
+							<separator/>
+							<button id="btAfegirSP" image="~./img/list-add.gif" label="${c:l('federacio.zul.AfegeixServiceProvid')}" visible="${canModifyFI}">
+							<attribute name="onClick"><![CDATA[
+								if (canModifyFI) {
+									//Triem l'element seleccionat de l'arbre
+									treebox = esquema.getFellow("lista").getFellow("treebox");
+									obj = treebox.selectedItem;
+									if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+										ins = obj.value.instance;
+										if (ins instanceof EntityGroupMember) {
+											FederationMember fm = ins.getFederationMember();
+											if ("V".equals(fm.getClasse())) {
+												desktop.getPage("federationMember").setAttribute("tipusFM","S");											
+												Events.postEvent	("onInicia",desktop.getPage("federationMember").getFellow("esquema"), g_serviceProvider);
+											}
+										}
+									}
+								}
+							]]>
+							</attribute>
+							</button>
+							</divVisible>
+							<divVisible bind="@federationMember/@classe" valorVisible="I">
+							<!-- NOMES PER ALS IDENTITY PROVIDERS -->
+							<input_etiqueta value="${c:l('federacio.zul.ServiceProviders')}"/>
+							<separator height="3px"/>
+							<grid dataPath="@federationMember/@serviceProvider" id="g_serviceProvider2">
+								<attribute name="onActualitza"><![CDATA[
+									if (canModifyFI) {
+										FederationMember nouSP = (FederationMember)event.getData();
+										//Missatgebox.info ("federa "+nouSP);
+										treebox = esquema.getFellow("lista").getFellow("treebox");
+										obj = treebox.selectedItem;
+										if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+											EntityGroupMember ins = obj.value.instance;
+											Collection sps = ins.getFederationMember().getServiceProvider();
+											if (sps ==null) {
+												sps = new ArrayList();
+												ins.getFederationMember().setServiceProvider(sps);
+											}
+											for (Iterator it = sps.iterator(); it.hasNext(); ) {
+												FederationMember f = (FederationMember) it.next();
+												if (f.getId().equals(nouSP.getId())) {
+													Missatgebox.error (String.format(org.zkoss.util.resource.Labels.getLabel("federacio.ExisteixService"), new Object [] {nouSP.getPublicId()}));
+													return;												
+												}
+											}
+											sps.add(nouSP);
+											ds = treebox.getDataSource();
+											ctx = ds.getJXPathContext();
+											xpath = obj.value.getXPath();
+											pointer = ctx.getPointer(xpath);	
+											ctx2 = ctx.getRelativeContext(pointer);
+											// Valor
+											ctx2.setValue("@federationMember/@serviceProvider", sps);
+											//pointer.invalidate();																
+
+											g_serviceProvider2.clear();
+											g_serviceProvider2.setDataPath("@federationMember/@serviceProvider");
+										}										
+									}									
+								]]></attribute>								
+								<columns visible="false">
+									<column width="*"/>
+									<column width="25px"/>
+								</columns>
+								<datarow>
+									<input_dada bind="@publicId" lectura="true" width_custom="98%"/>
+									<imageclic src="~./img/list-remove.gif">
+									<attribute name="onClick"><![CDATA[
+										if (canDeleteFI) {
+											//Triem l'element seleccionat de l'arbre
+											treebox = esquema.getFellow("lista").getFellow("treebox");
+											obj = treebox.selectedItem;
+											if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+												ins = obj.value.instance;
+												if (ins instanceof EntityGroupMember) {
+													FederationMember fm = ins.getFederationMember();
+													Collection sps = fm.getServiceProvider();
+													if (sps==null) { 
+														Missatgebox.error (org.zkoss.util.resource.Labels.getLabel("federacio.NoTrobatService"));
+														return;
+													} else {
+														// Obtenim la filera seleccionada
+														dataRow = self.getParent();
+														xpath = dataRow.getXPath();	
+														dataSource = g_serviceProvider2.getDataSource();
+														context = dataSource.getJXPathContext();
+														dada = context.getValue(xpath);
+														
+														//no mirem el tipus
+														if (sps.contains(dada))  {
+															context.removePath(xpath);
+															sps.remove(dada);
+															// l'esborrem (obtenint el xpath sencer)
+															ds = treebox.getDataSource();
+															ctx = ds.getJXPathContext();
+															xpath = obj.value.getXPath();
+															pointer = ctx.getPointer(xpath);	
+															ctx2 = ctx.getRelativeContext(pointer);
+															// Valor
+															ctx2.setValue("@federationMember/@serviceProvider",sps);
+															g_serviceProvider2.clear();
+															g_serviceProvider2.setDataPath("@federationMember/@serviceProvider");
+														} else {
+															Missatgebox.error (org.zkoss.util.resource.Labels.getLabel("federacio.NoTrobatService2"));
+															return;		
+														}
+													}
+												}
+											}										
+										}	
+										]]>
+									</attribute>
+								</imageclic>										
+							</datarow>
+							</grid>
+							<separator/>
+							<button image="~./img/list-add.gif" label="${c:l('federacio.zul.AfegeixServiceProvid')}" visible="${canModifyFI}">
+							<attribute name="onClick"><![CDATA[
+								if (canModifyFI) {
+									//Triem l'element seleccionat de l'arbre
+									treebox = esquema.getFellow("lista").getFellow("treebox");
+									obj = treebox.selectedItem;
+									if (obj!=null && obj.value!=null && obj.value.instance !=null) {
+										ins = obj.value.instance;
+										if (ins instanceof EntityGroupMember) {
+											FederationMember fm = ins.getFederationMember();
+											if ("I".equals(fm.getClasse())) {
+												desktop.getPage("federationMember").setAttribute("tipusFM","S");											
+												Events.postEvent	("onInicia",desktop.getPage("federationMember").getFellow("esquema"), g_serviceProvider2);
+											}
+										}
+									}
+								}
+							]]>
+							</attribute>
+							</button>
+							</divVisible>
+						</tabpanel>
+
+					</tabpanels>
+				</tabbox>
+
+			</form>
+		</detalls>
+
+	</esquema>
+	</tabpanel>
+	<tabpanel id="tp_politiques">
+		<navegador>
+		<toolbar style="border-top:0.1px solid white;">
+			<commitbutton datamodel="/model" id="btcommitpol"/>
+			<undotreebutton datamodel="/model" tree="/esquema/lista/treebox"/>
+		</toolbar>
+		<zscript>
+			btcommitpol.addEventListener(Events.ON_CLICK, new org.zkoss.zk.ui.event.EventListener() {
+				public boolean isAsap() {return true;}
+				public void onEvent(org.zkoss.zk.ui.event.Event event) {
+					// refresquem l'arbre
+					refrescaArbre();
+				}
+			});			
+				editaPolitica(Policy policy, String xpath) {
+					desktop.getPage("policyCondition").setAttribute("policy",policy);											
+					desktop.getPage("policyCondition").setAttribute("modifica",policy != null);
+					desktop.getPage("policyCondition").setAttribute("xpathpol",xpath);
+					Events.postEvent	("onInicia",desktop.getPage("policyCondition").getFellow("esquemaPo"), g_pol);
+				}
+			</zscript>
+			<vbox width="100%"> 
+				<grid dataPath="/model:/policy" id="g_pol">
+					<!-- politiques noves -->
+					<attribute name="onActualitza">
+					<![CDATA[
+						Policy npolicy = (Policy)event.getData()[0]; // politica nova
+						//Missatgebox.info ("nova politica = "+npolicy); 
+						modelProxy = (es.caib.zkib.binder.list.ModelProxy) g_pol.getModel();
+						// No es comprova l'existencia
+						/*ds = g_pol.getDataSource(); 
+						ctx =  ds.getJXPathContext();
+						xpath = g_pol.getXPath() + "[@name = '" + npolicy.getName() + "']";
+						boolean jaExisteix = true;
+						try {
+							valor = ctx.getValue(xpath);
+						} catch(Exception e) {
+							jaExisteix = false;
+						}	
+						if (jaExisteix) {
+							Missatgebox.avis(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.PoliticaExisteix"), new Object [] {npolicy.getName()}),
+											org.zkoss.util.resource.Labels.getLabel("federacio.ErrorPolitica"));
+						} else {*/	
+							position = modelProxy.newInstance();
+							ds = g_pol.getDataSource(); 
+							ctx =  ds.getJXPathContext(); 
+							xpath = g_pol.getXPath() + modelProxy.getBind(position); //Missatgebox.info ("nou xpath "+xpath);
+							pointer =ctx.createPath (xpath);
+							ctx2 = ctx.getRelativeContext(pointer);
+							ctx2.setValue("@name", npolicy.getName());
+							//ctx2.setValue("@identityProvider", npolicy.getIdentityProvider());
+							ctx2.setValue("@attributePolicy", npolicy.getAttributePolicy());
+							ctx2.setValue("@condition", npolicy.getCondition());
+							
+							pointer.invalidate ();
+						//}	
+					]]>
+					</attribute>
+					<!-- aceptar desde MODIFICAR un rol de la lista de roles de aplicación-->
+					<attribute name="onUpdate">	
+			   <![CDATA[
+			            Object[] dades = (Object[]) event.getData();
+						Policy npolicy = (Policy)dades[0]; // politica nova
+						String xpathPol = dades[1];
+						//Missatgebox.info ("politica a actualitzar= "+npolicy); 
+						modelProxy = (es.caib.zkib.binder.list.ModelProxy) g_pol.getModel();
+						ds = g_pol.getDataSource(); 
+						ctx =  ds.getJXPathContext();
+						if (npolicy.getId() == null) {
+							// Los nuevos no tienen id (todavía), lo obtenemos por xpath
+							if (xpathPol!=null) {
+								xpath = xpath;
+							}
+							else { //pot fallar:
+								xpath = g_pol.getXPath() + "[@name = '" + npolicy.getName()+ "']"; //
+							}
+							//Missatgebox.info ("xpath "+xpath);
+						}
+						else { 
+							xpath = g_pol.getXPath() +"[@id='"+npolicy.getId()+"']";
+						}
+						boolean jaExisteix = true;
+						try {
+							valor = ctx.getValue(xpath);
+						} catch(Exception e) {
+							jaExisteix = false;
+						}	
+						if (jaExisteix) {
+							pointer = ctx.getPointer(xpath);	
+							ctx2 = ctx.getRelativeContext(pointer);
+							// Atributs
+							ctx2.setValue("@name", npolicy.getName());
+							//ctx2.setValue("@identityProvider", npolicy.getIdentityProvider());
+							ctx2.setValue("@attributePolicy", npolicy.getAttributePolicy());
+							ctx2.setValue("@condition", npolicy.getCondition());
+							pointer.invalidate ();
+						} else {
+							Missatgebox.avis(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.PoliticaNoTrobada"), new Object [] {npolicy.getName()}),
+											org.zkoss.util.resource.Labels.getLabel("federacio.ErrorModPolitica"));															
+						}											
+					]]>
+					</attribute>
+					<columns>
+						<column width="*">${c:l('federacio.Politica')}</column>
+						<column align="center" label="${c:l('federacio.zul.')}" visible="${canModifyFI}" width="25px"/>
+						<column align="center" label="${c:l('federacio.zul.')}" visible="${canDeleteFI}" width="25px"/>
+					</columns>
+					<datarow>
+						<input_etiqueta bind="@name" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+						<imageclic src="~./img/vincula.gif" tooltip="vincula">
+							<attribute name="onClick">
+								if (canModifyFI) {
+									dataRow = self.getParent();
+									xpath = dataRow.getXPath();	
+									dataSource = g_pol.getDataSource();
+									context = dataSource.getJXPathContext();
+									dada = context.getValue(xpath);	
+									editaPolitica(dada.getInstance(), xpath);
+								}
+							</attribute>
+						</imageclic>
+						<imageclic src="~./img/list-remove.gif">
+							<attribute name="onClick">
+								if (canDeleteFI) {
+									dataRow = self.getParent();
+									xpath = dataRow.getXPath();	
+									dataSource = g_pol.getDataSource();
+									context = dataSource.getJXPathContext();
+									dada = context.getValue(xpath+"/@name");
+									Missatgebox.confirmaOK_CANCEL(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.SegurBorrarPolitica"), new Object [] {dada}),
+										org.zkoss.util.resource.Labels.getLabel("federacio.Borra"),
+										new EventListener() {
+											public void onEvent(Event evt) {
+												if ("onOK".equals(evt.getName())) {
+													context.removePath(xpath);
+												}
+										    }
+										});															
+								}										
+							</attribute>
+						</imageclic>
+					</datarow>
+				</grid>
+				<button id="btAfegirPolitica" image="~./img/list-add.gif" label="${c:l('federacio.zul.Afegeixpolatica')}" visible="${canCreateFI}">
+					<attribute name="onClick">
+						if (canCreateFI) {
+							editaPolitica(null, null);
+						}
+					</attribute>
+				</button>
+				</vbox>
+			</navegador>
+			</tabpanel>
+		</tabpanels>
+	</tabbox>
+	
+	<window id="pkcs12window" visible="false" closable="true" title="${c:l('federacio.zul.loadPkcs12') }">
+		<label value="PIN:" width="10em" style="margin-left: 15px;"></label>
+		<textbox type="password" id="pkcs12pin"></textbox>
+		<attribute name="onClose">
+			pkcs12window.setVisible(false);
+			event.stopPropagation();
+		</attribute>
+		<fileupload onUpload="parsePkcs12(event.media)" onClose="pkcs12window.setVisible(false);" />
+	</window>
+	<iframe height="1" id="pkcs10window" visible="true" width="1"/>
+	
+	<include src="/addon/federation/policyCondition.zul"/>
+	<include src="/addon/federation/federationMember.zul"/>
+	<include src="/addon/federation/federa_profile.zul"/>
+	<include src="/grupsllista.zul" />
+</zk>

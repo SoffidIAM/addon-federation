@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/java-shib-idp2/!svn/ver/2722/branches/REL_2/src/main/resources/META-INF
+END
+spring.schemas
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/java-shib-idp2/!svn/ver/2722/branches/REL_2/src/main/resources/META-INF/spring.schemas
+END
+spring.handlers
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/java-shib-idp2/!svn/ver/2722/branches/REL_2/src/main/resources/META-INF/spring.handlers
+END

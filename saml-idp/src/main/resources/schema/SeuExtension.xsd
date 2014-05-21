@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="urn:soffid.com:shibboleth:2.0:resolver" 
+        xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:resolver="urn:mace:shibboleth:2.0:resolver" 
+        elementFormDefault="qualified">
+
+    <import namespace="urn:mace:shibboleth:2.0:resolver"
+        schemaLocation="classpath:/schema/shibboleth-2.0-attribute-resolver.xsd" />
+
+    <complexType name="SeuLookup">
+        <annotation>
+            <documentation>
+               Description of your data connector.
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="resolver:BaseDataConnectorType">
+            <!-- 
+                <attribute name="lookupUrl" type="string" use="required">
+                    <annotation>
+                        <documentation>
+                            This is an example of a custom attribute called "lookupUrl". 
+                            Look in the shib-common.jar at schema/shibboleth-2.0-attribute-resolver-dc.xml 
+                            for more examples of how to define custom attributes and elements.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                 -->
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="MazingerLookup">
+        <annotation>
+            <documentation>
+               Description of your data connector.
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="resolver:BaseDataConnectorType">
+            <!-- 
+                <attribute name="lookupUrl" type="string" use="required">
+                    <annotation>
+                        <documentation>
+                            This is an example of a custom attribute called "lookupUrl". 
+                            Look in the shib-common.jar at schema/shibboleth-2.0-attribute-resolver-dc.xml 
+                            for more examples of how to define custom attributes and elements.
+                        </documentation>
+                    </annotation>
+                </attribute>
+                 -->
+            </extension>
+        </complexContent>
+    </complexType>
+</schema>

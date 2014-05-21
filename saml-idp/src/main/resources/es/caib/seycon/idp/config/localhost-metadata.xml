@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EntityDescriptor entityID="http://epreinf14.caib.es/shibboleth"
+	xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+	xmlns:shibmd="urn:mace:shibboleth:metadata:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+		<NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified
+		</NameIDFormat>
+
+		<AssertionConsumerService
+			Location="http://epreinf14.caib.es/Shibboleth.sso/SAML2/POST" index="1"
+			Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" />
+		<AssertionConsumerService
+			Location="http://epreinf14.caib.es/Shibboleth.sso/SAML2/POST-SimpleSign"
+			index="2" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" />
+		<AssertionConsumerService
+			Location="http://epreinf14.caib.es/Shibboleth.sso/SAML2/Artifact"
+			index="3" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" />
+		<AssertionConsumerService
+			Location="http://epreinf14.caib.es/Shibboleth.sso/SAML2/ECP" index="4"
+			Binding="urn:oasis:names:tc:SAML:2.0:bindings:PAOS" />
+		<AssertionConsumerService
+			Location="http://epreinf14.caib.es/Shibboleth.sso/SAML/POST" index="5"
+			Binding="urn:oasis:names:tc:SAML:1.0:profiles:browser-post" />
+		<AssertionConsumerService
+			Location="http://epreinf14.caib.es/Shibboleth.sso/SAML/Artifact"
+			index="6" Binding="urn:oasis:names:tc:SAML:1.0:profiles:artifact-01" />       <!-- This tells the SP where/how to resolve SAML 1.x artifacts into SAML 
+			assertions. -->
+
+		<KeyDescriptor>
+			<ds:KeyInfo>
+				<ds:X509Data>
+					<ds:X509Certificate>
+						MIICuzCCAmWgAwIBAgIJAKdkWW2RnlMhMA0GCSqGSIb3DQEBBQUAMHQxCzAJBgNV
+						BAYTAmVzMRYwFAYDVQQIEw1JbGxlcyBCYWxlYXJzMQ4wDAYDVQQHEwVQYWxtYTEh
+						MB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMRowGAYDVQQDExFlcHJl
+						aW5mMTQuY2FpYi5lczAeFw0xMjAzMjAxMDQwNDhaFw0xMjA0MTkxMDQwNDhaMHQx
+						CzAJBgNVBAYTAmVzMRYwFAYDVQQIEw1JbGxlcyBCYWxlYXJzMQ4wDAYDVQQHEwVQ
+						YWxtYTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMRowGAYDVQQD
+						ExFlcHJlaW5mMTQuY2FpYi5lczBcMA0GCSqGSIb3DQEBAQUAA0sAMEgCQQCxLLID
+						SV+djlgEyabmkGjpCgmPUEhnxgtrez1yHf9R+VAz+RhZ/7PhIibIyhHvrOniG1Bz
+						uBtMJsZIlMxTw7FhAgMBAAGjgdkwgdYwHQYDVR0OBBYEFCmBeobf3isq45/7xv2T
+						me8xmFENMIGmBgNVHSMEgZ4wgZuAFCmBeobf3isq45/7xv2Tme8xmFENoXikdjB0
+						MQswCQYDVQQGEwJlczEWMBQGA1UECBMNSWxsZXMgQmFsZWFyczEOMAwGA1UEBxMF
+						UGFsbWExITAfBgNVBAoTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDEaMBgGA1UE
+						AxMRZXByZWluZjE0LmNhaWIuZXOCCQCnZFltkZ5TITAMBgNVHRMEBTADAQH/MA0G
+						CSqGSIb3DQEBBQUAA0EAAjCMGIDNtT3YI5YJa3jvF7Gt88PpZGWLuijOhHqcIRt9
+						r3meO+A//j8BkEnG7nmR2ryz0yp8CuqwqxJ0Twqvqg==
+					</ds:X509Certificate>
+				</ds:X509Data>
+			</ds:KeyInfo>
+		</KeyDescriptor>
+
+	</SPSSODescriptor>
+	<Organization>
+		<OrganizationName xml:lang="ca">Govern de les Illes
+			Balears - proves
+		</OrganizationName>
+		<OrganizationDisplayName xml:lang="es">
+			Gobiernos de
+			las Islas Baleares - proves
+		</OrganizationDisplayName>
+		<OrganizationDisplayName xml:lang="ca">
+			Govern de les Illes Balears - proves
+		</OrganizationDisplayName>
+		<OrganizationDisplayName xml:lang="en">
+			Balearis Islands Government - proves
+		</OrganizationDisplayName>
+		<OrganizationURL xml:lang="en">https://proves.caib.es
+		</OrganizationURL>
+	</Organization>
+</EntityDescriptor>

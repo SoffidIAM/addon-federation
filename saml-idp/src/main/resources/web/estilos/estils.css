@@ -1,0 +1,274 @@
+.topline .codiusuari, .inici, .show-pass .title td, .new-pass .title td, .show-pass span, .new-pass span{font-family: "Avenir LT Std", Calibri, Arial !important; font-size:18px !important; color: white; font-weight: normal !important;}
+.vbox {margin-top:20px;margin-right:2px;background-color:#EEEEEE}
+button.vbuton {text-align:left;width:130px;margin:0 0 5px 0;padding:1px;}
+.pue_img {border:1px solid gray;margin:10px 0;padding:3px;background-color:white;cursor:pointer}
+.pue_img_noclick {border:1px solid gray;margin:10px 0;padding:3px;background-color:white;}
+.pue_noimg {border:1px solid gray;margin:10px 0;padding:3px;background-color:white;width:30px;height:30px;background-color:lightgrey;cursor:pointer}
+.pue_noimg_noclick {border:1px solid gray;margin:10px 0;padding:3px;width:30px;height:30px;background-color:lightgrey;}
+.ticona td {vertical-align:middle;}
+.ticona td.ticona-sp {margin:0;padding-left:0;padding-right:0;adding-top:0;width:0.3em;}
+.click {cursor:pointer}
+.noclick {}
+button.pue {padding: 1px !important;}
+div.modal_mask {background-color: white;}
+div.wc-highlighted, div.wc-highlighted-none {border: 2px solid #0e5462; background: #FFF;}
+.text-disd {color:#000 !important;}
+.titol_tancar_back {padding: 4px; float:right; border: 1px solid #BE6200; background-color:#EEEEEE;}
+.titol_tancar, .titol_tancar_fletxa {
+	font-family: Arial; font-size: 11px; font-weight: bold; color: #BE6200; cursor: pointer; 
+}
+.titol_tancar:hover {
+	text-decoration: underline;
+}
+.titol_tancar_back:hover {background-color:#FFF7EE;}
+div.head-cell-inner {text-align:left;}
+.dateboxinp  {font-size:11px;}
+span.nomesdata input.nomesdatainp {color:black !important; font-size:11px;border:none;background:transparent;}
+
+.titolperfil {font-size:18px !important;color:#8A4700;}
+
+td.dataTreeCelldestacada div {text-decoration: line-through; color:gray;}
+
+.finestraError{
+	border:3px solid #0e5462;
+	background-color:#FFFFFF;
+}
+
+.finestraTimeout {
+	border:3px double #0e5462;
+	background-color:#FAFAFA;
+}
+
+.finestraTimeout .title td {
+	background-color: #0e5462;
+	color: #AF0000;
+}
+.titolTout {
+	text-align:center;
+	color: #FFF;
+}
+
+.rellotge{
+	background-image: url('../img/noway.png');
+	background-repeat: no-repeat;
+	background-position: 5px 50%;
+	text-align:justify;
+}
+
+/* personalitzem la barra de processant */
+.z-loading {
+	border-color: #0e5462 !important;
+	background-color: #0e5462 !important;
+	border-top-left-radius: 7px;
+	border-bottom-right-radius: 7px;
+	border-width: 2px !important;	
+}
+
+/* intern */
+/* tindre en compte le pre-carrega index... */
+
+.z-loading-indicator {
+	display: block;
+    border-color: #0e5462 !important;
+    padding: 20px 25px 10px 25px !important;
+	background-image:url('../img/waitpacman.gif') !important; 
+	background-repeat: no-repeat;
+	background-position: 15px 15px;
+	height: 26px !important;
+	vertical-align: middle;
+	text-indent: 60px;
+	border-top-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+}
+
+img.z-loading-icon {
+	width: 0px !important;
+	height: 0px !important;
+	border: 0px none transparent !important;
+	background-image: none;	
+}
+
+.headcentrat {
+	text-align: center;
+}
+
+.titolapp {
+    color: #8A4700;
+    font-size: 1.4em;
+    font-weight: normal;
+}
+
+
+
+/* Element per a mostrar informació heading */ 
+.titolpagina {
+	padding: 1px 0 5px 0;
+}
+
+.titolpagina span {
+	font-size: 15px;
+	font-weight: bold;
+}
+
+.titolpagina span:first-child {
+	color: #8A4700;
+}
+
+.loginbox {
+	padding: 20px 0 0 0;
+	width:350px;
+}
+
+p.header {
+	padding: 0px 0 0 0;
+	margin-top: 0em; margin-bottom: 0em;
+	font-weight: bold;
+}
+
+.logintype {
+	/* border-radius: 8px; */
+	padding: 5px 10px 10px 5px;
+	width:500px;
+	background-color: #a6ff00; #8A4700; #BE6200; #0e5462; #fafae7;
+	font-size:12px;
+	color: black;
+}
+
+.nologintype {
+	/* border-radius: 8px; */
+	padding: 5px 10px 10px 5px;
+	width:500px;
+	background-color: #5f7993;
+	font-size:12px;
+	color: white;
+}
+
+.upinputcert {
+	width: 350px;
+	text-align: left;
+}
+
+.upbuttoncert {
+	width: 150px;
+	float: right;
+	text-align: right;
+}
+
+.upbutton {
+	text-align: right;
+}
+
+.upinput {
+	text-align: left;
+}
+
+.inputlogin{
+	padding: 0 0 0 10px;
+	text-align: right;
+	margin-right: 50px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.login{
+	padding: 20px 0 0 10px;
+	width:500px;
+	text-align: left;
+	vertical-align: middle;
+	margin: 0 auto;
+	font-family: "Avenir LT Std", Calibri, Arial; 
+	font-size:12px;
+	font-weight: normal;
+}
+
+.loginheader {
+	text-align: center;
+}
+
+.atencio { 
+	color: #a6ff00;
+	width: 500px;
+	font-weight:bold; 
+	text-align:center;
+	margin-top: 10px; 
+	margin-bottom: 10px; 
+}
+
+#language {
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 5px 0px;
+	width: 500px;
+	text-align: left;
+	vertical-align: middle;
+	margin: 0 auto;
+	font-family: "Avenir LT Std", Calibri, Arial; 
+	font-size:12px;
+	font-weight: normal;
+}
+
+#language ul {
+	padding: 0px 5px 0px 5px;
+	list-style: none;
+	display: block;
+}
+
+#language li:first-child {
+	padding-left: 0px;
+	border-left: 0px;
+}
+
+#language li, #language a {
+	display: inline-block
+}
+
+#language li {
+	padding: 0px 5px 0px 5px;
+}
+
+#language a {
+	text-decoration: none;
+	color: #41B6C7;
+}
+
+
+#language .active a {
+	color: #A6D514;
+}
+
+.centeredimage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-top: -14px;
+  margin-left: -14px;
+}
+
+.centered {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  margin-left: -20px;
+ /* border-radius: 4px; */
+  background-color: white;
+}
+
+
+
+.pass {
+	width: 150px;
+	margin-top: 4px;
+	float:left;
+}
+
+a.openidlink {
+  height: 20px;
+  width: 58px;	
+}
+
+.openidbutton {
+  height: 20px;
+  width: 58px;	
+}

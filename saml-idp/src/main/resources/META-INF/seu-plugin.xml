@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<seuServerPlugin  xmlns="http://seu.sourceforge.net/schema/serverplugin" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://seu.sourceforge.net/schema/ServerPlugin.xsd" >
+	<name>SAML Identiy Provider plugin</name>
+	<version>${pom.version}</version>
+	<agent>
+		<name>SAML Identity Provider</name>
+		<javaClass>es.caib.seycon.idp.agent.IDPAgent</javaClass>
+		<userInterface>IDPAgent.zul</userInterface>
+		<enableAccessControl>N</enableAccessControl>
+	</agent>	
+</seuServerPlugin>

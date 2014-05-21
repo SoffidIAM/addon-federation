@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<zkib-model>
+
+	<datanode name="federacioIdentitats">
+		<finder name="entitygroupmember" type="entitygroupmember">
+			<ejb-finder
+				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				method="findEntityGroupByNom" if="${queryEnabled}">
+				<parameter value="${name}" />
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
+		</finder>
+		<finder name="policy" type="policy">
+			<ejb-finder
+				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				method="findPolicies">
+			</ejb-finder>
+			<new-instance-bean className="com.soffid.iam.addons.federation.common.Policy" />
+		</finder>
+		<finder name="userType" type="userType">
+			<script-finder>
+				obj = new es.caib.seycon.ng.comu.TipusUsuari();
+				obj.descripcio = " - Select user type - ";
+				return obj;
+			</script-finder>
+			<ejb-finder jndi="java:comp/env/ejb/DominiUsuariEJB" method="findAllTipusUsuari">
+			</ejb-finder>
+		</finder>		
+			
+	</datanode>
+
+	<datanode name="atribut">
+		<finder name="atribut" type="atribut">
+			<ejb-finder
+				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				method="findAtributs" if="${queryEnabled}">
+				<parameter value="${name}" />
+				<parameter value="${shortname}" />
+				<parameter value="${oid}" />
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
+		</finder>
+	</datanode>
+
+	<datanode name="entitygroupmember">
+		<finder name="entitygroupmember" type="entitygroupmember">
+			<ejb-finder
+				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				method="findChildren">
+				<parameter value="${instance}" />
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
+		</finder>
+		<finder name="profile" type="profile">
+			<ejb-finder
+				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				method="findProfilesByFederationMember" if="${instance.federationMember != null}">
+				<parameter value="${instance.federationMember}" />
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.common.SAMLProfile" />
+		</finder>
+
+		<ejb-handler
+			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			<insert-method method="create" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<delete-method method="delete">
+				<parameter value="${instance}" />
+			</delete-method>
+			<update-method method="update">
+				<parameter value="${instance}" />
+			</update-method>
+		</ejb-handler>
+	</datanode>
+
+	<datanode name="federationMember">
+		<finder name="federationMember" type="federationMember">
+			<ejb-finder
+				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				method="findFederationMemberByEntityGroupAndPublicIdAndTipus">
+				<parameter value="${entityGroupName}" />
+				<parameter value="${publicId}" />
+				<parameter value="${tipusFM}" />
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
+		</finder>
+		<ejb-handler
+			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			<insert-method method="create" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<delete-method method="delete">
+				<parameter value="${instance}" />
+			</delete-method>
+			<update-method method="update">
+				<parameter value="${instance}" />
+			</update-method>
+		</ejb-handler>
+	</datanode>
+
+	<datanode name="profile">
+		<ejb-handler
+			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			<insert-method method="create" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<delete-method method="delete">
+				<parameter value="${instance}" />
+			</delete-method>
+			<update-method method="update">
+				<parameter value="${instance}" />
+			</update-method>
+		</ejb-handler>
+	</datanode>
+
+	<datanode name="policy">
+		<ejb-handler
+			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			<insert-method method="create" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<delete-method method="delete">
+				<parameter value="${instance}" />
+			</delete-method>
+			<update-method method="update">
+				<parameter value="${instance}" />
+			</update-method>
+		</ejb-handler>
+	</datanode>
+
+	<datanode name="atributPolicy">
+		<ejb-handler
+			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			<insert-method method="create" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<delete-method method="delete">
+				<parameter value="${instance}" />
+			</delete-method>
+			<update-method method="update">
+				<parameter value="${instance}" />
+			</update-method>
+		</ejb-handler>
+	</datanode>
+
+	<datanode name="userType"/>
+	
+</zkib-model>

@@ -1,0 +1,2 @@
+urn\:soffid.com\:shibboleth\:2.0\:resolver = es.caib.seycon.idp.shibext.NamespaceHandler
+urn\:soffid.com\:shibboleth\:2.0\:idp\:profile-handler = es.caib.seycon.idp.shibext.ProfileNamespaceHandler

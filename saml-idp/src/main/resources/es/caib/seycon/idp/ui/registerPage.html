@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Soffid SAML Identity Provider</title>
+	
+	<!-- css -->
+	<link href="estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
+	<!-- /css -->
+	
+	<script src="js/jquery-1.3.2.min.js"></script>
+</head>
+
+<body>
+	<div id="language">
+		<ul class="qtrans_language_chooser" id="qtranslate-chooser">
+			<li class="lang-en ${lang.active.en}"><a href="${refreshUrl}?lang=en" hreflang="en" title="English"><span>English</span></a></li>
+			<li class="lang-es ${lang.active.es}"><a href="${refreshUrl}?lang=es" hreflang="es" title="Español"><span>Español</span></a></li>
+			<li class="lang-ca ${lang.active.ca}"><a href="${refreshUrl}?lang=ca" hreflang="ca" title="Català"><span>Català</span></a></li>
+		</ul>
+	</div>
+	
+	<div class="login">
+		<div class="loginbox"> 
+			<p class="header">${titleRegister}</p>
+			<div id="registerlogin" class="nologintype">
+				<form method="post" action="${registerUrl}">
+					<div class="upinput">
+						<p><span class="pass">${userName}:</span><input name="userName" maxlength="10" type="text" value="${previousUserName}"/> </p>
+						<p><span class="pass">${givenName}:</span><input name="givenName" maxlength="50" type="text" value="${previousGivenName}"/> </p>
+						<p><span class="pass">${surName}:</span><input name="surName" maxlength="50" type="text" value="${previousSurName}"/> </p>
+						<p><span class="pass">${Email}:</span><input name="email" maxlength="100" type="text" value="${previousEmail}"/></p>
+						<p><span class="pass">${Password}:</span>
+						<input name="j_password1" id="j_password1" type="password" autocomplete="off" />
+						</p>
+						<p><span class="pass">${Password2}:</span>
+						<input name="j_password2" id="j_password2" type="password" autocomplete="off" />
+						</p>
+					</div>
+					<div class="upbutton">
+						<input id="cancelButton" type="button" value="${register.Cancel}" onClick="window.location='${loginPage}'"/>
+						<input id="registerButton" type="submit" value="${register.Register}"/>
+					</div>
+				</form>
+			</div>
+			<p>
+			{if ERROR}
+			<p id="errormsg" style="color:red;">${ERROR}</p>
+			{endif}
+			<pre>${policy}</pre>
+		</div>
+		<p/>
+	</div>
+
+	<div class="centered" style="visibility:hidden" id="progressdiv">
+		<img class="centeredimage" src="img/progress.gif"/>
+	</div>
+	<script>
+		$("#registerButton").click(function () {
+			$("#progressdiv").css("visibility", "visible");
+			$("#registerlogin").fadeOut("slow");
+		});
+	</script>
+</body>
+</html>

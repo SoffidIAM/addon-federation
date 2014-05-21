@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Govern de les Illes Balears</title>
+	
+	<!-- css -->
+	<link href="<#DATA_login.stylesheet#>" rel="stylesheet" type="text/css" />
+	<!-- /css -->
+	
+	<script type="text/javascript" src="js/comuns.js"></script>
+	<script type="text/javascript" src="js/login.js"></script>-->
+	
+	<script type="text/javascript">
+		function whichApplet ()
+		{
+			var _info = navigator.userAgent;
+			if (_info.indexOf("MSIE") > 0 && _info.indexOf("Win") > 0 &&
+		        _info.indexOf("Windows 3.1") < 0) {
+		        return document.appfirma;
+			} else {
+		        return document.appfirma2;
+			}
+		}
+		
+		function loginCertificado(){
+			var firma = '';	
+			var applet;
+		
+			applet = whichApplet ();
+			applet.setPassword(document.formCD.PIN.value);
+			document.formCD.PIN.value="";
+			firma = applet.firmar(document.formCD.j_username.value);	
+			
+			if (firma == '' || firma == null){
+				alert(applet.getLastError());
+				return;
+			}	
+		
+			document.formCD.j_password.value = firma;
+		}
+		
+		function cargarCertificado(){
+			whichApplet().inicializarDispositivo();
+		}
+	</script>
+		
+</head>
+
+<body>
+
+	<!-- contenidor -->
+	<div id="contenidor">
+	
+		<!-- logo illes balears -->
+		<div id="cap"><a href="http://www.caib.es" title="Portada caib.es" accesskey="0"><img src="imgs/cap/logo.png" alt="Govern de les Illes Balears" /></a></div>
+		<!-- /logo illes balears -->
+		
+		<ul id="mollaPa">
+			<li><a href="index.html"><#DATA_login.inicio#></a>&nbsp;</li><li>&gt; <#DATA_login.certificado.titulo#></li>
+		</ul>
+		
+		<!-- titol aplicacio -->
+		<p id="titolAplicacio"><#DATA_login.accedint#> <#DATA_organizationName#></p>
+		<!-- /titol aplicacio -->
+		
+		<!-- usuari -->
+		<div id="capsalUsuari"><p><#DATA_organizationUrl#></p></div>
+		<!-- /usuari -->
+		
+		<!-- continguts -->
+		<div id="continguts">
+			
+			<!-- sin menu lateral -->
+			<div class="total">
+				
+				<!-- intro -->
+				<p>
+					<strong><#DATA_login.header#></strong>
+				</p>
+				
+				<#IF_ERROR#>
+				<div class="error">
+					<h2><#DATA_ERROR#>.</h2>
+				</div>
+				<#FI_ERROR#>
+				
+
+				<!-- titol -->
+				<h1><#DATA_login.presentacion.parrafo2#></h1>
+				<!-- /titol -->
+				
+				<!-- opcions -->
+				<div id="opcions">
+				
+					<!-- certificado digital -->
+					<div>
+						<h2><#DATA_login.certificado.titulo#></h2>
+						<p class="intro">
+							<#DATA_login.certificado.instrucciones.parrafo1#> <a href="<#DATA_login.certificado.instrucciones.enlace#>"><#DATA_login.certificado.instrucciones.textoEnlace#></a> <#DATA_login.certificado.instrucciones.parrafo2#>.
+						</p>
+						<p class="intro">
+							<#DATA_login.certificado.instrucciones.iniciarDispositivo#>
+						<p>	
+						
+						<form id="formCD" name="formCD" action="/signatureLoginAction" method="post" onSubmit="loginCertificado();" >
+							<p>
+								<input type="button" value="<#DATA_login.certificado.instrucciones.iniciarDispositivo.boton#>" 
+								title="<#DATA_login.certificado.instrucciones.iniciarDispositivo.boton#>" onclick="cargarCertificado();" />
+							</p>
+							<p>
+								<label for="appfirma"><span class="etiqueta"><#DATA_login.certificado.certificadosDisponibles#></span></label>
+								<object id="appfirma" name="appfirma" classid="clsid:8AD9C840-044E-11D1-B3E9-00805F499D93" width="60%" height="35" >
+									<param name="codebase" value="/applet/" />
+									<param name="code" value="es.caib.loginModule.applet.AppletFirma" />
+									<param name="archive" value="seyconsession-applet.jar, signaturacaib.core-3.2.1-api.jar" />
+									<param name="idioma" value="es" />
+									<param name="scriptable" value="true" />
+									<param name="mayscript" value="true" />
+									<param name="autologin" value="<#DATA_login.autologin#>"/>
+									<embed type="application/x-java-applet"
+									     width="60%" height="35" align="baseline" 
+										 code="es.caib.loginModule.applet.AppletFirma" 
+										 codebase="/applet/" 
+										 archive="/applet/signaturacaib.core-3.2.1-api.jar, /applet/seyconsession-applet.jar" 
+										 pluginspage="https://java.sun.com/j2se/1.5.0/download.html" 
+										 idioma="es"
+										 id="appfirma2"
+										 scriptable="true"
+										 mayscript="true"
+										 autologin="<#DATA_login.autologin#>">
+											<noembed>
+													No Java 2 SDK, Standard Edition v 1.4 support for APPLET!!
+											</noembed>
+									</embed>
+								</object>	
+							</p>
+							<p><label for="PIN"><span class="etiqueta"><#DATA_login.certificado.PINCertificado#></span></label><input name="PIN" id="PIN" type="password" class="txt" autocomplete="off"/></p>
+							<p class="botonera">								
+								<input name="formCDboton" type="submit" value="<#DATA_login.boton.iniciar#>" title="<#DATA_login.usuario.boton.title#>" /></p>
+								<input name="j_username" id="j_username" type="hidden" value="<#DATA_login.certificado.challenge#>" />
+								<input name="j_password" id="j_password" type="hidden" value="" />
+								<input name="j_method" id="j_method" type="hidden" value="C" />	
+							</p>
+						</form>
+					</div>
+					
+				</div>
+				<!-- /opcions -->
+				
+			</div>
+			<!-- /sin menu lateral -->
+			
+		</div>
+		<!-- /continguts -->
+		
+		<!-- eines -->
+		<div id="eines">
+						
+			<div class="esquerra"><!-- <a href="https://www.caib.es/zonaperfront/inicio?lang=ca" accesskey="8">El meu portal</a>--></div>
+			<div class="centre">
+				<div class="tamanyLletra"></div>
+			</div>
+			<div class="dreta">
+	            <span class="idiomes">
+	                <#DATA_login.idioma.applet.catala#> - <#DATA_login.idioma.applet.castellano#>
+                </span>            
+            </div>
+		
+		</div>
+		<!-- /eines -->
+		
+		<!-- peu -->
+		<div id="peu">
+			
+			<div class="esquerra">&copy; Govern de les Illes Balears</div>
+			
+			<!-- contacte -->
+			<div class="centre">
+				<!-- 
+				<a href="http://www.caib.es/govern/organigrama/area.do?coduo=3&lang=ca">Presid&egrave;ncia</a>: <a href="#">C/ de la Llotja de Mar, 3 - 07012 PALMA</a>
+				<br />
+				Tel&egrave;fon - Fax 971 17 65 87
+				-->
+			</div>
+			<!-- /contacte -->
+			
+			<div class="dreta">
+				<strong><#DATA_login.problemas.titulo#></strong> <#DATA_login.problemas.texto#>
+			</div>
+		
+		</div>
+		<!-- /peu -->
+	
+	</div>
+	<!-- /contenidor -->
+
+</body>
+	
+</html>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="urn:soffid.com:shibboleth:2.0:idp:profile-handler"
+        xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:profilehandler="urn:mace:shibboleth:2.0:idp:profile-handler"
+        elementFormDefault="qualified">
+
+    <import namespace="urn:mace:shibboleth:2.0:idp:profile-handler"
+        schemaLocation="classpath:/schema/shibboleth-2.0-idp-profile-handler.xsd" />
+
+    <complexType name="SAML2SLO">
+        <annotation>
+            <documentation>
+               Single Logout enhancer
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="profilehandler:SAML2SLO">
+            </extension>
+        </complexContent>
+    </complexType>
+
+</schema>

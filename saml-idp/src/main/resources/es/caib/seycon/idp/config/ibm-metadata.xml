@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+	entityID="https://apps.lotuslive.com/sps/sp/saml20">
+	<md:SPSSODescriptor AuthnRequestsSigned="false"
+		WantAssertionsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+		<md:KeyDescriptor use="signing">
+			<KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+				<X509Data>
+					<X509Certificate>MIICFzCCAYCgAwIBAgIETKfRxTANBgkqhkiG9w0BAQQFADBQMQswCQYDVQQGEwJVUzEMMAoGA1UEChMDSUJNMQ4wDAYDVQQLEwVMb3R1czEjMCEGA1UEAxMaTG90dXNMaXZlIFNlcnZpY2UgUHJvdmlkZXIwHhcNMTAxMDAzMDA0MzQ5WhcNMzIwODI4MDA0MzQ5WjBQMQswCQYDVQQGEwJVUzEMMAoGA1UEChMDSUJNMQ4wDAYDVQQLEwVMb3R1czEjMCEGA1UEAxMaTG90dXNMaXZlIFNlcnZpY2UgUHJvdmlkZXIwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMG84NlvczyDWDYxnLU611apYadVwAh9TLnG7KtQnuxA0hy6w7o2WMsO6tvuZaUy/3AE+r1vxLEliZiXOQPsUVgFmO4RqRQTReC/PR1Cs7hgDAx3qcWUqxXQHGSVi4iCCSt5qdbwAmS7r6IiJSkrlJYagvKMLkXKqxhfBjLcAJRVAgMBAAEwDQYJKoZIhvcNAQEEBQADgYEAs9E3XrXr6eyNYmGeE8kr0f4y9z2OxnUbYinj4CyUqr3mCxOOXUTpBbC0qibLhl24GlTzmwkOn9Gd/0Q8bXYPkR61OFRmegFmf5+VMlRl4hS6usGu5PP9VLzAzW2YBY/uhwbC2E0YodGx320QANXHwXD+Z3G7agoPo65lwHTcJJc=
+					</X509Certificate>
+				</X509Data>
+			</KeyInfo>
+		</md:KeyDescriptor>
+		<md:KeyDescriptor use="encryption">
+			<KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+				<X509Data>
+					<X509Certificate>MIICMTCCAZqgAwIBAgIETKfR7TANBgkqhkiG9w0BAQQFADBdMQswCQYDVQQGEwJVUzEMMAoGA1UEChMDSUJNMQ4wDAYDVQQLEwVMb3R1czEwMC4GA1UEAxMnTG90dXNMaXZlIFNlcnZpY2UgUHJvdmlkZXIgLSBFbmNyeXB0aW9uMB4XDTEwMTAwMzAwNDQyOVoXDTMyMDgyODAwNDQyOVowXTELMAkGA1UEBhMCVVMxDDAKBgNVBAoTA0lCTTEOMAwGA1UECxMFTG90dXMxMDAuBgNVBAMTJ0xvdHVzTGl2ZSBTZXJ2aWNlIFByb3ZpZGVyIC0gRW5jcnlwdGlvbjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAhOR/VHt8SqLxa+PVVAjcNz8iGWpNKYFjfN2C08hBj6YW2J5pBj++PnKOrHQd6mcdsBMeyK7ZtandzP+Py4MWvv/ko496EyS5qxFI0LsC2cHmFU0qrUxUmbPFmPKnWbZdiMJB01LzT89k7s5VWQCf9h5tDOVPz5Ugwde+CuuwHFECAwEAATANBgkqhkiG9w0BAQQFAAOBgQBuZ69sjkqn+zJYWe5MR1fP3jMAQi7V9+LHqDB+jq6MEKO/3FJ1fJ4uyGmWO7o84I+4v60e7AP2MweECeTIOk+rlBB4WGPMhi9nDjWDXcLV0O8votGqU6/c0fdQ0z18pMoyL0FCiwK71KabsfHnsB7m8XboWeT9OMyocmaEa6LPQg==
+					</X509Certificate>
+				</X509Data>
+			</KeyInfo>
+			<md:EncryptionMethod xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+				Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-1_5" />
+		</md:KeyDescriptor>
+		<md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+		</md:NameIDFormat>
+		<md:AssertionConsumerService
+			Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://apps.lotuslive.com/sps/sp/saml20/login"
+			index="0" isDefault="true" />
+	</md:SPSSODescriptor>
+	<md:Organization>
+		<md:OrganizationName xml:lang="en">IBM LotusLive
+		</md:OrganizationName>
+		<md:OrganizationDisplayName xml:lang="en">IBM
+			LotusLive</md:OrganizationDisplayName>
+		<md:OrganizationURL xml:lang="en">https://www.lotuslive.com
+		</md:OrganizationURL>
+	</md:Organization>
+	<md:ContactPerson contactType="technical">
+		<md:Company>IBM LotusLive</md:Company>
+		<md:GivenName>Brent</md:GivenName>
+		<md:SurName>Hepburn</md:SurName>
+		<md:EmailAddress>bahepbur@us.ibm.com</md:EmailAddress>
+		<md:TelephoneNumber />
+	</md:ContactPerson>
+</md:EntityDescriptor>

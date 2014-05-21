@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+Purpose:
+	Defines methods and actions for DSP
+Description:
+	
+Histroy:
+	Mon Jun 20 20:57:56     2005, Created by tomyeh
+
+Copyright (C) 2005 Potix Corporation. All Rights Reserved.
+-->
+
+<taglib>
+	<uri>http://www.soffid.com/dsp/web/addon/federationcore</uri>
+	<description>
+	methods and tags for federation
+	</description>
+
+
+	<!--         -->
+	<!-- Imports -->
+	<!--         -->
+	<function>
+		<name>l</name>
+		<function-class>com.soffid.iam.plugin.federation.web.TagLibFunction</function-class>
+		<function-signature>java.lang.String getLabel(org.zkoss.zk.ui.Page, java.lang.String)</function-signature>
+		<description>
+		Returns the label of the specified key.
+		</description>
+	</function>
+
+</taglib>
