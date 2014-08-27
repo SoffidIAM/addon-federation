@@ -1,10 +1,11 @@
-package es.caib.seycon.idp.ui;
+package es.caib.seycon.idp.ui.rememberPassword;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.security.Principal;
 import java.util.Calendar;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -22,6 +23,9 @@ import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
+import com.soffid.iam.addons.rememberPassword.common.UserAnswer;
+import com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
@@ -37,7 +41,8 @@ import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
-import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
+import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
+import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.ng.comu.DadaUsuari;
 import es.caib.seycon.ng.comu.PolicyCheckResult;
 import es.caib.seycon.ng.comu.TipusDada;
@@ -47,7 +52,7 @@ import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.UsuariService;
 import es.caib.seycon.ng.sync.servei.ServerService;
 
-public class PasswordRecoveryAction extends HttpServlet {
+public class PasswordRememberAction extends HttpServlet {
     /**
 	 * 
 	 */
@@ -55,7 +60,7 @@ public class PasswordRecoveryAction extends HttpServlet {
 
 	LogRecorder logRecorder = LogRecorder.getInstance();
 
-    public static final String URI = "/passwordRecoveryAction"; //$NON-NLS-1$
+    public static final String URI = "/passwordRememberAction"; //$NON-NLS-1$
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -68,37 +73,45 @@ public class PasswordRecoveryAction extends HttpServlet {
         try  {
 	    	IdpConfig config = IdpConfig.getConfig();
 	    	
+	    	String answer = req.getParameter("answer");
+	    	Integer question = Integer.decode(req.getParameter("questionid"));
 	    	HttpSession session = req.getSession();
-	        
-	    	String relyingParty = (String) session.
-	                getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
-	
-	    	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
-
-	    	if (! ip.isAllowRecover())
-	    		throw new InternalErrorException ("Registration is not permited");
 	    	
-	        String email = req.getParameter("email"); //$NON-NLS-1$
-	        
-    		String url = "https://"+config.getHostName()+":"+config.getStandardPort()+PasswordRecoveryAction2.URI;
-    		
-    		try
-    		{
-    			Class cl = Class.forName("com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService");
+            RememberPasswordChallenge challenge = (RememberPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
+
+            int i = 0;
+            Iterator<UserAnswer> it = challenge.getQuestions().iterator();
+            UserAnswer ua = null;
+            while ( i <= question.intValue())
+            {
+            	ua = it.next();
+            	i ++;
+            }
+            
+            ua.setAnswer(answer);
+            if (it.hasNext())
+            {
+            	session.setAttribute("rememberPasswordQuestion", Integer.valueOf(question.intValue()+1));
 	            RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordRememberForm.URI);
-	            session.setAttribute("rememberPasswordEmail", email);
-	            session.setAttribute("rememberPasswordChallenge", null);
 	            dispatcher.forward(req, resp);
-    		} 
-    		catch (ClassNotFoundException e )
-    		{
-	      		config.getFederationService().sendRecoverEmail(email, 
-	      				ip.getMailHost(), ip.getMailSenderAddress(), 
-	      				url, ip.getOrganization());
-	      		
-	            RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordRecoveryForm.URI);
-	            dispatcher.forward(req, resp);
-    		}
+            }
+            else
+            {
+            	RemoteServiceLocator rsl = new RemoteServiceLocator();
+            	RememberPasswordUserService rpus = (RememberPasswordUserService) rsl.getRemoteService(RememberPasswordUserService.REMOTE_PATH);
+            	if (rpus.responseChallenge(challenge))
+            	{
+                    req.setAttribute("ERROR", "Invalid questions"); //$NON-NLS-1$
+                	session.setAttribute("rememberPasswordQuestion", Integer.valueOf(0));
+    	            RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordResetForm.URI);
+    	            dispatcher.forward(req, resp);
+            	} else {
+                    req.setAttribute("ERROR", "Invalid questions"); //$NON-NLS-1$
+                	session.setAttribute("rememberPasswordQuestion", Integer.valueOf(0));
+    	            RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordRememberForm.URI);
+    	            dispatcher.forward(req, resp);
+            	}
+            }
             return;
         } catch (InternalErrorException e) {
             error = "Unable to activate account: "+e.getMessage(); //$NON-NLS-1$

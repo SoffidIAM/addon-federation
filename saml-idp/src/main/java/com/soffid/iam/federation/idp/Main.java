@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.instrument.ClassDefinition;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -78,6 +79,10 @@ import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
 import es.caib.seycon.idp.ui.openid.OpenIdRequestAction;
 import es.caib.seycon.idp.ui.openid.OpenIdResponseAction;
+import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberAction;
+import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
+import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
+import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
 import es.caib.seycon.ng.comu.Dispatcher;
 import es.caib.seycon.ng.comu.Password;
 import es.caib.seycon.ng.config.Config;
@@ -323,6 +328,14 @@ public class Main {
         ctx.addServlet(OpenIdResponseAction.class, OpenIdResponseAction.URI);
         ctx.addServlet(OauthRequestAction.class, OauthRequestAction.URI);
         ctx.addServlet(OauthResponseAction.class, OauthResponseAction.URI);
+        
+        try {
+            ctx.addServlet(PasswordRememberAction.class, PasswordRememberAction.URI);
+            ctx.addServlet(PasswordRememberForm.class, PasswordRememberForm.URI);
+            ctx.addServlet(PasswordResetAction.class, PasswordResetAction.URI);
+            ctx.addServlet(PasswordResetForm.class, PasswordResetForm.URI);
+        } catch (NoClassDefFoundError e) {
+        }
 
         servlet = new ServletHolder(ErrorServlet.class);
         servlet.setName("error"); //$NON-NLS-1$
