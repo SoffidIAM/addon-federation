@@ -44,6 +44,7 @@ import es.caib.seycon.ng.comu.DominiCorreu;
 import es.caib.seycon.ng.comu.Password;
 import es.caib.seycon.ng.comu.PolicyCheckResult;
 import es.caib.seycon.ng.comu.TipusDada;
+import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.comu.Usuari;
 
 import com.soffid.iam.addons.federation.common.EntityGroup;
@@ -53,6 +54,7 @@ import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.SeyconException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -60,6 +62,7 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 import com.soffid.iam.addons.federation.model.AttributeConditionEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntity;
 import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
+
 import es.caib.seycon.ng.model.AuditoriaEntity;
 import es.caib.seycon.ng.model.DadaUsuariEntity;
 import es.caib.seycon.ng.model.DispatcherEntity;
@@ -70,6 +73,7 @@ import es.caib.seycon.ng.model.UsuariEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
+
 import es.caib.seycon.ng.model.Parameter;
 
 import com.soffid.iam.addons.federation.model.AttributeEntityDao;
@@ -85,6 +89,8 @@ import com.soffid.iam.addons.federation.model.SamlProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
+import com.soffid.iam.api.AttributeVisibilityEnum;
+
 import es.caib.seycon.ng.servei.ConfiguracioService;
 import es.caib.seycon.ng.utils.AutoritzacionsUsuari;
 import es.caib.seycon.ng.utils.MailUtils;
@@ -1279,8 +1285,14 @@ public class FederacioServiceImpl
 		TipusDada tda = getDadesAddicionalsService().findTipusDadaByCodi(ACTIVATION_KEY);
 		if (tda == null)
 		{
-			tda = new TipusDada (ACTIVATION_KEY, -100L);
-			getDadesAddicionalsService().create (tda);
+			tda = new TipusDada ();
+			tda.setCodi(ACTIVATION_KEY);
+			tda.setOrdre(-100L);
+			tda.setType(TypeEnumeration.STRING_TYPE);
+			tda.setOperatorVisibility(AttributeVisibilityEnum.HIDDEN);
+			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
+			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
+		getDadesAddicionalsService().create (tda);
 		}
 		
 		DadaUsuari dadaUsuari = new DadaUsuari (tda.getCodi(), usuari.getCodi());
@@ -1393,7 +1405,13 @@ public class FederacioServiceImpl
 		TipusDada tda = getDadesAddicionalsService().findTipusDadaByCodi(RECOVER_KEY);
 		if (tda == null)
 		{
-			tda = new TipusDada (RECOVER_KEY, -101L);
+			tda = new TipusDada ();
+			tda.setCodi(RECOVER_KEY);
+			tda.setOrdre(-101L);
+			tda.setType(TypeEnumeration.STRING_TYPE);
+			tda.setOperatorVisibility(AttributeVisibilityEnum.HIDDEN);
+			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
+			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
 			getDadesAddicionalsService().create (tda);
 		}
 		
@@ -1498,7 +1516,14 @@ public class FederacioServiceImpl
     				if (tda2.getOrdre() >= last)
     					last = tda2.getOrdre().intValue() + 1;
     			}
-    			tda = new TipusDada(key, new Long(last));
+    			tda = new TipusDada ();
+    			tda.setCodi(key);
+    			tda.setOrdre(Long.valueOf(last));
+    			tda.setType(TypeEnumeration.STRING_TYPE);
+    			tda.setOperatorVisibility(AttributeVisibilityEnum.EDITABLE);
+    			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
+    			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
+
     			tda = getDadesAddicionalsService().create(tda);
     		}
 
