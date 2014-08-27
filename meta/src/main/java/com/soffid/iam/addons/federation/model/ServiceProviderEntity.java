@@ -20,7 +20,7 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	public java.lang.String nameIdFormat;
 
-	@Column (name="FED_CERCHA")
+	@Column (name="FED_CERCHA", length=2000)
 	@Nullable
 	public java.lang.String certificateChain;
 
