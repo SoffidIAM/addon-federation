@@ -24,8 +24,8 @@
 	  </licenses>
 
 	<scm>
-		<connection>scm:git:ssh://git@github.com:SoffidIAM/addon-federation.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com:SoffidIAM/addon-federation.git</developerConnection>
+		<connection>scm:git:ssh://git@github.com:/SoffidIAM/addon-federation.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com:/SoffidIAM/addon-federation.git</developerConnection>
 		<tag>federation-1.1.0-beta-1</tag>
 	</scm>
 	<build>
