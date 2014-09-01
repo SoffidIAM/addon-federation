@@ -24,8 +24,8 @@
 	  </licenses>
 
 	<scm>
-		<connection>scm:git:ssh://git@stash.dev.lab:7999/IAM/console.git</connection>
-		<developerConnection>scm:git:ssh://git@stash.dev.lab:7999/IAM/console.git</developerConnection>
+		<connection>scm:git:ssh://git@github.com:SoffidIAM/addon-federation.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com:SoffidIAM/addon-federation.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 	<build>
