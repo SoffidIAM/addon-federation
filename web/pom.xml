@@ -109,14 +109,14 @@
 		<dependency>
 			<groupId>com.soffid.zkib</groupId>
 			<artifactId>zkiblaf</artifactId>
-			<version>1.1</version>
+			<version>1.13</version>
 			<classifier>classes</classifier>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.soffid.zkib</groupId>
 			<artifactId>zkdb</artifactId>
-			<version>1.1</version>
+			<version>1.13</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

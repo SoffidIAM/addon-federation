@@ -282,13 +282,6 @@
 			<version>3.8.1</version>
 			<optional>test</optional>
 		</dependency>
-		<dependency>
-			<groupId>com.soffid.iam.console</groupId>
-			<artifactId>document-manager-ejb</artifactId>
-			<version>${console.version}</version>
-			<type>ejb</type>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 </project>
 
