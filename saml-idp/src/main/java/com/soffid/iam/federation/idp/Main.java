@@ -30,6 +30,7 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.DispatcherType;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.SessionManager;
+import org.eclipse.jetty.server.bio.SocketConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.server.ssl.SslSocketConnector;
@@ -59,6 +60,7 @@ import es.caib.seycon.idp.ui.DefaultServlet;
 import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
+import es.caib.seycon.idp.ui.P3PFilter;
 import es.caib.seycon.idp.ui.PasswordChangeAction;
 import es.caib.seycon.idp.ui.PasswordChangeForm;
 import es.caib.seycon.idp.ui.PasswordChangeRequiredAction;
@@ -137,7 +139,11 @@ public class Main {
             Integer port = c.getStandardPort();
             Integer port2 = c.getClientCertPort();
     
-            installSSLConnector(host, port);
+            if (c.getFederationMember().getDisableSSL() != null &&
+            		c.getFederationMember().getDisableSSL().booleanValue())
+                installPlainConnector(host, port);
+            else
+            	installSSLConnector(host, port);
             installClientCertConnector(host, port2);
     
             // Deploy war
@@ -220,6 +226,24 @@ public class Main {
         server.addConnector(connector);
     }
 
+    private void installPlainConnector(String host, Integer port) throws IOException, FileNotFoundException {
+        System.out.println("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        Log.getLog().info("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+        SocketConnector connector = new SocketConnector();
+
+        connector.setPort(port == null ? 80 : port.intValue());
+        // connector.setHost(host);
+        connector.setAcceptors(2);
+        connector.setAcceptQueueSize(10);
+        connector.setMaxIdleTime(60000);
+
+        connector.setHostHeader(host);
+
+        server.addConnector(connector);
+    }
+
+
     private void installClientCertConnector(String host, Integer port)
             throws IOException, FileNotFoundException {
         installConnector(host, port, true);
@@ -252,6 +276,11 @@ public class Main {
         // Filters
 
         FilterHolder f = new FilterHolder(
+                P3PFilter.class);
+        f.setName("P3PFilter"); //$NON-NLS-1$
+        ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
+
+        f = new FilterHolder(
                 edu.internet2.middleware.shibboleth.common.log.SLF4JMDCCleanupFilter.class);
         f.setName("JCleanupFilter"); //$NON-NLS-1$
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$

@@ -370,6 +370,11 @@ public class IdpConfig {
         String hostname = getHostName();
         
         subst.put("${hostName}", hostname); //$NON-NLS-1$
+        if (getFederationMember().getDisableSSL() == null ||
+        		! getFederationMember().getDisableSSL().booleanValue())
+            subst.put("${protocol}", "https"); //$NON-NLS-1$
+        else
+            subst.put("${protocol}", "http"); //$NON-NLS-1$
         subst.put("${sslport}", Integer.toString(getClientCertPort())); //$NON-NLS-1$
         subst.put("${port}", Integer.toString(getStandardPort())); //$NON-NLS-1$
         subst.put("${conf}", confDir.getAbsolutePath()); //$NON-NLS-1$

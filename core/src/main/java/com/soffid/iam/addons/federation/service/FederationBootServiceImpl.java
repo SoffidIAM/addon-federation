@@ -73,6 +73,8 @@ public class FederationBootServiceImpl extends FederationBootServiceBase {
 			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_REGISTER=0 WHERE ALLOW_REGISTER IS NULL"); //$NON-NLS-1$
 			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_RECOVER=0 WHERE ALLOW_RECOVER IS NULL"); //$NON-NLS-1$
 			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_CERTIFICATE=0 WHERE ALLOW_CERTIFICATE IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET FED_KERBEROS=0 WHERE FED_KERBEROS IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET FED_DISSSL=0 WHERE FED_DISSSL IS NULL"); //$NON-NLS-1$
 		} finally {
 			conn.close ();
 		}

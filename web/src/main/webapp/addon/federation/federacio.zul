@@ -761,6 +761,7 @@
 											hostname.getFellow("dada").setDisabled(!self.isChecked());
 											port1.getFellow("dada").setDisabled(!self.isChecked());
 											port2.getFellow("dada").setDisabled(!self.isChecked());
+											id_disableSSL.setDisabled(!self.isChecked());
 											certificatechain.getFellow("dada").setDisabled(!self.isChecked());
 											metadades.getFellow("dada").setDisabled(self.isChecked());
 											organization.getFellow("dada").setDisabled(!self.isChecked());
@@ -808,7 +809,13 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.PortStandard')}"/>
-									<input_dada bind="@federationMember/standardPort" disabled="true" id="port1" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
+									<div>
+										<input_dada bind="@federationMember/standardPort" disabled="true" id="port1" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
+										<checkbox bind="@federationMember/disableSSL" disabled="${!canModifyFI}"
+													id="id_disableSSL" onCheck="">
+										</checkbox>
+										<input_etiqueta value="${c:l('federacio.zul.disableSSL')}"/>
+									</div>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.PortCertificatClient')}"/>
