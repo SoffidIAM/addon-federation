@@ -210,7 +210,7 @@
 			<bean id="shibboleth.SAML2HttpPostSimpleSignEncoder"
 				class="org.opensaml.saml2.binding.encoding.HTTPPostSimpleSignEncoder">
 				<constructor-arg ref="shibboleth.VelocityEngine" />
-				<constructor-arg value="/templates/saml2-post-simplesign-binding.vm" />
+				<constructor-arg value="/es/caib/seycon/idp/template/saml2-post-simplesign-binding.vm" />
 			</bean>
 		</entry>
 		<entry>
@@ -219,7 +219,7 @@
 			</key>
 			<bean id="shibboleth.SAML2HttpPostEncoder" class="org.opensaml.saml2.binding.encoding.HTTPPostEncoder">
 				<constructor-arg ref="shibboleth.VelocityEngine" />
-				<constructor-arg value="/templates/saml2-post-binding.vm" />
+				<constructor-arg value="/es/caib/seycon/idp/template/saml2-post-binding.vm" />
 			</bean>
 		</entry>
 		<entry>

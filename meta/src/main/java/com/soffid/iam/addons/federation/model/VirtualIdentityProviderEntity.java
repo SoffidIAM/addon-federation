@@ -24,7 +24,7 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Description("Conté la clau privada en format PEM")
 	public java.lang.String privateKey;
 
-	@Column (name="FED_CERCHA", length=2000)
+	@Column (name="FED_CERCHA", length=8000)
 	@Nullable
 	@Description("Conté la cadena en format PEM amb el certificat propi i les autoritats de certificació")
 	public java.lang.String certificateChain;
@@ -71,5 +71,13 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Column (name="MAIL_SENDER_ADDRESS")
 	@Nullable
 	public java.lang.String mailSenderAddress;
+
+	@Column (name="FED_KERBEROS")
+	@Nullable
+	public Boolean enableKerberos;
+
+	@Column (name="FED_DISSSL", defaultValue="false")
+	@Nullable
+	public Boolean disableSSL;
 
 }

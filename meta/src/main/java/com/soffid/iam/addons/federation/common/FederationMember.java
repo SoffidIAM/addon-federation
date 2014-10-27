@@ -79,6 +79,12 @@ public abstract class FederationMember {
 	public boolean allowRecover;
 
 	@Nullable
+	public Boolean enableKerberos;
+
+	@Nullable
+	public Boolean disableSSL;
+
+	@Nullable
 	public java.lang.String userTypeToRegister;
 
 	@Nullable

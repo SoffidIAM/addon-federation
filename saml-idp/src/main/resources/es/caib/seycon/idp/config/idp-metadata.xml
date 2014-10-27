@@ -17,34 +17,34 @@ ${publicCertX509}
         </KeyDescriptor>
         
         <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding"
-                                   Location="https://${hostName}:${port}/profile/SAML1/SOAP/ArtifactResolution" 
+                                   Location="${protocol}://${hostName}:${port}/profile/SAML1/SOAP/ArtifactResolution" 
                                    index="1"/>
 
         <ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
-                                   Location="https://${hostName}:${port}/profile/SAML2/SOAP/ArtifactResolution" 
+                                   Location="${protocol}://${hostName}:${port}/profile/SAML2/SOAP/ArtifactResolution" 
                                    index="2"/>
                                    
- 		<SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://${hostName}:${port}/profile/SAML2/Redirect/SLO" />
+ 		<SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="${protocol}://${hostName}:${port}/profile/SAML2/Redirect/SLO" />
 
-        <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://${hostName}:${port}/profile/SAML2/POST/SLO" />
+        <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="${protocol}://${hostName}:${port}/profile/SAML2/POST/SLO" />
 
-        <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://${hostName}:${port}/profile/SAML2/SOAP/SLO" />
+        <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="${protocol}://${hostName}:${port}/profile/SAML2/SOAP/SLO" />
  
         <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
 
         <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" 
-                             Location="https://${hostName}:${port}/profile/Shibboleth/SSO" />
+                             Location="${protocol}://${hostName}:${port}/profile/Shibboleth/SSO" />
         
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
-                             Location="https://${hostName}:${port}/profile/SAML2/POST/SSO" />
+                             Location="${protocol}://${hostName}:${port}/profile/SAML2/POST/SSO" />
 
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" 
-                             Location="https://${hostName}:${port}/profile/SAML2/POST-SimpleSign/SSO" />
+                             Location="${protocol}://${hostName}:${port}/profile/SAML2/POST-SimpleSign/SSO" />
         
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" 
-                             Location="https://${hostName}:${port}/profile/SAML2/Redirect/SSO" />
+                             Location="${protocol}://${hostName}:${port}/profile/SAML2/Redirect/SSO" />
     </IDPSSODescriptor>
 
     <AttributeAuthorityDescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
@@ -60,10 +60,10 @@ ${publicCertX509}
         </KeyDescriptor>
 
         <AttributeService Binding="urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding" 
-                          Location="https://${hostName}:${port}/profile/SAML1/SOAP/AttributeQuery" />
+                          Location="${protocol}://${hostName}:${port}/profile/SAML1/SOAP/AttributeQuery" />
         
         <AttributeService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
-                          Location="https://${hostName}:${port}/profile/SAML2/SOAP/AttributeQuery" />
+                          Location="${protocol}://${hostName}:${port}/profile/SAML2/SOAP/AttributeQuery" />
         
         <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>

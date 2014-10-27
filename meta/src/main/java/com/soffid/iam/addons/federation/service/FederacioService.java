@@ -383,4 +383,5 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
+	
 }
