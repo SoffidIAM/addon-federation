@@ -1,5 +1,6 @@
 package es.caib.seycon.idp.ui;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -18,7 +19,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
+
+import com.soffid.iam.addons.federation.common.FederationMember;
 
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -36,21 +40,36 @@ public class LoginServlet extends LangSupportServlet {
         HttpSession session = req.getSession();
         session.setAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM, method);
         session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, entityId);
-        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (amf.allowUserPassword()) {
-   			resp.sendRedirect(UserPasswordFormServlet.URI);
-        } else if (amf.allowTls()) {
-            IdpConfig idpConfig;
-            try {
-				idpConfig = IdpConfig.getConfig();
-	            resp.sendRedirect("https://"+idpConfig.getHostName()+":"+idpConfig.getClientCertPort()+CertificateAction.URI);
-			} catch (Exception e) {
-	    		req.setAttribute("ERROR", e.toString()); //$NON-NLS-1$
-	            RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
-	            dispatcher.forward(req, resp);
-			}
-        } else {
-            resp.sendRedirect(SignatureForm.URI);
+        Autenticator auth = new Autenticator();
+        boolean previousAuth = false;
+		try {
+			previousAuth = auth.validateCookie(req, resp);
+		} catch (Exception e1) {
+			LogFactory.getLog(getClass()).warn("Error decoding authentication cookie", e1);
+		}
+        if (!previousAuth)
+        {
+	        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
+
+	        if (amf.requiresKerberos())
+	   			resp.sendRedirect(NtlmAction.URI);
+	        else if (amf.allowKerberos() && auth.hasKerberosCookie(req))
+	   			resp.sendRedirect(NtlmAction.URI);
+	        else if (amf.allowUserPassword()) {
+	   			resp.sendRedirect(UserPasswordFormServlet.URI);
+	        } else if (amf.allowTls()) {
+	            IdpConfig idpConfig;
+	            try {
+					idpConfig = IdpConfig.getConfig();
+		            resp.sendRedirect("https://"+idpConfig.getHostName()+":"+idpConfig.getClientCertPort()+CertificateAction.URI);
+				} catch (Exception e) {
+		    		req.setAttribute("ERROR", e.toString()); //$NON-NLS-1$
+		            RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+		            dispatcher.forward(req, resp);
+				}
+	        } else {
+	            resp.sendRedirect(SignatureForm.URI);
+	        }
         }
     }
 
@@ -67,5 +86,4 @@ public class LoginServlet extends LangSupportServlet {
     	super.doPost(req, resp);
         process (req, resp);
     }
-
 }

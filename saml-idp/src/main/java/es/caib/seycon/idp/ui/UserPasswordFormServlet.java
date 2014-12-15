@@ -99,6 +99,7 @@ public class UserPasswordFormServlet extends BaseForm {
             HtmlGenerator g = new HtmlGenerator(context, req);
             g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
+            g.addArgument("kerberosUrl", NtlmAction.URI); //$NON-NLS-1$
             g.addArgument("passwordLoginUrl", UserPasswordAction.URI); //$NON-NLS-1$
             g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
             g.addArgument("registerUrl", RegisterFormServlet.URI);
@@ -106,7 +107,13 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("openIdRequestUrl", OpenIdRequestAction.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+
+            g.addArgument("kerberosAllowed", 
+            		ip.getEnableKerberos() != null && 
+            		ip.getEnableKerberos().booleanValue()
+            		 ? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
           
+            g.addArgument("kerberosDomain", ip.getKerberosDomain());
             g.addArgument("certAllowed", ip.isAllowCertificate() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
