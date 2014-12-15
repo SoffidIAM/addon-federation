@@ -76,8 +76,20 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public Boolean enableKerberos;
 
+	@Column (name="FED_KRBDOM", length=128)
+	@Nullable
+	public String kerberosDomain;
+	
 	@Column (name="FED_DISSSL", defaultValue="false")
 	@Nullable
 	public Boolean disableSSL;
+
+	@Column (name="FED_SSCODO")
+	@Nullable
+	public String ssoCookieDomain;
+
+	@Column (name="FED_SSCONA")
+	@Nullable
+	public String ssoCookieName;
 
 }

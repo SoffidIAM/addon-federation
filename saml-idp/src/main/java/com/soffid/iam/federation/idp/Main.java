@@ -12,20 +12,32 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Policy.Parameters;
 import java.security.Security;
 import java.security.SignatureException;
+import java.security.URIParameter;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.EnumSet;
 import java.util.EventListener;
 
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.login.Configuration;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import net.shibboleth.utilities.jetty7.DelegateToApplicationSslContextFactory;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.jetty.http.security.Constraint;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.SecurityHandler;
+import org.eclipse.jetty.security.SpnegoLoginService;
+import org.eclipse.jetty.security.authentication.SpnegoAuthenticator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.DispatcherType;
 import org.eclipse.jetty.server.Server;
@@ -34,6 +46,7 @@ import org.eclipse.jetty.server.bio.SocketConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.server.ssl.SslSocketConnector;
+import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -48,6 +61,7 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.service.CertificateValidationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.config.PasswordCallbackHandler;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
@@ -60,6 +74,7 @@ import es.caib.seycon.idp.ui.DefaultServlet;
 import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
+import es.caib.seycon.idp.ui.NtlmAction;
 import es.caib.seycon.idp.ui.P3PFilter;
 import es.caib.seycon.idp.ui.PasswordChangeAction;
 import es.caib.seycon.idp.ui.PasswordChangeForm;
@@ -89,6 +104,8 @@ import es.caib.seycon.ng.comu.Dispatcher;
 import es.caib.seycon.ng.comu.Password;
 import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.sync.engine.kerberos.ChainConfiguration;
+import es.caib.seycon.ng.sync.jetty.SeyconUserRealm;
 import es.caib.seycon.ssl.SeyconKeyStore;
 
 public class Main {
@@ -115,7 +132,7 @@ public class Main {
         try {
             Thread.currentThread().setContextClassLoader(Main.class.getClassLoader());
             
-            System.out.println ("Staring IDP "+publicId); //$NON-NLS-1$
+            System.out.println ("Starting IDP "+publicId); //$NON-NLS-1$
             
             IdpConfig c = IdpConfig.getConfig();
     
@@ -253,7 +270,7 @@ public class Main {
             UnrecoverableKeyException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException,
             InternalErrorException, InvalidKeyException, IllegalStateException,
-            NoSuchProviderException, SignatureException {
+            NoSuchProviderException, SignatureException, LoginException {
 
         ServletContextHandler ctx = new ServletContextHandler(
                 ServletContextHandler.SESSIONS);
@@ -278,7 +295,7 @@ public class Main {
         FilterHolder f = new FilterHolder(
                 P3PFilter.class);
         f.setName("P3PFilter"); //$NON-NLS-1$
-        ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
+//        ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
         f = new FilterHolder(
                 edu.internet2.middleware.shibboleth.common.log.SLF4JMDCCleanupFilter.class);
@@ -374,7 +391,18 @@ public class Main {
         servlet.setName("default"); //$NON-NLS-1$
         ctx.addServlet(servlet, "/*"); //$NON-NLS-1$
 
-        ctx.setErrorHandler(new ErrorHandler());
+        ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
+        ctx.setErrorHandler(errorHandler);
+        
+        errorHandler.addErrorPage(401, UserPasswordFormServlet.URI);
+        errorHandler.addErrorPage(500, ErrorServlet.URI);
+        
+        if (c.getFederationMember().getEnableKerberos() != null &&
+        		c.getFederationMember().getEnableKerberos().booleanValue())
+        {
+            configureSpnego(ctx, c);
+        }
+        	
 
         /**
          * <!-- Send request to the EntityID to the SAML metadata handler. -->
@@ -395,23 +423,38 @@ public class Main {
         ctx.getSessionHandler().getSessionManager().setMaxInactiveInterval(1200); // 20 minutes timeout
         ctx.getSessionHandler().getSessionManager().addEventListener(new SessionListener());
         
+
     }
 
-    private void updateTrustedCerts() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, InternalErrorException
-    {
-    	char password [] = "changeit".toCharArray();
-    	Config config = Config.getConfig();
-        File ksFile = new File(config.getHomeDir(), "cacerts");
-
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream (ksFile), password);
-        RemoteServiceLocator rsl = new RemoteServiceLocator();
-        CertificateValidationService vds = rsl.getCertificateValidationService();
-        for (X509Certificate cert: vds.getRootCertificateList())
-        {
-        	String name = cert.getSubjectX500Principal().getName();
-        	ks.setCertificateEntry(name, cert);
-        }
-        ks.store(new FileOutputStream(ksFile), password);
-    }
+	private void configureSpnego(ServletContextHandler ctx, IdpConfig c) throws FileNotFoundException,
+			IOException, NoSuchAlgorithmException, LoginException {
+		File f = new File (c.getConfDir(), "krb5.keytab");
+		if (! f.canRead())
+		{
+			throw new FileNotFoundException(f.getAbsolutePath());
+		}
+		Constraint constraint = new Constraint(Constraint.__SPNEGO_AUTH, "Soffid Identity Provider");
+        constraint.setRoles(new String[] { c.getFederationMember().getKerberosDomain()});
+        constraint.setAuthenticate(true);
+        
+        ConstraintMapping constraintMapping = new ConstraintMapping();
+        constraintMapping.setConstraint(constraint);
+        constraintMapping.setPathSpec(NtlmAction.URI);
+        
+        SpnegoLoginService loginService = new SpnegoLoginService("SpnegoLogin", new File(c.getConfDir(), "spnego.properties").toString());
+//        CustomSpnegoLoginService customLoginService = new CustomSpnegoLoginService(loginService, "CustomSpnegoLoginService");
+        
+        ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
+        csh.setAuthenticator(new SpnegoAuthenticator());
+        csh.setRealmName("Soffid");
+        csh.setConstraintMappings(new ConstraintMapping[] {constraintMapping});
+        csh.setLoginService( loginService );
+        
+        ctx.setSecurityHandler(csh);
+        
+        ctx.addServlet(NtlmAction.class, NtlmAction.URI);
+        // Now perform login
+        Configuration cfg = Configuration.getInstance("JavaLoginConfig", new URIParameter(new File (c.getConfDir(), "spnego.conf").toURI()));
+        ChainConfiguration.addConfiguration(cfg);
+	}
 }

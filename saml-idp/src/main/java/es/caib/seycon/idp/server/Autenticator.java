@@ -1,10 +1,12 @@
 package es.caib.seycon.idp.server;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Principal;
@@ -12,17 +14,21 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.security.auth.Subject;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.opensaml.saml2.core.AuthnContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.federation.idp.LanguageFilter;
 
@@ -48,8 +54,9 @@ import es.caib.seycon.util.Base64;
 public class Autenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
 
-    private String generateSession (HttpSession session, String principal, boolean externalAuth) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException
+    private String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException
     {
+        HttpSession session = req.getSession();
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         
         IdpConfig config = IdpConfig.getConfig();
@@ -82,10 +89,97 @@ public class Autenticator {
         	append (certString).append("|").
         	append(serverConfig.getServerList());
         
+        setCookie (req, resp, sessio, user, type);
         return buffer.toString();
     }
     
-    public void autenticate (String user, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
+    public boolean validateCookie (HttpServletRequest req, HttpServletResponse resp) 
+    		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException
+    {
+        HttpSession session = req.getSession();
+        IdpConfig config = IdpConfig.getConfig();
+        
+        String relyingParty = (String) session.
+                getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        
+        if (relyingParty == null)
+        	return false;
+
+    	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
+        if (ip == null)
+        	return false;
+    	
+        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
+        {
+        	for (Cookie c: req.getCookies())
+        	{
+        		if (c.getName().equals(ip.getSsoCookieName()))
+        		{
+        			String value = c.getValue();
+        			int separator = value.indexOf('_');
+        			if (separator > 0)
+        			{
+        				String hash = value.substring(separator+1);
+        				Long id = Long.decode(value.substring(0, separator));
+        				for (Sessio sessio: new RemoteServiceLocator().getSessioService().getActiveSessions(id))
+        				{
+        		        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getClau().getBytes("UTF-8"));
+        		        	String digestString = Base64.encodeBytes(digest);
+        		        	if (digestString.equals(hash))
+        		        	{
+        		        		try {
+									autenticate(sessio.getCodiUsuari(), req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
+	        		        		return true;
+								} catch (UnknownUserException e) {
+									e.printStackTrace();
+								}
+        		        	}
+        					
+        				}
+        			}
+        		}
+        	}
+        }
+        return false;
+    }
+    
+    private void setCookie(HttpServletRequest req, HttpServletResponse resp,
+			Sessio sessio, Usuari user, String type) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+        HttpSession session = req.getSession();
+        IdpConfig config = IdpConfig.getConfig();
+        
+        String relyingParty = (String) session.
+                getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        
+        if (relyingParty == null)
+        	throw new es.caib.seycon.ng.exception.InternalErrorException("Internal error. Cannot guess relying party");
+
+    	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
+        if (ip == null)
+        	throw new es.caib.seycon.ng.exception.InternalErrorException(String.format("Internal error. Cannot guess virtual identity provider for %s", relyingParty));
+
+        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
+        {
+        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getClau().getBytes("UTF-8"));
+        	String digestString = Base64.encodeBytes(digest);
+        	String value = user.getId().toString()+"_"+digestString;
+        	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
+        	cookie.setMaxAge(-1);
+        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
+        		cookie.setDomain(ip.getSsoCookieDomain());
+        	resp.addCookie(cookie);
+        	if (AuthnContext.KERBEROS_AUTHN_CTX.equals(type))
+        	{
+        		Cookie cookie2 = new Cookie (ip.getSsoCookieName()+"_krb", "true");
+        		cookie2.setMaxAge(60 * 24 * 3); // 3 monthis to remember kerberos usage
+            	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
+            		cookie2.setDomain(ip.getSsoCookieDomain());
+            	resp.addCookie(cookie2);
+        	}
+        }
+	}
+
+	public void autenticate (String user, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
     	autenticate(user, req, resp, type, type, externalAuth);
     }
     
@@ -100,7 +194,8 @@ public class Autenticator {
         String entityId = (String) session
                 .getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
 
-        Principal principal = new SessionPrincipal(user, generateSession(req.getSession(), user, externalAuth));
+        Principal principal = new SessionPrincipal(user, 
+        		generateSession(req, resp, user, type, externalAuth));
         
         req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
         req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, type);
@@ -124,4 +219,38 @@ public class Autenticator {
         }
     }
 
+
+    public boolean hasKerberosCookie (HttpServletRequest req) throws IOException
+    {
+        HttpSession session = req.getSession();
+        IdpConfig config;
+		try {
+			config = IdpConfig.getConfig();
+	        
+	        String relyingParty = (String) session.
+	                getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+	        
+	        if (relyingParty == null)
+	        	return false;
+	
+	    	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
+	        if (ip == null)
+	        	return false;
+	        
+	        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
+	        {
+	        	for (Cookie c: req.getCookies())
+	        	{
+	        		if (c.getName().equals(ip.getSsoCookieName()+"_krb") && c.getValue().equals("true"))
+	        		{
+	        			return true;
+	        		}
+	        	}
+	        }
+
+	        return false;
+		} catch (Exception e) {
+			return false;
+		}
+    }
 }

@@ -71,7 +71,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setClientCertificatePort(idp.getClientCertificatePort());
 			target.setDisableSSL(idp.getDisableSSL());
 			
-			
+			target.setEnableKerberos(idp.getEnableKerberos());
+			target.setKerberosDomain(idp.getKerberosDomain());
+			target.setSsoCookieDomain(idp.getSsoCookieDomain());
+			target.setSsoCookieName(idp.getSsoCookieName());
 			// Service providers
 			if (idp.getServiceProviderVirtualIdentityProvider() != null) {
 				Collection spse = idp.getServiceProviderVirtualIdentityProvider();
@@ -97,6 +100,11 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setPrivateKey(vip.getPrivateKey());
 			target.setPublicKey(vip.getPublicKey());
 			target.setCertificateChain(vip.getCertificateChain());
+			
+			target.setEnableKerberos(vip.getEnableKerberos());
+			target.setKerberosDomain(vip.getKerberosDomain());
+			target.setSsoCookieDomain(vip.getSsoCookieDomain());
+			target.setSsoCookieName(vip.getSsoCookieName());
 			// Default IDP
 			if (vip.getDefaultIdentityProvider() != null) {
 				FederationMember dip = toFederationMember(vip.getDefaultIdentityProvider());
@@ -261,6 +269,11 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setClientCertificatePort(source.getClientCertificatePort());
 			idp.setDisableSSL(source.getDisableSSL());
 			
+			idp.setKerberosDomain(source.getKerberosDomain());
+			idp.setEnableKerberos(source.getEnableKerberos());
+			idp.setSsoCookieDomain(source.getSsoCookieDomain());
+			idp.setSsoCookieName(source.getSsoCookieName());
+			
 			if (source.getServiceProvider() != null) {
 				// els transformem tots i es guarden a sps
 				List<FederationMemberEntity> sps = federationMemberToEntityList(source.getServiceProvider()); // federarionmember
@@ -311,6 +324,11 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			vip.setPublicKey(source.getPublicKey());
 			if (source.getCertificateChain() != null)
 				vip.setCertificateChain(source.getCertificateChain());
+
+			vip.setKerberosDomain(source.getKerberosDomain());
+			vip.setEnableKerberos(source.getEnableKerberos());
+			vip.setSsoCookieDomain(source.getSsoCookieDomain());
+			vip.setSsoCookieName(source.getSsoCookieName());
 
 			// Default IDP
 			if (source.getDefaultIdentityProvider() != null) {

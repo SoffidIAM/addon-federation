@@ -842,6 +842,24 @@
 									</vbox>
 								</row>
 								<row>
+									<input_etiqueta value="${c:l('federacio.zul.ssoCookieName')}"/>
+									<input_dada bind="@federationMember/ssoCookieName" lectura="${!canModifyFI}" maxim="120"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.ssoCookieDomain')}"/>
+									<input_dada bind="@federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.enableKerberos')}"/>
+									<div>
+										<checkbox bind="@federationMember/enableKerberos" disabled="${!canModifyFI}"
+													onCheck="">
+										</checkbox>
+										<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
+										<input_dada bind="@federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+									</div>
+								</row>
+								<row>
 									<space/>
 									<hbox>
 									<checkbox bind="@federationMember/allowRecover" disabled="${!canModifyFI}"
@@ -1033,6 +1051,24 @@
 											<button disabled="${!canModifyFI}" image="img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
 										</divVisible>										
 									</vbox>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.ssoCookieName')}"/>
+									<input_dada bind="@federationMember/ssoCookieName" lectura="${!canModifyFI}" maxim="120"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.ssoCookieDomain')}"/>
+									<input_dada bind="@federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.enableKerberos')}"/>
+									<div>
+										<checkbox bind="@federationMember/enableKerberos" disabled="${!canModifyFI}"
+													onCheck="">
+										</checkbox>
+										<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
+										<input_dada bind="@federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+									</div>
 								</row>
 								<row>
 									<space/>

@@ -42,6 +42,28 @@ public class AuthenticationMethodFilter {
             return true;
         if (AuthnContext.PPT_AUTHN_CTX.equals (method))
             return true;
+        if (AuthnContext.KERBEROS_AUTHN_CTX.equals (method))
+            return true;
+        return false;
+    }
+
+    public boolean requiresKerberos () {
+        if (method == null)
+            return true;
+        if (AuthnContext.KERBEROS_AUTHN_CTX.equals (method))
+            return true;
+        return false;
+    }
+
+    public boolean allowKerberos () {
+        if (method == null)
+            return true;
+        if (AuthnContext.UNSPECIFIED_AUTHN_CTX.equals (method))
+            return true;
+        if (AuthnContext.KERBEROS_AUTHN_CTX.equals (method))
+            return true;
+        if (AuthnContext.PPT_AUTHN_CTX.equals (method))
+            return true;
         return false;
     }
 

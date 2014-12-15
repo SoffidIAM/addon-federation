@@ -34,5 +34,9 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 		defaultValue="\"false\"")
 	@Nullable
 	public java.lang.String clientCertificatePort;
+	
+	@Column (name="FED_KTAB", length=1024)
+	@Nullable
+	public String ktabFile;
 
 }

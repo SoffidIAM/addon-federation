@@ -82,6 +82,15 @@ public abstract class FederationMember {
 	public Boolean enableKerberos;
 
 	@Nullable
+	public String kerberosDomain;
+	
+	@Nullable
+	public String ssoCookieDomain;
+	
+	@Nullable
+	public String ssoCookieName;
+	
+	@Nullable
 	public Boolean disableSSL;
 
 	@Nullable

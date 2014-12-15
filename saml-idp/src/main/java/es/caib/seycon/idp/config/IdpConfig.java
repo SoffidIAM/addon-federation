@@ -369,6 +369,9 @@ public class IdpConfig {
         HashMap<String, String> subst = new HashMap<String, String>(1);
         String hostname = getHostName();
         
+        String kerberosDomain = fm.getKerberosDomain();
+        
+        subst.put("${kerberosDomain}", kerberosDomain); //$NON-NLS-1$
         subst.put("${hostName}", hostname); //$NON-NLS-1$
         if (getFederationMember().getDisableSSL() == null ||
         		! getFederationMember().getDisableSSL().booleanValue())
@@ -453,6 +456,8 @@ public class IdpConfig {
 
     public void updateMetadata () throws IOException, InternalErrorException { 
         extractConfigFile("idp-metadata.xml", "idp-metadata.xml", federationMember); //$NON-NLS-1$ //$NON-NLS-2$
+        extractConfigFile("spnego.properties", "spnego.properties", federationMember); //$NON-NLS-1$ //$NON-NLS-2$
+        extractConfigFile("spnego.conf", "spnego.conf", federationMember); //$NON-NLS-1$ //$NON-NLS-2$
         updateMetadata(federationMember, "idp-metadata.xml"); //$NON-NLS-1$
         updateMetadata (entityGroupMember);
     }

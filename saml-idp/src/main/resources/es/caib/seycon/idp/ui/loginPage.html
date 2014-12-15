@@ -49,6 +49,9 @@
 				${You can use your previous account from}
 				</div>
 				<div class="upbutton">
+					{if kerberosAllowed}
+					<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img></a>
+					{endif} 
 					<a class="openidlink" href="${openIdRequestUrl}?id=http://www.google.com/accounts/o8/id"><img class="openidbutton" src="/img/google.png"></img></a> 
 					<a class="openidlink" href="${openIdRequestUrl}?id=http://me.yahoo.com/"><img  class="openidbutton" src="/img/yahoo.png"></img></a> 
 					<a class="openidlink" href="${facebookRequestUrl}"><img class="openidbutton"  src="/img/facebook.png"></img></a> 
