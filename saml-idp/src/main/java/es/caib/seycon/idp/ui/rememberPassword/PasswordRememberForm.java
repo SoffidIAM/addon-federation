@@ -45,6 +45,7 @@ import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.InternalErrorException;
 import es.caib.seycon.UnknownUserException;
+import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.textformatter.TextFormatException;
@@ -94,7 +95,13 @@ public class PasswordRememberForm extends BaseForm {
 
             if (challenge == null)
             {
-            	RemoteServiceLocator rsl = new RemoteServiceLocator();
+            	String server = (String) session.getAttribute("recoverServer");
+            	if (server == null)
+            	{
+            		server = ServerLocator.getInstance().getServer();
+            		session.setAttribute("recoverServer", server);
+            	}
+            	RemoteServiceLocator rsl = new RemoteServiceLocator(server);
             	RememberPasswordUserService rpus = (RememberPasswordUserService) rsl.getRemoteService(RememberPasswordUserService.REMOTE_PATH);
             	UsuariService us = (UsuariService) rsl.getUsuariService();
             	Usuari user = us.findUsuariByCodiTipusDadaIValorTipusDada("EMAIL", email);
