@@ -22,7 +22,6 @@ import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
 import com.soffid.iam.addons.rememberPassword.common.UserAnswer;
 import com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService;
@@ -38,6 +37,7 @@ import es.caib.seycon.InvalidPasswordException;
 import es.caib.seycon.Password;
 import es.caib.seycon.UnknownUserException;
 import es.caib.seycon.idp.client.PasswordManager;
+import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
@@ -48,6 +48,7 @@ import es.caib.seycon.ng.comu.PolicyCheckResult;
 import es.caib.seycon.ng.comu.TipusDada;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.remote.RemoteServiceLocator;
 import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.UsuariService;
 import es.caib.seycon.ng.sync.servei.ServerService;
@@ -97,7 +98,13 @@ public class PasswordRememberAction extends HttpServlet {
             }
             else
             {
-            	RemoteServiceLocator rsl = new RemoteServiceLocator();
+            	String server = (String) session.getAttribute("recoverServer");
+            	if (server == null)
+            	{
+            		server = ServerLocator.getInstance().getServer();
+            		session.setAttribute("recoverServer", server);
+            	}
+            	RemoteServiceLocator rsl = new RemoteServiceLocator(server);
             	RememberPasswordUserService rpus = (RememberPasswordUserService) rsl.getRemoteService(RememberPasswordUserService.REMOTE_PATH);
             	if (rpus.responseChallenge(challenge))
             	{
