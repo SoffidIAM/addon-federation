@@ -104,5 +104,9 @@ public abstract class FederationMember {
 
 	@Nullable
 	public java.lang.String mailSenderAddress;
+	
+	@Description ("Identity Provider session timeout")
+	@Nullable
+	Long sessionTimeout;
 
 }

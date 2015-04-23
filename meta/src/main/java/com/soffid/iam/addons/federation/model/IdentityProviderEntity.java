@@ -39,4 +39,8 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Nullable
 	public String ktabFile;
 
+	@Description ("Identity Provider session timeout")
+	@Nullable
+	@Column (name="FED_SETIOU")
+	Long sessionTimeout;
 }

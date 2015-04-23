@@ -1,5 +1,6 @@
 package es.caib.seycon.idp.shibext;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.security.NoSuchAlgorithmException;
@@ -78,6 +79,8 @@ import edu.internet2.middleware.shibboleth.idp.profile.saml2.SLOProfileHandler;
 import edu.internet2.middleware.shibboleth.idp.profile.saml2.SLOProfileHandler.SLORequestContext;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
+import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class SoffidSLOProfileHandler extends SLOProfileHandler {
 	IdentifierGenerator generator;
@@ -158,6 +161,11 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
                 if (indexedSession.getServicesInformation().keySet().size() > 1) {
                     status = requestLogout(requestContext, indexedSession);
                 } else {
+                	try {
+						new Autenticator().notifyLogout (indexedSession);
+					} catch (Exception e) {
+						log.warn("Error closing soffid session", e);
+					}
                     status = buildStatus(StatusCode.SUCCESS_URI, null, null);
                 }
             } else {
@@ -169,9 +177,19 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
                     if (indexedSession.getServicesInformation().keySet().size() > 1) {
                         status = requestLogout(requestContext, indexedSession);
                     } else {
+                    	try {
+    						new Autenticator().notifyLogout (indexedSession);
+    					} catch (Exception e) {
+    						log.warn("Error closing soffid session", e);
+    					}
                         status = buildStatus(StatusCode.SUCCESS_URI, null, null);
                     }
                 } else {
+                	try {
+						new Autenticator().notifyLogout (indexedSession);
+					} catch (Exception e) {
+						log.warn("Error closing soffid session", e);
+					}
                     // Session found, but it's not the same as the active session.
                     indexedSession = null;
                     log.warn("LogoutRequest referenced a session other than the client's current one.");
