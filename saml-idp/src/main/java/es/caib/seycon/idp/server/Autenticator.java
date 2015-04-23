@@ -35,6 +35,7 @@ import com.soffid.iam.federation.idp.LanguageFilter;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
+import edu.internet2.middleware.shibboleth.idp.session.Session;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -43,10 +44,12 @@ import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.Sessio;
+import es.caib.seycon.ng.comu.UserAccount;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
+import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.sync.servei.ServerService;
 import es.caib.seycon.ssl.SeyconKeyStore;
 import es.caib.seycon.util.Base64;
@@ -128,8 +131,17 @@ public class Autenticator {
         		        	if (digestString.equals(hash))
         		        	{
         		        		try {
-									autenticate(sessio.getCodiUsuari(), req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
-	        		        		return true;
+        		        			
+        		        			ServerService svc = new RemoteServiceLocator().getServerService();
+        		        			Usuari u = svc.getUserInfo(sessio.getCodiUsuari(), null);
+        		        			if (u != null && u.getActiu())
+        		        			{
+        		        				for (UserAccount account: svc.getUserAccounts(u.getId(), config.getDispatcher().getCodi()))
+        		        				{
+        									autenticate(account.getName(), req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
+        	        		        		return true;
+        		        				}
+        		        			}
 								} catch (UnknownUserException e) {
 									e.printStackTrace();
 								}
@@ -143,6 +155,7 @@ public class Autenticator {
         return false;
     }
     
+
     private void setCookie(HttpServletRequest req, HttpServletResponse resp,
 			Sessio sessio, Usuari user, String type) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
         HttpSession session = req.getSession();
@@ -164,7 +177,7 @@ public class Autenticator {
         	String digestString = Base64.encodeBytes(digest);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
-        	cookie.setMaxAge(-1);
+//        	cookie.setMaxAge(-1);
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	resp.addCookie(cookie);
@@ -206,6 +219,11 @@ public class Autenticator {
         principals.add(principal);
         Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
         req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
+        Session shibbolethSession = (Session) req.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        if (shibbolethSession != null)
+        {
+        	shibbolethSession.setSubject(userSubject);
+        }
         
         LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
         
@@ -253,4 +271,28 @@ public class Autenticator {
 			return false;
 		}
     }
+
+	public void notifyLogout(Session indexedSession) throws NumberFormatException, InternalErrorException, IOException {
+		Subject s = indexedSession.getSubject();
+		if (s != null)
+		{
+			for ( SessionPrincipal sp: s.getPrincipals(SessionPrincipal.class))
+			{
+		        if (sp.getSessionString() != null)
+		        {
+			        String[] split = sp.getSessionString().split("\\|");
+					if (split.length > 2)
+					{
+						String sessionid = split[0];
+						String sessionKey = split[1];
+						SessioService ss = new RemoteServiceLocator().getSessioService();
+						Sessio soffidSession = ss
+								.getSession(Long.decode(sessionid), sessionKey);
+						if (ss != null)
+							ss.destroySessio(soffidSession);
+					}
+		        }
+			}
+		}
+	}
 }

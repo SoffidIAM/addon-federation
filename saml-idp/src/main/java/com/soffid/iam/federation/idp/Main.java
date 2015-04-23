@@ -1,41 +1,29 @@
 package com.soffid.iam.federation.idp;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.instrument.ClassDefinition;
 import java.security.InvalidKeyException;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Policy.Parameters;
-import java.security.Security;
 import java.security.SignatureException;
 import java.security.URIParameter;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.EnumSet;
 import java.util.EventListener;
 
-import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.login.Configuration;
-import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import net.shibboleth.utilities.jetty7.DelegateToApplicationSslContextFactory;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.jetty.http.security.Constraint;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
-import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.security.SpnegoLoginService;
 import org.eclipse.jetty.security.authentication.SpnegoAuthenticator;
 import org.eclipse.jetty.server.Connector;
@@ -43,7 +31,6 @@ import org.eclipse.jetty.server.DispatcherType;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.SessionManager;
 import org.eclipse.jetty.server.bio.SocketConnector;
-import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.server.ssl.SslSocketConnector;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
@@ -57,11 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.ContextLoaderListener;
 import org.xml.sax.SAXException;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.service.CertificateValidationService;
-
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.config.PasswordCallbackHandler;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
@@ -101,11 +84,8 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
 import es.caib.seycon.ng.comu.Dispatcher;
-import es.caib.seycon.ng.comu.Password;
-import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.sync.engine.kerberos.ChainConfiguration;
-import es.caib.seycon.ng.sync.jetty.SeyconUserRealm;
 import es.caib.seycon.ssl.SeyconKeyStore;
 
 public class Main {
@@ -420,7 +400,9 @@ public class Main {
          */
 
         ctx.setSessionHandler(new SessionHandler());
-        ctx.getSessionHandler().getSessionManager().setMaxInactiveInterval(1200); // 20 minutes timeout
+        int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
+        				:c.getFederationMember().getSessionTimeout().intValue();
+        ctx.getSessionHandler().getSessionManager().setMaxInactiveInterval(timeout); // 20 minutes timeout
         ctx.getSessionHandler().getSessionManager().addEventListener(new SessionListener());
         
 

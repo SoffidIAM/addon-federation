@@ -73,7 +73,7 @@ public class PasswordManager {
 
     public void changePassword(String user, Password passwordNew) throws RemoteException, FileNotFoundException, IOException, UnknownUserException, es.caib.seycon.ng.exception.BadPasswordException, es.caib.seycon.ng.exception.InternalErrorException {
     	ServerService serverService = new RemoteServiceLocator().getServerService();
-        serverService.changePassword(user,  getDispatcher(), passwordNew, false);
+        serverService.changePasswordSync(user,  getDispatcher(), passwordNew, false);
         mustChangePassword = false;
 
     }

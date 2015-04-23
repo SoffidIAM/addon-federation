@@ -4,7 +4,7 @@
 <?component name="input_criteri" macro-uri="/comu/input_criteri.zul"?>
 <?component name="input_dada" macro-uri="/comu/input_dada.zul"?>
 <?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
-<zk xmlns:h="http://www.w3.org/1999/xhtml"> 
+<frame xmlns:h="http://www.w3.org/1999/xhtml"> 
 
 	<style src="~./styles/estil.css"/>
 
@@ -840,6 +840,10 @@
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
 										</divVisible>
 									</vbox>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.timeout')}"/>
+									<input_dada bind="@federationMember/sessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ssoCookieName')}"/>
@@ -1789,4 +1793,4 @@
 	<include src="/addon/federation/federationMember.zul"/>
 	<include src="/addon/federation/federa_profile.zul"/>
 	<include src="/grupsllista.zul" />
-</zk>
+</frame>
