@@ -27,6 +27,7 @@ import org.opensaml.xml.util.DatatypeHelper;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.rememberPassword.common.MissconfiguredRecoverException;
 import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
 import com.soffid.iam.addons.rememberPassword.common.UserAnswer;
 import com.soffid.iam.addons.rememberPassword.service.Messages;
@@ -54,6 +55,7 @@ import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.idp.ui.HtmlGenerator;
+import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
 import es.caib.seycon.ng.servei.UsuariService;
@@ -86,8 +88,9 @@ public class PasswordRememberForm extends BaseForm {
 
     	HttpSession session = req.getSession();
         
+        String email = (String) session.getAttribute("rememberPasswordEmail");
+
         try {
-            String email = (String) session.getAttribute("rememberPasswordEmail");
             RememberPasswordChallenge challenge = (RememberPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
             Integer question = (Integer) session.getAttribute("rememberPasswordQuestion");
             
@@ -138,7 +141,16 @@ public class PasswordRememberForm extends BaseForm {
             g.addArgument("questionId", question.toString());
             g.addArgument("user", challenge.getUser());
             g.generate(resp, "rememberPassword/rememberPassword.html"); //$NON-NLS-1$
-
+        } catch (es.caib.seycon.ng.exception.UnknownUserException e) {
+        	req.setAttribute("ERROR", 
+        			String.format(es.caib.seycon.idp.ui.Messages.getString("RecoverPassword.invalidUser"),
+        					email));
+        	req.getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);
+        } catch (MissconfiguredRecoverException e) {
+        	req.setAttribute("ERROR", 
+        			String.format(es.caib.seycon.idp.ui.Messages.getString("RecoverPassword.invalidUser"),
+        					email));
+        	req.getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);
         } catch (Exception e) {
             throw new ServletException(e);
 		}
