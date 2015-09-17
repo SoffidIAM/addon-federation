@@ -1295,7 +1295,9 @@ public class FederacioServiceImpl
 		getDadesAddicionalsService().create (tda);
 		}
 		
-		DadaUsuari dadaUsuari = new DadaUsuari (tda.getCodi(), usuari.getCodi());
+		DadaUsuari dadaUsuari = new DadaUsuari ();
+		dadaUsuari.setCodiDada(tda.getCodi());
+		dadaUsuari.setCodiUsuari(usuari.getCodi());
 		dadaUsuari.setValorDada(key.toString());
 		getDadesAddicionalsService().create(dadaUsuari);
 		
@@ -1420,7 +1422,9 @@ public class FederacioServiceImpl
 		{
 			getDadesAddicionalsService().delete(dadaUsuari);
 		}
-		dadaUsuari = new DadaUsuari (tda.getCodi(), usuari.getCodi());
+		dadaUsuari = new DadaUsuari ();
+		dadaUsuari.setCodiDada(tda.getCodi());
+		dadaUsuari.setCodiUsuari(usuari.getCodi());
 		dadaUsuari.setValorDada(key.toString());
 		getDadesAddicionalsService().create(dadaUsuari);
 		
@@ -1527,7 +1531,9 @@ public class FederacioServiceImpl
     			tda = getDadesAddicionalsService().create(tda);
     		}
 
-    		DadaUsuari dada = new DadaUsuari(key, usuari.getCodi());
+    		DadaUsuari dada = new DadaUsuari();
+		dada.setCodiDada(key);
+		dada.setCodiUsuari(usuari.getCodi());
     		dada.setValorDada( additionalData2.get(key));
 			getDadesAddicionalsService().create(dada);
 		}
