@@ -38,9 +38,9 @@ import org.xml.sax.SAXParseException;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.sync.ServerServiceLocator;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.sync.ServerServiceLocator;
 
 public class MetadataGenerator extends HttpServlet {
     @Override

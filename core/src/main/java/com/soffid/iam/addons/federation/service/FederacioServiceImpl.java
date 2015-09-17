@@ -16,12 +16,10 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -62,20 +60,19 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 import com.soffid.iam.addons.federation.model.AttributeConditionEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntity;
 import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
-
-import es.caib.seycon.ng.model.AuditoriaEntity;
-import es.caib.seycon.ng.model.DadaUsuariEntity;
-import es.caib.seycon.ng.model.DispatcherEntity;
-import es.caib.seycon.ng.model.DominiContrasenyaEntity;
-import es.caib.seycon.ng.model.PoliticaContrasenyaEntity;
-import es.caib.seycon.ng.model.UsuariEntity;
-
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
-
-import es.caib.seycon.ng.model.Parameter;
-
+import com.soffid.iam.model.AuditEntity;
+import com.soffid.iam.model.Parameter;
+import com.soffid.iam.model.PasswordDomainEntity;
+import com.soffid.iam.model.PasswordPolicyEntity;
+import com.soffid.iam.model.SystemEntity;
+import com.soffid.iam.model.UserDataEntity;
+import com.soffid.iam.model.UserEntity;
+import com.soffid.iam.utils.AutoritzacionsUsuari;
+import com.soffid.iam.utils.MailUtils;
+import com.soffid.iam.utils.Security;
 import com.soffid.iam.addons.federation.model.AttributeEntityDao;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
 import com.soffid.iam.addons.federation.model.PolicyEntity;
@@ -92,9 +89,6 @@ import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
 import com.soffid.iam.api.AttributeVisibilityEnum;
 
 import es.caib.seycon.ng.servei.ConfiguracioService;
-import es.caib.seycon.ng.utils.AutoritzacionsUsuari;
-import es.caib.seycon.ng.utils.MailUtils;
-import es.caib.seycon.ng.utils.Security;
 
 /**
  * @see es.caib.seycon.ng.servei.FederacioService
@@ -500,8 +494,8 @@ public class FederacioServiceImpl
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy kk:mm:ss"); //$NON-NLS-1$
 		auditoria.setData(dateFormat.format(Calendar.getInstance().getTime()));
 
-		AuditoriaEntity auditoriaEntity = getAuditoriaEntityDao().auditoriaToEntity(auditoria);
-		getAuditoriaEntityDao().create(auditoriaEntity);
+		AuditEntity auditoriaEntity = getAuditEntityDao().auditoriaToEntity(auditoria);
+		getAuditEntityDao().create(auditoriaEntity);
 	}
 
 	/**
@@ -1221,13 +1215,13 @@ public class FederacioServiceImpl
 			String dispatcher) throws Exception {
 		if (dispatcher == null)
 			dispatcher = getPasswordService().getDefaultDispatcher();
-		DispatcherEntity dispatcherEntity = getDispatcherEntityDao().findByCodi(dispatcher);
+		SystemEntity dispatcherEntity = getSystemEntityDao().findByName(dispatcher);
 		if (dispatcherEntity == null)
 			return null;
 		
-		PoliticaContrasenyaEntity policy = getPoliticaContrasenyaEntityDao().
-				findByDominiContrasenyaTipusUsuari(
-						dispatcherEntity.getDomini().getCodi(), userType);
+		PasswordPolicyEntity policy = getPasswordPolicyEntityDao().
+				findByPasswordDomainAndUserType(
+						dispatcherEntity.getPasswordDomain().getName(), userType);
 		if (policy == null)
 			return null;
 		return getInternalPasswordService().getPolicyDescription(policy);
@@ -1238,13 +1232,13 @@ public class FederacioServiceImpl
 			Password password) throws Exception {
 		if (dispatcher == null)
 			dispatcher = getPasswordService().getDefaultDispatcher();
-		DispatcherEntity dispatcherEntity = getDispatcherEntityDao().findByCodi(dispatcher);
+		SystemEntity dispatcherEntity = getSystemEntityDao().findByName(dispatcher);
 		if (dispatcherEntity == null)
 			return null;
 		
-		PoliticaContrasenyaEntity policy = getPoliticaContrasenyaEntityDao().
-				findByDominiContrasenyaTipusUsuari(
-						dispatcherEntity.getDomini().getCodi(), userType);
+		PasswordPolicyEntity policy = getPasswordPolicyEntityDao()
+				.findByPasswordDomainAndUserType(
+						dispatcherEntity.getPasswordDomain().getName(), userType);
 		return getInternalPasswordService().checkPolicy(policy, password);
 	}
 
@@ -1295,7 +1289,9 @@ public class FederacioServiceImpl
 		getDadesAddicionalsService().create (tda);
 		}
 		
-		DadaUsuari dadaUsuari = new DadaUsuari (tda.getCodi(), usuari.getCodi());
+		DadaUsuari dadaUsuari = new DadaUsuari ();
+		dadaUsuari.setCodiDada(tda.getCodi());
+		dadaUsuari.setCodiUsuari(usuari.getCodi());
 		dadaUsuari.setValorDada(key.toString());
 		getDadesAddicionalsService().create(dadaUsuari);
 		
@@ -1319,10 +1315,10 @@ public class FederacioServiceImpl
 
 	@Override
 	protected Usuari handleVerifyActivationEmail(String key) throws Exception {
-		List<DadaUsuariEntity> dades = getDadaUsuariEntityDao().findByTypeAndValue(ACTIVATION_KEY, key);
-		for (DadaUsuariEntity dada: dades)
+		List<UserDataEntity> dades = getUserDataEntityDao().findByTypeAndValue(ACTIVATION_KEY, key);
+		for (UserDataEntity dada: dades)
 		{
-			DadaUsuari du = getDadaUsuariEntityDao().toDadaUsuari(dada);
+			DadaUsuari du = getUserDataEntityDao().toDadaUsuari(dada);
 			getDadesAddicionalsService().delete(du);
 			Usuari usuari = getUsuariService().findUsuariByCodiUsuari(du.getCodiUsuari());
 			if (!usuari.getActiu().booleanValue())
@@ -1374,11 +1370,11 @@ public class FederacioServiceImpl
 			usuari = usuaris.iterator().next();
 		else
 		{
-			List<DadaUsuariEntity> dades = getDadaUsuariEntityDao().findByTypeAndValue(EMAIL, email);
+			List<UserDataEntity> dades = getUserDataEntityDao().findByTypeAndValue(EMAIL, email);
 			if (!dades.isEmpty())
 			{
-				DadaUsuariEntity dada = dades.iterator().next();
-				usuari = getUsuariService().findUsuariByIdUsuari(dada.getUsuari().getId());
+				UserDataEntity dada = dades.iterator().next();
+				usuari = getUsuariService().findUsuariByIdUsuari(dada.getUser().getId());
 			
 			}
 		}
@@ -1420,7 +1416,9 @@ public class FederacioServiceImpl
 		{
 			getDadesAddicionalsService().delete(dadaUsuari);
 		}
-		dadaUsuari = new DadaUsuari (tda.getCodi(), usuari.getCodi());
+		dadaUsuari = new DadaUsuari ();
+		dadaUsuari.setCodiDada(tda.getCodi());
+		dadaUsuari.setCodiUsuari(usuari.getCodi());
 		dadaUsuari.setValorDada(key.toString());
 		getDadesAddicionalsService().create(dadaUsuari);
 		
@@ -1444,10 +1442,10 @@ public class FederacioServiceImpl
 
 	@Override
 	protected Usuari handleVerifyRecoverEmail(String key) throws Exception {
-		List<DadaUsuariEntity> dades = getDadaUsuariEntityDao().findByTypeAndValue(RECOVER_KEY, key);
-		for (DadaUsuariEntity dada: dades)
+		List<UserDataEntity> dades = getUserDataEntityDao().findByTypeAndValue(RECOVER_KEY, key);
+		for (UserDataEntity dada: dades)
 		{
-			DadaUsuari du = getDadaUsuariEntityDao().toDadaUsuari(dada);
+			DadaUsuari du = getUserDataEntityDao().toDadaUsuari(dada);
 			Usuari usuari = getUsuariService().findUsuariByCodiUsuari(du.getCodiUsuari());
 			if (usuari.getActiu().booleanValue())
 			{
@@ -1465,8 +1463,8 @@ public class FederacioServiceImpl
 		
 		usuari = registerUser(usuari, additionalData, false);
 		
-		UsuariEntity usuariEntity = getUsuariEntityDao().load(usuari.getId());
-		DominiContrasenyaEntity dce = getDominiContrasenyaEntityDao().findByDispatcher(dispatcher);
+		UserEntity usuariEntity = getUserEntityDao().load(usuari.getId());
+		PasswordDomainEntity dce = getPasswordDomainEntityDao().findBySystem(dispatcher);
 		
 		getInternalPasswordService().storeAndForwardPassword(usuariEntity, dce, password, false);
 		return usuari;
@@ -1486,12 +1484,12 @@ public class FederacioServiceImpl
 			if (domini != null)
 				throw new InternalErrorException (String.format(com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.AddressDomainErrorMsg"), domain)); //$NON-NLS-1$
 			
-			List<DadaUsuariEntity> usuaris = getDadaUsuariEntityDao().findByTypeAndValue(EMAIL, email); 
+			List<UserDataEntity> usuaris = getUserDataEntityDao().findByTypeAndValue(EMAIL, email); 
 			if (usuaris.size() == 1 && reuseEmail)
 			{
-				DadaUsuariEntity dada = usuaris.get(0);
-				UsuariEntity usuariEntity = dada.getUsuari();
-				Usuari usuari2 = getUsuariEntityDao().toUsuari(usuariEntity);
+				UserDataEntity dada = usuaris.get(0);
+				UserEntity usuariEntity = dada.getUser();
+				Usuari usuari2 = getUserEntityDao().toUsuari(usuariEntity);
 				usuari2.setNom(usuari.getNom());
 				usuari2.setPrimerLlinatge(usuari.getPrimerLlinatge());
 				usuari2.setSegonLlinatge(usuari.getSegonLlinatge());
@@ -1527,7 +1525,9 @@ public class FederacioServiceImpl
     			tda = getDadesAddicionalsService().create(tda);
     		}
 
-    		DadaUsuari dada = new DadaUsuari(key, usuari.getCodi());
+    		DadaUsuari dada = new DadaUsuari();
+    		dada.setCodiDada(key);
+    		dada.setCodiUsuari(usuari.getCodi());
     		dada.setValorDada( additionalData2.get(key));
 			getDadesAddicionalsService().create(dada);
 		}
@@ -1549,8 +1549,8 @@ public class FederacioServiceImpl
 				usuari = registerUser(usuari, additionalData, true);
 				// Creates the openid account
 				
-				DispatcherEntity de = getDispatcherEntityDao().findByCodi(dispatcher);
-				Dispatcher dvo = getDispatcherEntityDao().toDispatcher(de);
+				SystemEntity de = getSystemEntityDao().findByName(dispatcher);
+				Dispatcher dvo = getSystemEntityDao().toDispatcher(de);
 				getAccountService().createAccount(usuari, dvo, account);
 				
 				break;
