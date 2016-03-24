@@ -155,6 +155,7 @@
 									<include>org.springframework:spring-beans</include>
 
 									<include>net.sf.ehcache:ehcache-core</include>
+									<include>net.sf.jgrapht:jgrapht</include>
 
 									<include>org.eclipse.jetty:jetty-security</include>
 									<include>org.eclipse.jetty:jetty-io</include>
