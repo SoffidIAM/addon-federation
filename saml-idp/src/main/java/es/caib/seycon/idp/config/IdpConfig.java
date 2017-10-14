@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -50,6 +52,7 @@ import es.caib.seycon.ng.remote.RemoteServiceLocator;
 
 import com.soffid.iam.addons.federation.common.*;
 import com.soffid.iam.addons.federation.service.FederacioService;
+
 import es.caib.seycon.ssl.SeyconKeyStore;
 import es.caib.seycon.util.Base64;
 
@@ -289,7 +292,14 @@ public class IdpConfig {
             throw new IOException ("Missing certificate chain"); //$NON-NLS-1$
         }
         pm = new PEMReader( new StringReader(federationMember.getCertificateChain()));
-        Certificate cert = (Certificate) pm.readObject();
+        List<Certificate> certs = new LinkedList<Certificate>();
+        do
+        {
+        	Certificate cert = (Certificate) pm.readObject();
+        	if (cert == null)
+        		break;
+        	certs.add(cert);
+        } while (true);
 
         if (federationMember.getPublicKey() == null) {
             StringWriter w = new StringWriter();
@@ -309,7 +319,7 @@ public class IdpConfig {
         
         w = new StringWriter();
         pw = new PEMWriter(w);
-        pw.writeObject(cert);
+       	pw.writeObject(certs.get(0));
         pw.close();
         publicCert = w.toString();
         
@@ -317,7 +327,7 @@ public class IdpConfig {
         String keystorePath = SeyconKeyStore.getKeyStoreFile().getPath();
         KeyStore ks = KeyStore.getInstance(SeyconKeyStore.getKeyStoreType());
         ks.load(new FileInputStream(keystorePath), p.getPassword().toCharArray());
-        ks.setKeyEntry("idp",k, p.getPassword().toCharArray(), new Certificate[] {cert}); //$NON-NLS-1$
+        ks.setKeyEntry("idp",k, p.getPassword().toCharArray(), certs.toArray(new Certificate[certs.size()])); //$NON-NLS-1$
         ks.store(new FileOutputStream(keystorePath), p.getPassword().toCharArray());
         
     }
