@@ -62,7 +62,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase {
 		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3");
 		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11");
 		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4");
-		testAttribute("Role & group membership", "IsMeberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1");
+		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1");
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1");
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2");
 		
