@@ -992,6 +992,10 @@
 									<input_etiqueta value="certificateChain" />
 									<input_dada bind="@federationMember/certificateChain" rows_custom="4" width_custom="98%" lectura="${!canModifyFI}"/>
 								</row-->
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
+									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="@federationMember/uidExpression" />
+								</row>
 							</rows>
 						</grid>
 						</hbox>						

@@ -109,4 +109,7 @@ public abstract class FederationMember {
 	@Nullable
 	Long sessionTimeout;
 
+	@Description("Bean shell expression to generate user id")
+	@Nullable
+	public String uidExpression;
 }
