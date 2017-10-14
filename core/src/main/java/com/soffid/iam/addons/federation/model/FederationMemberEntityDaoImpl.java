@@ -134,7 +134,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setPublicId(sp.getPublicId());
 			target.setNameIdFormat(sp.getNameIdFormat());
 			target.setCertificateChain(sp.getCertificateChain());
-			
+			target.setUidExpression(sp.getUidExpression());
 			// Virtual Identity Provider (informatiu)
 			// Service providers
 			if (sp.getServiceProviderVirtualIdentityProvider() != null) {
@@ -387,6 +387,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Heretats de VIP
 			sp.setPublicId(source.getPublicId());
 			sp.setNameIdFormat(source.getNameIdFormat());
+			sp.setUidExpression(source.getUidExpression());
 			if (source.getCertificateChain() != null)
 				sp.setCertificateChain(source.getCertificateChain());
 			
