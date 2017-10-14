@@ -18,19 +18,19 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.service.impl.FederationSyncBoot;
 import com.soffid.iam.addons.federation.sync.web.MetadataGenerator;
+import com.soffid.iam.sync.SoffidApplication;
 
 import es.caib.seycon.ng.comu.DadaUsuari;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.sync.SeyconApplication;
 
 public class FederationBootServiceImpl extends FederationBootServiceBase {
 	Log log = LogFactory.getLog(getClass());
  	@Override
 	protected void handleSyncServerBoot() throws Exception {
-		SeyconApplication.getJetty().
+		SoffidApplication.getJetty().
 			bindAdministrationServlet("/SAML/metadata.xml", null, MetadataGenerator.class);
 
-		SeyconApplication.getJetty(). 
+		SoffidApplication.getJetty(). 
 			publish(getFederacioService(), FederacioService.REMOTE_PATH, "agent");
 	}
 

@@ -14,10 +14,8 @@ import java.util.List;
 
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.FederationMember;
-
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.model.GrupEntity;
-import es.caib.seycon.ng.model.TipusUsuariEntity;
+import com.soffid.iam.model.GroupEntity;
+import com.soffid.iam.model.UserTypeEntity;
 
 /**
  * @see com.soffid.iam.addons.federation.model.FederationMemberEntity
@@ -161,8 +159,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 		target.setAllowRecover(vip.isAllowRecover());
 		target.setAllowRegister(vip.isAllowRegister());
 		target.setUserTypeToRegister(vip.getUserTypeToRegister() == null? null :
-			vip.getUserTypeToRegister().getCodi());
-		target.setGroupToRegister(vip.getGroupToRegister() == null? null: vip.getGroupToRegister().getCodi());
+			vip.getUserTypeToRegister().getName());
+		target.setGroupToRegister(vip.getGroupToRegister() == null? 
+				null: 
+				vip.getGroupToRegister().getName());
 		target.setMailHost(vip.getMailHost());
 		target.setMailSenderAddress(vip.getMailSenderAddress());
 	}
@@ -412,7 +412,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 		}
 		else
 		{
-			TipusUsuariEntity tipus = getTipusUsuariEntityDao().findByCodi(source.getUserTypeToRegister());
+			UserTypeEntity tipus = getUserTypeEntityDao().findByName(source.getUserTypeToRegister());
 			if (tipus == null)
 				throw new IllegalArgumentException(String.format("Invalid user type %s", source.getUserTypeToRegister()));
 			vip.setUserTypeToRegister(tipus);
@@ -424,7 +424,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 		}
 		else
 		{
-			GrupEntity grup = getGrupEntityDao().findByCodi(source.getGroupToRegister());
+			GroupEntity grup = getGroupEntityDao().findByName(source.getGroupToRegister());
 			if (grup == null)
 				throw new IllegalArgumentException(String.format("Invalid group %s", source.getGroupToRegister()));
 			vip.setGroupToRegister(grup);
