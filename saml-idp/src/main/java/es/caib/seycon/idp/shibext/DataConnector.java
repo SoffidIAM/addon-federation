@@ -2,11 +2,25 @@ package es.caib.seycon.idp.shibext;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+
+import org.apache.commons.logging.LogFactory;
+import org.eclipse.jetty.util.log.Log;
+
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.FederacioService;
 
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.BasicAttribute;
@@ -19,9 +33,14 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.ng.comu.Account;
 import es.caib.seycon.ng.comu.DadaUsuari;
 import es.caib.seycon.ng.comu.RolGrant;
 import es.caib.seycon.ng.comu.Usuari;
+import es.caib.seycon.ng.sync.engine.extobj.ObjectTranslator;
+import es.caib.seycon.ng.sync.engine.extobj.UserExtensibleObject;
+import es.caib.seycon.ng.sync.engine.extobj.ValueObjectMapper;
+import es.caib.seycon.ng.sync.intf.ExtensibleObjectMapping;
 import es.caib.seycon.ng.sync.servei.ServerService;
 
 public class DataConnector extends BaseDataConnector {
@@ -35,6 +54,8 @@ public class DataConnector extends BaseDataConnector {
         
         String principal = ctx.getPrincipalName();
         
+        String rpid = ctx.getInboundMessageIssuer();
+        
         try {
         	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         	IdpConfig config = IdpConfig.getConfig();
@@ -45,7 +66,7 @@ public class DataConnector extends BaseDataConnector {
             addStringValue (m, "givenname", ui.getNom()); //$NON-NLS-1$
             String surname =ui.getPrimerLlinatge()+(ui.getSegonLlinatge()==null?"":" "+ui.getSegonLlinatge()); //$NON-NLS-1$ //$NON-NLS-2$
             addStringValue (m, "surname", surname); //$NON-NLS-1$
-            addStringValue (m, "fullname", surname); //$NON-NLS-1$
+            addStringValue (m, "fullname", ui.getFullName()); //$NON-NLS-1$
             
             BasicAttribute<String> b = new BasicAttribute<String>("surnames"); //$NON-NLS-1$
             LinkedList<String> l = new LinkedList<String>();
@@ -70,9 +91,11 @@ public class DataConnector extends BaseDataConnector {
             }
             addStringValue (m, "group", ui.getCodiGrupPrimari()); //$NON-NLS-1$
             addStringValue (m, "userType", ui.getTipusUsuari()); //$NON-NLS-1$
-            addStringValue (m, "uid", ui.getCodi()); //$NON-NLS-1$
-            
-            DadaUsuari data = server.getUserData(ui.getId(), "TELÈFON"); //$NON-NLS-1$
+            String uid = evaluateUid (server, rpid, principal, ui);
+			addStringValue (m, "uid", uid); //$NON-NLS-1$
+			ctx.setPrincipalName(uid);
+
+			DadaUsuari data = server.getUserData(ui.getId(), "TELÈFON"); //$NON-NLS-1$
             if (data == null)
             	 data = server.getUserData(ui.getId(), "PHONE"); //$NON-NLS-1$
             if (data != null)
@@ -89,7 +112,33 @@ public class DataConnector extends BaseDataConnector {
 		}
     }
 
-    private void collectRoles(HashMap<String, BaseAttribute> m, ServerService server,
+    org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
+    
+    private String evaluateUid(ServerService server, String rpid, String principal, Usuari ui) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+    	String uid = ui.getCodi();
+    	log.info("Searching uid for relaying party "+rpid);
+    	FederacioService fs = new RemoteServiceLocator().getFederacioService();
+    	for (FederationMember member: fs.findFederationMemberByEntityGroupAndPublicIdAndTipus("%", rpid, "S"))
+    	{
+    		if (member.getUidExpression() != null && ! member.getUidExpression().trim().isEmpty())
+    		{
+    			log.info("Evaluating expression "+member.getUidExpression());
+    			ValueObjectMapper mapper = new ValueObjectMapper();
+            	IdpConfig config = IdpConfig.getConfig();
+    			Account account = server.getAccountInfo(principal, config.getDispatcher().getCodi());
+    			UserExtensibleObject eo = new UserExtensibleObject(account, ui, server);
+    			String result = (String) new ObjectTranslator(config.getDispatcher(), server,
+    					new java.util.LinkedList<ExtensibleObjectMapping>())
+    				.eval(member.getUidExpression(), eo);
+    			uid = result;
+    		}
+    	}
+		log.info("UID="+uid);
+    	return uid;
+    	
+	}
+
+	private void collectRoles(HashMap<String, BaseAttribute> m, ServerService server,
             Usuari ui) throws RemoteException, InternalErrorException, UnknownUserException {
         Collection<RolGrant> roles = server.getUserRoles(ui.getId(), null);
         BasicAttribute<String> b = new BasicAttribute<String>("memberOf"); //$NON-NLS-1$
