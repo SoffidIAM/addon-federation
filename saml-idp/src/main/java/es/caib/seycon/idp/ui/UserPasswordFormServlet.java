@@ -27,7 +27,11 @@ import es.caib.seycon.idp.ui.openid.OpenIdRequestAction;
 
 public class UserPasswordFormServlet extends BaseForm {
 
-    public static final String URI = "/passwordLoginForm"; //$NON-NLS-1$
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static final String URI = "/passwordLoginForm"; //$NON-NLS-1$
     private ServletContext context;
     private IdPProfileHandlerManager handlerManager;
     private SessionManager<Session> sessionManager;

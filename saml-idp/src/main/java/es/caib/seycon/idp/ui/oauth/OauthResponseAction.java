@@ -11,22 +11,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.openid4java.discovery.Identifier;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.User;
+import com.soffid.iam.sync.service.LogonService;
+import com.soffid.iam.sync.service.ServerService;
+import com.soffid.iam.util.NameParser;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.oauth.consumer.FacebookConsumer;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
-import es.caib.seycon.ng.comu.Usuari;
-import es.caib.seycon.ng.comu.sso.NameParser;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.sync.servei.LogonService;
-import es.caib.seycon.ng.sync.servei.ServerService;
 
 public class OauthResponseAction extends HttpServlet {
     public static final String REGISTER_SERVICE_PROVIDER = "RegisterServiceProvider";
@@ -89,9 +88,9 @@ public class OauthResponseAction extends HttpServlet {
 	    	LogonService logonService = new RemoteServiceLocator().getLogonService();
 	    	ServerService serverService = new RemoteServiceLocator().getServerService();
 	        
-	    	Usuari usuari;
+	    	User usuari;
 	    	try {
-	    		usuari = serverService.getUserInfo(user, IdpConfig.getConfig().getDispatcher().getCodi());
+	    		usuari = serverService.getUserInfo(user, IdpConfig.getConfig().getSystem().getName());
 	    	}
 	    	catch (es.caib.seycon.ng.exception.UnknownUserException e)
 	        {
@@ -102,37 +101,37 @@ public class OauthResponseAction extends HttpServlet {
 	    		}
 	    		else
 	    		{
-            		usuari = new Usuari();
-            		usuari.setCodi("?");
+            		usuari = new User();
+            		usuari.setUserName("?");
             		if (consumer.getFullName() != null)
             		{
             			usuari.setFullName(consumer.getFullName());
             			NameParser np = new NameParser();
             			String name [] = np.parse(consumer.getFullName(), 2);
             			if (name.length >= 1)
-            				usuari.setNom(name[0]);
+            				usuari.setFirstName(name[0]);
             			if (name.length >= 2)
-            				usuari.setPrimerLlinatge(name[1]);
+            				usuari.setFirstName(name[1]);
             		}
             		if (consumer.getFirstName() != null)
-            			usuari.setNom(consumer.getFirstName());
+            			usuari.setFirstName(consumer.getFirstName());
             		if (consumer.getLastName() != null)
-            			usuari.setPrimerLlinatge(consumer.getLastName());
+            			usuari.setLastName(consumer.getLastName());
             		
-            		if (usuari.getNom() == null)
-            			usuari.setNom("?");
-            		if (usuari.getPrimerLlinatge() == null)
-            			usuari.setPrimerLlinatge("?");
+            		if (usuari.getFirstName() == null)
+            			usuari.setFirstName("?");
+            		if (usuari.getLastName() == null)
+            			usuari.setLastName("?");
             		
-            		usuari.setActiu(Boolean.TRUE);
-            		usuari.setCodiGrupPrimari(ip.getGroupToRegister());
-            		usuari.setDataCreacioUsuari(Calendar.getInstance());
-            		usuari.setMultiSessio(Boolean.FALSE);
-            		usuari.setServidorCorreu("null");
-            		usuari.setServidorHome("null");
-            		usuari.setServidorPerfil("null");
-            		usuari.setTipusUsuari(ip.getUserTypeToRegister());
-            		usuari.setComentari(String.format("Facebook registered from IP %s", req.getRemoteAddr()));
+            		usuari.setActive(Boolean.TRUE);
+            		usuari.setPrimaryGroup(ip.getGroupToRegister());
+            		usuari.setCreatedDate(Calendar.getInstance());
+            		usuari.setMultiSession(Boolean.FALSE);
+            		usuari.setMailServer("null");
+            		usuari.setHomeServer("null");
+            		usuari.setProfileServer("null");
+            		usuari.setUserType(ip.getUserTypeToRegister());
+            		usuari.setComments(String.format("OAuth registered from IP %s", req.getRemoteAddr()));
             		
             		Map<String,String> dades = new HashMap<String, String>();
             		dades.put ("EMAIL", consumer.getEmail());
@@ -140,7 +139,8 @@ public class OauthResponseAction extends HttpServlet {
             		
             		IdpConfig config = IdpConfig.getConfig();
             		
-            		usuari = config.getFederationService().registerOpenidUser(user, config.getDispatcher().getCodi(), usuari, dades);
+            		usuari = config.getFederationService().registerOpenidUser(user, config.getSystem().getName(), usuari, dades);
+            		
           			new RemoteServiceLocator().getServerService().propagateOBUser(usuari);
 	    		}
 	        	

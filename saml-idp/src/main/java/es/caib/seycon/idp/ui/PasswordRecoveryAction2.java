@@ -1,49 +1,20 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.security.Principal;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
 
-import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.eclipse.jetty.server.session.JDBCSessionManager.Session;
-import org.opensaml.saml2.core.AuthnContext;
-import org.opensaml.saml2.metadata.EntityDescriptor;
-
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.User;
 
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
-import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
-import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
-import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
-import es.caib.seycon.ng.comu.DadaUsuari;
-import es.caib.seycon.ng.comu.Dispatcher;
-import es.caib.seycon.ng.comu.Password;
-import es.caib.seycon.ng.comu.PolicyCheckResult;
-import es.caib.seycon.ng.comu.TipusDada;
-import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.servei.DadesAddicionalsService;
-import es.caib.seycon.ng.servei.UsuariService;
-import es.caib.seycon.ng.sync.servei.LogonService;
-import es.caib.seycon.ng.sync.servei.ServerService;
 
 public class PasswordRecoveryAction2 extends HttpServlet {
     /**
@@ -79,7 +50,7 @@ public class PasswordRecoveryAction2 extends HttpServlet {
 	        
     		String url = "https://"+config.getHostName()+":"+config.getStandardPort()+PasswordRecoveryForm.URI;
 
-      		Usuari usuari = config.getFederationService().verifyRecoverEmail(key);
+      		User usuari = config.getFederationService().verifyRecoverEmail(key);
       		
       		if (usuari == null)
       		{
@@ -90,7 +61,7 @@ public class PasswordRecoveryAction2 extends HttpServlet {
       		} else {
                 HttpSession s = req.getSession();
                 
-                s.setAttribute(SessionConstants.SEU_TEMP_USER, usuari.getCodi());
+                s.setAttribute(SessionConstants.SEU_TEMP_USER, usuari.getUserName());
 
                 RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
 		        dispatcher.forward(req, resp);

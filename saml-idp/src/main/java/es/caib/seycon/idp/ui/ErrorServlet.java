@@ -1,31 +1,21 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
-import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.jetty.http.HttpHeaders;
-import org.eclipse.jetty.http.HttpMethods;
-import org.eclipse.jetty.http.MimeTypes;
-import org.eclipse.jetty.server.HttpConnection;
-import org.eclipse.jetty.util.ByteArrayISO8859Writer;
 
 import edu.internet2.middleware.shibboleth.common.profile.AbstractErrorHandler;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 
 public class ErrorServlet extends HttpServlet {
 
-    public static final String URI = "/error.jsp";
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static final String URI = "/error.jsp";
 
 	@Override
     protected void service(HttpServletRequest req, HttpServletResponse resp)

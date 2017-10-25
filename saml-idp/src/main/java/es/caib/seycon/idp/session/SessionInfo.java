@@ -1,6 +1,5 @@
 package es.caib.seycon.idp.session;
 
-import java.net.InetAddress;
 import java.util.Date;
 
 import edu.internet2.middleware.shibboleth.idp.session.Session;

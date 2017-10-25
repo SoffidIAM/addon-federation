@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="SC_FEDERA" ,
@@ -42,42 +43,86 @@ public abstract class FederationMemberEntity {
 	@Nullable
 	public byte[] metadades;
 
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.FederationMemberEntity fm\nwhere\n(:entityGroupId is null or fm.entityGroup.id =:entityGroupId) \norder by fm.classe")
+	@Column (name="FED_TEN_ID")
+	@Nullable
+	public TenantEntity tenant;
+
+
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.FederationMemberEntity fm "
+			+ "where (:entityGroupId is null or fm.entityGroup.id =:entityGroupId) and "
+			+ "eg.tenant.id=:tenantId "
+			+ "order by fm.classe")
 	public java.util.List<com.soffid.iam.addons.federation.model.FederationMemberEntity> findByEntityGroupId(
 		java.lang.Long entityGroupId) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.IdentityProviderEntity fm\nwhere\n(:entityGroupId is null or fm.entityGroup.id =:entityGroupId) ")
+	
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm "
+			+ "where (:entityGroupId is null or fm.entityGroup.id =:entityGroupId) and "
+			+ "fm.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.FederationMemberEntity> findIDPByEntityGroupId(
 		java.lang.Long entityGroupId) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm\nwhere\n(:entityGroupId is null or fm.entityGroup.id =:entityGroupId) \n")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm "
+			+ "where (:entityGroupId is null or fm.entityGroup.id =:entityGroupId) and "
+			+ "fm.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.FederationMemberEntity> findVIPByEntityGroupId(
 		java.lang.Long entityGroupId) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.ServiceProviderEntity fm\nwhere\n(:entityGroupId is null or fm.entityGroup.id =:entityGroupId)")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm "
+			+ "where (:entityGroupId is null or fm.entityGroup.id =:entityGroupId) and "
+			+ "fm.tenant.id = :tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.FederationMemberEntity> findSPByEntityGroupId(
 		java.lang.Long entityGroupId) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.IdentityProviderEntity fm\nwhere\n(fm.id=:id) ")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm "
+			+ "where (fm.id=:id) and fm.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.IdentityProviderEntity findIDPById(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm\nwhere\n(fm.id=:id) \n")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm "
+			+ "where (fm.id=:id)  and fm.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity findVIPById(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.ServiceProviderEntity fm\nwhere\n(fm.id=:id) ")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm "
+			+ "where (fm.id=:id)  and fm.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.ServiceProviderEntity findSPById(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.IdentityProviderEntity fm\nwhere\n(:tipusFM='I') and \n(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  and (:publicId is null or fm.publicId like :publicId)\nunion\nselect fm\nfrom\ncom.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm\nwhere\n(:tipusFM='V') and \n(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  and (:publicId is null or fm.publicId like :publicId)\nunion\nselect fm\nfrom\ncom.soffid.iam.addons.federation.model.ServiceProviderEntity fm\nwhere\n(:tipusFM='S') and \n(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  and (:publicId is null or fm.publicId like :publicId)")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm "
+			+ "where (:tipusFM='I') and  "
+			+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  and "
+			+ "(:publicId is null or fm.publicId like :publicId) and "
+			+ "fm.tenant.id=:tenantId"
+			+ "union "
+			+ "select fm "
+			+ "from com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm "
+			+ "where (:tipusFM='V') and  "
+			+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  "
+			+ "and (:publicId is null or fm.publicId like :publicId) and "
+			+ "fm.tenant.id=:tenantId"
+			+ "union "
+			+ "select fm "
+			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm "
+			+ "where (:tipusFM='S') and  "
+			+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  and "
+			+ "(:publicId is null or fm.publicId like :publicId) and "
+			+ "fm.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.FederationMemberEntity> findFMByEntityGroupAndPublicIdAndTipus(
 		java.lang.String entityGroupName, 
 		java.lang.String publicId, 

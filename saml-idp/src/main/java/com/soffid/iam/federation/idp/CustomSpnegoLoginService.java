@@ -1,7 +1,5 @@
 package com.soffid.iam.federation.idp;
 
-import java.security.PrivilegedAction;
-
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
@@ -11,9 +9,6 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.SpnegoLoginService;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
-
-import es.caib.seycon.idp.config.PasswordCallbackHandler;
-import es.caib.seycon.ng.comu.Password;
 
 public class CustomSpnegoLoginService extends AbstractLifeCycle implements LoginService {
 	SpnegoLoginService parentService;

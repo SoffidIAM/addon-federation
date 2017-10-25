@@ -1,14 +1,6 @@
 package es.caib.seycon.idp.shibext;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,9 +9,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import edu.internet2.middleware.shibboleth.idp.session.IdPSessionFilter;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.sync.intf.LogEntry;
 
 public class LogRecorder {

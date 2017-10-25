@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -43,37 +45,38 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import es.caib.seycon.idp.client.ServerLocator;
-import es.caib.seycon.ng.comu.Dispatcher;
-import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.remote.RemoteServiceLocator;
 
 import com.soffid.iam.addons.federation.common.*;
 import com.soffid.iam.addons.federation.service.FederacioService;
-import es.caib.seycon.ssl.SeyconKeyStore;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.config.Config;
+import com.soffid.iam.remote.RemoteServiceLocator;
+import com.soffid.iam.ssl.SeyconKeyStore;
+
 import es.caib.seycon.util.Base64;
 
 
 public class IdpConfig {
     String publicId = null;
-    Dispatcher dispatcher;
+    com.soffid.iam.api.System system;
     
     public String getFacebookKey ()
     {
-    	return getDispatcher().getParam1();
+    	return getSystem().getParam1();
     }
     
     public String getFacebookSecret ()
     {
-    	return getDispatcher().getParam2();
+    	return getSystem().getParam2();
     }
 
-    public Dispatcher getDispatcher() {
-		return dispatcher;
+    public com.soffid.iam.api.System getSystem() {
+		return system;
 	}
 
-	public void setDispatcher(Dispatcher dispatcher) {
-		this.dispatcher = dispatcher;
+	public void setDispatcher(com.soffid.iam.api.System dispatcher) {
+		this.system = dispatcher;
 	}
 
 	public String getPublicId() {
@@ -98,7 +101,7 @@ public class IdpConfig {
     public void configure () throws FileNotFoundException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, es.caib.seycon.ng.exception.InternalErrorException {
         seyconConfig = Config.getConfig();
         
-        es.caib.seycon.ng.remote.RemoteServiceLocator rsl = new RemoteServiceLocator();
+        RemoteServiceLocator rsl = new RemoteServiceLocator();
         ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         
@@ -247,7 +250,7 @@ public class IdpConfig {
 
 
     public void extractKeyFile () throws FileNotFoundException, IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
-        es.caib.seycon.ng.comu.Password p = SeyconKeyStore.getKeyStorePassword();
+        Password p = SeyconKeyStore.getKeyStorePassword();
         
         
         if (federationMember.getPrivateKey() == null) {
@@ -289,7 +292,14 @@ public class IdpConfig {
             throw new IOException ("Missing certificate chain"); //$NON-NLS-1$
         }
         pm = new PEMReader( new StringReader(federationMember.getCertificateChain()));
-        Certificate cert = (Certificate) pm.readObject();
+        List<Certificate> certs = new LinkedList<Certificate>();
+        do
+        {
+        	Certificate cert = (Certificate) pm.readObject();
+        	if (cert == null)
+        		break;
+        	certs.add(cert);
+        } while (true);
 
         if (federationMember.getPublicKey() == null) {
             StringWriter w = new StringWriter();
@@ -309,7 +319,7 @@ public class IdpConfig {
         
         w = new StringWriter();
         pw = new PEMWriter(w);
-        pw.writeObject(cert);
+       	pw.writeObject(certs.get(0));
         pw.close();
         publicCert = w.toString();
         
@@ -317,7 +327,7 @@ public class IdpConfig {
         String keystorePath = SeyconKeyStore.getKeyStoreFile().getPath();
         KeyStore ks = KeyStore.getInstance(SeyconKeyStore.getKeyStoreType());
         ks.load(new FileInputStream(keystorePath), p.getPassword().toCharArray());
-        ks.setKeyEntry("idp",k, p.getPassword().toCharArray(), new Certificate[] {cert}); //$NON-NLS-1$
+        ks.setKeyEntry("idp",k, p.getPassword().toCharArray(), certs.toArray(new Certificate[certs.size()])); //$NON-NLS-1$
         ks.store(new FileOutputStream(keystorePath), p.getPassword().toCharArray());
         
     }
@@ -487,7 +497,7 @@ public class IdpConfig {
         if (upc != null) {
             upc.end( );
         }
-        upc = new UpdateConfigurationThread(entityGroupMember);
+        upc = new UpdateConfigurationThread(this, entityGroupMember);
         upc.doStart();
 
     }

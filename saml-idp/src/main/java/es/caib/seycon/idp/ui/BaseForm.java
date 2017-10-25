@@ -12,7 +12,12 @@ import es.caib.seycon.ng.comu.lang.MessageFactory;
 
 
 public class BaseForm extends HttpServlet {
-    private void process (HttpServletRequest req, HttpServletResponse resp) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private void process (HttpServletRequest req, HttpServletResponse resp) {
         if (req.getParameter("lang") != null) //$NON-NLS-1$
         {
             req.getSession().setAttribute("lang", req.getParameter("lang")); //$NON-NLS-1$ //$NON-NLS-2$

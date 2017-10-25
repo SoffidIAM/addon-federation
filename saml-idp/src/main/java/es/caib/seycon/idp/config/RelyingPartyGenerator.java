@@ -2,15 +2,14 @@ package es.caib.seycon.idp.config;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -28,7 +27,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -38,19 +36,18 @@ import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PEMWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Entity;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import edu.internet2.middleware.shibboleth.idp.ui.ServicePrivacyURLTag;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.comu.Password;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.ssl.SeyconKeyStore;
+import com.soffid.iam.utils.Security;
+
 import es.caib.seycon.idp.client.ServerLocator;
 import com.soffid.iam.addons.federation.common.*; 
 import com.soffid.iam.addons.federation.service.*;
-import es.caib.seycon.ssl.SeyconKeyStore;
-import es.caib.seycon.util.Base64;
 
 public class RelyingPartyGenerator {
     final static String AFP_NAMESPACE = "urn:mace:shibboleth:2.0:afp"; //$NON-NLS-1$
@@ -141,7 +138,7 @@ public class RelyingPartyGenerator {
         Element confNode = doc.createElementNS(METADATA_NAMESPACE,
                 "MetadataResource"); //$NON-NLS-1$
         spmdNode.appendChild(confNode);
-        URL server = ServerLocator.getInstance().getServerUrl("/SAML/metadata.xml"); //$NON-NLS-1$
+        URL server = ServerLocator.getInstance().getServerUrl("/SAML/metadata.xml?tenant="+URLEncoder.encode(Security.getCurrentTenantName(), "UTF-8")); //$NON-NLS-1$
         confNode.setAttribute("url", server.toString()); //$NON-NLS-1$
         confNode.setAttribute("file", new File (IdpConfig.getConfig().getConfDir(), "metadata.xml").getPath()); //$NON-NLS-1$ //$NON-NLS-2$
         confNode.setAttribute("xsi:type", "resource:FileBackedHttpResource"); //$NON-NLS-1$ //$NON-NLS-2$

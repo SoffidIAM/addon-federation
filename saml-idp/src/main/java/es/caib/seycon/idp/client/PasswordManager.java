@@ -11,15 +11,15 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
-import es.caib.seycon.Password;
-import es.caib.seycon.UnknownUserException;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.api.PasswordValidation;
+import com.soffid.iam.api.PolicyCheckResult;
+import com.soffid.iam.remote.RemoteServiceLocator;
+import com.soffid.iam.sync.service.LogonService;
+
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.ng.comu.PasswordValidation;
-import es.caib.seycon.ng.comu.PolicyCheckResult;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.remote.RemoteServiceLocator;
-import es.caib.seycon.ng.sync.servei.LogonService;
-import es.caib.seycon.ng.sync.servei.ServerService;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class PasswordManager {
 
@@ -33,7 +33,7 @@ public class PasswordManager {
 		} catch (Exception e) {
 			throw new InternalErrorException("Error getting default dispatcher", e);
 		}
-    	return cfg.getDispatcher().getCodi();
+    	return cfg.getSystem().getName();
     }
     /**
      * main
@@ -72,7 +72,7 @@ public class PasswordManager {
     }
 
     public void changePassword(String user, Password passwordNew) throws RemoteException, FileNotFoundException, IOException, UnknownUserException, es.caib.seycon.ng.exception.BadPasswordException, es.caib.seycon.ng.exception.InternalErrorException {
-    	ServerService serverService = new RemoteServiceLocator().getServerService();
+    	com.soffid.iam.sync.service.ServerService serverService = new com.soffid.iam.remote.RemoteServiceLocator().getServerService();
         serverService.changePasswordSync(user,  getDispatcher(), passwordNew, false);
         mustChangePassword = false;
 

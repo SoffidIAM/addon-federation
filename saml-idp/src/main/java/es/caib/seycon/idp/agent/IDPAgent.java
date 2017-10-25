@@ -5,11 +5,11 @@ import java.util.Collection;
 import java.util.Date;
 
 import com.soffid.iam.federation.idp.Main;
+import com.soffid.iam.sync.agent.Agent;
+import com.soffid.iam.sync.intf.AccessLogMgr;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.idp.shibext.LogRecorder;
-import es.caib.seycon.ng.sync.agent.Agent;
-import es.caib.seycon.ng.sync.intf.AccessLogMgr;
 import es.caib.seycon.ng.sync.intf.LogEntry;
 
 public class IDPAgent extends Agent implements AccessLogMgr {
@@ -26,7 +26,7 @@ public class IDPAgent extends Agent implements AccessLogMgr {
     @Override
     public void init() throws Exception {
         super.init();
-        newName = getDispatcher().getParam0();
+        newName = getSystem().getParam0();
         if (newName == null)
             throw new InternalErrorException("Missing idp publicId"); //$NON-NLS-1$
         synchronized (lock) {
@@ -41,7 +41,7 @@ public class IDPAgent extends Agent implements AccessLogMgr {
                     if (name == null)
                         log.info("Starting IDP {} (Previous {})", newName, name); //$NON-NLS-1$
                     main = new Main();
-                    main.start(newName, getDispatcher());
+                    main.start(newName, getSystem());
                     name = newName;
                 }
             } catch (Exception e) {

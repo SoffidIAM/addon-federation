@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="SC_SAMLPRO" ,
@@ -37,43 +38,71 @@ public abstract class SamlProfileEntity {
 
 	@Column (name="PRO_VIP_ID")
 	public com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity virtualIdentityProvider;
+	
+	@Column (name="PRO_TEN_ID")
+	@Nullable
+	public TenantEntity tenant;
 
-	@DaoFinder("select en\nfrom\ncom.soffid.iam.addons.federation.model.SamlProfileEntity en\nwhere\n(:virtualIPId is null or en.virtualIdentityProvider.id =:virtualIPId) \n")
+	@DaoFinder("select en "
+			+ "from com.soffid.iam.addons.federation.model.SamlProfileEntity en "
+			+ "where (:virtualIPId is null or en.virtualIdentityProvider.id =:virtualIPId) and "
+			+ "en.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.SamlProfileEntity> findByVIPId(
 		java.lang.Long virtualIPId) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en  "
+			+ "from  com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity en "
+			+ "where (:id is null or en.id =:id) and "
+			+ "en.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity findSAML1ARPById(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en  "
+			+ "from  com.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity en "
+			+ "where (:id is null or en.id =:id) and "
+			+ "en.tenant.id=:tenantId ")
 	public com.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity findSAML1AQPbyId(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.Saml2ArtifactResolutionProfileEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en "
+			+ "from  com.soffid.iam.addons.federation.model.Saml2ArtifactResolutionProfileEntity en "
+			+ "where (:id is null or en.id =:id) and "
+			+ "en.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.Saml2ArtifactResolutionProfileEntity findSAML2ARPbyId(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en  "
+			+ "from  com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity en "
+			+ "where (:id is null or en.id =:id) and "
+			+ "en.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity findSAML2AQPbyId(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.Saml2ECPProfileEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en "
+			+ "from com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity en "
+			+ "where (:id is null or en.id =:id) and "
+			+ "en.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity findSAML2ECPPbyId(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.Saml2SSOProfileEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en "
+			+ "from com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity en "
+			+ "where (:id is null or en.id =:id) and "
+			+ "en.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity findSAML2SSOPbyId(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.SamlProfileEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en  "
+			+ "from  com.soffid.iam.addons.federation.model.SamlProfileEntity en "
+			+ "where (:id is null or en.id =:id) and "
+			+ "en.tenant.id=:tenantId")
 	public com.soffid.iam.addons.federation.model.SamlProfileEntity findSAMLProfileById(
 		java.lang.Long id) {
 	 return null;

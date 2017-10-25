@@ -57,7 +57,7 @@ public class PasswordResetForm extends BaseForm {
         	ServerService serverService = rsl.getServerService();
         	LogonService logonService = rsl.getLogonService();
         	
-        	String dispatcher = IdpConfig.getConfig().getDispatcher().getCodi();
+        	String dispatcher = IdpConfig.getConfig().getSystem().getName();
         	Usuari usuari = serverService.getUserInfo(challenge.getUser(), null);
         	Collection<UserAccount> accounts = serverService.getUserAccounts(usuari.getId(), dispatcher);
         	if (accounts.isEmpty())

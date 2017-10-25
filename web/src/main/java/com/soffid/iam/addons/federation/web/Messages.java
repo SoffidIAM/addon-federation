@@ -3,7 +3,7 @@ package com.soffid.iam.addons.federation.web;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import es.caib.seycon.ng.comu.lang.MessageFactory;
+import com.soffid.iam.lang.MessageFactory;
 
 public class Messages {
 	private static final String BUNDLE_NAME = "com.soffid.iam.addons.federation.web.messages"; //$NON-NLS-1$

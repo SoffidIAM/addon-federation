@@ -38,9 +38,10 @@ import org.xml.sax.SAXParseException;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.sync.ServerServiceLocator;
+import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.sync.ServerServiceLocator;
 
 public class MetadataGenerator extends HttpServlet {
     @Override
@@ -73,7 +74,18 @@ public class MetadataGenerator extends HttpServlet {
             throws ServletException, IOException {
         resp.setContentType("text/xml");
         try {
-            generate (resp.getOutputStream());
+        	String tenant = req.getParameter("tenant");
+        	if (tenant != null)
+        	{
+        		Security.nestedLogin(tenant, "anonymous", new String[0]);
+        		try {
+            		generate (resp.getOutputStream());
+        		} finally {
+        			Security.nestedLogoff();
+        		}
+        	}
+        	else
+        		generate (resp.getOutputStream());
         } catch (Exception e) {
             throw new ServletException(e);
         }

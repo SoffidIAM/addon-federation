@@ -22,12 +22,18 @@ public abstract class ServiceProviderVirtualIdentityProviderEntity {
 	@Column (name="SPI_SP_ID")
 	public com.soffid.iam.addons.federation.model.ServiceProviderEntity serviceProvider;
 
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity fm\nwhere\n(fm.virtualIdentityProvider.id=:vipId)")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity fm "
+			+ "where (fm.virtualIdentityProvider.id=:vipId) and "
+			+ "fm.virtualIdentityProvider.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity> findByVIP(
 		java.lang.Long vipId) {
 	 return null;
 	}
-	@DaoFinder("select fm\nfrom\ncom.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity fm\nwhere\n(fm.serviceProvider.id=:spId) \n")
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity fm "
+			+ "where (fm.serviceProvider.id=:spId) and "
+			+ "fm.serviceProvider.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity> findBySP(
 		java.lang.Long spId) {
 	 return null;

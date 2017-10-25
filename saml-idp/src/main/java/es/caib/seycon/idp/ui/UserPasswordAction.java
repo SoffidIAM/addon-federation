@@ -1,11 +1,6 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
-import java.security.Principal;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -13,20 +8,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.eclipse.jetty.server.session.JDBCSessionManager.Session;
 import org.opensaml.saml2.core.AuthnContext;
 
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
-import es.caib.seycon.Password;
-import es.caib.seycon.UnknownUserException;
+import com.soffid.iam.api.Password;
+
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class UserPasswordAction extends HttpServlet {
-    LogRecorder logRecorder = LogRecorder.getInstance();
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	LogRecorder logRecorder = LogRecorder.getInstance();
 
     public static final String URI = "/passwordLoginAction"; //$NON-NLS-1$
 

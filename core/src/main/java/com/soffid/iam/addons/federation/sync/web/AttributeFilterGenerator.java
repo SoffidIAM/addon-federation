@@ -32,9 +32,9 @@ import com.soffid.iam.addons.federation.common.ConditionType;
 import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.sync.ServerServiceLocator;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.sync.ServerServiceLocator;
 
 public class AttributeFilterGenerator extends HttpServlet {
     @Override

@@ -17,9 +17,12 @@
 			<xsl:apply-templates select="node()|@*" />
 		</xsl:copy>
 			
-			<zul:treeitem open="false" if="{'${canViewFederation}'}">
+			<zul:treeitem open="false">
+				<xsl:attribute name="if">${canViewFederation}</xsl:attribute>
 				<zul:treerow >
-					<zul:treecell label="{'${c:l(&quot;federation.menu&quot;)}'}" onClick="self.parent.parent.open=!self.parent.parent.open"/>
+					<zul:treecell onClick="self.parent.parent.open=!self.parent.parent.open">
+						<xsl:attribute name="label">${c:l("federation.menu")}</xsl:attribute>
+					</zul:treecell>
 				</zul:treerow>
 				<zul:treechildren>
 					<zul:treeitem>

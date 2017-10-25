@@ -9,28 +9,32 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import com.soffid.iam.addons.federation.common.Attribute;
-import com.soffid.iam.addons.federation.service.impl.FederationSyncBoot;
 import com.soffid.iam.addons.federation.sync.web.MetadataGenerator;
+import com.soffid.iam.api.Tenant;
+import com.soffid.iam.sync.SoffidApplication;
 
-import es.caib.seycon.ng.comu.DadaUsuari;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.sync.SeyconApplication;
 
-public class FederationBootServiceImpl extends FederationBootServiceBase {
+public class FederationBootServiceImpl extends FederationBootServiceBase 
+	implements ApplicationContextAware
+{
 	Log log = LogFactory.getLog(getClass());
+	private ApplicationContext applicationContext;
  	@Override
 	protected void handleSyncServerBoot() throws Exception {
-		SeyconApplication.getJetty().
+		SoffidApplication.getJetty().
 			bindAdministrationServlet("/SAML/metadata.xml", null, MetadataGenerator.class);
 
-		SeyconApplication.getJetty(). 
+		SoffidApplication.getJetty(). 
 			publish(getFederacioService(), FederacioService.REMOTE_PATH, "agent");
 	}
 
@@ -62,12 +66,12 @@ public class FederationBootServiceImpl extends FederationBootServiceBase {
 		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3");
 		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11");
 		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4");
-		testAttribute("Role & group membership", "IsMeberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1");
+		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1");
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1");
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2");
 		
 		
-		DataSource ds = (DataSource) new InitialContext().lookup("java:/jdbc/seycon"); //$NON-NLS-1$
+		DataSource ds = (DataSource) applicationContext.getBean("dataSource"); //$NON-NLS-1$
 		final Connection conn = ds.getConnection();
 		try {
 			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_REGISTER=0 WHERE ALLOW_REGISTER IS NULL"); //$NON-NLS-1$
@@ -168,7 +172,25 @@ public class FederationBootServiceImpl extends FederationBootServiceBase {
 		}
 	}
 
+	@Override
+	protected void handleTenantBoot(Tenant arg0) throws Exception {
+		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1");
+		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241");
+		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42");
+		testAttribute("Surname", "SurName", "urn:oid:2.5.4.4");
+		testAttribute("Surnames (all)", "SurNames", "urn:oid:1.3.6.1.4.1.22896.3.1.5");
+		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20");
+		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3");
+		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11");
+		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4");
+		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1");
+		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1");
+		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2");
+	}
 
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
+	}
 }
 
 interface RowProcessor {

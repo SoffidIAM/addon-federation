@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="SC_POLICY" )
@@ -28,12 +29,17 @@ public abstract class PolicyEntity {
 	@Nullable
 	public com.soffid.iam.addons.federation.model.PolicyConditionEntity condition;
 
+	@Column (name="POL_TEN_ID")
+	@Nullable
+	public TenantEntity tenant;
+	
 	@DaoFinder
 	public com.soffid.iam.addons.federation.model.PolicyEntity findById(
 		java.lang.Long id) {
 	 return null;
 	}
-	@DaoFinder("from com.soffid.iam.addons.federation.model.PolicyEntity as policyEntity where policyEntity.identiyProvider.id = :id")
+	@DaoFinder("from com.soffid.iam.addons.federation.model.PolicyEntity as policyEntity "
+			+ "where policyEntity.identiyProvider.id = :id and policyEntity.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.PolicyEntity> findByidentiyProviderId(
 		java.lang.Long id) {
 	 return null;

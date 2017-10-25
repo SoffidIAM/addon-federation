@@ -27,4 +27,7 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@ForeignKey (foreignColumn="SPI_SP_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity> serviceProviderVirtualIdentityProvider;
 
+	@Column(name="FED_UID", length=2000)
+	@Nullable
+	public String uidExpression;
 }

@@ -504,7 +504,7 @@
 									port1.getFellow("dada").setDisabled(!marcat);
 									port2.getFellow("dada").setDisabled(!marcat);
 									certificatechain.getFellow("dada").setDisabled(!marcat);
-									metadades.getFellow("dada").setDisabled(marcat);
+									metadades.setDisabled(marcat);
 									organization.getFellow("dada").setDisabled(!marcat);
 									contact.getFellow("dada").setDisabled(!marcat);
 									id_allowCertificate1.setDisabled(!marcat);
@@ -719,7 +719,7 @@
 											<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
 											<input_dada bind="@descripcio" id="detall_name" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 										</row>
-										<row>
+										<row visible="false">
 											<input_etiqueta value="${c:l('federacio.zul.MetatadaUrl')}"/>
 											<input_dada bind="@entityGrupPare/metadataUrl" id="detall_metadataUrl" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 										</row>
@@ -747,7 +747,9 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
-									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" 
+										readonly="${!canModifyFI}" width="98%"
+										id="idpPublicId"/>
 									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
 								</row>
 								<row>
@@ -763,7 +765,7 @@
 											port2.getFellow("dada").setDisabled(!self.isChecked());
 											id_disableSSL.setDisabled(!self.isChecked());
 											certificatechain.getFellow("dada").setDisabled(!self.isChecked());
-											metadades.getFellow("dada").setDisabled(self.isChecked());
+											metadades.setDisabled(self.isChecked());
 											organization.getFellow("dada").setDisabled(!self.isChecked());
 											contact.getFellow("dada").setDisabled(!self.isChecked());
 											id_allowCertificate1.setDisabled(!self.isChecked());
@@ -793,7 +795,33 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
-									<input_dada bind="@federationMember/metadades" id="metadades" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+									<textbox sclass="textbox" 
+										bind="@federationMember/metadades" id="metadades" readonly="${!canModifyFI}" rows="4" width="98%">
+										<attribute name="onChange"><![CDATA[
+							                try {
+							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+							                    dbFactory.setNamespaceAware(true);
+							                    javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+							                    org.w3c.dom.Document newDoc = dBuilder.parse(new org.xml.sax.InputSource(new java.io.StringReader(self.getValue())));
+							                    org.w3c.dom.NodeList nl = newDoc.getChildNodes();
+							                    for (int i = 0; i < nl.getLength(); i++) {
+							                        org.w3c.dom.Node n = nl.item(i);
+							                        if (n instanceof org.w3c.dom.Element)
+							                        {
+							                        	String id = n.getAttribute("entityID");
+							                        	if (id != null)
+							                        	{
+							                        		es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+							                        		idpPublicId.setValue( id );
+							                        	}
+							                        }
+							                    }
+							                } catch (SAXParseException e) {
+							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
+							                }
+										]]>
+										</attribute>
+									</textbox>
 								</row>
 								<row  id="firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
@@ -965,12 +993,16 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
-									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<textbox id="spPublicId" bind="@federationMember/publicId" maxlength="255" 
+										onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
 									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
-									<textbox bind="@federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<textbox bind="@federationMember/name" maxlength="255" 
+										onChange="canviaDescripcioEG()" 
+										readonly="${!canModifyFI}" 
+										width="98%"/>
 								</row>
 								<!--row>
 									<input_etiqueta value="Organization" />
@@ -982,7 +1014,34 @@
 								</row-->
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
-									<input_dada bind="@federationMember/metadades" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+									<textbox sclass="textbox" 
+										bind="@federationMember/metadades" readonly="${!canModifyFI}" rows="4" 
+										width="98%">
+										<attribute name="onChange"><![CDATA[
+							                try {
+							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+							                    dbFactory.setNamespaceAware(true);
+							                    javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+							                    org.w3c.dom.Document newDoc = dBuilder.parse(new org.xml.sax.InputSource(new java.io.StringReader(self.getValue())));
+							                    org.w3c.dom.NodeList nl = newDoc.getChildNodes();
+							                    for (int i = 0; i < nl.getLength(); i++) {
+							                        org.w3c.dom.Node n = nl.item(i);
+							                        if (n instanceof org.w3c.dom.Element)
+							                        {
+							                        	String id = n.getAttribute("entityID");
+							                        	if (id != null)
+							                        	{
+							                        		es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+							                        		spPublicId.setValue( id );
+							                        	}
+							                        }
+							                    }
+							                } catch (SAXParseException e) {
+							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
+							                }
+										]]>
+										</attribute>
+									</textbox>
 								</row>
 								<!--row>
 									<input_etiqueta value="nameIdFormat" />
@@ -992,6 +1051,10 @@
 									<input_etiqueta value="certificateChain" />
 									<input_dada bind="@federationMember/certificateChain" rows_custom="4" width_custom="98%" lectura="${!canModifyFI}"/>
 								</row-->
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
+									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="@federationMember/uidExpression" />
+								</row>
 							</rows>
 						</grid>
 						</hbox>						
@@ -1018,7 +1081,9 @@
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
 									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
-									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" 
+										id="vipPublicId"
+										readonly="${!canModifyFI}" width="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
@@ -1026,7 +1091,33 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
-									<input_dada bind="@federationMember/metadades" lectura="true" rows_custom="4" width_custom="98%"/>
+									<textbox sclass="textbox" 
+										bind="@federationMember/metadades" readonly="true" rows="4" width="98%">
+										<attribute name="onChange"><![CDATA[
+							                try {
+							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+							                    dbFactory.setNamespaceAware(true);
+							                    javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+							                    org.w3c.dom.Document newDoc = dBuilder.parse(new org.xml.sax.InputSource(new java.io.StringReader(self.getValue())));
+							                    org.w3c.dom.NodeList nl = newDoc.getChildNodes();
+							                    for (int i = 0; i < nl.getLength(); i++) {
+							                        org.w3c.dom.Node n = nl.item(i);
+							                        if (n instanceof org.w3c.dom.Element)
+							                        {
+							                        	String id = n.getAttribute("entityID");
+							                        	if (id != null)
+							                        	{
+							                        		es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+							                        		vipPublicId.setValue( id );
+							                        	}
+							                        }
+							                    }
+							                } catch (SAXParseException e) {
+							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
+							                }
+										]]>
+										</attribute>
+									</textbox>
 								</row>
 								<row id = "firstRowToHide2">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>

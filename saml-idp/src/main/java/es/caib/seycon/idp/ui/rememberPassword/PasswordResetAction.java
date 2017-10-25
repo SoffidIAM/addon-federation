@@ -13,10 +13,8 @@ import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
 import com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService;
-
 import es.caib.seycon.BadPasswordException;
 import es.caib.seycon.InvalidPasswordException;
-import es.caib.seycon.Password;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
@@ -61,7 +59,7 @@ public class PasswordResetAction extends HttpServlet {
         } else if (! p1.equals(p2)) {
             error = Messages.getString("PasswordChangeRequiredAction.password.mismatch"); //$NON-NLS-1$
         } else {
-            challenge.setPassword(new Password(p1));
+            challenge.setPassword(new es.caib.seycon.ng.comu.Password(p1));
             
             try
             {

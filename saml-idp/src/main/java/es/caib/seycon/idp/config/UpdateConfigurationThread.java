@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -29,14 +28,17 @@ import com.soffid.iam.addons.federation.service.FederacioService;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.idp.client.ServerLocator;
-import es.caib.seycon.ng.sync.servei.ServerService;
+import com.soffid.iam.sync.service.ServerService;
+import com.soffid.iam.utils.Security;
 
 public class UpdateConfigurationThread extends Thread {
 
     private EntityGroupMember egm;
     private Logger log;
-    public UpdateConfigurationThread(EntityGroupMember egm) {
+	private IdpConfig cfg;
+    public UpdateConfigurationThread(IdpConfig cfg, EntityGroupMember egm) {
         super();
+        this.cfg = cfg;
         this.egm = egm;
         log = LoggerFactory.getLogger(UpdateConfigurationThread.class);
     }
@@ -52,6 +54,7 @@ public class UpdateConfigurationThread extends Thread {
         long l;
         do {
             
+        	Security.nestedLogin(cfg.getSystem().getTenant(), "saml-configuration-thread", Security.ALL_PERMISSIONS);
             try {
                 Thread.sleep(30000); /// 5 Minutos
                 if (end) {

@@ -9,11 +9,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.soffid.iam.api.Password;
+
 import es.caib.seycon.BadPasswordException;
 import es.caib.seycon.InvalidPasswordException;
-import es.caib.seycon.Password;
-import es.caib.seycon.UnknownUserException;
 import es.caib.seycon.idp.client.PasswordManager;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class PasswordChangeAction extends HttpServlet {
 

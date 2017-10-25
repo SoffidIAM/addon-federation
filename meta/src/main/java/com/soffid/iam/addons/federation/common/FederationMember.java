@@ -8,7 +8,7 @@ package com.soffid.iam.addons.federation.common;
 import com.soffid.mda.annotation.*;
 
 @ValueObject 
-public abstract class FederationMember {
+public class FederationMember {
 
 	@Nullable
 	public java.lang.Long id;
@@ -109,4 +109,7 @@ public abstract class FederationMember {
 	@Nullable
 	Long sessionTimeout;
 
+	@Description("Bean shell expression to generate user id")
+	@Nullable
+	public String uidExpression;
 }
