@@ -8,7 +8,7 @@ package com.soffid.iam.addons.federation.common;
 import com.soffid.mda.annotation.*;
 
 @ValueObject 
-public abstract class AttributePolicyCondition extends com.soffid.iam.addons.federation.common.PolicyCondition {
+public class AttributePolicyCondition extends com.soffid.iam.addons.federation.common.PolicyCondition {
 
 	public java.lang.Boolean allow;
 

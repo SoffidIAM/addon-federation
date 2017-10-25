@@ -3,11 +3,7 @@ package es.caib.seycon.idp.ui;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.security.Principal;
-import java.util.HashSet;
-import java.util.Set;
 
-import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -15,19 +11,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.eclipse.jetty.server.session.JDBCSessionManager.Session;
 import org.opensaml.saml2.core.AuthnContext;
 
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
-import es.caib.seycon.InternalErrorException;
 import es.caib.seycon.InvalidPasswordException;
-import es.caib.seycon.Password;
-import es.caib.seycon.UnknownUserException;
-import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.signatura.api.Signature;
 import es.caib.signatura.api.SignatureProviderException;
 import es.caib.signatura.api.SignatureVerifyException;
@@ -74,7 +63,7 @@ public class SignatureAction extends HttpServlet {
                             req.getRemoteAddr());
                     error = Messages.getString("SignatureAction.unableToGuessUserName"); //$NON-NLS-1$
                 }
-            } catch (InternalErrorException e) {
+            } catch (es.caib.seycon.ng.exception.InternalErrorException e) {
                 error = Messages.getString("SignatureAction.unableToCreateUser")+e.toString(); //$NON-NLS-1$
                 log(Messages.getString("SignatureAction.UnexpectedError"), e); //$NON-NLS-1$
             } catch (UnknownUserException e) {

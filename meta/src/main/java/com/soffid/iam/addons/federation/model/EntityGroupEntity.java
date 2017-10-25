@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="SC_ENTGRP" )
@@ -23,10 +24,18 @@ public abstract class EntityGroupEntity {
 	@Nullable
 	public java.lang.String metadataUrl;
 
+	@Column (name="ENG_TEN_ID")
+	@Nullable
+	public TenantEntity tenant;
+
 	@ForeignKey (foreignColumn="FED_ENT_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.FederationMemberEntity> members;
 
-	@DaoFinder("select eg\nfrom\ncom.soffid.iam.addons.federation.model.EntityGroupEntity eg\nwhere\n(:name is null or eg.name like :name)\norder by eg.name")
+	@DaoFinder("select eg "
+			+ "from com.soffid.iam.addons.federation.model.EntityGroupEntity eg "
+			+ "where (:name is null or eg.name like :name) "
+			+ "and eg.tenant.id=:tenantId "
+			+ "order by eg.name")
 	public java.util.List<com.soffid.iam.addons.federation.model.EntityGroupEntity> findByName(
 		java.lang.String name) {
 	 return null;

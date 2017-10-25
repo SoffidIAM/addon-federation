@@ -37,8 +37,6 @@ import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSyste
 import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
-import es.caib.seycon.InternalErrorException;
-import es.caib.seycon.UnknownUserException;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.textformatter.TextFormatException;
@@ -102,7 +100,7 @@ public class RegisterFormServlet extends BaseForm {
         	LogonService logonService = new RemoteServiceLocator().getLogonService();
         	String userType = ip.getUserTypeToRegister();
         	g.addArgument("policy", 
-        			config.getFederationService().getPolicyDescriptionForUserType(userType, IdpConfig.getConfig().getDispatcher().getCodi()));
+        			config.getFederationService().getPolicyDescriptionForUserType(userType, IdpConfig.getConfig().getSystem().getName()));
 
             g.generate(resp, "registerPage.html"); //$NON-NLS-1$
 

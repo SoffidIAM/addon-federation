@@ -27,6 +27,9 @@
 	<zscript>
 	// Autoritzacions
 	import es.caib.seycon.ng.utils.AutoritzacionsUsuari;
+	import com.soffid.iam.addons.federation.web.PolConditionTree;
+	import com.soffid.iam.addons.federation.web.AttPolicy;
+	import com.soffid.iam.addons.federation.common.PolicyCondition;
 	canQueryFederacions = AutoritzacionsUsuari.canQueryAllIdentityFederation();
 	canCreateFI = AutoritzacionsUsuari.canCreateAllIdentityFederation();
 	canUpdateFI = AutoritzacionsUsuari.canUpdateAllIdentityFederation();
@@ -68,9 +71,9 @@
 					if (atrib !=null) cond.setAttribute(atrib);
 				}
 				ap.guardaValorsCondicio(cond);
-			} else if (item instanceof PolCondition) {
+			} else if (item instanceof PolConditionTree) {
 				// guardem valors
-				PolCondition pc = (PolCondition) item;
+				PolConditionTree pc = (PolConditionTree) item;
 				pc.guardaValorsCondicio(pc.getCondicio());
 			}
 			Treechildren tchs = item.getTreechildren();
@@ -127,7 +130,7 @@
 			// Guardem totes les condicions iterativament...
 			guardaCondicions(tfills, null); // Per a tots
 			//es.caib.zkib.zkiblaf.Missatgebox.info ("en té "+ tfills.getChildren().size()+ " fills");
-			PolCondition polcon = tfills.getChildren().get(0); //només en té 1
+			PolConditionTree polcon = tfills.getChildren().get(0); //només en té 1
 			//polcon.guardaValorsCondicio(); // establim valors
 			pol.setCondition(polcon.getCondicio());
 			//es.caib.zkib.zkiblaf.Missatgebox.info("Condicio de tipus " + polcon.getCondicio().getType());
@@ -184,313 +187,6 @@
 	import es.caib.zkib.zkiblaf.ImageClic;
 	import com.soffid.iam.addons.federation.web.*;
 	// Condicions generals
-	public class PolCondition extends FederationElementFillTree {
-
-		public PolCondition(Component contenidor, PolicyCondition condicio, boolean principal) {
-			super(contenidor, condicio, null, principal);
-
-			PolCondition yomismo = this;
-
-			// Afegim les condicions FILLES si les té
-			if (getCondicio().getChildrenCondition() != null && getCondicio().getChildrenCondition().size() != 0) {
-				// Condició secundària
-				if (yomismo.getFila().getTreechildren() == null) {
-					yomismo.getFila().appendChild(new Treechildren());
-				}
-
-				for (Iterator it = yomismo.getCondicio().getChildrenCondition().iterator(); it.hasNext();) {
-					// Creen la nova condició
-					PolicyCondition novacond = (PolicyCondition) it.next();
-					// I l'afegim con a filla nostra
-					Collection fills = novacond.getChildrenCondition();
-					if (fills == null) {
-						fills = new ArrayList();
-						novacond.setChildrenCondition(fills);
-					}
-					//fills.add(novacond);
-					// Component de l'arbre
-					PolCondition nova = new PolCondition(getFila().getTreechildren(), novacond, false);
-					//ens afegim con a condició pare de la nova
-					nova.setCondicioPare(getCondicio());
-				}
-			}
-
-			// Afegim event al botó esborrar
-			if (getBotoEsborrar() != null)
-				getBotoEsborrar().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						removeAsChildrenCondition(); //ens esborrem del pare (si en té)
-						eliminarElementArbre(yomismo);
-					}
-				});
-
-			if (getBotoAfegir() != null) {
-				getBotoAfegir().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						// Condició secundària
-						if (getFila().getTreechildren() == null) {
-							getFila().appendChild(new Treechildren());
-						}
-						// Creen la nova condició
-						PolicyCondition novacond = new PolicyCondition(com.soffid.iam.addons.federation.common.ConditionType.ANY, "");
-						// I l'afegim con a filla nostra
-						Collection fills = getCondicio().getChildrenCondition();
-						if (fills == null) {
-							fills = new ArrayList();
-							getCondicio().setChildrenCondition(fills);
-						}
-						fills.add(novacond);
-						// Component de l'arbre
-						PolCondition nova = new PolCondition(getFila().getTreechildren(), novacond, false);
-						//ens afegim con a condició pare de la nova
-						nova.setCondicioPare(getCondicio());
-					}
-				});
-			}
-
-			getListbox().addEventListener("onSelect", new org.zkoss.zk.ui.event.EventListener() {
-				public void onEvent(Event event) throws Exception {
-					Listitem sel = yomismo.getListbox().getSelectedItem();
-					if (sel != null && sel.getValue() instanceof ConditionType) {
-						comprovaCondicio((ConditionType) sel.getValue());
-					}
-				}
-			});
-
-			if (getBotoSelecionaAtribut() != null) {
-				getBotoSelecionaAtribut().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						Object[] dades = { yomismo, yomismo.getAttributeName(), "", "" };
-						Events.postEvent("onInicia", desktop.getPage("federacioAtributs").getFellow("esquema"), dades);
-					}
-				});
-			}
-
-			addEventListener("onActualitza", new org.zkoss.zk.ui.event.EventListener() {
-				public void onEvent(Event event) throws Exception {
-					Attribute sel = (Attribute) event.getData();
-					// Ho posem graficament
-					yomismo.setAttributeName(sel.getName());
-					// Guardem l'atribut a la condición
-					getCondicio().setAttribute(sel);
-				}
-			});
-
-		}
-
-		public PolCondition(PolicyCondition condicio, boolean principal) {
-			this(esquemaPo.getFellow("dades").getFellow("form").getFellow("treepol").getFellow("rows_policy"), condicio, principal);
-		}
-	}
-	// Per a attributs i les seues condicion
-	public class AttPolicy extends AtributFederationElementFillTree {
-
-		public AttPolicy(Component contenidor, Attribute atribut, AttributePolicyCondition condPare, boolean principal)
-				throws Exception {
-			super(contenidor, atribut, condPare, principal);
-			//setCondicioAtributPare(condicioPare);
-			AttPolicy yomismo = this;
-
-			if (getBotoEsborrar() != null) {
-				getBotoEsborrar().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						removeAllAttributeChildrenCondition();
-						eliminarElementArbre(yomismo);
-					}
-				});
-			}
-			/*if (getBotoAfegir() != null) {
-				getBotoAfegir().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						//Missatgebox.info("afa");
-						// Condició secundària
-						if (getFila().getTreechildren() == null) {
-							getFila().appendChild(new Treechildren());
-						}
-						afegirCondicioAtribut(getFila().getTreechildren(), new AttributePolicyCondition("ATTC",
-								com.soffid.iam.addons.federation.common.ConditionType.ANY, "", true)); 
-					}
-				});
-			}*/
-
-			if (getBotoSelecionaAtribut() != null) {
-				getBotoSelecionaAtribut().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						Object[] dades = { yomismo, yomismo.getAttributeName(), yomismo.getAttributeShortName(),
-								yomismo.getAttributeOID() };
-						Events.postEvent("onInicia", desktop.getPage("federacioAtributs").getFellow("esquema"), dades);
-					}
-				});
-			}
-			addEventListener("onActualitza", new org.zkoss.zk.ui.event.EventListener() {
-				public void onEvent(Event event) throws Exception {
-					Attribute sel = (Attribute) event.getData();
-					// Ho posem graficament
-					yomismo.setAttributeName(sel.getName());
-					yomismo.setAttributeShortName(sel.getShortName());
-					yomismo.setAttributeOID(sel.getOid());
-					// Guardem l'atribut a la condició
-					yomismo.setAtribut(sel);
-				}
-			});
-
-		}
-
-		public AttPolicy(Component contenidor, AttributePolicyCondition atributCondition, boolean principal) {
-			super(contenidor, atributCondition, null, principal);
-			//setCondicioAtributPare(atributConditionPare);
-			AttPolicy yomismo = this;
-			if (getBotoEsborrar() != null) {
-				getBotoEsborrar().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						removeAsChildrenAttributeCondition();
-						eliminarElementArbre(yomismo);
-					}
-				});
-			}
-			if (getBotoAfegir() != null) {
-				getBotoAfegir().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						// Condició secundària
-						if (getFila().getTreechildren() == null) {
-							getFila().appendChild(new Treechildren());
-						}
-						//condicio filla
-						AttributePolicyCondition novaCond = new AttributePolicyCondition(
-						com.soffid.iam.addons.federation.common.ConditionType.ANY, "", true);
-						// I l'afegim con a filla nostra
-						Collection fills = getCondicio().getChildrenCondition();
-						if (fills == null) {
-							fills = new ArrayList();
-							getCondicio().setChildrenCondition(fills);
-						}
-						fills.add(novaCond);
-						// Component de l'arbre
-						AttPolicy nova = new AttPolicy(getFila().getTreechildren(), novaCond, false);
-						//ens afegim con a condició pare de la nova
-						nova.setAttributePolicyConditionPare(getAttributePolicyCondition());
-						// Heretem atribut del pare
-						novaCond.setAttribute(getAttributePolicyCondition().getAttribute()); 
-					}
-				});
-			}
-			getListbox().addEventListener("onSelect", new org.zkoss.zk.ui.event.EventListener() {
-				public void onEvent(Event event) throws Exception {
-					Listitem sel = yomismo.getListbox().getSelectedItem();
-					if (sel != null && sel.getValue() instanceof ConditionType) {
-						comprovaCondicio((ConditionType) sel.getValue());
-					}
-				}
-			});
-			if (getBotoSelecionaAtribut() != null) {
-				getBotoSelecionaAtribut().addEventListener("onClick", new org.zkoss.zk.ui.event.EventListener() {
-					public void onEvent(Event event) throws Exception {
-						Object[] dades = { yomismo, yomismo.getAttributeName(), "", "" };
-						Events.postEvent("onInicia", desktop.getPage("federacioAtributs").getFellow("esquema"), dades);
-					}
-				});
-			}
-
-			addEventListener("onActualitza", new org.zkoss.zk.ui.event.EventListener() {
-				public void onEvent(Event event) throws Exception {
-					if (event.getData() instanceof String[]) {
-						String[] dades = (String[]) event.getData();
-						yomismo.setAttributeName(dades[0]);
-						//yomismo.setAttributeShortName(dades[1]);
-						//yomismo.setAttributeOID(dades[2]);
-					}
-				}
-			});
-
-			// mirem si té condicions filles
-			if (atributCondition.getChildrenCondition() != null) {
-
-				// Pare és mainCond
-				if (yomismo.getFila().getTreechildren() == null) {
-					yomismo.getFila().appendChild(new Treechildren());
-				}
-				for (Iterator it = atributCondition.getChildrenCondition().iterator(); it.hasNext();) {
-					Object elem = it.next();
-					if (elem instanceof AttributePolicyCondition) {
-						AttributePolicyCondition pc = (AttributePolicyCondition) elem;
-						AttPolicy nova = new AttPolicy(yomismo.getFila().getTreechildren(), pc, false); // no principal
-						nova.setAttributePolicyConditionPare(atributCondition);
-					}
-				}
-			}
-
-		}
-
-		public AttPolicy(Attribute atribut, AttributePolicyCondition condPare, boolean principal) throws Exception {
-			// Afegim l'atribut
-			this(esquemaPo.getFellow("dades").getFellow("form").getFellow("treeattpol").getFellow("rows_attPolicy"), atribut,
-					condPare, principal);
-		}
-
-		public AttPolicy(AttributePolicyCondition condicio, boolean principal) {
-			// Afegim l'atribut
-			this(esquemaPo.getFellow("dades").getFellow("form").getFellow("treeattpol").getFellow("rows_attPolicy"), condicio,
-					principal);
-		}
-
-		// Principal
-		/*public AttPolicy(Component contenidor, AttributePolicy attPolicy, boolean principal) {
-			// Afegim atribut 
-			this(contenidor, attPolicy.getAttribute(), attPolicy.getAttributePolicyCondition(), principal);
-			setAttributePolicy(attPolicy); // la guardem
-
-			// I les seues condicions (si les té)
-			if (attPolicy.getAttributePolicyCondition() != null) {
-				if (getFila().getTreechildren() == null) {
-					getFila().appendChild(new Treechildren());
-				}
-
-				// La primera condició no se pot esborrar (principal = true) [i no en té condició pare]
-				AttPolicy mainCond = new AttPolicy(getFila().getTreechildren(), attPolicy.getAttributePolicyCondition(), true);
-
-				// Establim la condició principal a l'atribut
-				setAttributePolicyConditionPare(mainCond.getAttributePolicyCondition());
-
-				// mirem si té condicions filles
-				if (attPolicy.getAttributePolicyCondition().getChildrenCondition() != null) {
-
-					// Pare és mainCond
-					if (mainCond.getFila().getTreechildren() == null) {
-						mainCond.getFila().appendChild(new Treechildren());
-					}
-					for (Iterator it = attPolicy.getAttributePolicyCondition().getChildrenCondition().iterator(); it.hasNext();) {
-						Object elem = it.next();
-						if (elem instanceof AttributePolicyCondition) {
-							AttributePolicyCondition pc = (AttributePolicyCondition) elem;
-							AttPolicy nova = new AttPolicy(mainCond.getFila().getTreechildren(), pc, false); // no principal
-							nova.setAttributePolicyConditionPare(mainCond.getAttributePolicyCondition());
-						}
-					}
-				}
-
-			} else {// si no en té cap condicio
-				// Afegim la condició inicial (no la té encara i és obligatòria)
-				if (getFila().getTreechildren() == null) {
-					getFila().appendChild(new Treechildren());
-				}
-
-				AttributePolicyCondition novaCond = new AttributePolicyCondition(com.soffid.iam.addons.federation.common.ConditionType.ANY,
-						"", true);
-				// Component de l'arbre (filla de l'atribut)
-				AttPolicy nova = new AttPolicy(getFila().getTreechildren(), novaCond, true);
-				//ens afegim con a condició pare de l'atribut
-				setAttributePolicyConditionPare(novaCond);
-				//nova.setAttributePolicyConditionPare(null);
-			}
-
-		} 
-
-		public AttPolicy(AttributePolicy attPolicy, boolean principal) {
-			this(esquemaPo.getFellow("dades").getFellow("form").getFellow("treeattpol").getFellow("rows_attPolicy"), attPolicy,
-					principal);
-		} */
-
-	}
 	// Policy actual
 	Policy policy;
 	// Lo elimina gráficamente y del vector que contiene el dato
@@ -509,22 +205,10 @@
 			return;
 		}
 		// Per guardar totes.. i fer neteja dels arbres (sense pare)
-		new PolCondition(condicio, true);
+		new PolConditionTree(esquemaPo.getFellow("dades").getFellow("form").getFellow("treepol").getFellow("rows_policy"),
+				condicio, true);
 	}
-	/*void afegirCondicioAtribut(Component pare, AttributePolicyCondition condicio) throws Exception {
-																							 if (condicio == null) {
-																							 return;
-																							 }
-																							 // Per guardar totes.. i fer neteja dels arbres
-																							 c_attPolicy.add(new AttPolicy(pare, condicio, false));
-																							 }*/
-	/*void afegirCondicioPrincipalAtribut(Component pare, AttributePolicyCondition condicio) {
-		if (condicio == null) {
-			return;
-		}
-		// Per guardar totes.. i fer neteja dels arbres (sense pare)
-		c_attPolicy.add(new AttPolicy(pare, condicio, true));
-	}*/
+
 	void afegirAtribut(AttributePolicy attPolicy, boolean principal) throws Exception {
 		if (attPolicy == null) {
 			return;
@@ -537,7 +221,8 @@
 		}
 
 		// Generem la filera de l'atribut
-		AttPolicy filaAtribut = new AttPolicy(attPolicy.getAttribute(), attPolicy.getAttributePolicyCondition(), principal);
+		AttPolicy filaAtribut = new AttPolicy(esquemaPo.getFellow("dades").getFellow("form").getFellow("treeattpol").getFellow("rows_attPolicy"),
+				attPolicy.getAttribute(), attPolicy.getAttributePolicyCondition(), principal);
 		filaAtribut.setAttributePolicy(attPolicy);
 
 		if (attPolicy.getAttributePolicyCondition() != null) {

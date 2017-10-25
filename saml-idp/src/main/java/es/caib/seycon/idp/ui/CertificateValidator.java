@@ -5,11 +5,11 @@ import java.security.cert.X509Certificate;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.soffid.iam.api.User;
+
 import es.caib.seycon.idp.client.ServerLocator;
-import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
-import es.caib.seycon.ng.sync.servei.ServerService;
 
 public class CertificateValidator {
     public String validate(HttpServletRequest req) throws InternalErrorException, IOException, UnknownUserException {
@@ -23,9 +23,9 @@ public class CertificateValidator {
         if (certs == null || certs.length == 0) {
             return null;
         } else {
-        	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
-            Usuari ui = server.getUserInfo(certs);
-            return ui.getCodi();
+        	com.soffid.iam.sync.service.ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+            User ui = server.getUserInfo(certs);
+            return ui.getUserName();
         }
 
     }

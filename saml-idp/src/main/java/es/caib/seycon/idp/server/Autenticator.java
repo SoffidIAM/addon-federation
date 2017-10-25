@@ -14,7 +14,6 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,12 +29,18 @@ import org.slf4j.LoggerFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.Session;
+import com.soffid.iam.api.User;
+import com.soffid.iam.api.UserAccount;
+import com.soffid.iam.config.Config;
 import com.soffid.iam.federation.idp.LanguageFilter;
+import com.soffid.iam.service.SessionService;
+import com.soffid.iam.ssl.SeyconKeyStore;
+import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -43,15 +48,8 @@ import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.ui.SessionConstants;
-import es.caib.seycon.ng.comu.Sessio;
-import es.caib.seycon.ng.comu.UserAccount;
-import es.caib.seycon.ng.comu.Usuari;
-import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
-import es.caib.seycon.ng.servei.SessioService;
-import es.caib.seycon.ng.sync.servei.ServerService;
-import es.caib.seycon.ssl.SeyconKeyStore;
 import es.caib.seycon.util.Base64;
 
 public class Autenticator {
@@ -64,14 +62,14 @@ public class Autenticator {
         
         IdpConfig config = IdpConfig.getConfig();
         
-        Usuari user = server.getUserInfo(principal, config.getDispatcher().getCodi());
+        User user = server.getUserInfo(principal, config.getSystem().getName());
         
         server.updateExpiredPasswords(user, externalAuth);
         
         String url = "https://" + config.getHostName()+":"+config.getStandardPort()+ SessionCallbackServlet.URI;
         
-        Sessio sessio = new RemoteServiceLocator().getSessioService().registraSessioWeb(
-        		user.getCodi(), config.getHostName(),
+        com.soffid.iam.api.Session sessio = new RemoteServiceLocator().getSessionService().registerWebSession(
+        		user.getUserName(), config.getHostName(),
         		LanguageFilter.getRemoteIp(),
         		url);
 
@@ -87,7 +85,7 @@ public class Autenticator {
         Config serverConfig = Config.getConfig();
 
         StringBuffer buffer = new StringBuffer ();
-        buffer.append (sessio.getId()).append("|").append(sessio.getClau()).
+        buffer.append (sessio.getId()).append("|").append(sessio.getKey()).
         	append("|").
         	append (certString).append("|").
         	append(serverConfig.getServerList());
@@ -124,19 +122,19 @@ public class Autenticator {
         			{
         				String hash = value.substring(separator+1);
         				Long id = Long.decode(value.substring(0, separator));
-        				for (Sessio sessio: new RemoteServiceLocator().getSessioService().getActiveSessions(id))
+        				for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
         				{
-        		        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getClau().getBytes("UTF-8"));
+        		        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
         		        	String digestString = Base64.encodeBytes(digest);
         		        	if (digestString.equals(hash))
         		        	{
         		        		try {
         		        			
         		        			ServerService svc = new RemoteServiceLocator().getServerService();
-        		        			Usuari u = svc.getUserInfo(sessio.getCodiUsuari(), null);
-        		        			if (u != null && u.getActiu())
+        		        			User u = svc.getUserInfo(sessio.getUserName(), null);
+        		        			if (u != null && u.getActive().booleanValue())
         		        			{
-        		        				for (UserAccount account: svc.getUserAccounts(u.getId(), config.getDispatcher().getCodi()))
+        		        				for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
         		        				{
         									autenticate(account.getName(), req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
         	        		        		return true;
@@ -157,7 +155,7 @@ public class Autenticator {
     
 
     private void setCookie(HttpServletRequest req, HttpServletResponse resp,
-			Sessio sessio, Usuari user, String type) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+			Session sessio, User user, String type) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
         HttpSession session = req.getSession();
         IdpConfig config = IdpConfig.getConfig();
         
@@ -173,7 +171,7 @@ public class Autenticator {
 
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
-        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getClau().getBytes("UTF-8"));
+        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
         	String digestString = Base64.encodeBytes(digest);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
@@ -219,7 +217,10 @@ public class Autenticator {
         principals.add(principal);
         Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
         req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
-        Session shibbolethSession = (Session) req.getAttribute(Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
+        		(edu.internet2.middleware.shibboleth.idp.session.Session) 
+        			req.getAttribute(
+        					edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         if (shibbolethSession != null)
         {
         	shibbolethSession.setSubject(userSubject);
@@ -272,7 +273,7 @@ public class Autenticator {
 		}
     }
 
-	public void notifyLogout(Session indexedSession) throws NumberFormatException, InternalErrorException, IOException {
+	public void notifyLogout(edu.internet2.middleware.shibboleth.idp.session.Session indexedSession) throws NumberFormatException, InternalErrorException, IOException {
 		Subject s = indexedSession.getSubject();
 		if (s != null)
 		{
@@ -285,11 +286,11 @@ public class Autenticator {
 					{
 						String sessionid = split[0];
 						String sessionKey = split[1];
-						SessioService ss = new RemoteServiceLocator().getSessioService();
-						Sessio soffidSession = ss
+						SessionService ss = new RemoteServiceLocator().getSessionService();
+						Session soffidSession = ss
 								.getSession(Long.decode(sessionid), sessionKey);
 						if (ss != null)
-							ss.destroySessio(soffidSession);
+							ss.destroySession(soffidSession);
 					}
 		        }
 			}

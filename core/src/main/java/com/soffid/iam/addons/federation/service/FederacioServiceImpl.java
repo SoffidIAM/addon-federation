@@ -34,17 +34,6 @@ import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
 import com.soffid.iam.addons.federation.common.AttributePolicyCondition;
 
-import es.caib.seycon.ng.comu.Auditoria;
-import es.caib.seycon.ng.comu.Configuracio;
-import es.caib.seycon.ng.comu.DadaUsuari;
-import es.caib.seycon.ng.comu.Dispatcher;
-import es.caib.seycon.ng.comu.DominiCorreu;
-import es.caib.seycon.ng.comu.Password;
-import es.caib.seycon.ng.comu.PolicyCheckResult;
-import es.caib.seycon.ng.comu.TipusDada;
-import es.caib.seycon.ng.comu.TypeEnumeration;
-import es.caib.seycon.ng.comu.Usuari;
-
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -53,6 +42,7 @@ import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 
+import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.SeyconException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -70,6 +60,7 @@ import com.soffid.iam.model.PasswordPolicyEntity;
 import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
+import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
@@ -87,6 +78,15 @@ import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
 import com.soffid.iam.api.AttributeVisibilityEnum;
+import com.soffid.iam.api.Audit;
+import com.soffid.iam.api.Configuration;
+import com.soffid.iam.api.DataType;
+import com.soffid.iam.api.MailDomain;
+import com.soffid.iam.api.MetadataScope;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.api.PolicyCheckResult;
+import com.soffid.iam.api.User;
+import com.soffid.iam.api.UserData;
 
 import es.caib.seycon.ng.servei.ConfiguracioService;
 
@@ -453,27 +453,27 @@ public class FederacioServiceImpl
 	}
 
 	private void guardaDataModificacioPolitiques() throws InternalErrorException {
-		ConfiguracioService cs = getConfiguracioService();
-		Configuracio c = cs.findParametreByCodiAndCodiXarxa("saml.policy.lastchange", null); //$NON-NLS-1$
+		ConfigurationService cs = getConfigurationService();
+		Configuration c = cs.findParameterByNameAndNetworkName("saml.policy.lastchange", null); //$NON-NLS-1$
 		long aramateix = Calendar.getInstance().getTimeInMillis();
 		if (c == null) {
-			c = new Configuracio("saml.policy.lastchange", "" + aramateix); //$NON-NLS-1$ //$NON-NLS-2$
+			c = new Configuration("saml.policy.lastchange", "" + aramateix); //$NON-NLS-1$ //$NON-NLS-2$
 			cs.create(c);
 		} else {
-			c.setValor("" + aramateix); //$NON-NLS-1$
+			c.setValue("" + aramateix); //$NON-NLS-1$
 			cs.update(c);
 		}
 	}
 
 	private void guardaDataModificacioFederacio() throws InternalErrorException {
-		ConfiguracioService cs = getConfiguracioService();
-		Configuracio c = cs.findParametreByCodiAndCodiXarxa("saml.federation.lastchange", null); //$NON-NLS-1$
+		ConfigurationService cs = getConfigurationService();
+		Configuration c = cs.findParameterByNameAndNetworkName("saml.federation.lastchange", null); //$NON-NLS-1$
 		long aramateix = Calendar.getInstance().getTimeInMillis();
 		if (c == null) {
-			c = new Configuracio("saml.federation.lastchange", "" + aramateix); //$NON-NLS-1$ //$NON-NLS-2$
+			c = new Configuration("saml.federation.lastchange", "" + aramateix); //$NON-NLS-1$ //$NON-NLS-2$
 			cs.create(c);
 		} else {
-			c.setValor("" + aramateix); //$NON-NLS-1$
+			c.setValue("" + aramateix); //$NON-NLS-1$
 			cs.update(c);
 		}
 	}
@@ -481,20 +481,19 @@ public class FederacioServiceImpl
 	private void creaAuditoria(String taula, String accio, String federacio) {
 		Principal principal = Security.getPrincipal();
 		// Corregim accés sense principal (donar d'alta usuaris)
-		String codiUsuari = principal != null ? principal.getName() : "SEYCON"; //$NON-NLS-1$
-		Auditoria auditoria = new Auditoria();
-		auditoria.setAccio(accio);
-		auditoria.setObjecte(taula);
-		auditoria.setAutor(codiUsuari);
+		String codiUser = principal != null ? principal.getName() : "SEYCON"; //$NON-NLS-1$
+		Audit auditoria = new Audit();
+		auditoria.setAction(accio);
+		auditoria.setObject(taula);
+		auditoria.setAuthor(codiUser);
 		if (federacio != null && federacio.length() > 100) {
 			federacio = federacio.substring(0, 100);
 		}
-		auditoria.setFederacioIdentitats(federacio);
+		auditoria.setIdentityFederation(federacio);
 
-		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy kk:mm:ss"); //$NON-NLS-1$
-		auditoria.setData(dateFormat.format(Calendar.getInstance().getTime()));
+		auditoria.setCalendar(Calendar.getInstance());
 
-		AuditEntity auditoriaEntity = getAuditEntityDao().auditoriaToEntity(auditoria);
+		AuditEntity auditoriaEntity = getAuditEntityDao().auditToEntity(auditoria);
 		getAuditEntityDao().create(auditoriaEntity);
 	}
 
@@ -1247,19 +1246,19 @@ public class FederacioServiceImpl
 			java.lang.String from, 
 			java.lang.String activationUrl, 
 			java.lang.String organizationName) throws Exception {
-		Usuari usuari = getUsuariService().findUsuariByCodiUsuari(user);
-		if (usuari == null)
+		User usuari = getUserService().findUserByUserName(user);
+		if (user == null)
 			throw new UnknownUserException (user);
 		
 		String to;
-		if (usuari.getNomCurt() != null && usuari.getDominiCorreu() != null)
-			to = usuari.getNomCurt()+ "@" + usuari.getDominiCorreu(); //$NON-NLS-1$
+		if (usuari.getShortName() != null && usuari.getMailDomain() != null)
+			to = usuari.getShortName()+ "@" + usuari.getMailDomain(); //$NON-NLS-1$
 		else
 		{
-			DadaUsuari dada = getUsuariService().findDadaByCodiTipusDada(user, EMAIL);
-			if (dada == null || dada.getValorDada() == null || dada.getValorDada().isEmpty())
+			UserData dada = getUserService().findDataByUserAndCode(user, EMAIL);
+			if (dada == null || dada.getValue() == null || dada.getValue().isEmpty())
 				throw new InternalErrorException (String.format(com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.UnableGetMailError"), user)); //$NON-NLS-1$
-			to = dada.getValorDada();
+			to = dada.getValue();
 		}
 		
 		StringBuffer key = new StringBuffer();
@@ -1276,24 +1275,27 @@ public class FederacioServiceImpl
 		}
 		key.append(usuari.getId());
 		
-		TipusDada tda = getDadesAddicionalsService().findTipusDadaByCodi(ACTIVATION_KEY);
-		if (tda == null)
+		Collection<DataType> list = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, ACTIVATION_KEY);
+		DataType tda;
+		if (list == null || list.isEmpty())
 		{
-			tda = new TipusDada ();
-			tda.setCodi(ACTIVATION_KEY);
-			tda.setOrdre(-100L);
+			tda = new DataType ();
+			tda.setCode(ACTIVATION_KEY);
+			tda.setOrder(-100L);
 			tda.setType(TypeEnumeration.STRING_TYPE);
 			tda.setOperatorVisibility(AttributeVisibilityEnum.HIDDEN);
 			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
 			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
-		getDadesAddicionalsService().create (tda);
+			getAdditionalDataService().create (tda);
+		} else {
+			tda = list.iterator().next();
 		}
 		
-		DadaUsuari dadaUsuari = new DadaUsuari ();
-		dadaUsuari.setCodiDada(tda.getCodi());
-		dadaUsuari.setCodiUsuari(usuari.getCodi());
-		dadaUsuari.setValorDada(key.toString());
-		getDadesAddicionalsService().create(dadaUsuari);
+		UserData dadaUser = new UserData ();
+		dadaUser.setAttribute(tda.getCode());
+		dadaUser.setUser(usuari.getUserName());
+		dadaUser.setValue(key.toString());
+		getAdditionalDataService().create(dadaUser);
 		
 		StringBuffer url = new StringBuffer(activationUrl);
 		if (url.indexOf("?") >= 0) //$NON-NLS-1$
@@ -1305,7 +1307,9 @@ public class FederacioServiceImpl
 		String subject = String.format (com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.ActivationMailMsg")); //$NON-NLS-1$
 		StringBuffer message = new StringBuffer();
 		message.append ("<body><html><p>" ); //$NON-NLS-1$
-		message.append ( String.format (com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.RecentlyRegisteredAccountMsg"), usuari.getCodi(), organizationName)); //$NON-NLS-1$
+		message.append ( String.format (com.soffid.iam.addons.federation.service.Messages
+				.getString("FederacioServiceImpl.RecentlyRegisteredAccountMsg"), 
+				usuari.getUserName(), organizationName)); //$NON-NLS-1$
 		message.append ( String.format("</p><p><a href='%s'>", url.toString())); //$NON-NLS-1$
 		message.append ( com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.ActivateButtonMsg") ); //$NON-NLS-1$
 		message.append ( "</p></html></body>"); //$NON-NLS-1$
@@ -1314,17 +1318,17 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected Usuari handleVerifyActivationEmail(String key) throws Exception {
+	protected User handleVerifyActivationEmail(String key) throws Exception {
 		List<UserDataEntity> dades = getUserDataEntityDao().findByTypeAndValue(ACTIVATION_KEY, key);
 		for (UserDataEntity dada: dades)
 		{
-			DadaUsuari du = getUserDataEntityDao().toDadaUsuari(dada);
-			getDadesAddicionalsService().delete(du);
-			Usuari usuari = getUsuariService().findUsuariByCodiUsuari(du.getCodiUsuari());
-			if (!usuari.getActiu().booleanValue())
+			UserData du = getUserDataEntityDao().toUserData(dada);
+			getAdditionalDataService().delete(du);
+			User usuari = getUserService().findUserByUserName(du.getUser());
+			if (!usuari.getActive().booleanValue())
 			{
-				usuari.setActiu(Boolean.TRUE);
-				getUsuariService().update(usuari);
+				usuari.setActive(Boolean.TRUE);
+				getUserService().update(usuari);
 			}
 			return usuari;
 		}
@@ -1344,8 +1348,8 @@ public class FederacioServiceImpl
 		
 		String leftSide = email.substring(0, atSign);
 		String rightSide = email.substring(atSign+1);
-		Usuari usuari = null;
-		Collection<Usuari> usuaris = getUsuariService().findUsuariByCriteri("%" // codi  //$NON-NLS-1$
+		User usuari = null;
+		Collection<User> usuaris = getUserService().findUserByCriteria("%" // codi  //$NON-NLS-1$
 				,null // nom
 				, null // primerLlinatge
 				,leftSide // nomCurt
@@ -1355,7 +1359,7 @@ public class FederacioServiceImpl
 				, null // segonLlinatge
 				, null // multiSessio
 				, null // comentari
-				, null // tipusUsuari
+				, null // tipusUser
 				, null // servidorPerfil
 				, null // servidorHome
 				, null // servidorCorreu
@@ -1374,7 +1378,7 @@ public class FederacioServiceImpl
 			if (!dades.isEmpty())
 			{
 				UserDataEntity dada = dades.iterator().next();
-				usuari = getUsuariService().findUsuariByIdUsuari(dada.getUser().getId());
+				usuari = getUserService().findUserByUserId(dada.getUser().getId());
 			
 			}
 		}
@@ -1398,29 +1402,34 @@ public class FederacioServiceImpl
 		}
 		key.append(usuari.getId());
 		
-		TipusDada tda = getDadesAddicionalsService().findTipusDadaByCodi(RECOVER_KEY);
-		if (tda == null)
+		Collection<DataType> list = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, RECOVER_KEY);
+		DataType tda;
+		if (list == null || list.isEmpty())
 		{
-			tda = new TipusDada ();
-			tda.setCodi(RECOVER_KEY);
-			tda.setOrdre(-101L);
+			tda = new DataType ();
+			tda.setCode(RECOVER_KEY);
+			tda.setOrder(-101L);
 			tda.setType(TypeEnumeration.STRING_TYPE);
 			tda.setOperatorVisibility(AttributeVisibilityEnum.HIDDEN);
 			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
 			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
-			getDadesAddicionalsService().create (tda);
+			getAdditionalDataService().create (tda);
+		}
+		else
+		{
+			tda = list.iterator().next();
 		}
 		
-		DadaUsuari dadaUsuari = getUsuariService().findDadaByCodiTipusDada(usuari.getCodi(), tda.getCodi());
-		if (dadaUsuari != null)
+		UserData dadaUser = getUserService().findDataByUserAndCode(usuari.getUserName(), tda.getCode());
+		if (dadaUser != null)
 		{
-			getDadesAddicionalsService().delete(dadaUsuari);
+			getAdditionalDataService().delete(dadaUser);
 		}
-		dadaUsuari = new DadaUsuari ();
-		dadaUsuari.setCodiDada(tda.getCodi());
-		dadaUsuari.setCodiUsuari(usuari.getCodi());
-		dadaUsuari.setValorDada(key.toString());
-		getDadesAddicionalsService().create(dadaUsuari);
+		dadaUser = new UserData ();
+		dadaUser.setAttribute(tda.getCode());
+		dadaUser.setUser(usuari.getUserName());
+		dadaUser.setValue(key.toString());
+		getAdditionalDataService().create(dadaUser);
 		
 		StringBuffer url = new StringBuffer(activationUrl);
 		if (url.indexOf("?") >= 0) //$NON-NLS-1$
@@ -1429,10 +1438,13 @@ public class FederacioServiceImpl
 			url.append("?"); //$NON-NLS-1$
 		url.append ("key=").append(key); //$NON-NLS-1$
 			
-		String subject = String.format (com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.AccountRecoverMsg")); //$NON-NLS-1$
+		String subject = String.format (com.soffid.iam.addons.federation.service.Messages
+				.getString("FederacioServiceImpl.AccountRecoverMsg")); //$NON-NLS-1$
 		StringBuffer message = new StringBuffer();
 		message.append ("<body><html><p>" ); //$NON-NLS-1$
-		message.append ( String.format (com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.RequestedRecoverPasswordMsg"), usuari.getCodi(), organizationName)); //$NON-NLS-1$
+		message.append ( String.format (com.soffid.iam.addons.federation.service.Messages
+				.getString("FederacioServiceImpl.RequestedRecoverPasswordMsg"), 
+				usuari.getUserName(), organizationName)); //$NON-NLS-1$
 		message.append ( String.format("</p><p><a href='%s'>", url.toString())); //$NON-NLS-1$
 		message.append ( com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.RecoverButtonMsg") ); //$NON-NLS-1$
 		message.append ( "</p></html></body>"); //$NON-NLS-1$
@@ -1441,15 +1453,15 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected Usuari handleVerifyRecoverEmail(String key) throws Exception {
+	protected User handleVerifyRecoverEmail(String key) throws Exception {
 		List<UserDataEntity> dades = getUserDataEntityDao().findByTypeAndValue(RECOVER_KEY, key);
 		for (UserDataEntity dada: dades)
 		{
-			DadaUsuari du = getUserDataEntityDao().toDadaUsuari(dada);
-			Usuari usuari = getUsuariService().findUsuariByCodiUsuari(du.getCodiUsuari());
-			if (usuari.getActiu().booleanValue())
+			UserData du = getUserDataEntityDao().toUserData(dada);
+			User usuari = getUserService().findUserByUserName(du.getUser());
+			if (usuari.getActive().booleanValue())
 			{
-				getDadesAddicionalsService().delete(du);
+				getAdditionalDataService().delete(du);
 				return usuari;
 			}
 		}
@@ -1458,7 +1470,7 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected Usuari handleRegisterUser(String dispatcher, Usuari usuari, Map additionalData,
+	protected User handleRegisterUser(String dispatcher, User usuari, Map additionalData,
 			Password password) throws Exception {
 		
 		usuari = registerUser(usuari, additionalData, false);
@@ -1470,7 +1482,7 @@ public class FederacioServiceImpl
 		return usuari;
 	}
 
-	private Usuari registerUser(Usuari usuari, Map additionalData, boolean reuseEmail)
+	private User registerUser(User usuari, Map additionalData, boolean reuseEmail)
 			throws InternalErrorException {
 		final Map<String, String> additionalData2 = (Map<String, String>) additionalData; 
 		String email = additionalData2.get(EMAIL);
@@ -1480,7 +1492,7 @@ public class FederacioServiceImpl
 			if (separator < 0 || email.contains(" ") || email.contains(">") || email.contains("<")) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				throw new InternalErrorException (com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.WrongMailFormatMsg")); //$NON-NLS-1$
 			String domain = email.substring(separator + 1);
-			DominiCorreu domini = getLlistesDeCorreuService().findDominiCorreuByCodi(domain);
+			MailDomain domini = getMailListsService().findMailDomainByName(domain);
 			if (domini != null)
 				throw new InternalErrorException (String.format(com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.AddressDomainErrorMsg"), domain)); //$NON-NLS-1$
 			
@@ -1489,11 +1501,11 @@ public class FederacioServiceImpl
 			{
 				UserDataEntity dada = usuaris.get(0);
 				UserEntity usuariEntity = dada.getUser();
-				Usuari usuari2 = getUserEntityDao().toUsuari(usuariEntity);
-				usuari2.setNom(usuari.getNom());
-				usuari2.setPrimerLlinatge(usuari.getPrimerLlinatge());
-				usuari2.setSegonLlinatge(usuari.getSegonLlinatge());
-				getUsuariService().update(usuari2);
+				User usuari2 = getUserEntityDao().toUser(usuariEntity);
+				usuari2.setFirstName(usuari.getFirstName());
+				usuari2.setLastName(usuari.getLastName());
+				usuari2.setMiddleName(usuari.getMiddleName());
+				getUserService().update(usuari2);
 				return usuari2;
 			}
 			if (! usuaris.isEmpty())
@@ -1502,61 +1514,56 @@ public class FederacioServiceImpl
 			}
 		}
 		
-		usuari = getUsuariService().create(usuari);
+		usuari = getUserService().create(usuari);
 		for ( String key: additionalData2.keySet())
 		{
-    		TipusDada tda = getDadesAddicionalsService().findTipusDadaByCodi(key);
-    		if (tda == null)
+    		Collection<DataType> l = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, key);
+    		if (l == null || l.isEmpty())
     		{
-    			int last = 100;
-    			for (TipusDada tda2: getDadesAddicionalsService().getTipusDades())
-    			{
-    				if (tda2.getOrdre() >= last)
-    					last = tda2.getOrdre().intValue() + 1;
-    			}
-    			tda = new TipusDada ();
-    			tda.setCodi(key);
-    			tda.setOrdre(Long.valueOf(last));
+    			DataType tda = new DataType();
+    			tda.setCode(key);
+    			tda.setOrder(0L);
     			tda.setType(TypeEnumeration.STRING_TYPE);
+    			tda.setScope(MetadataScope.USER);
     			tda.setOperatorVisibility(AttributeVisibilityEnum.EDITABLE);
     			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
     			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
 
-    			tda = getDadesAddicionalsService().create(tda);
+    			tda = getAdditionalDataService().create(tda);
     		}
 
-    		DadaUsuari dada = new DadaUsuari();
-    		dada.setCodiDada(key);
-    		dada.setCodiUsuari(usuari.getCodi());
-    		dada.setValorDada( additionalData2.get(key));
-			getDadesAddicionalsService().create(dada);
+    		UserData dada = new UserData();
+    		dada.setAttribute(key);
+    		dada.setUser(usuari.getUserName());
+    		dada.setValue( additionalData2.get(key));
+			getAdditionalDataService().create(dada);
 		}
 		return usuari;
 	}
 
 	@Override
-	protected Usuari handleRegisterOpenidUser(String account,
-			String dispatcher, Usuari usuari, Map additionalData) throws Exception {
+	protected User handleRegisterOpenidUser(String account,
+			String dispatcher, User usuari, Map additionalData) throws Exception {
 		long n = System.currentTimeMillis() % 1000000L;
 		String codi = (String) additionalData.get(EMAIL);
 		do
 		{
-			Usuari u2 = getUsuariService().findUsuariByCodiUsuari(codi);
+			User u2 = getUserService().findUserByUserName(codi);
 			if (u2 == null)
 			{
 				// Creates the user
-				usuari.setCodi(codi);
+				usuari.setUserName(codi);
 				usuari = registerUser(usuari, additionalData, true);
 				// Creates the openid account
 				
 				SystemEntity de = getSystemEntityDao().findByName(dispatcher);
-				Dispatcher dvo = getSystemEntityDao().toDispatcher(de);
+				com.soffid.iam.api.System dvo = getSystemEntityDao().toSystem(de);
 				getAccountService().createAccount(usuari, dvo, account);
 				
 				break;
 			}
 			n++;
-			codi = usuari.getTipusUsuari();
+			codi = usuari.getUserType();
 			codi = codi + n;
 		} while (true);
 		return usuari;

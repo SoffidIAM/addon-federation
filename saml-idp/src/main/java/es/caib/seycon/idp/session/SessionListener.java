@@ -9,7 +9,6 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
-import edu.internet2.middleware.shibboleth.idp.session.Session;
 import es.caib.seycon.idp.shibext.LogRecorder;
 
 public class SessionListener implements HttpSessionListener {

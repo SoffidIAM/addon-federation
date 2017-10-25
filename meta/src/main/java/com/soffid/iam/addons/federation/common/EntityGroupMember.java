@@ -8,7 +8,7 @@ package com.soffid.iam.addons.federation.common;
 import com.soffid.mda.annotation.*;
 
 @ValueObject 
-public abstract class EntityGroupMember {
+public class EntityGroupMember {
 
 	@Nullable
 	public java.lang.String descripcio;

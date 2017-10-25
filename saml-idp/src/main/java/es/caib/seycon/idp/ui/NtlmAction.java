@@ -1,44 +1,34 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
-import java.security.Principal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
-import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import org.eclipse.jetty.server.session.JDBCSessionManager.Session;
 import org.opensaml.saml2.core.AuthnContext;
 
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
-import es.caib.seycon.Password;
-import es.caib.seycon.UnknownUserException;
-import es.caib.seycon.idp.client.PasswordManager;
+import com.soffid.iam.sync.engine.kerberos.KerberosManager;
+
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.comu.Challenge;
-import es.caib.seycon.ng.comu.Dispatcher;
-import es.caib.seycon.ng.comu.PasswordValidation;
 import es.caib.seycon.ng.comu.Sessio;
 import es.caib.seycon.ng.comu.UserAccount;
-import es.caib.seycon.ng.exception.LogonDeniedException;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
-import es.caib.seycon.ng.sync.engine.kerberos.KerberosManager;
 import es.caib.seycon.ng.sync.servei.LogonService;
 import es.caib.seycon.ng.sync.servei.ServerService;
 
 public class NtlmAction extends HttpServlet {
-    LogRecorder logRecorder = LogRecorder.getInstance();
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	LogRecorder logRecorder = LogRecorder.getInstance();
 
     public static final String URI = "/ntlmLoginAction"; //$NON-NLS-1$
 
@@ -88,7 +78,7 @@ public class NtlmAction extends HttpServlet {
 	
 	        Sessio s = logonService.responseChallenge(challenge);  
 
-	        for (UserAccount account: serverService.getUserAccounts(challenge.getUser().getId(), c.getDispatcher().getCodi()))
+	        for (UserAccount account: serverService.getUserAccounts(challenge.getUser().getId(), c.getSystem().getName()))
 	        {
 	        	if (!account.isDisabled())
 	        	{

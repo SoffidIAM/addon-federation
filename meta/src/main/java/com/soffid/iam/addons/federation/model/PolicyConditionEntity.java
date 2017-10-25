@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="SC_POLCON" ,
@@ -66,12 +67,21 @@ public abstract class PolicyConditionEntity {
 	@Nullable
 	public com.soffid.iam.addons.federation.model.AttributeEntity attribute;
 
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.PolicyConditionEntity en\nwhere\n(:policyId is null or en.policy.id =:policyId) \n")
+	@Column (name="PCO_TEN_ID")
+	@Nullable
+	public TenantEntity tenant;
+
+
+	@DaoFinder("select en \n"
+			+ "from \ncom.soffid.iam.addons.federation.model.PolicyConditionEntity en\n"
+			+ "where (:policyId is null or en.policy.id =:policyId) ande en.tenant.id=:tenantId\n")
 	public java.util.List<com.soffid.iam.addons.federation.model.PolicyConditionEntity> findByPolicyId(
 		java.lang.Long policyId) {
 	 return null;
 	}
-	@DaoFinder("select en \nfrom \ncom.soffid.iam.addons.federation.model.PolicyConditionEntity en\nwhere\n(:id is null or en.id =:id) \n")
+	@DaoFinder("select en \n"
+			+ "from com.soffid.iam.addons.federation.model.PolicyConditionEntity en "
+			+ "where\n(:id is null or en.id =:id) and en.tenant.id=:tenantId\n")
 	public java.util.List<com.soffid.iam.addons.federation.model.PolicyConditionEntity> findPolicyConditionById(
 		java.lang.Long id) {
 	 return null;

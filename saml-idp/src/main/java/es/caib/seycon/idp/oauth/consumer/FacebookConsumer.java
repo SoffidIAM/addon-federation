@@ -1,16 +1,7 @@
 package es.caib.seycon.idp.oauth.consumer;
 
 import org.mortbay.util.ajax.JSON;
-import org.openid4java.association.AssociationException;
 import org.openid4java.consumer.*;
-import org.openid4java.discovery.DiscoveryException;
-import org.openid4java.discovery.Identifier;
-import org.openid4java.discovery.DiscoveryInformation;
-import org.openid4java.message.ax.FetchRequest;
-import org.openid4java.message.ax.FetchResponse;
-import org.openid4java.message.ax.AxMessage;
-import org.openid4java.message.*;
-import org.openid4java.OpenIDException;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.FacebookApi;
 import org.scribe.model.OAuthRequest;
@@ -24,13 +15,8 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
-import es.caib.seycon.idp.ui.openid.OpenIdResponseAction;
-import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,11 +28,9 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.List;
 import java.util.Map;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Serializable;
 
 /**
@@ -54,6 +38,10 @@ import java.io.Serializable;
  */
 public class FacebookConsumer implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private static final String SESSION_ATTRIBUTE = "SoffidOAuthConsumer";
 
 	public static FacebookConsumer fromSesssion(HttpSession session) {

@@ -17,7 +17,6 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.openid.OpenIdResponseAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpSession;
@@ -34,13 +33,16 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Serializable;
 
 /**
  * Sample Consumer (Relying Party) implementation.
  */
 public class OpenidConsumer implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private static String yahooEndpoint = "https://me.yahoo.com";
 	private static String googleEndpoint = "https://www.google.com";
 	private static String googleEndpoint2 = "http://www.google.com";

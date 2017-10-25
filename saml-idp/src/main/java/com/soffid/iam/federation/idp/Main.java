@@ -44,6 +44,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.ContextLoaderListener;
 import org.xml.sax.SAXException;
 
+import com.soffid.iam.ssl.SeyconKeyStore;
+import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
+import com.soffid.iam.utils.Security;
+
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -72,6 +76,7 @@ import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
 import es.caib.seycon.idp.ui.SignatureAction;
 import es.caib.seycon.idp.ui.SignatureForm;
+import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
 import es.caib.seycon.idp.ui.UserPasswordAction;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
@@ -83,10 +88,7 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
-import es.caib.seycon.ng.comu.Dispatcher;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.sync.engine.kerberos.ChainConfiguration;
-import es.caib.seycon.ssl.SeyconKeyStore;
 
 public class Main {
 
@@ -106,9 +108,9 @@ public class Main {
         server.stop();
     }
 
-    public void start(String publicId, Dispatcher dispatcher) throws Exception{
-
-        ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    public void start(String publicId, com.soffid.iam.api.System dispatcher) throws Exception
+    {
+    	ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(Main.class.getClassLoader());
             
@@ -277,6 +279,11 @@ public class Main {
         f.setName("P3PFilter"); //$NON-NLS-1$
 //        ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
+        f = new FilterHolder(TenantFilter.class);
+        f.setName("TenantFilter");
+        f.setInitParameter("tenant", Security.getCurrentTenantName());
+        ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
+        
         f = new FilterHolder(
                 edu.internet2.middleware.shibboleth.common.log.SLF4JMDCCleanupFilter.class);
         f.setName("JCleanupFilter"); //$NON-NLS-1$

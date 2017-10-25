@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="SC_ATTRIB" )
@@ -31,6 +32,10 @@ public abstract class AttributeEntity {
 	@Column (name="ATT_NAME")
 	@Nullable
 	public java.lang.String name;
+	
+	@Column(name="ATT_TEN_ID")
+	@Nullable
+	public TenantEntity tenant;
 
 	@ForeignKey (foreignColumn="PCO_ATT_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.PolicyConditionEntity> condicions;
@@ -55,7 +60,12 @@ public abstract class AttributeEntity {
 		java.lang.String name) {
 	 return null;
 	}
-	@DaoFinder("from com.soffid.iam.addons.federation.model.AttributeEntity as attributeEntity where (:name is null or attributeEntity.name like :name) and (:shortName is null or attributeEntity.shortName like :shortName) and (:oid is null or attributeEntity.oid like :oid) order by attributeEntity.name")
+	@DaoFinder("from com.soffid.iam.addons.federation.model.AttributeEntity as attributeEntity "
+			+ "where (:name is null or attributeEntity.name like :name) and "
+			+ "(:shortName is null or attributeEntity.shortName like :shortName) and "
+			+ "(:oid is null or attributeEntity.oid like :oid) and "
+			+ "tenant.id = :tenantId "
+			+ "order by attributeEntity.name")
 	public java.util.List<com.soffid.iam.addons.federation.model.AttributeEntity> findByNameShortNameOid(
 		java.lang.String name, 
 		java.lang.String shortName, 

@@ -1,14 +1,10 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
-import javax.security.auth.Subject;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -16,33 +12,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.eclipse.jetty.server.session.JDBCSessionManager.Session;
-import org.opensaml.saml2.core.AuthnContext;
-
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.api.User;
+import com.soffid.iam.service.AdditionalDataService;
+import com.soffid.iam.service.UserService;
 
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
-import edu.internet2.middleware.shibboleth.idp.authn.UsernamePrincipal;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
-import es.caib.seycon.BadPasswordException;
-import es.caib.seycon.InvalidPasswordException;
-import es.caib.seycon.Password;
-import es.caib.seycon.UnknownUserException;
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.shibext.LogRecorder;
-import es.caib.seycon.idp.textformatter.TextFormatException;
-import es.caib.seycon.ng.comu.DadaUsuari;
-import es.caib.seycon.ng.comu.PolicyCheckResult;
-import es.caib.seycon.ng.comu.TipusDada;
-import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.servei.DadesAddicionalsService;
-import es.caib.seycon.ng.servei.UsuariService;
-import es.caib.seycon.ng.sync.servei.ServerService;
 
 public class RegisterAction extends HttpServlet {
     public static final String REGISTER_SERVICE_PROVIDER = "RegisterServiceProvider";
@@ -113,35 +94,35 @@ public class RegisterAction extends HttpServlet {
 	        } else {
 	       
 	            PasswordManager pm = new PasswordManager();
-                PolicyCheckResult result = pm.checkPolicy(userType, new Password(p1));
+                com.soffid.iam.api.PolicyCheckResult result = pm.checkPolicy(userType, new Password(p1));
                 if (result.isValid())
                 {
-                	UsuariService usuariService = new RemoteServiceLocator().getUsuariService();
-                	DadesAddicionalsService dadesService = new RemoteServiceLocator().getDadesAddicionalsService();
-                	Usuari usuari = usuariService.findUsuariByCodiUsuari(un);
+                	UserService usuariService = new RemoteServiceLocator().getUserService();
+                	AdditionalDataService dadesService = new RemoteServiceLocator().getAdditionalDataService();
+                	User usuari = usuariService.findUserByUserName(un);
                 	if (usuari != null)
                 		error = String.format("The user name %s is in use. Please, selecte another one", un);
                 	else
                 	{
-                		usuari = new Usuari();
-                		usuari.setCodi(un);
-                		usuari.setNom(gn);
-                		usuari.setPrimerLlinatge(sn);
-                		usuari.setActiu(Boolean.FALSE);
-                		usuari.setCodiGrupPrimari(ip.getGroupToRegister());
-                		usuari.setDataCreacioUsuari(Calendar.getInstance());
-                		usuari.setMultiSessio(Boolean.FALSE);
-                		usuari.setServidorCorreu("null");
-                		usuari.setServidorHome("null");
-                		usuari.setServidorPerfil("null");
-                		usuari.setTipusUsuari(ip.getUserTypeToRegister());
-                		usuari.setComentari(String.format("Self registered from IP %s", req.getRemoteAddr()));
+                		usuari = new User();
+                		usuari.setUserName(un);
+                		usuari.setFirstName(gn);
+                		usuari.setLastName(sn);
+                		usuari.setActive(Boolean.FALSE);
+                		usuari.setPrimaryGroup(ip.getGroupToRegister());
+                		usuari.setCreatedDate(Calendar.getInstance());
+                		usuari.setMultiSession(Boolean.FALSE);
+                		usuari.setMailServer("null");
+                		usuari.setHomeServer("null");
+                		usuari.setProfileServer("null");
+                		usuari.setUserType(ip.getUserTypeToRegister());
+                		usuari.setComments(String.format("Self registered from IP %s", req.getRemoteAddr()));
                 		
                 		Map<String,String> dades = new HashMap<String, String>();
                 		dades.put ("EMAIL", email);
                 		dades.put (REGISTER_SERVICE_PROVIDER, relyingParty);
                 		
-                		config.getFederationService().registerUser(config.getDispatcher().getCodi(), usuari, dades, new Password(p1));
+                		config.getFederationService().registerUser(config.getSystem().getName(), usuari, dades, new Password(p1));
 
                 		String url = "https://"+config.getHostName()+":"+config.getStandardPort()+ActivateUserAction.URI
                 				+ "?rp="+relyingParty;

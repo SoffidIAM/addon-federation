@@ -1,15 +1,12 @@
 package es.caib.seycon.idp.client;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 
-import es.caib.seycon.Server;
 import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
 import es.caib.seycon.ng.remote.URLManager;
-import es.caib.sso.LogonMgr;
 
 public class ServerLocator {
     private static ServerLocator serverLocator;
@@ -63,8 +60,8 @@ public class ServerLocator {
         throw new IOException("No server available"); //$NON-NLS-1$
     }
     
-    public RemoteServiceLocator getRemoteServiceLocator() throws InternalErrorException, IOException {
-    	return new RemoteServiceLocator(getServer());
+    public com.soffid.iam.remote.RemoteServiceLocator getRemoteServiceLocator() throws InternalErrorException, IOException {
+    	return new com.soffid.iam.remote.RemoteServiceLocator(getServer());
     }
     
     public URL getServerUrl (String url) throws InternalErrorException, IOException {

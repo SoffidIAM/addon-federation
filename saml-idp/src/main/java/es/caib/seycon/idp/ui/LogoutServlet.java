@@ -9,13 +9,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 
 public class LogoutServlet extends HttpServlet {
 
     
-    public static final String URI = "/logout.jsp"; //$NON-NLS-1$
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static final String URI = "/logout.jsp"; //$NON-NLS-1$
 
     void process (HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, IOException, ServletException {
     	HttpSession session = req.getSession(false);

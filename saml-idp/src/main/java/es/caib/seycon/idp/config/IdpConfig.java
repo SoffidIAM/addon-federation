@@ -45,38 +45,38 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import es.caib.seycon.idp.client.ServerLocator;
-import es.caib.seycon.ng.comu.Dispatcher;
-import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.remote.RemoteServiceLocator;
 
 import com.soffid.iam.addons.federation.common.*;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.config.Config;
+import com.soffid.iam.remote.RemoteServiceLocator;
+import com.soffid.iam.ssl.SeyconKeyStore;
 
-import es.caib.seycon.ssl.SeyconKeyStore;
 import es.caib.seycon.util.Base64;
 
 
 public class IdpConfig {
     String publicId = null;
-    Dispatcher dispatcher;
+    com.soffid.iam.api.System system;
     
     public String getFacebookKey ()
     {
-    	return getDispatcher().getParam1();
+    	return getSystem().getParam1();
     }
     
     public String getFacebookSecret ()
     {
-    	return getDispatcher().getParam2();
+    	return getSystem().getParam2();
     }
 
-    public Dispatcher getDispatcher() {
-		return dispatcher;
+    public com.soffid.iam.api.System getSystem() {
+		return system;
 	}
 
-	public void setDispatcher(Dispatcher dispatcher) {
-		this.dispatcher = dispatcher;
+	public void setDispatcher(com.soffid.iam.api.System dispatcher) {
+		this.system = dispatcher;
 	}
 
 	public String getPublicId() {
@@ -101,7 +101,7 @@ public class IdpConfig {
     public void configure () throws FileNotFoundException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, es.caib.seycon.ng.exception.InternalErrorException {
         seyconConfig = Config.getConfig();
         
-        es.caib.seycon.ng.remote.RemoteServiceLocator rsl = new RemoteServiceLocator();
+        RemoteServiceLocator rsl = new RemoteServiceLocator();
         ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         
@@ -250,7 +250,7 @@ public class IdpConfig {
 
 
     public void extractKeyFile () throws FileNotFoundException, IOException, KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException, InvalidKeyException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
-        es.caib.seycon.ng.comu.Password p = SeyconKeyStore.getKeyStorePassword();
+        Password p = SeyconKeyStore.getKeyStorePassword();
         
         
         if (federationMember.getPrivateKey() == null) {
@@ -497,7 +497,7 @@ public class IdpConfig {
         if (upc != null) {
             upc.end( );
         }
-        upc = new UpdateConfigurationThread(entityGroupMember);
+        upc = new UpdateConfigurationThread(this, entityGroupMember);
         upc.doStart();
 
     }

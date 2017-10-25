@@ -7,7 +7,7 @@ import com.soffid.iam.addons.federation.service.FederacioService;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 
-public class RemoteServiceLocator extends es.caib.seycon.ng.remote.RemoteServiceLocator {
+public class RemoteServiceLocator extends com.soffid.iam.remote.RemoteServiceLocator {
 	public FederacioService getFederacioService () throws IOException, InternalErrorException 
 	{
 		return (FederacioService) getRemoteService(FederacioService.REMOTE_PATH);

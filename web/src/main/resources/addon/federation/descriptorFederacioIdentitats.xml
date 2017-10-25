@@ -5,7 +5,7 @@
 	<datanode name="federacioIdentitats">
 		<finder name="entitygroupmember" type="entitygroupmember">
 			<ejb-finder
-				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findEntityGroupByNom" if="${queryEnabled}">
 				<parameter value="${name}" />
 			</ejb-finder>
@@ -14,7 +14,7 @@
 		</finder>
 		<finder name="policy" type="policy">
 			<ejb-finder
-				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findPolicies">
 			</ejb-finder>
 			<new-instance-bean className="com.soffid.iam.addons.federation.common.Policy" />
@@ -34,7 +34,7 @@
 	<datanode name="atribut">
 		<finder name="atribut" type="atribut">
 			<ejb-finder
-				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findAtributs" if="${queryEnabled}">
 				<parameter value="${name}" />
 				<parameter value="${shortname}" />
@@ -48,7 +48,7 @@
 	<datanode name="entitygroupmember">
 		<finder name="entitygroupmember" type="entitygroupmember">
 			<ejb-finder
-				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findChildren">
 				<parameter value="${instance}" />
 			</ejb-finder>
@@ -57,7 +57,7 @@
 		</finder>
 		<finder name="profile" type="profile">
 			<ejb-finder
-				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findProfilesByFederationMember" if="${instance.federationMember != null}">
 				<parameter value="${instance.federationMember}" />
 			</ejb-finder>
@@ -66,7 +66,7 @@
 		</finder>
 
 		<ejb-handler
-			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -82,7 +82,7 @@
 	<datanode name="federationMember">
 		<finder name="federationMember" type="federationMember">
 			<ejb-finder
-				jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findFederationMemberByEntityGroupAndPublicIdAndTipus">
 				<parameter value="${entityGroupName}" />
 				<parameter value="${publicId}" />
@@ -92,7 +92,7 @@
 				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
 		</finder>
 		<ejb-handler
-			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -107,7 +107,7 @@
 
 	<datanode name="profile">
 		<ejb-handler
-			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -122,7 +122,7 @@
 
 	<datanode name="policy">
 		<ejb-handler
-			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -137,7 +137,7 @@
 
 	<datanode name="atributPolicy">
 		<ejb-handler
-			jndi="soffid/ejb/com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>

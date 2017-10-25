@@ -8,7 +8,7 @@ package com.soffid.iam.addons.federation.common;
 import com.soffid.mda.annotation.*;
 
 @ValueObject 
-public abstract class Attribute {
+public class Attribute {
 
 	@Nullable
 	public java.lang.Long id;

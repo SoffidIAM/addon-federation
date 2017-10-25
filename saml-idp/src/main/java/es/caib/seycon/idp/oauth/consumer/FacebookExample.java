@@ -3,11 +3,9 @@ package es.caib.seycon.idp.oauth.consumer;
 import java.util.Map;
 import java.util.Scanner;
 
-import org.eclipse.jetty.util.ajax.JSONObjectConvertor;
 import org.mortbay.util.ajax.JSON;
 import org.scribe.builder.*;
 import org.scribe.builder.api.*;
-import org.scribe.extractors.JsonTokenExtractor;
 import org.scribe.model.*;
 import org.scribe.oauth.*;
 

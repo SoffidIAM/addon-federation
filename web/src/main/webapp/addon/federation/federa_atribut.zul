@@ -52,12 +52,12 @@
 	}
 	void showAltres() {
 		if (view_altres == false) {
-			esquema.getFellow("queryWindow").setHeight("120px");
+			esquema.getFellow("queryWindow").setHeight("");
 			esquema.getFellow("queryWindow").getFellow("queryWindowAltres").setVisible(true);
 			esquema.getFellow("queryWindow").getFellow("img_altres").setSrc("~./img/fletxa-baix.gif");
 			view_altres = true;
 		} else {
-			esquema.getFellow("queryWindow").setHeight("40px");
+			esquema.getFellow("queryWindow").setHeight("");
 			esquema.getFellow("queryWindow").getFellow("queryWindowAltres").setVisible(false);
 			esquema.getFellow("queryWindow").getFellow("img_altres").setSrc("~./img/fletxa.gif");
 			view_altres = false;
@@ -116,7 +116,7 @@
 			event.stopPropagation();
 		</attribute>
 
-		<criteris height="40px" id="queryWindow" onOK="search()" width="99.7%">
+		<criteris height="" id="queryWindow" onOK="search()" width="99.7%">
 			<hbox>
 				<input_criteri etiqueta="${c:l('federa_atribut.zul.Name')}" id="queryName"/>
 				<input_criteri etiqueta="${c:l('federa_atribut.zul.ShortName')}" id="queryShortName"/>
