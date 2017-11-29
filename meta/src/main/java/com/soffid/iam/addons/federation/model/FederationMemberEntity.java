@@ -28,6 +28,26 @@ public abstract class FederationMemberEntity {
 	@Nullable
 	public java.lang.String name;
 
+	@Column (name="FED_INTERN",
+			defaultValue="false")
+	@Nullable
+	public boolean internal;
+
+	@Column (name="FED_PRIKEY", length=4000)
+	@Nullable
+	@Description("Conté la clau privada en format PEM")
+	public java.lang.String privateKey;
+
+	@Column (name="FED_PUBKEY", length=4000)
+	@Nullable
+	@Description("Conté la clau privada en format PEM")
+	public java.lang.String publicKey;
+
+	@Column (name="FED_CERCHA", length=8000)
+	@Nullable
+	@Description("Conté la cadena en format PEM amb el certificat propi i les autoritats de certificació")
+	public java.lang.String certificateChain;
+
 	@Column (name="FED_ORGAN")
 	@Nullable
 	public java.lang.String organization;
@@ -35,6 +55,22 @@ public abstract class FederationMemberEntity {
 	@Column (name="FED_CONTAC")
 	@Nullable
 	public java.lang.String contact;
+
+	
+	@Column (name="FED_DISSSL", defaultValue="false")
+	@Nullable
+	public Boolean disableSSL;
+
+	@Column (name="FED_HOST",
+		defaultValue="\"false\"")
+	@Nullable
+	public java.lang.String hostName;
+
+	@Column (name="FED_STDPORT",
+		defaultValue="\"false\"")
+	@Nullable
+	public java.lang.String standardPort;
+
 
 	@Column (name="FED_ENT_ID")
 	public com.soffid.iam.addons.federation.model.EntityGroupEntity entityGroup;

@@ -11,12 +11,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.opensaml.util.storage.StorageService;
+import org.opensaml.xml.io.UnmarshallingException;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
+import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -52,6 +54,12 @@ public class UserPasswordFormServlet extends BaseForm {
             throws ServletException, IOException {
         super.doGet(req, resp);
 
+        try {
+			((Saml2LoginContext)HttpServletHelper.getLoginContext(req)).getAuthenticiationRequestXmlObject().getSubject().getNameID();
+		} catch (UnmarshallingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
         if (! amf.allowUserPassword())
             throw new ServletException (Messages.getString("UserPasswordFormServlet.methodNotAllowed")); //$NON-NLS-1$

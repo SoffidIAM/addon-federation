@@ -52,6 +52,14 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setEntityGroup(eg);
 		}
 
+		target.setPublicKey(source.getPublicKey());
+		target.setPrivateKey(source.getPrivateKey());
+		target.setCertificateChain(source.getCertificateChain());
+		target.setInternal(source.isInternal());
+		target.setDisableSSL(source.getDisableSSL());
+		target.setHostName(source.getHostName());
+		target.setStandardPort(source.getStandardPort());
+
 		if (source instanceof IdentityProviderEntity) {
 			target.setClasse("I"); //$NON-NLS-1$
 			// IdentityProvider
@@ -59,15 +67,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			IdentityProviderEntity idp = (IdentityProviderEntity) source;
 			// Heretats de VIP
 			target.setPublicId(idp.getPublicId());
-			target.setPublicKey(idp.getPublicKey());
-			target.setPrivateKey(idp.getPrivateKey());
-			target.setCertificateChain(idp.getCertificateChain());
 			// Propis
-			target.setInternal(idp.isInternal());
-			target.setHostName(idp.getHostName());
-			target.setStandardPort(idp.getStandardPort());
 			target.setClientCertificatePort(idp.getClientCertificatePort());
-			target.setDisableSSL(idp.getDisableSSL());
 			
 			target.setEnableKerberos(idp.getEnableKerberos());
 			target.setKerberosDomain(idp.getKerberosDomain());
