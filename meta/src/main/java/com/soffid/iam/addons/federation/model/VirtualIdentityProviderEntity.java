@@ -19,16 +19,6 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Column (name="FED_PUBID")
 	public java.lang.String publicId;
 
-	@Column (name="FED_PRIKEY", length=4000)
-	@Nullable
-	@Description("Conté la clau privada en format PEM")
-	public java.lang.String privateKey;
-
-	@Column (name="FED_CERCHA", length=8000)
-	@Nullable
-	@Description("Conté la cadena en format PEM amb el certificat propi i les autoritats de certificació")
-	public java.lang.String certificateChain;
-
 	@ForeignKey (foreignColumn="PRO_VIP_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.SamlProfileEntity> profiles;
 
@@ -38,11 +28,6 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 
 	@ForeignKey (foreignColumn="SPI_VIP_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity> serviceProviderVirtualIdentityProvider;
-
-	@Column (name="FED_PUBKEY", length=4000)
-	@Nullable
-	@Description("Conté la clau privada en format PEM")
-	public java.lang.String publicKey;
 
 	@Column (name="ALLOW_REGISTER")
 	@Nullable
@@ -79,10 +64,6 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Column (name="FED_KRBDOM", length=128)
 	@Nullable
 	public String kerberosDomain;
-	
-	@Column (name="FED_DISSSL", defaultValue="false")
-	@Nullable
-	public Boolean disableSSL;
 
 	@Column (name="FED_SSCODO")
 	@Nullable
