@@ -83,6 +83,9 @@ public abstract class FederationMemberEntity {
 	@Nullable
 	public TenantEntity tenant;
 
+	@Column (name="FED_ASSPAT")
+	@Nullable
+	public java.lang.String assertionPath;
 
 	@DaoFinder("select fm "
 			+ "from com.soffid.iam.addons.federation.model.FederationMemberEntity fm "

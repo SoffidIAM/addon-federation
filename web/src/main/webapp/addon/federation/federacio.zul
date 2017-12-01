@@ -618,8 +618,80 @@
 							eg.setDescripcio(fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""));
 							ctx.setValue("@descripcio",eg.getDescripcio());
 						}
-					}			
-						
+					}
+				}
+
+				void generateMetadata() {
+
+					// Recover the form values
+					ds = form.getDataSource();
+					ctx = ds.getJXPathContext();
+					formPublicId = ctx.getValue("@federationMember/publicId");
+					formHostName = ctx.getValue("@federationMember/hostName");
+					formStandardPort = ctx.getValue("@federationMember/standardPort");
+					formAssertionPath = ctx.getValue("@federationMember/assertionPath");
+
+					// Review if we have all the needed data
+					boolean missingData = false;
+					if (formPublicId==null || formPublicId.isEmpty()) {
+						missingData = true;
+					} else if (formHostName==null || formHostName.isEmpty()) {
+						missingData = true;
+					} else if (formStandardPort==null || formStandardPort.isEmpty()) {
+						missingData = true;
+					} else if (formAssertionPath==null || formAssertionPath.isEmpty()) {
+						missingData = true;
+					}
+
+					// Clean or build the metadata attribute
+					if (missingData == true) {
+						sp_metadades.setValue("");
+					} else {
+
+						// Optionally, we can include the certificate chain
+						String formCertificateChain = ctx.getValue("@federationMember/certificateChain");
+						String myCertificate = "";
+						if (formCertificateChain!=null && !formCertificateChain.isEmpty()){
+							formCertificateChain = formCertificateChain.trim();
+							if (formCertificateChain.startsWith("-----BEGIN CERTIFICATE-----") &&
+									formCertificateChain.endsWith("-----END CERTIFICATE-----"))
+							{
+								StringBuffer plantilla = new StringBuffer();
+								plantilla.append("		<KeyDescriptor>\n");
+								plantilla.append("			<ds:KeyInfo>\n");
+								plantilla.append("				<ds:X509Data>\n");
+								plantilla.append("					<ds:X509Certificate>\n");
+								plantilla.append(formCertificateChain.substring(28, formCertificateChain.length()-25));
+								plantilla.append("					</ds:X509Certificate>\n");
+								plantilla.append("				</ds:X509Data>\n");
+								plantilla.append("			</ds:KeyInfo>\n");
+								plantilla.append("		</KeyDescriptor>\n");
+								myCertificate = plantilla.toString();
+							}
+						}
+
+						// Optionally, the SSL check could be checked to be disabled
+						Boolean formDisableSSL = ctx.getValue("@federationMember/disableSSL");
+						String myProtocol = "https";
+						if (formDisableSSL.booleanValue()==true) {
+							myProtocol = "http";
+						}
+
+						// Generate the xml metadata
+						StringBuffer plantilla = new StringBuffer();
+						plantilla.append("<EntityDescriptor entityID=\""+formPublicId+"\"\n");
+						plantilla.append("		xmlns=\"urn:oasis:names:tc:SAML:2.0:metadata\"\n");
+						plantilla.append("		xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\n");
+						plantilla.append("	<SPSSODescriptor protocolSupportEnumeration=\"urn:oasis:names:tc:SAML:2.0:protocol\">\n");
+						if (!myCertificate.isEmpty()) plantilla.append(myCertificate);
+						plantilla.append("		<NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>\n");
+						plantilla.append("		<AssertionConsumerService index=\"1\" Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST\"\n");
+						plantilla.append("			Location=\""+myProtocol+"://"+formHostName+":"+formStandardPort+"/"+formAssertionPath+"\">\n");
+						plantilla.append("		</AssertionConsumerService>\n");
+						plantilla.append("	</SPSSODescriptor>\n");
+						plantilla.append("</EntityDescriptor>");
+						sp_metadades.setValue(plantilla.toString());
+					}
 				}
 			
 				void enableIDPComponents ()
@@ -1001,10 +1073,11 @@
 									<input_etiqueta value="${c:l('federacio.zul.Internal?')}"/>
 									<checkbox bind="@federationMember/internal" disabled="${!canModifyFI}" id="sp_id_internal1">
 										<attribute name="onCheck">
-											sp_hostname.getFellow("dada").setDisabled(!self.isChecked());
-											sp_port1.getFellow("dada").setDisabled(!self.isChecked());
+											sp_hostname.setDisabled(!self.isChecked());
+											sp_port1.setDisabled(!self.isChecked());
+											sp_assertionPath.setDisabled(!self.isChecked());
 											sp_id_disableSSL.setDisabled(!self.isChecked());
-											sp_certificatechain.getFellow("dada").setDisabled(!self.isChecked());
+											sp_certificatechain.setDisabled(!self.isChecked());
 											sp_metadades.setDisabled(self.isChecked());
 											sp_organization.getFellow("dada").setDisabled(!self.isChecked());
 											sp_contact.getFellow("dada").setDisabled(!self.isChecked());
@@ -1032,7 +1105,7 @@
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
 									<textbox id="spPublicId" bind="@federationMember/publicId" maxlength="255" 
-										onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+										onChange="canviaDescripcioEG();generateMetadata();" readonly="${!canModifyFI}" width="98%"/>
 									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
 								</row>
 								<row>
@@ -1046,33 +1119,9 @@
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
 									<textbox sclass="textbox"
 										id="sp_metadades" 
-										bind="@federationMember/metadades" readonly="${!canModifyFI}" rows="4" 
-										width="98%">
-										<attribute name="onChange"><![CDATA[
-							                try {
-							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
-							                    dbFactory.setNamespaceAware(true);
-							                    javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-							                    org.w3c.dom.Document newDoc = dBuilder.parse(new org.xml.sax.InputSource(new java.io.StringReader(self.getValue())));
-							                    org.w3c.dom.NodeList nl = newDoc.getChildNodes();
-							                    for (int i = 0; i < nl.getLength(); i++) {
-							                        org.w3c.dom.Node n = nl.item(i);
-							                        if (n instanceof org.w3c.dom.Element)
-							                        {
-							                        	String id = n.getAttribute("entityID");
-							                        	if (id != null)
-							                        	{
-							                        		es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
-							                        		spPublicId.setValue( id );
-							                        	}
-							                        }
-							                    }
-							                } catch (SAXParseException e) {
-							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
-							                }
-										]]>
-										</attribute>
-									</textbox>
+										bind="@federationMember/metadades" readonly="${!canModifyFI}" rows="8"
+										disabled="true"
+										width="98%"/>
 								</row>
 								<row  id="sp_firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
@@ -1086,24 +1135,45 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Hostname')}"/>
-									<input_dada bind="@federationMember/hostName" disabled="true" 
-										id="sp_hostname" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<textbox bind="@federationMember/hostName"
+										id="sp_hostname"
+										onChange="generateMetadata()"
+										readonly="${!canModifyFI}"
+										maxlength="255"
+										width="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.PortStandard')}"/>
 									<div>
-										<input_dada bind="@federationMember/standardPort" disabled="true" 
-											id="sp_port1" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
+										<textbox bind="@federationMember/standardPort"
+											id="sp_port1"
+											onChange="generateMetadata()"
+											readonly="${!canModifyFI}"
+											maxlength="20"/>
 										<checkbox bind="@federationMember/disableSSL" disabled="${!canModifyFI}"
-													id="sp_id_disableSSL" onCheck="">
+													id="sp_id_disableSSL" style="vertical-align:-4px; margin-left:12px"
+													onCheck="generateMetadata()">
 										</checkbox>
 										<input_etiqueta value="${c:l('federacio.zul.disableSSL')}"/>
 									</div>
 								</row>
 								<row>
+									<input_etiqueta value="${c:l('federacio.zul.AssertionPath')}"/>
+									<textbox bind="@federationMember/assertionPath"
+										id="sp_assertionPath"
+										onChange="generateMetadata()"
+										readonly="${!canModifyFI}"
+										maxlength="255"
+										width="98%"/>
+								</row>
+								<row>
 									<input_etiqueta value="${c:l('federacio.zul.certificateChain')}"/>
-									<input_dada bind="@federationMember/certificateChain" disabled="true" 
-										id="sp_certificatechain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+									<textbox bind="@federationMember/certificateChain"
+										id="sp_certificatechain"
+										onChange="generateMetadata()"
+										readonly="${!canModifyFI}"
+										rows="8"
+										width="98%"/>
 								</row>								
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicKey')}"/>
