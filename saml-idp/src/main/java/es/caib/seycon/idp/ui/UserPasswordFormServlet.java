@@ -54,11 +54,14 @@ public class UserPasswordFormServlet extends BaseForm {
             throws ServletException, IOException {
         super.doGet(req, resp);
 
+        String requestedUser = "";
         try {
-			((Saml2LoginContext)HttpServletHelper.getLoginContext(req)).getAuthenticiationRequestXmlObject().getSubject().getNameID();
-		} catch (UnmarshallingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
+					.getAuthenticiationRequestXmlObject()
+					.getSubject()
+					.getNameID()
+					.getValue();
+		} catch (Exception e1) {
 		}
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
         if (! amf.allowUserPassword())
@@ -91,6 +94,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("openIdRequestUrl", OpenIdRequestAction.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("requestedUser", requestedUser);
 
             g.addArgument("kerberosAllowed", 
             		ip.getEnableKerberos() != null && 
