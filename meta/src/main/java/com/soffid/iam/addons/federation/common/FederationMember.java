@@ -112,4 +112,8 @@ public class FederationMember {
 	@Description("Bean shell expression to generate user id")
 	@Nullable
 	public String uidExpression;
+
+	@Description("Assertion consumer service path")
+	@Nullable
+	public String assertionPath;
 }
