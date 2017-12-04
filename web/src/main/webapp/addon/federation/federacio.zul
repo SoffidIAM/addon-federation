@@ -10,6 +10,7 @@
 
 	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml"/>
 	
+	<script src='~./js/codemirror/java-classes.js'/>
 	<zscript src="/comu/netejaCriteris.zul"/>
 
 	<zscript>
@@ -828,7 +829,6 @@
 									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" 
 										readonly="${!canModifyFI}" width="98%"
 										id="idpPublicId"/>
-									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
@@ -900,6 +900,22 @@
 										]]>
 										</attribute>
 									</textbox>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.DomainExpression')}"/>
+									<input_dada bind="@federationMember/domainExpression" id="domainExpression" 
+											lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.ScriptParse')}"/>
+									<codemirror bind="@federationMember/scriptParse" id="scriptParse"
+											linenumbers="true" visible="true" 
+											readonly="${!canModifyFI}"
+											height="10em" language="java" style="width:98%">
+										<attribute name='onCreate'><![CDATA[
+											self.setGlobalVars(new com.soffid.iam.web.agent.ScriptEnviroment().getRuleVars());
+										]]></attribute>
+									</codemirror>
 								</row>
 								<row  id="firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
