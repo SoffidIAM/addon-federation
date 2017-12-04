@@ -176,4 +176,14 @@ public abstract class FederationMemberEntity {
 		java.lang.String tipusFM) {
 	 return null;
 	}
+
+
+	@DaoFinder("select fm "
+			+ "from com.soffid.iam.addons.federation.model.FederationMemberEntity fm "
+			+ "where (fm.publicId = :publicId) and "
+			+ "fm.tenant.id=:tenantId")
+	public java.util.List<com.soffid.iam.addons.federation.model.FederationMemberEntity> findFMByPublicId(
+		java.lang.String publicId) {
+	 return null;
+	}
 }
