@@ -654,20 +654,26 @@
 						String myCertificate = "";
 						if (formCertificateChain!=null && !formCertificateChain.isEmpty()){
 							formCertificateChain = formCertificateChain.trim();
-							if (formCertificateChain.startsWith("-----BEGIN CERTIFICATE-----") &&
-									formCertificateChain.endsWith("-----END CERTIFICATE-----"))
+							int i = formCertificateChain.indexOf("-----BEGIN CERTIFICATE-----");
+							if (i >= 0)
 							{
-								StringBuffer plantilla = new StringBuffer();
-								plantilla.append("		<KeyDescriptor>\n");
-								plantilla.append("			<ds:KeyInfo>\n");
-								plantilla.append("				<ds:X509Data>\n");
-								plantilla.append("					<ds:X509Certificate>\n");
-								plantilla.append(formCertificateChain.substring(28, formCertificateChain.length()-25));
-								plantilla.append("					</ds:X509Certificate>\n");
-								plantilla.append("				</ds:X509Data>\n");
-								plantilla.append("			</ds:KeyInfo>\n");
-								plantilla.append("		</KeyDescriptor>\n");
-								myCertificate = plantilla.toString();
+								int j = formCertificateChain.indexOf("-----END CERTIFICATE-----", i);
+								if (j > 0)
+								{
+									StringBuffer plantilla = new StringBuffer();
+									plantilla.append("		<KeyDescriptor>\n");
+									plantilla.append("			<ds:KeyInfo>\n");
+									plantilla.append("				<ds:KeyName>defaultKey</ds:KeyName>\n");
+									plantilla.append("				<ds:X509Data>\n");
+									plantilla.append("					<ds:X509Certificate>\n");
+									plantilla.append(formCertificateChain.substring(i+28, 
+										j));
+									plantilla.append("					</ds:X509Certificate>\n");
+									plantilla.append("				</ds:X509Data>\n");
+									plantilla.append("			</ds:KeyInfo>\n");
+									plantilla.append("		</KeyDescriptor>\n");
+									myCertificate = plantilla.toString();
+								}
 							}
 						}
 

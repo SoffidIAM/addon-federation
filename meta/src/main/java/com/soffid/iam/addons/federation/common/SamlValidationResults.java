@@ -21,9 +21,11 @@ public class SamlValidationResults {
 	String sessionCookie;
 	
 	@Nullable
-	@Attribute(defaultValue="new java.util.HashMap<String,java.util.LinkedList<String>>()")
+	@Attribute(defaultValue="new java.util.HashMap<String,java.util.List<String>>()")
 	Map<String,List<String>> attributes;
 	
 	@Nullable
 	Usuari user;
+	
+	String failureReason;
 }

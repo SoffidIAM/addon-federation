@@ -15,7 +15,10 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.PrivilegedAction;
+import java.security.Provider;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
@@ -52,6 +55,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
@@ -213,63 +217,67 @@ public class SAMLServiceInternal {
 		Response saml2Response = (Response) marshaller.unmarshall(doc.getDocumentElement());
 		String identityProvider = saml2Response.getIssuer().getValue();
 
-		if (! validateResponse(identityProvider, serviceProviderName, saml2Response))
-			return null;
+		SamlValidationResults result = new SamlValidationResults();
+		result.setValid(false);
+
+		if (! validateResponse(identityProvider, serviceProviderName, saml2Response, result))
+		{
+			return result;
+		}
 
 		String originalrequest = saml2Response.getInResponseTo();
 		SamlRequestEntity requestEntity = samlRequestEntityDao.findByExternalId(originalrequest);
 		if (requestEntity == null)
 		{
-			log.info("Received authentication response for unknown request "+originalrequest);
-			return null;
+			result.setFailureReason("Received authentication response for unknown request "+originalrequest);
+			log.info(result.getFailureReason());
+			return result;
 		}
 		if (requestEntity.isFinished() == true)
 		{
-			log.info("Received authentication response for already served request "+originalrequest);
-			return null;
+			result.setFailureReason("Received authentication response for already served request "+originalrequest);
+			log.info(result.getFailureReason());
+			return result;
 		}
 
 		for ( EncryptedAssertion encryptedAssertion: saml2Response.getEncryptedAssertions())
 		{
 			Assertion assertion = decrypt (serviceProviderName,encryptedAssertion);
-			if (validateAssertion(identityProvider, serviceProviderName, assertion))
+			if (validateAssertion(identityProvider, serviceProviderName, assertion, result))
 			{
-				return createAuthenticationRecord(serviceProviderName, requestEntity, assertion, autoProvision);
+				return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 			}
 		}
 		
 		for ( Assertion assertion: saml2Response.getAssertions())
 		{
-			if (validateAssertion(identityProvider, serviceProviderName, assertion))
+			if (validateAssertion(identityProvider, serviceProviderName, assertion, result))
 			{
-				return createAuthenticationRecord(serviceProviderName, requestEntity, assertion, autoProvision);
+				return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 			}
 		}
 		
-		
-		SamlValidationResults result = new SamlValidationResults();
-		result.setValid(false);
 		return result ;
 	}
 
-	private SamlValidationResults createAuthenticationRecord(String hostName, SamlRequestEntity requestEntity, Assertion assertion,
+	private SamlValidationResults createAuthenticationRecord(String identityProvider, String serviceProviderName, SamlRequestEntity requestEntity, Assertion assertion,
 			boolean provision) throws InternalErrorException {
+		SamlValidationResults result = new SamlValidationResults();
+		result.setValid(false);
 		Subject subject = assertion.getSubject();
 		if (subject == null)
 		{
-			log.info("Assertion does not contain subject information");
-			return null;
+			result.setFailureReason("Assertion does not contain subject information");
+			return result;
 		}
 		
 		NameID nameID = subject.getNameID();
 		if (nameID == null)
 		{
-			log.info("Assertion does not contain nameID information");
-			return null;
+			result.setFailureReason("Assertion does not contain nameID information");
+			return result;
 		}
 		
-		SamlValidationResults result = new SamlValidationResults();
-		result.setValid(false);
 		if (nameID.getFormat().equals(NameID.PERSISTENT) ||
 				nameID.getFormat().equals(NameID.TRANSIENT) ||
 				nameID.getFormat().equals(NameID.UNSPECIFIED) ||
@@ -294,8 +302,11 @@ public class SAMLServiceInternal {
 				}
 			}
 		}
-		log.info("Cannot get user name. Format "+nameID.getFormat()+" not supported");
-
+		else
+		{
+			result.setFailureReason("Cannot get user name. Format "+nameID.getFormat()+" not supported");
+			return result;
+		}
 		
 		StringBuffer sb = new StringBuffer();
 		SecureRandom sr = new SecureRandom();
@@ -315,13 +326,15 @@ public class SAMLServiceInternal {
 		}
 		
 		requestEntity.setKey(sb.toString());
-
+		result.setIdentityProvider(identityProvider);
 		result.setUser( searchUser (assertion, result, provision )  );
 		if (result.getUser() != null)
 			requestEntity.setUser( result.getUser().getUserName() );
+		result.setSessionCookie(requestEntity.getExternalId()+":"+requestEntity.getKey());
 		requestEntity.setFinished(true);
 		samlRequestEntityDao.update(requestEntity);
 
+		result.setValid(true);
 		return result;
 	}
 
@@ -362,18 +375,21 @@ public class SAMLServiceInternal {
 			{
 				if (fm instanceof IdentityProviderEntity)
 				{
-					try {
-						Interpreter interpreter = new Interpreter();
-						interpreter.set("user", u); //$NON-NLS-1$
-						interpreter.set("attributes", attributes); //$NON-NLS-1$
-						interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
-						
-						Object r = interpreter.eval( "" );
-						if (Boolean.FALSE.equals(r))
-							return null;
-					} catch (EvalError e) {
-						throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", issuer),
-								e);
+					if (false)
+					{
+						try {
+							Interpreter interpreter = new Interpreter();
+							interpreter.set("user", u); //$NON-NLS-1$
+							interpreter.set("attributes", attributes); //$NON-NLS-1$
+							interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
+							
+							Object r = interpreter.eval( "" );
+							if (Boolean.FALSE.equals(r))
+								return null;
+						} catch (EvalError e) {
+							throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", issuer),
+									e);
+						}
 					}
 
 				}
@@ -468,7 +484,7 @@ public class SAMLServiceInternal {
 				throw new InternalErrorException(String.format("Unable to find Identity Provider metadata"));
 			IDPSSODescriptor idpssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
 
-			EntityDescriptor sp = getSpMetadata(identityProvider);
+			EntityDescriptor sp = getSpMetadata(serviceProvider);
 			
 			// Create the assertion
 			AuthnRequest req = builder.buildObject( );
@@ -560,7 +576,7 @@ public class SAMLServiceInternal {
 	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, AuthnRequest req) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
 		List<Certificate> certs = getCertificateChain(serviceProvider);
 		if (certs == null || certs.isEmpty())
-			throw new InternalErrorException ("Cannot find certificate chain for "+serviceProvider);
+			return req.getDOM();
 		
 		KeyPair pk = getPrivateKey(serviceProvider);
 		if (pk == null)
@@ -574,7 +590,9 @@ public class SAMLServiceInternal {
 		signature.setSigningCredential(cred);
 		signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA);
-		signature.setKeyInfo(getKeyInfo(serviceProvider));
+		KeyInfo keyInfo = getKeyInfo(serviceProvider);
+		keyInfo.detach();
+		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
 		
 		// Get the marshaller factory
@@ -598,12 +616,15 @@ public class SAMLServiceInternal {
 			{
 				try {
 					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+					dbFactory.setNamespaceAware(true);
+					dbFactory.setValidating(false);
 					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 					Document doc = dBuilder.parse( new ByteArrayInputStream(metadata));
 	 
 					UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 					
-					XMLObject ed = unmarshallerFactory.getUnmarshaller(doc.getDocumentElement()).unmarshall(doc.getDocumentElement());
+					XMLObject ed = unmarshallerFactory.getUnmarshaller(EntityDescriptor.ELEMENT_QNAME)
+							.unmarshall(doc.getDocumentElement());
 					if (ed instanceof EntityDescriptor &&
 							((EntityDescriptor) ed).getIDPSSODescriptor(SAMLConstants.SAML20P_NS) != null)
 						return (EntityDescriptor) ed;
@@ -626,12 +647,16 @@ public class SAMLServiceInternal {
 			{
 				try {
 					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+					dbFactory.setNamespaceAware(true);
+					dbFactory.setValidating(false);
 					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 					Document doc = dBuilder.parse( new ByteArrayInputStream(metadata));
 	 
 					UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 					
-					XMLObject ed = unmarshallerFactory.getUnmarshaller(doc.getDocumentElement()).unmarshall(doc.getDocumentElement());
+					XMLObject ed = unmarshallerFactory.getUnmarshaller(EntityDescriptor.ELEMENT_QNAME)
+							.unmarshall(doc.getDocumentElement());
+
 					if (ed instanceof EntityDescriptor &&
 							((EntityDescriptor) ed).getSPSSODescriptor(SAMLConstants.SAML20P_NS) != null)
 						return (EntityDescriptor) ed;
@@ -662,6 +687,13 @@ public class SAMLServiceInternal {
 	}
 
 	private List<Certificate> getCertificateChain(String identityProvider) throws UnmarshallingException, SAXException, IOException, ParserConfigurationException, InternalErrorException {
+		java.security.AccessController.doPrivileged(new PrivilegedAction<Object>() {
+			public Object run() {
+				if (Security.getProvider("BC") == null)
+					Security.addProvider(new BouncyCastleProvider());
+				return null;
+			}
+		});
 		for (FederationMemberEntity fm :federationMemberEntityDao.findFMByPublicId(identityProvider))
 		{
 			if (fm instanceof ServiceProviderEntity)
@@ -702,7 +734,7 @@ public class SAMLServiceInternal {
 		this.samlRequestEntityDao = samlRequestEntityDao;
 	}
 
-    private boolean validateAssertion (String identityProvider, String serviceProvider, Assertion assertion) throws ResolverException, InternalErrorException, ComponentInitializationException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
+    private boolean validateAssertion (String identityProvider, String serviceProvider, Assertion assertion, SamlValidationResults result2) throws ResolverException, InternalErrorException, ComponentInitializationException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
     {
     	SAML20AssertionValidator validator = getValidator(identityProvider, serviceProvider);
     	
@@ -724,19 +756,23 @@ public class SAMLServiceInternal {
 
 		ValidationResult result = validator.validate(assertion, ctx);
 		if (result != ValidationResult.VALID)
+		{
+			result2.setFailureReason(ctx.getValidationFailureMessage());
 			log.info("Error validating SAML message: "+ctx.getValidationFailureMessage());
+		}
 		
-		if ( ! validDate (assertion.getIssueInstant()))
+		if ( ! validDate (assertion.getIssueInstant(), result2))
 			return false;
 
 		return result == ValidationResult.VALID ;
     	
     }
 
-	private boolean validDate(DateTime issueInstant) {
+	private boolean validDate(DateTime issueInstant, SamlValidationResults result2) {
 		if (issueInstant == null)
 		{
-			log.info("Error validatig assertion: issueInstant is null");
+			result2.setFailureReason("Error validatig assertion: issueInstant is miising");
+			log.info(result2.getFailureReason());
 			return false;
 		}
 		Calendar c = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
@@ -753,7 +789,8 @@ public class SAMLServiceInternal {
 		now.add(Calendar.MINUTE, 5);
 		if (c.after( now ))
 		{
-			log.info("Error validatig assertion: issueInstant is after current instant");
+			result2.setFailureReason("Error validatig assertion: issueInstant is after current instant");
+			log.info(result2.getFailureReason());
 			return false;
 		}
 		
@@ -762,7 +799,8 @@ public class SAMLServiceInternal {
 		now.add(Calendar.MINUTE, -10);
 		if (c.before( now ))
 		{
-			log.info("Error validatig assertion: issueInstant is more than ten minutes old");
+			result2.setFailureReason("Error validatig assertion: issueInstant is more than ten minutes old");
+			log.info(result2.getFailureReason());
 			return false;
 		}
 
@@ -816,7 +854,7 @@ public class SAMLServiceInternal {
     	return new SAML20AssertionValidator(conditionValidators, subjectConfirmationValidators, statementValidators, signatureTrustEngine, signaturePrevalidator);
 	}
 
-    private boolean validateResponse (String serviceProvider, String identityProvider, Response assertion) throws ResolverException, InternalErrorException, ComponentInitializationException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
+    private boolean validateResponse (String identityProvider, String serviceProvider, Response assertion, SamlValidationResults result2) throws ResolverException, InternalErrorException, ComponentInitializationException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
     {
     	SAML20ResponseValidator validator = getResponseValidator(identityProvider);
     	
@@ -824,20 +862,27 @@ public class SAMLServiceInternal {
     	
 		ValidationResult result = validator.validate(assertion, ctx);
 		if (result != ValidationResult.VALID)
+		{
 			log.info("Error validating SAML message: "+ctx.getValidationFailureMessage());
+			result2.setFailureReason(ctx.getValidationFailureMessage());
+		}
 		
-		if ( ! validDate (assertion.getIssueInstant()))
+		if ( ! validDate (assertion.getIssueInstant(), result2))
+		{
 			return false;
+		}
 		
 		if ( assertion.getStatus() == null || assertion.getStatus().getStatusCode() == null)
 		{
-			log.info("Response does not contain status");
+			result2.setFailureReason("Response does not contain status");
+			log.info(result2.getFailureReason());
 			return false;
 		}
 		
 		if ( ! assertion.getStatus().getStatusCode().getValue().equals(StatusCode.SUCCESS))
 		{
-			log.info("Authentication failed: "+assertion.getStatus().getStatusCode().getValue());
+			result2.setFailureReason("Authentication failed: "+assertion.getStatus().getStatusCode().getValue());
+			log.info(result2.getFailureReason());
 			return false;
 		}
 
