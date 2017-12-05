@@ -245,7 +245,7 @@ public class SAMLServiceInternal {
 			Assertion assertion = decrypt (serviceProviderName,encryptedAssertion);
 			if (validateAssertion(identityProvider, serviceProviderName, assertion, result))
 			{
-				return createAuthenticationRecord(serviceProviderName, requestEntity, assertion, autoProvision);
+				return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 			}
 		}
 		
@@ -253,14 +253,14 @@ public class SAMLServiceInternal {
 		{
 			if (validateAssertion(identityProvider, serviceProviderName, assertion, result))
 			{
-				return createAuthenticationRecord(serviceProviderName, requestEntity, assertion, autoProvision);
+				return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 			}
 		}
 		
 		return result ;
 	}
 
-	private SamlValidationResults createAuthenticationRecord(String hostName, SamlRequestEntity requestEntity, Assertion assertion,
+	private SamlValidationResults createAuthenticationRecord(String identityProvider, String serviceProviderName, SamlRequestEntity requestEntity, Assertion assertion,
 			boolean provision) throws InternalErrorException {
 		SamlValidationResults result = new SamlValidationResults();
 		result.setValid(false);
@@ -326,7 +326,7 @@ public class SAMLServiceInternal {
 		}
 		
 		requestEntity.setKey(sb.toString());
-		result.setIdentityProvider(hostName);
+		result.setIdentityProvider(identityProvider);
 		result.setUser( searchUser (assertion, result, provision )  );
 		if (result.getUser() != null)
 			requestEntity.setUser( result.getUser().getUserName() );
