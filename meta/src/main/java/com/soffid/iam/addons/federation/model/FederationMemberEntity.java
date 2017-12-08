@@ -87,6 +87,14 @@ public abstract class FederationMemberEntity {
 	@Nullable
 	public java.lang.String assertionPath;
 
+	@Column (name="FED_DOMEXP")
+	@Nullable
+	public String domainExpression;
+
+	@Column (name="FED_SCRPAR")
+	@Nullable
+	public String scriptParse;
+
 	@DaoFinder("select fm "
 			+ "from com.soffid.iam.addons.federation.model.FederationMemberEntity fm "
 			+ "where (:entityGroupId is null or fm.entityGroup.id =:entityGroupId) and "

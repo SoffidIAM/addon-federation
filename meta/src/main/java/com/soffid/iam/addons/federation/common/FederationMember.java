@@ -116,4 +116,12 @@ public class FederationMember {
 	@Description("Assertion consumer service path")
 	@Nullable
 	public String assertionPath;
+
+	@Description("Domain expression (regular expression) to validate user domains")
+	@Nullable
+	public String domainExpression;
+
+	@Description("Script to parse the user name")
+	@Nullable
+	public String scriptParse;
 }
