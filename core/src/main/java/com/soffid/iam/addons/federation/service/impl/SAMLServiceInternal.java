@@ -1,28 +1,23 @@
 package com.soffid.iam.addons.federation.service.impl;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PrivilegedAction;
-import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -40,7 +35,6 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import javax.crypto.SecretKey;
-import javax.validation.constraints.Null;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -52,13 +46,12 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
-import org.bouncycastle.openssl.PEMWriter;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.joda.time.DateTime;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.config.InitializationService;
@@ -100,7 +93,6 @@ import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
-import org.opensaml.saml.saml2.metadata.impl.EntityDescriptorBuilder;
 import org.opensaml.saml.security.impl.SAMLSignatureProfileValidator;
 import org.opensaml.security.credential.BasicCredential;
 import org.opensaml.security.credential.Credential;
@@ -111,15 +103,8 @@ import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
 import org.opensaml.xmlsec.keyinfo.impl.StaticKeyInfoCredentialResolver;
 import org.opensaml.xmlsec.signature.KeyInfo;
-import org.opensaml.xmlsec.signature.KeyName;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.X509Data;
-import org.opensaml.xmlsec.signature.X509SubjectName;
-import org.opensaml.xmlsec.signature.impl.KeyInfoBuilder;
-import org.opensaml.xmlsec.signature.impl.KeyNameBuilder;
-import org.opensaml.xmlsec.signature.impl.X509CertificateBuilder;
-import org.opensaml.xmlsec.signature.impl.X509DataBuilder;
-import org.opensaml.xmlsec.signature.impl.X509SubjectNameBuilder;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.opensaml.xmlsec.signature.support.SignaturePrevalidator;
 import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
@@ -134,14 +119,13 @@ import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntityDao;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
-import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.MetadataScope;
-import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordDomain;
 import com.soffid.iam.api.PasswordPolicy;
 import com.soffid.iam.api.SamlRequest;
+import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.UserType;
@@ -151,21 +135,18 @@ import com.soffid.iam.service.AccountService;
 import com.soffid.iam.service.AdditionalDataService;
 import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.service.DispatcherService;
-import com.soffid.iam.service.DomainService;
-import com.soffid.iam.service.UserService;
+import com.soffid.iam.service.SessionService;
 import com.soffid.iam.service.UserDomainService;
+import com.soffid.iam.service.UserService;
 import com.soffid.iam.service.saml.CustomSubjectConfirmationValidator;
 import com.soffid.iam.service.saml.SAML20ResponseValidator;
-import com.soffid.iam.ssl.SeyconKeyStore;
 
 import bsh.EvalError;
 import bsh.Interpreter;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import net.shibboleth.utilities.java.support.security.RandomIdentifierGenerationStrategy;
 
 public class SAMLServiceInternal {
 	private static final String EXTERNAL_SAML_PASSWORD_DOMAIN = "EXTERNAL-SAML";
@@ -361,7 +342,7 @@ public class SAMLServiceInternal {
 			u.setActive(true);
 			u.setUserName(issuer + "#" +result.getPrincipalName());
 			u.setFirstName( toSingleString( result, "urn:oid:2.5.4.42", "givenName") );
-			u.setLastName ( toSingleString( result, "urn:oid:2.5.4.4", "surName")) ;
+			u.setLastName ( toSingleString( result, "urn:oid:2.5.4.4", "sn")) ;
 			u.setUserType("E");
 			u.setPrimaryGroup("world");
 			u.setComments(String.format("Autoprovisioned from %s identity provider", issuer));
@@ -375,7 +356,7 @@ public class SAMLServiceInternal {
 			{
 				if (fm instanceof IdentityProviderEntity)
 				{
-					if (false)
+					if (fm.getScriptParse() != null && ! fm.getScriptParse().trim().isEmpty())
 					{
 						try {
 							Interpreter interpreter = new Interpreter();
@@ -383,7 +364,7 @@ public class SAMLServiceInternal {
 							interpreter.set("attributes", attributes); //$NON-NLS-1$
 							interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
 							
-							Object r = interpreter.eval( "" );
+							Object r = interpreter.eval( fm.getScriptParse() );
 							if (Boolean.FALSE.equals(r))
 								return null;
 						} catch (EvalError e) {
@@ -472,10 +453,10 @@ public class SAMLServiceInternal {
 
 	private XMLObjectBuilderFactory builderFactory = null;
 	private SamlRequestEntityDao samlRequestEntityDao;
+	private SessionService sessionService;
 
-	public SamlRequest generateSamlRequest(String serviceProvider, String identityProvider, long sessionSeconds) throws InternalErrorException {
+	public SamlRequest generateSamlRequest(String serviceProvider, String identityProvider, String userName, long sessionSeconds) throws InternalErrorException {
 		try {
-			RandomIdentifierGenerationStrategy idGenerator = new RandomIdentifierGenerationStrategy();
 			// Get the assertion builder based on the assertion element name
 			SAMLObjectBuilder<AuthnRequest> builder = (SAMLObjectBuilder<AuthnRequest>) builderFactory.getBuilder(AuthnRequest.DEFAULT_ELEMENT_NAME);
 			 
@@ -489,7 +470,7 @@ public class SAMLServiceInternal {
 			// Create the assertion
 			AuthnRequest req = builder.buildObject( );
 			
-			String newID = idGenerator.generateIdentifier();
+			String newID = generateRandomId();
 			
 			SamlRequest r = new SamlRequest();
 			r.setParameters(new HashMap<String, String>());
@@ -534,7 +515,20 @@ public class SAMLServiceInternal {
 			issuer.setValue( serviceProvider );
 			
 			req.setIssuer( issuer );
-			
+
+			if (userName != null && ! userName.trim().isEmpty())
+			{
+				Subject newSubject = ( (SAMLObjectBuilder<Subject>)builderFactory.getBuilder(Subject.DEFAULT_ELEMENT_NAME)).buildObject();
+				NameID newNameID = ( (SAMLObjectBuilder<NameID>)builderFactory.getBuilder(NameID.DEFAULT_ELEMENT_NAME)).buildObject();
+				newNameID.setValue(userName);
+				if (userName.contains("@") && userName.contains("."))
+					newNameID.setFormat(NameID.EMAIL);
+				else
+					newNameID.setFormat(NameID.PERSISTENT);
+				newSubject.setNameID(newNameID);
+				req.setSubject(newSubject );
+			}
+
 			Element xml = sign (serviceProvider, builderFactory, req);
 			
 			String xmlString = generateString(xml);
@@ -560,6 +554,14 @@ public class SAMLServiceInternal {
 		}
 	}
 	
+	private String generateRandomId() throws NoSuchAlgorithmException {
+        SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+        Hex encoder = new Hex();
+        final byte[] buf = new byte[24];
+        random.nextBytes(buf);
+        return "_" + StringUtils.newStringUsAscii(encoder.encode(buf));
+	}
+
 	private String generateString(Element xml)
 			throws TransformerConfigurationException,
 			TransformerFactoryConfigurationError, TransformerException {
@@ -673,7 +675,8 @@ public class SAMLServiceInternal {
 	private KeyPair getPrivateKey(String identityProvider) throws UnmarshallingException, SAXException, IOException, ParserConfigurationException, InternalErrorException {
 		for (FederationMemberEntity fm :federationMemberEntityDao.findFMByPublicId(identityProvider))
 		{
-			if (fm instanceof ServiceProviderEntity)
+			if (fm.getPrivateKey() != null && 
+					!fm.getPrivateKey().trim().isEmpty())
 			{
 		        // Now read the private and public key
 		        PEMReader pm = new PEMReader( new StringReader(fm.getPrivateKey()));
@@ -696,21 +699,18 @@ public class SAMLServiceInternal {
 		});
 		for (FederationMemberEntity fm :federationMemberEntityDao.findFMByPublicId(identityProvider))
 		{
-			if (fm instanceof ServiceProviderEntity)
-			{
-		        PEMReader pm = new PEMReader( new StringReader(fm.getCertificateChain()));
-		        List<Certificate> certs = new LinkedList<Certificate>();
-		        do
-		        {
-		        	Certificate cert = (Certificate) pm.readObject();
-		        	if (cert == null)
-		        		break;
-		        	certs.add(cert);
-		        } while (true);
-		        pm.close();
+	        PEMReader pm = new PEMReader( new StringReader(fm.getCertificateChain()));
+	        List<Certificate> certs = new LinkedList<Certificate>();
+	        do
+	        {
+	        	Certificate cert = (Certificate) pm.readObject();
+	        	if (cert == null)
+	        		break;
+	        	certs.add(cert);
+	        } while (true);
+	        pm.close();
 
-		        return certs;
-			}
+	        return certs;
 		}
 		throw new InternalErrorException("Unable to find certificate chain for service provider "+identityProvider);
 	}
@@ -734,7 +734,8 @@ public class SAMLServiceInternal {
 		this.samlRequestEntityDao = samlRequestEntityDao;
 	}
 
-    private boolean validateAssertion (String identityProvider, String serviceProvider, Assertion assertion, SamlValidationResults result2) throws ResolverException, InternalErrorException, ComponentInitializationException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
+    private boolean validateAssertion (String identityProvider, String serviceProvider, Assertion assertion, SamlValidationResults result2) 
+    		throws InternalErrorException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
     {
     	SAML20AssertionValidator validator = getValidator(identityProvider, serviceProvider);
     	
@@ -807,7 +808,9 @@ public class SAMLServiceInternal {
 		return true;
 	}
 
-	private SAML20AssertionValidator getValidator(String identityProvider, String serviceProvider) throws ResolverException, InternalErrorException, ComponentInitializationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException {
+	private SAML20AssertionValidator getValidator(String identityProvider, String serviceProvider) 
+			throws InternalErrorException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException 
+	{
 		EntityDescriptor md = getIdpMetadata(identityProvider);
 
 		List<ConditionValidator> conditionValidators = new LinkedList<ConditionValidator>();
@@ -854,7 +857,8 @@ public class SAMLServiceInternal {
     	return new SAML20AssertionValidator(conditionValidators, subjectConfirmationValidators, statementValidators, signatureTrustEngine, signaturePrevalidator);
 	}
 
-    private boolean validateResponse (String identityProvider, String serviceProvider, Response assertion, SamlValidationResults result2) throws ResolverException, InternalErrorException, ComponentInitializationException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
+    private boolean validateResponse (String identityProvider, String serviceProvider, Response assertion, SamlValidationResults result2) 
+    		throws InternalErrorException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
     {
     	SAML20ResponseValidator validator = getResponseValidator(identityProvider);
     	
@@ -881,7 +885,7 @@ public class SAMLServiceInternal {
 		
 		if ( ! assertion.getStatus().getStatusCode().getValue().equals(StatusCode.SUCCESS))
 		{
-			result2.setFailureReason("Authentication failed: "+assertion.getStatus().getStatusCode().getValue());
+			result2.setFailureReason("Authentication failed Status "+assertion.getStatus().getStatusCode().getValue());
 			log.info(result2.getFailureReason());
 			return false;
 		}
@@ -890,7 +894,7 @@ public class SAMLServiceInternal {
     	
     }
 
-    private SAML20ResponseValidator getResponseValidator(String identityProvider) throws ResolverException, InternalErrorException, ComponentInitializationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException {
+    private SAML20ResponseValidator getResponseValidator(String identityProvider) throws InternalErrorException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException {
 		EntityDescriptor md = getIdpMetadata(identityProvider);
 
 		List<ConditionValidator> conditionValidators = new LinkedList<ConditionValidator>();
@@ -936,27 +940,85 @@ public class SAMLServiceInternal {
 	}
 
 	public SamlValidationResults validateSessionCookie(String sessionCookie) throws InternalErrorException {
-		String[] split = sessionCookie.split(":");
+		User u = null;
+		try {
+			u = checkSamlCookie(sessionCookie);
+		} catch (Exception e) {
+			// Ignore validation exceptions
+		}
+		if ( u == null )
+		{
+			try {
+				u = checkIdpCookie(sessionCookie);
+			} catch (Exception e) {
+				// Ignore validation exceptions
+			}
+		}
+		SamlValidationResults r = new SamlValidationResults();
+		if (u != null)
+		{
+			r.setValid(true);
+			r.setAttributes(new HashMap<String, List<String>>());
+			r.setSessionCookie(sessionCookie);
+			r.setIdentityProvider(null);
+			r.setUser(u);
+		}
+		else
+			r.setValid(false);
+		
+		return r;
+	}
+
+	private User checkSamlCookie(String value) 
+			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+		String[] split = value.split(":");
 		if (split.length != 2)
-			throw new InternalErrorException("Invalid cookie");
+			return null;
 		SamlRequestEntity entity = samlRequestEntityDao.findByExternalId(split[0]);
 		SamlValidationResults r = new SamlValidationResults();
 		if (entity == null || entity.getExpirationDate() == null ||
 				entity.getExpirationDate().before(new Date()) ||
 				! entity.getKey().equals(split[1]))
 		{
-			r.setValid(false);
-			return r;
+			User u = userService.findUserByUserName(entity.getUser());
+			if (u != null && u.getActive().booleanValue())
+			{
+				return u;
+			}
+			else
+				return null;
 		}
-		
-		r.setValid(true);
-		r.setUser( userService.findUserByUserName( entity.getUser() ) );
-		r.setAttributes(new HashMap<String, List<String>>());
-		r.setSessionCookie(sessionCookie);
-		r.setIdentityProvider(null);
-		return r;
+		else
+			return null;
 	}
-	
+
+	private User checkIdpCookie(String value) throws InternalErrorException, IOException, NoSuchAlgorithmException,
+			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
+			CertificateException, NoSuchProviderException, SignatureException {
+		int separator = value.indexOf('_');
+		if (separator > 0)
+		{
+			String hash = value.substring(separator+1);
+			Long id = Long.decode(value.substring(0, separator));
+			for (Session sessio: sessionService.getActiveSessions(id))
+			{
+				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				String digestString = Base64.encodeBytes(digest);
+				if (digestString.equals(hash))
+				{
+					User u = userService.findUserByUserName(sessio.getUserName());
+					if (u != null && u.getActive().booleanValue())
+					{
+						return u;
+					}
+				}
+				
+			}
+		}
+		return null;
+	}
+    
+
 	private PasswordDomain createExternalPasswordDomain () throws InternalErrorException
 	{
 		PasswordDomain pd = userDomainService.findPasswordDomainByName(EXTERNAL_SAML_PASSWORD_DOMAIN);
@@ -1071,5 +1133,10 @@ public class SAMLServiceInternal {
 
 	public void setAdditionalData(AdditionalDataService additionalData) {
 		this.additionalData = additionalData;
+	}
+
+	public void setSessionService(SessionService sessionService) {
+		this.sessionService = sessionService;
+		
 	}
 }
