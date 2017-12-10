@@ -11,8 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.opensaml.util.storage.StorageService;
-import org.opensaml.xml.io.UnmarshallingException;
-
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
@@ -55,12 +53,15 @@ public class UserPasswordFormServlet extends BaseForm {
         super.doGet(req, resp);
 
         String requestedUser = "";
+        String userReadonly = "dummy";
         try {
 			requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
 					.getAuthenticiationRequestXmlObject()
 					.getSubject()
 					.getNameID()
 					.getValue();
+			if (requestedUser != null && ! requestedUser.trim().isEmpty())
+				userReadonly = "readonly";
 		} catch (Exception e1) {
 		}
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
@@ -94,6 +95,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("openIdRequestUrl", OpenIdRequestAction.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$
             g.addArgument("requestedUser", requestedUser);
 
             g.addArgument("kerberosAllowed", 

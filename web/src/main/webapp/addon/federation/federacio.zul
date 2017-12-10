@@ -182,6 +182,7 @@
 			p.getFellow("p_vip").setSelected(vipVis);
 			p.getFellow("p_sp").setSelected(spVis);
 			p.getFellow("p_eg").setSelected(egVis);
+			
 		}
 		
 		void refrescaArbre() {
@@ -483,49 +484,7 @@
 						ds = form.getDataSource();
 						ctx = ds.getJXPathContext();
 						registre = ctx.getValue("/");
-						if (!registre.isNew()) {
-							// Obtenim el tipus de node actual
-							Object obj = registre.getInstance();
-							//Missatgebox.info ("no nou");
-							if (obj instanceof EntityGroupMember) {
-								EntityGroupMember nodeActual = (EntityGroupMember) obj;
-								tipus = nodeActual.getTipus();
-								//Missatgebox.info ("tipus #"+tipus+"# pare="+registre.getParent());
-								// Deshabilitem els camps si correspon de hostname-related
-								// sinó és internal (i es Idp)
-								if ("IDP".equals(tipus)) {
-									marcat = nodeActual.getFederationMember().getInternal();
-									hostname.getFellow("dada").setDisabled(!marcat);
-									port1.getFellow("dada").setDisabled(!marcat);
-									port2.getFellow("dada").setDisabled(!marcat);
-									certificatechain.getFellow("dada").setDisabled(!marcat);
-									metadades.setDisabled(marcat);
-									organization.getFellow("dada").setDisabled(!marcat);
-									contact.getFellow("dada").setDisabled(!marcat);
-									id_allowCertificate1.setDisabled(!marcat);
-									id_allowRecover1.setDisabled(!marcat);
-									id_allowRegister1.setDisabled(!marcat);
-									Vbox pbox = r_publicKey;
-									for (Iterator it = pbox.getChildren().iterator(); it.hasNext(); ) { 
-										Component c = (Component) it.next();
-										if (c instanceof Button) {
-											Button b = (Button) c;
-											b.setDisabled(!marcat);
-										} else if (c instanceof Div) {
-											Div d = (Div) c;
-											for (Iterator dit = d.getChildren().iterator(); dit.hasNext(); ) {
-												Component cd = (Component) dit.next();
-												if (cd instanceof Button) {
-													Button b = (Button) cd;
-													b.setDisabled(!marcat);
-												}		
-											}
-										}
-									}									
-								}
-								mostraPanel(tipus);
-							}
-						} else {
+						if (registre.isNew()) {
 							// Obtenim el pare mitjançant botó d'inserir
 							b_inserir = esquema.getFellow("lista").getFellow("b_inserir");
 							//Nou registre grup, obtenim el seu pare
@@ -576,7 +535,7 @@
 											fmn.setClasse(classe);
 											nodeActual.setFederationMember(fmn);
 											ctx.setValue("@federationMember",fmn);
-											mostraPanel(tipusN);
+//											mostraPanel(tipusN);
 										} else if ("ARREL".equals(tipusP)){ // la resta (incloent ARREL)
 											// Crearem un fill de tipus entitygroup
 											//Missatgebox.info (tipus+" ARREL eg pare = "+(EGPare!=null?EGPare.getName():"ARREL"));
@@ -587,16 +546,58 @@
 											nodeActual.setEntityGrupPare(nouEG);
 											ctx.setValue("@entityGrupPare",nouEG);
 											
-											mostraPanel("EG");																				
+//											mostraPanel("EG");																				
 										} 
 									} else {
-										mostraPanel(nodeActual.getTipus());
+//										mostraPanel(nodeActual.getTipus());
 									}
 								}
 								//Missatgebox.info ("tipus pare "+tipusP);
 							} //else Missatgebox.info ("Pare de tipus no catalogat: classe "+pare.getClass()+ " pare="+pare);
 							
 						}		
+						// Obtenim el tipus de node actual
+						Object obj = registre.getInstance();
+						//Missatgebox.info ("no nou");
+						if (obj instanceof EntityGroupMember) {
+							EntityGroupMember nodeActual = (EntityGroupMember) obj;
+							tipus = nodeActual.getTipus();
+							//Missatgebox.info ("tipus #"+tipus+"# pare="+registre.getParent());
+							// Deshabilitem els camps si correspon de hostname-related
+							// sinó és internal (i es Idp)
+							if ("IDP".equals(tipus)) {
+								marcat = nodeActual.getFederationMember().getInternal();
+								if (marcat == null) marcat = false;
+								hostname.getFellow("dada").setDisabled(!marcat);
+								port1.getFellow("dada").setDisabled(!marcat);
+								port2.getFellow("dada").setDisabled(!marcat);
+								certificatechain.getFellow("dada").setDisabled(!marcat);
+								metadades.setDisabled(marcat);
+								organization.getFellow("dada").setDisabled(!marcat);
+								contact.getFellow("dada").setDisabled(!marcat);
+								id_allowCertificate1.setDisabled(!marcat);
+								id_allowRecover1.setDisabled(!marcat);
+								id_allowRegister1.setDisabled(!marcat);
+								Vbox pbox = r_publicKey;
+								for (Iterator it = pbox.getChildren().iterator(); it.hasNext(); ) { 
+									Component c = (Component) it.next();
+									if (c instanceof Button) {
+										Button b = (Button) c;
+										b.setDisabled(!marcat);
+									} else if (c instanceof Div) {
+										Div d = (Div) c;
+										for (Iterator dit = d.getChildren().iterator(); dit.hasNext(); ) {
+											Component cd = (Component) dit.next();
+											if (cd instanceof Button) {
+												Button b = (Button) cd;
+												b.setDisabled(!marcat);
+											}		
+										}
+									}
+								}									
+							}
+							mostraPanel(tipus);
+						}
 						enableSPComponents();
 						enableIDPComponents();
 						enableVIPComponents();
@@ -734,6 +735,7 @@
 						id_mailSender1.getFellow("dada").disabled = true;
 						id_mailSender1.getFellow("dada").setConstraint( "" );
 					}
+					scriptParse.refresh();
 				}	
 
 				void enableSPComponents ()
@@ -914,14 +916,34 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ScriptParse')}"/>
-									<codemirror bind="@federationMember/scriptParse" id="scriptParse"
-											linenumbers="true" visible="true" 
-											readonly="${!canModifyFI}"
-											height="10em" language="java" style="width:98%">
-										<attribute name='onCreate'><![CDATA[
-											self.setGlobalVars(new com.soffid.iam.web.agent.ScriptEnviroment().getRuleVars());
-										]]></attribute>
-									</codemirror>
+									<div>
+										<codemirror bind="@federationMember/scriptParse" id="scriptParse"
+												linenumbers="true" visible="true" 
+												readonly="${!canModifyFI}"
+												height="10em" language="java" style="width:98%">
+											<attribute name='onCreate'><![CDATA[
+												self.setGlobalVars(new com.soffid.iam.web.agent.ScriptEnviroment().getRuleVars());
+											]]></attribute>
+										</codemirror>
+										<div style="display: table;">
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="serviceLocator:"/>
+												<label style="display:table-cell;" value="${c:l('rules.var1')}"/>
+											</div>
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="principal:"/>
+												<label style="display:table-cell;" value="${c:l('federacio.zul.principal')}"/>
+											</div>
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="attributes:"/>
+												<label style="display:table-cell;" value="${c:l('federacio.zul.attributes')}"/>
+											</div>
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="return value:"/>
+												<label style="display:table-cell;" value="${c:l('federacio.zul.returnValue')}"/>
+											</div>
+										</div>
+									</div>
 								</row>
 								<row  id="firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
@@ -1068,6 +1090,11 @@
 											bind="@federationMember/mailSenderAddress" mascara="no empty"
 											lectura="${!canModifyFI}"/>
 								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.broker')}"/>
+									<checkbox bind="@federationMember/identityBroker" disabled="${!canModifyFI}" onCheck=""/>
+								</row>
+								
 							</rows>
 						</grid>
 						</hbox>						

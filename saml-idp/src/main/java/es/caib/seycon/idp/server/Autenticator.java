@@ -3,6 +3,7 @@ package es.caib.seycon.idp.server;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -14,6 +15,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
@@ -40,7 +44,9 @@ import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
+import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -95,7 +101,7 @@ public class Autenticator {
     }
     
     public boolean validateCookie (HttpServletRequest req, HttpServletResponse resp) 
-    		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException
+    		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException
     {
         HttpSession session = req.getSession();
         IdpConfig config = IdpConfig.getConfig();
@@ -116,42 +122,91 @@ public class Autenticator {
         	{
         		if (c.getName().equals(ip.getSsoCookieName()))
         		{
-        			String value = c.getValue();
-        			int separator = value.indexOf('_');
-        			if (separator > 0)
-        			{
-        				String hash = value.substring(separator+1);
-        				Long id = Long.decode(value.substring(0, separator));
-        				for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
-        				{
-        		        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
-        		        	String digestString = Base64.encodeBytes(digest);
-        		        	if (digestString.equals(hash))
-        		        	{
-        		        		try {
-        		        			
-        		        			ServerService svc = new RemoteServiceLocator().getServerService();
-        		        			User u = svc.getUserInfo(sessio.getUserName(), null);
-        		        			if (u != null && u.getActive().booleanValue())
-        		        			{
-        		        				for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
-        		        				{
-        									autenticate(account.getName(), req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
-        	        		        		return true;
-        		        				}
-        		        			}
-								} catch (UnknownUserException e) {
-									e.printStackTrace();
-								}
-        		        	}
-        					
-        				}
-        			}
+    				if (checkExternalCookie(req, resp, config, c))
+    					return true;
         		}
         	}
         }
         return false;
     }
+
+	private boolean checkExternalCookie(HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
+			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+		String value = c.getValue();
+		FederacioService fs = new RemoteServiceLocator().getFederacioService();
+		SamlValidationResults check = fs.validateSessionCookie(value);
+		if (check.isValid() && check.getUser() != null)
+		{
+			Collection<UserAccount> accounts = new com.soffid.iam.remote.RemoteServiceLocator()
+					.getServerService()
+					.getUserAccounts(check.getUser().getId(), config.getSystem().getName());
+			if (accounts == null || accounts.isEmpty())
+			{
+				LOG.info("User "+check.getUser().getUserName()+" has no account on "+config.getSystem().getName());
+			}
+			else
+			{
+				String user = accounts.iterator().next().getName();
+		        String requestedUser = "";
+		        try {
+					requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
+							.getAuthenticiationRequestXmlObject()
+							.getSubject()
+							.getNameID()
+							.getValue();
+				} catch (Exception e1) {
+				}
+		        if (! requestedUser.isEmpty() && !user.equals(requestedUser))
+		        {
+					LOG.info("Service provider requests login for "+requestedUser+" but "+user+" is authenticated instead");
+		            HttpSession session = req.getSession();
+		            session.removeAttribute(SessionConstants.SEU_USER);
+		            return false;
+		        }
+		        else
+		        	autenticate(user, req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
+				return true;
+			}
+		}
+		return check.isValid();
+	}
+
+	private boolean checkOwnCookie(HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) throws InternalErrorException, IOException, NoSuchAlgorithmException,
+			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
+			CertificateException, NoSuchProviderException, SignatureException {
+		String value = c.getValue();
+		int separator = value.indexOf('_');
+		if (separator > 0)
+		{
+			String hash = value.substring(separator+1);
+			Long id = Long.decode(value.substring(0, separator));
+			for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
+			{
+				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				String digestString = Base64.encodeBytes(digest);
+				if (digestString.equals(hash))
+				{
+					try {
+						
+						ServerService svc = new RemoteServiceLocator().getServerService();
+						User u = svc.getUserInfo(sessio.getUserName(), null);
+						if (u != null && u.getActive().booleanValue())
+						{
+							for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
+							{
+								autenticate(account.getName(), req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
+				        		return true;
+							}
+						}
+					} catch (UnknownUserException e) {
+						e.printStackTrace();
+					}
+				}
+				
+			}
+		}
+		return false;
+	}
     
 
     private void setCookie(HttpServletRequest req, HttpServletResponse resp,
@@ -217,6 +272,7 @@ public class Autenticator {
         principals.add(principal);
         Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
         req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
+        
         edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
         		(edu.internet2.middleware.shibboleth.idp.session.Session) 
         			req.getAttribute(
@@ -224,9 +280,12 @@ public class Autenticator {
         if (shibbolethSession != null)
         {
         	shibbolethSession.setSubject(userSubject);
+        	shibbolethSession.getAuthenticationMethods().clear();
         }
         
-        LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
+		((Saml2LoginContext)HttpServletHelper.getLoginContext(req)).setAuthenticationMethodInformation(null); 
+		
+		LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
         
         if (returnPath == null) 
         {
