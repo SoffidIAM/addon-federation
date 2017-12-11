@@ -1630,6 +1630,7 @@ public class FederacioServiceImpl
 			delegate.setUserDomainService(getUserDomainService());
 			delegate.setUserService(getUserService());
 			delegate.setSessionService ( getSessionService() );
+			delegate.setLogonService(getLogonService());
 		}
 		return delegate;
 	}
@@ -1682,6 +1683,13 @@ public class FederacioServiceImpl
 			}
 		}
 		return null;
+	}
+
+	@Override
+	protected SamlValidationResults handleAuthenticate(String serviceProvider, String identityProvider, 
+			String user, String password, long sessionSeconds)
+			throws Exception {
+		return getDelegate().authenticate(serviceProvider, identityProvider, user, password, sessionSeconds);
 	}
 
 }
