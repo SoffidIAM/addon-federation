@@ -41,7 +41,7 @@ public class AuthenticatedFilter implements Filter {
                 session.setAttribute(HtmlGenerator.ORGANIZATION_URL, req.getRequestURL().toString());
                 session.setAttribute(HtmlGenerator.ORGANIZATION_NAME, Messages.getString("AuthenticatedFilter.2")); //$NON-NLS-1$
                 session.setAttribute(SessionConstants.AUTHENTICATION_REDIRECT, path.toString());
-                ((HttpServletResponse) response).sendRedirect(UserPasswordFormServlet.URI);
+                ((HttpServletResponse) response).sendRedirect(LoginServlet.URI);
                 return;
             }
         }

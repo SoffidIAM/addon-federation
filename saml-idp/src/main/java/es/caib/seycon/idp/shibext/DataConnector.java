@@ -9,11 +9,13 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -112,6 +114,21 @@ public class DataConnector extends BaseDataConnector {
             Session session = ctx.getUserSession();
             if (session != null)
                 addStringValue (m, "sessionId", session.getSessionID()); //$NON-NLS-1$
+            
+            SimpleDateFormat simpleDf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            simpleDf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            
+            for (UserData d: server.getUserData(ui.getId()))
+            {
+            	if (d.getDateValue() != null)
+            	{
+            		addStringValue(m, "custom:"+d.getAttribute(), simpleDf.format(d.getDateValue().getTime()));
+            	}
+            	else if (d.getValue() != null)
+            	{
+            		addStringValue(m, "custom:"+d.getAttribute(), d.getValue());
+            	}
+            }
             return m;
         } catch (Exception e) {
             throw new AttributeResolutionException(e);

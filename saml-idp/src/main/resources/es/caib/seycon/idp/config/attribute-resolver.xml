@@ -97,7 +97,7 @@
         <resolver:AttributeEncoder xsi:type="enc:SAML2String" name="urn:oid:2.5.4.20" friendlyName="telephoneNumber" />
     </resolver:AttributeDefinition>
 
-    <resolver:AttributeDefinition xsi:type="ad:Simple" id="FullName" sourceAttributeID="fullname">
+    <resolver:AttributeDefinition xsi:type="ad:Simple" id="Fullname" sourceAttributeID="fullname">
         <resolver:Dependency ref="seu" />
         <resolver:AttributeEncoder xsi:type="enc:SAML1String" name="urn:mace:dir:attribute-def:displayName" />
         <resolver:AttributeEncoder xsi:type="enc:SAML2String" name="urn:oid:2.16.840.1.113730.3.1.241" friendlyName="displayName" />
@@ -202,7 +202,13 @@
     <!--      Principal Connectors                  -->
     <!-- ========================================== -->
     <resolver:PrincipalConnector xsi:type="pc:Transient" id="shibTransient" nameIDFormat="urn:mace:shibboleth:1.0:nameIdentifier" />
-    <resolver:PrincipalConnector xsi:type="pc:Transient" id="saml1Unspec" nameIDFormat="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
+    <resolver:PrincipalConnector xsi:type="pc:Direct" id="saml1Unspec" nameIDFormat="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
     <resolver:PrincipalConnector xsi:type="pc:Transient" id="saml2Transient" nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:transient" />
+
+    <resolver:PrincipalConnector xsi:type="pc:Direct" id="saml2Persistent" nameIDFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent" >
+     </resolver:PrincipalConnector>
+
+    <resolver:PrincipalConnector xsi:type="pc:Direct" id="saml1Email" nameIDFormat="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" >
+    </resolver:PrincipalConnector>
 
 </resolver:AttributeResolver>

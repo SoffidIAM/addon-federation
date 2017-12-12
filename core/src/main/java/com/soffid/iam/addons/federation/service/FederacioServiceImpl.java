@@ -25,6 +25,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMWriter;
@@ -1627,6 +1629,8 @@ public class FederacioServiceImpl
 			delegate.setDispatcherService(getDispatcherService());
 			delegate.setUserDomainService(getUserDomainService());
 			delegate.setUserService(getUserService());
+			delegate.setSessionService ( getSessionService() );
+			delegate.setLogonService(getLogonService());
 		}
 		return delegate;
 	}
@@ -1641,13 +1645,51 @@ public class FederacioServiceImpl
 
 	@Override
 	protected SamlRequest handleGenerateSamlRequest(String serviceProvider, String identityProvider,
+			String userName,
 			long sessionSeconds) throws Exception {
-		return getDelegate().generateSamlRequest (serviceProvider, identityProvider, sessionSeconds);
+		if (userName != null && !userName.trim().isEmpty())
+		{
+			for (FederationMemberEntity fm: getIdentityProviderEntityDao().findFMByPublicId(identityProvider))
+			{
+				String pattern = fm.getDomainExpression();
+				if (pattern != null && !pattern.trim().isEmpty())
+				{
+					Matcher m = Pattern.compile("^"+pattern+"$").matcher(userName);
+					if ( m.matches() && m.group(1) != null)
+						userName = m.group(1);
+				}
+			}
+		}
+		return getDelegate().generateSamlRequest (serviceProvider, identityProvider, userName, sessionSeconds);
 	}
 
 	@Override
 	protected SamlValidationResults handleValidateSessionCookie(String sessionCookie) throws Exception {
 		return getDelegate().validateSessionCookie(sessionCookie);
+	}
+
+	@Override
+	protected String handleSearchIdpForUser(String userName) throws Exception {
+		for (FederationMemberEntity fm: getFederationMemberEntityDao().loadAll())
+		{
+			if (fm instanceof IdentityProviderEntity)
+			{
+				String pattern = fm.getDomainExpression();
+				if (pattern != null && !pattern.trim().isEmpty())
+				{
+					if ( Pattern.matches("^"+pattern+"$", userName))
+						return ((IdentityProviderEntity) fm).getPublicId();
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	protected SamlValidationResults handleAuthenticate(String serviceProvider, String identityProvider, 
+			String user, String password, long sessionSeconds)
+			throws Exception {
+		return getDelegate().authenticate(serviceProvider, identityProvider, user, password, sessionSeconds);
 	}
 
 }

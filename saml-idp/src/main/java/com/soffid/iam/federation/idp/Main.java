@@ -71,6 +71,9 @@ import es.caib.seycon.idp.ui.PasswordChangedForm;
 import es.caib.seycon.idp.ui.PasswordRecoveryAction;
 import es.caib.seycon.idp.ui.PasswordRecoveryAction2;
 import es.caib.seycon.idp.ui.PasswordRecoveryForm;
+import es.caib.seycon.idp.ui.broker.QueryUserIdPServlet;
+import es.caib.seycon.idp.ui.broker.SAMLSSOPostServlet;
+import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
@@ -169,7 +172,7 @@ public class Main {
             IOException, InternalErrorException, InvalidKeyException,
             IllegalStateException, NoSuchProviderException, SignatureException,
             SAXException, ParserConfigurationException, TransformerException {
-        c.extractConfigFile("attribute-resolver.xml"); //$NON-NLS-1$
+//        c.extractConfigFile("attribute-resolver.xml"); //$NON-NLS-1$
         c.extractConfigFile("handler.xml"); //$NON-NLS-1$
         c.generateFederationConfiguration();
     }
@@ -361,6 +364,10 @@ public class Main {
         ctx.addServlet(OpenIdResponseAction.class, OpenIdResponseAction.URI);
         ctx.addServlet(OauthRequestAction.class, OauthRequestAction.URI);
         ctx.addServlet(OauthResponseAction.class, OauthResponseAction.URI);
+        
+        ctx.addServlet(QueryUserIdPServlet.class, QueryUserIdPServlet.URI);
+        ctx.addServlet(SAMLSSOPostServlet.class, SAMLSSOPostServlet.URI);
+        ctx.addServlet(SAMLSSORequest.class, SAMLSSORequest.URI);
         
         try {
             ctx.addServlet(PasswordRememberAction.class, PasswordRememberAction.URI);

@@ -16,7 +16,9 @@ import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.DispatcherService;
 import es.caib.seycon.ng.servei.DominiService;
 import es.caib.seycon.ng.servei.DominiUsuariService;
+import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.servei.UsuariService;
+import es.caib.seycon.ng.sync.servei.LogonService;
 
 import java.util.List;
 import java.util.Map;
@@ -71,7 +73,9 @@ import org.springframework.transaction.annotation.Transactional;
 	SamlRequestEntity.class,
 	DominiService.class,
 	DispatcherService.class,
-	DominiUsuariService.class
+	DominiUsuariService.class,
+	SessioService.class,
+	LogonService.class
 })
 public abstract class FederacioService {
 
@@ -416,6 +420,7 @@ public abstract class FederacioService {
 
 	@Description("Generates a SAML request to formard to the IdP")
 	SamlRequest generateSamlRequest (String serviceProvider, String identityProvider,
+			@Nullable String subject,
 			long sessionSeconds) {return null;}
 	
 	@Description("Checks SAML response")
@@ -425,5 +430,12 @@ public abstract class FederacioService {
 
 	@Description("Checks SAML response")
 	SamlValidationResults validateSessionCookie(String sessionCookie) {return null;}
+
+	@Description("Finds identity provider for subject")
+	String searchIdpForUser(String userName) {return null;}
+
+	@Description("Creates a virtual IdP session")
+	SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
+			String user, String password, long sessionSeconds) {return null;}
 
 }

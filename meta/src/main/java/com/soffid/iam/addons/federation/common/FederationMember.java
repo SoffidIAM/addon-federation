@@ -117,7 +117,11 @@ public class FederationMember {
 	@Nullable
 	public String assertionPath;
 
-	@Description("Domain expression (regular expression) to validate user domains")
+	@Description ("Act as a identity broker (only for identity providers)")
+	@Nullable
+	Boolean identityBroker;
+
+	@Description("Domain expression (regular expression) to detect users from this domain")
 	@Nullable
 	public String domainExpression;
 
