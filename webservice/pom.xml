@@ -58,7 +58,7 @@
 			<groupId>${pom.groupId}</groupId>
 			<artifactId>federation-core</artifactId>
 			<version>${pom.version}</version>
-			<type>ejb</type>
+			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

@@ -2,6 +2,7 @@ package com.soffid.iam.addons.federation.rest;
 
 import java.rmi.RemoteException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.servlet.annotation.HttpConstraint;
@@ -17,8 +18,10 @@ import javax.ws.rs.core.Response.Status;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.FederationServiceLocator;
+import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.api.PasswordValidation;
+import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.sync.service.LogonService;
@@ -57,68 +60,53 @@ public class FederationREST {
 	@Path("/validate-credentials")
 	@POST
 	public Response validateCredentials(
+			@QueryParam("serviceProvider") @DefaultValue("") String serviceProviderName, 
+			@QueryParam("identityProvider") @DefaultValue("") String identityProvider, 
 			@QueryParam("user") @DefaultValue("") String user, 
 			@QueryParam("password") @DefaultValue("") String password,
-			@QueryParam("passwordDomain") @DefaultValue("") String passwordDomain)
+			@QueryParam("sessionSeconds") @DefaultValue("3600") String sessionSeconds)
 			throws InternalErrorException {
 
 		// Parameters validation
 		if (user.isEmpty()) return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyUser");
 		if (password.isEmpty()) return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyPassword");
-		if (passwordDomain.isEmpty()) return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyPasswordDomain");
 
+		FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
+		SamlValidationResults r = federationService.authenticate(serviceProviderName, identityProvider, user, password, Long.parseLong(sessionSeconds));
 		// User validation
-		User portalUser = ServiceLocator.instance().getUserService().findUserByUserName(user);
-		if (portalUser==null) return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "UserNotFound");
-				
-		// Credential validation???
-//		FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
-			
-		// Account????
-//		Collection<UserAccount> accounts = ServiceLocator.instance().getAccountService().getUserAccounts(portalUser);
-//		for (UserAccount userAccount: accounts) {
-//			userAccount.getName();
-//		}
-		
-		// Auterization???
-//		ServiceLocator.instance().getAuthorizationService();
-
-		PasswordValidation result = null;
-		try {
-			// result = ServiceLocator.instance().getLogonService().validatePassword(user, password, passwordDomain);
-			com.soffid.iam.sync.service.LogonService logonService = (LogonService) com.soffid.iam.ServiceLocator.instance().getContext().getBean("logonService-v2");
-			result = logonService.validatePassword(user, password, passwordDomain);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-		
-		
-		
-		//ServiceLocator.instance().getPasswordService().checkPassword(arg0, arg1, arg2, arg3, arg4)
-		// Response generation
-//		if (idp == null) {
-//			return ResponseBuilder.responseOk(new String("{\"exists\":\"no\",\"identityProvider\":\"\"}"));
-//		} else {
-//			return ResponseBuilder.responseOk(new String("{\"exists\":\"yes\",\"identityProvider\":\"" + idp + "\"}"));
-//		}
-		
-		
-		
-		return ResponseBuilder.responseOk(result);
+		return ResponseBuilder.responseOk(r);
 	}
 	
 	@Path("/generate-saml-request")
 	@POST
-	public Response generateSAMLRequest(@QueryParam("filter") @DefaultValue("") String filter, @QueryParam("attributes") String atts)
+	public Response generateSAMLRequest( 
+			@QueryParam("serviceProvider") @DefaultValue("") String serviceProviderName, 
+			@QueryParam("identityProvider") @DefaultValue("") String identityProvider, 
+			@QueryParam("user") @DefaultValue("") String user, 
+			@QueryParam("sessionSeconds") @DefaultValue("3600") String sessionSeconds)
 			throws InternalErrorException {
-		return ResponseBuilder.responseOk(new String("{\"operation\":\"generate-saml-request\"}"));
+		FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
+		SamlRequest r = federationService.generateSamlRequest(serviceProviderName, 
+				identityProvider, user, Long.parseLong(sessionSeconds));
+		// User validation
+		return ResponseBuilder.responseOk(r);
 	}
 
 	@Path("/parse-saml-response")
 	@POST
-	public Response parseSAMLResponse(@QueryParam("filter") @DefaultValue("") String filter, @QueryParam("attributes") String atts)
+	public Response parseSAMLResponse(
+			@QueryParam("autoProvision") Boolean autoProvision, 
+			@QueryParam("response") Map<String, String> response, 
+			@QueryParam("protocol") @DefaultValue("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST") String protocol, 
+			String serviceProviderName)
 			throws InternalErrorException {
-		return ResponseBuilder.responseOk(new String("{\"operation\":\"parse-saml-response\"}"));
+
+		FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
+		SamlValidationResults r = federationService.authenticate(serviceProviderName, 
+				protocol, 
+				response, 
+				autoProvision == null ? false: autoProvision.booleanValue()) ;
+		return ResponseBuilder.responseOk(r);
 	}
 
 	public static void main (String [ ] args) {
