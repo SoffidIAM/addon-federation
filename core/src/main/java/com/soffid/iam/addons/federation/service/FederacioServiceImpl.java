@@ -1630,7 +1630,7 @@ public class FederacioServiceImpl
 			delegate.setUserDomainService(getUserDomainService());
 			delegate.setUserService(getUserService());
 			delegate.setSessionService ( getSessionService() );
-			delegate.setLogonService(getLogonService());
+			delegate.setPasswordService(getPasswordService());
 		}
 		return delegate;
 	}
