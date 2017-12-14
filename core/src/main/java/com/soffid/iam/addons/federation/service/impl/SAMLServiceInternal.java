@@ -123,6 +123,7 @@ import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.MetadataScope;
+import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordDomain;
 import com.soffid.iam.api.PasswordPolicy;
 import com.soffid.iam.api.PasswordValidation;
@@ -137,6 +138,7 @@ import com.soffid.iam.service.AccountService;
 import com.soffid.iam.service.AdditionalDataService;
 import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.service.DispatcherService;
+import com.soffid.iam.service.PasswordService;
 import com.soffid.iam.service.SessionService;
 import com.soffid.iam.service.UserDomainService;
 import com.soffid.iam.service.UserService;
@@ -168,7 +170,7 @@ public class SAMLServiceInternal {
 	private UserDomainService userDomainService;
 	private DispatcherService dispatcherService;
 	private AccountService accountService;
-	private com.soffid.iam.sync.service.LogonService logonService;
+	private PasswordService passwordService;
 	
 	public void setConfigurationService(ConfigurationService configurationService) {
 		this.configurationService = configurationService;
@@ -1146,9 +1148,10 @@ public class SAMLServiceInternal {
 
 	public SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
 			String user, String password, long sessionSeconds ) throws InternalErrorException, RemoteException, NoSuchAlgorithmException {
-		PasswordValidation v = logonService.validatePassword(user, identityProvider, password);
+		boolean v = passwordService.checkPassword(user, identityProvider, new Password(password), 
+				true, false);
 		SamlValidationResults r = new SamlValidationResults();
-		if (v == PasswordValidation.PASSWORD_GOOD)
+		if (v)
 		{
 			StringBuffer sb = new StringBuffer();
 			SecureRandom sr = new SecureRandom();
@@ -1190,10 +1193,6 @@ public class SAMLServiceInternal {
 			r.setValid(true);
 			return r;
 		}
-		else if (v == PasswordValidation.PASSWORD_GOOD_EXPIRED)
-		{
-			r.setFailureReason("Password is expired");
-		}
 		else
 		{
 			r.setFailureReason("Wrong user name ar password");
@@ -1213,7 +1212,12 @@ public class SAMLServiceInternal {
 		return null;
 	}
 
-	public void setLogonService(com.soffid.iam.sync.service.LogonService logonService2) {
-		this.logonService = logonService2;
+	public PasswordService getPasswordService() {
+		return passwordService;
 	}
+
+	public void setPasswordService(PasswordService passwordService) {
+		this.passwordService = passwordService;
+	}
+
 }
