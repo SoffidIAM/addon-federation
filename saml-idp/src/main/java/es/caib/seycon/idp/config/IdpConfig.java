@@ -37,8 +37,13 @@ import javax.xml.transform.TransformerException;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMEncryptor;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PEMWriter;
+import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
+import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -311,17 +316,26 @@ public class IdpConfig {
             federationService.update(federationMember);
         }
         
-        StringWriter w = new StringWriter();
-        PEMWriter pw = new PEMWriter(w);
-        pw.writeObject(k, "DESEDE", p.getPassword().toCharArray(), new SecureRandom()); //$NON-NLS-1$
-        pw.close();
-        privateKey = w.getBuffer().toString();
+		JcePEMEncryptorBuilder builder = new JcePEMEncryptorBuilder("AES-128-CBC");
+		builder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+		builder.setSecureRandom(new SecureRandom());
+		PEMEncryptor encryptor = builder.build(p.getPassword().toCharArray());
+		
+		JcaMiscPEMGenerator gen = new JcaMiscPEMGenerator(k, encryptor);
+
+        StringWriter writer = new StringWriter();
+        PemWriter pemWriter = new PemWriter(writer);
+
+        pemWriter.writeObject(gen);
+        pemWriter.close();
+
+        privateKey = writer.getBuffer().toString();
         
-        w = new StringWriter();
-        pw = new PEMWriter(w);
-       	pw.writeObject(certs.get(0));
-        pw.close();
-        publicCert = w.toString();
+        writer = new StringWriter();
+        pemWriter = new PemWriter(writer);
+        pemWriter.writeObject(new JcaMiscPEMGenerator(certs.get(0)) );
+        pemWriter.close();
+        publicCert = writer.toString();
         
         
         String keystorePath = SeyconKeyStore.getKeyStoreFile().getPath();
