@@ -1,10 +1,7 @@
 target
-/core/.settings/org.eclipse.wst.common.component
-/core/.settings/org.eclipse.wst.common.project.facet.core.xml
-/core/.settings/org.eclipse.wst.validation.prefs
-/web/.settings/.jsdtscope
-/web/.settings/org.eclipse.wst.common.component
-/web/.settings/org.eclipse.wst.common.project.facet.core.xml
-/web/.settings/org.eclipse.wst.jsdt.ui.superType.container
-/web/.settings/org.eclipse.wst.jsdt.ui.superType.name
-/web/.settings/org.eclipse.wst.validation.prefs
+/core/.settings/
+/web/.settings/
+/webservice/.classpath
+/webservice/.project
+/webservice/.settings/
+/webservice/target/

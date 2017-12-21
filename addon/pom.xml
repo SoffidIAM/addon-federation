@@ -167,6 +167,12 @@
 		</dependency>
 		<dependency>
 			<groupId>${pom.groupId}</groupId>
+			<artifactId>federation-webservice</artifactId>
+			<version>${pom.version}</version>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>${pom.groupId}</groupId>
 			<artifactId>federation-web</artifactId>
 			<version>${pom.version}</version>
 			<type>war</type>

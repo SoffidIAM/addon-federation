@@ -625,6 +625,9 @@
 
 				void generateMetadata() {
 
+					// Only for internal=false
+					if (!sp_id_internal1.isChecked()) return;
+
 					// Recover the form values
 					ds = form.getDataSource();
 					ctx = ds.getJXPathContext();
@@ -1169,7 +1172,6 @@
 									<textbox sclass="textbox"
 										id="sp_metadades" 
 										bind="@federationMember/metadades" readonly="${!canModifyFI}" rows="8"
-										disabled="true"
 										width="98%"/>
 								</row>
 								<row  id="sp_firstRowToHide">

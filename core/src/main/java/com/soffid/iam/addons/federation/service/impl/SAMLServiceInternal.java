@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
@@ -122,8 +123,10 @@ import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.MetadataScope;
+import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordDomain;
 import com.soffid.iam.api.PasswordPolicy;
+import com.soffid.iam.api.PasswordValidation;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
@@ -135,6 +138,7 @@ import com.soffid.iam.service.AccountService;
 import com.soffid.iam.service.AdditionalDataService;
 import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.service.DispatcherService;
+import com.soffid.iam.service.PasswordService;
 import com.soffid.iam.service.SessionService;
 import com.soffid.iam.service.UserDomainService;
 import com.soffid.iam.service.UserService;
@@ -146,6 +150,7 @@ import bsh.Interpreter;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
+import es.caib.seycon.ng.sync.servei.LogonService;
 import es.caib.seycon.util.Base64;
 
 public class SAMLServiceInternal {
@@ -165,6 +170,7 @@ public class SAMLServiceInternal {
 	private UserDomainService userDomainService;
 	private DispatcherService dispatcherService;
 	private AccountService accountService;
+	private PasswordService passwordService;
 	
 	public void setConfigurationService(ConfigurationService configurationService) {
 		this.configurationService = configurationService;
@@ -1139,4 +1145,79 @@ public class SAMLServiceInternal {
 		this.sessionService = sessionService;
 		
 	}
+
+	public SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
+			String user, String password, long sessionSeconds ) throws InternalErrorException, RemoteException, NoSuchAlgorithmException {
+		boolean v = passwordService.checkPassword(user, identityProvider, new Password(password), 
+				true, false);
+		SamlValidationResults r = new SamlValidationResults();
+		if (v)
+		{
+			StringBuffer sb = new StringBuffer();
+			SecureRandom sr = new SecureRandom();
+			for (int i = 0; i < 180; i++)
+			{
+				int random = sr.nextInt(64);
+				if (random < 26)
+					sb.append((char) ('A'+random));
+				else if (random < 52)
+					sb.append((char) ('a'+random-26));
+				else if (random < 62)
+					sb.append((char) ('0'+random-52));
+				else if (random < 63)
+					sb.append('+');
+				else
+					sb.append('/');
+			}
+			
+			String newID = generateRandomId();
+
+			SamlRequestEntity reqEntity = samlRequestEntityDao.newSamlRequestEntity();
+			reqEntity.setHostName(serviceProvider);
+			reqEntity.setDate(new Date());
+			reqEntity.setExpirationDate(new Date(System.currentTimeMillis()+sessionSeconds * 1000L));
+			reqEntity.setExternalId(newID);
+			reqEntity.setFinished(false);
+
+			reqEntity.setKey(sb.toString());
+			r.setIdentityProvider(identityProvider);
+			
+			
+			r.setUser( searchUser (identityProvider, user )  );
+			if (r.getUser() != null)
+				reqEntity.setUser( r.getUser().getUserName() );
+			r.setSessionCookie(reqEntity.getExternalId()+":"+reqEntity.getKey());
+			reqEntity.setFinished(true);
+			samlRequestEntityDao.create(reqEntity);
+
+			r.setValid(true);
+			return r;
+		}
+		else
+		{
+			r.setFailureReason("Wrong user name ar password");
+		}
+		return r;
+	}
+
+	private User searchUser(String identityProvider, String user) throws InternalErrorException {
+		Account account = accountService.findAccount( user , identityProvider);
+		if (account != null)
+		{
+			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
+			{
+				return account.getOwnerUsers().iterator().next();
+			}
+		}
+		return null;
+	}
+
+	public PasswordService getPasswordService() {
+		return passwordService;
+	}
+
+	public void setPasswordService(PasswordService passwordService) {
+		this.passwordService = passwordService;
+	}
+
 }

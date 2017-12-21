@@ -117,6 +117,7 @@
 		<module>meta</module>
 		<module>common</module>
 		<module>core</module>
+		<module>webservice</module>
 		<module>web</module>
 		<module>saml-idp</module>
 		<module>addon</module>

@@ -19,6 +19,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -32,8 +33,19 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMEncryptor;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PEMReader;
 import org.bouncycastle.openssl.PEMWriter;
+import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -189,31 +201,50 @@ public class RelyingPartyGenerator {
         node.appendChild(privateNode);
         privateNode.setAttribute("password", p.getPassword()); //$NON-NLS-1$
 
-        PEMReader pm = new PEMReader(new StringReader(
+		PEMParser pemParser = new PEMParser(new StringReader(
                 federationMember.getPrivateKey()));
-        KeyPair kp = (KeyPair) pm.readObject();
+		Object object = pemParser.readObject();
+	    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+	    KeyPair kp;
+        kp = converter.getKeyPair((PEMKeyPair) object);
+		pemParser.close();
 
-        StringWriter w = new StringWriter();
-        PEMWriter pw = new PEMWriter(w);
-        pw.writeObject(kp.getPrivate(), "DESEDE", //$NON-NLS-1$
-                p.getPassword().toCharArray(), new SecureRandom());
-        pw.close();
-        privateNode.setTextContent(w.getBuffer().toString());
+		JcePEMEncryptorBuilder builder = new JcePEMEncryptorBuilder("AES-128-CBC");
+		builder.setProvider(BouncyCastleProvider.PROVIDER_NAME);
+		builder.setSecureRandom(new SecureRandom());
+		PEMEncryptor encryptor = builder.build(p.getPassword().toCharArray());
+		
+		JcaMiscPEMGenerator gen = new JcaMiscPEMGenerator(kp.getPrivate(), encryptor);
 
+        StringWriter writer = new StringWriter();
+        PemWriter pemWriter = new PemWriter(writer);
+
+        pemWriter.writeObject(gen);
+        pemWriter.close();
+
+        privateNode.setTextContent(writer.getBuffer().toString());
+        
         // Public key
         Element certNode = doc.createElementNS(SECURITY_NAMESPACE,
                 "Certificate"); //$NON-NLS-1$
         node.appendChild(certNode);
 
-        pm = new PEMReader(new StringReader(
+		pemParser = new PEMParser(new StringReader(
                 federationMember.getCertificateChain()));
-        Certificate cert = (Certificate) pm.readObject();
-
-        w = new StringWriter();
-        pw = new PEMWriter(w);
-        pw.writeObject(cert);
-        pw.close();
-        certNode.setTextContent(w.getBuffer().toString());
+		do {
+			object = pemParser.readObject();
+			if (object == null) break;
+			if (object instanceof X509Certificate)
+			{
+		        writer = new StringWriter();
+		        pemWriter = new PemWriter(writer);
+		        pemWriter.writeObject(new JcaMiscPEMGenerator( object ) );
+		        pemWriter.close();
+		        certNode.setTextContent(writer.getBuffer().toString());
+		        break;
+			}
+		} while (true);
+		        
     }
 
     @SuppressWarnings("rawtypes")

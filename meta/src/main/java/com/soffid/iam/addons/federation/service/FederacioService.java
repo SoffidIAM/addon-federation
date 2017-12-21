@@ -18,6 +18,7 @@ import es.caib.seycon.ng.servei.DominiService;
 import es.caib.seycon.ng.servei.DominiUsuariService;
 import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.servei.UsuariService;
+import es.caib.seycon.ng.sync.servei.LogonService;
 
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,8 @@ import org.springframework.transaction.annotation.Transactional;
 	DominiService.class,
 	DispatcherService.class,
 	DominiUsuariService.class,
-	SessioService.class
+	SessioService.class,
+	LogonService.class
 })
 public abstract class FederacioService {
 
@@ -431,5 +433,9 @@ public abstract class FederacioService {
 
 	@Description("Finds identity provider for subject")
 	String searchIdpForUser(String userName) {return null;}
+
+	@Description("Creates a virtual IdP session")
+	SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
+			String user, String password, long sessionSeconds) {return null;}
 
 }
