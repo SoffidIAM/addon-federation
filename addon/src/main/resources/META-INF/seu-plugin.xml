@@ -5,6 +5,7 @@
 	<version>${pom.version}</version>
 	<core name="Federation common classes" resource="federation-common-${pom.version}.jar"/>
 	<core name="Federation core classes" resource="federation-core-${pom.version}.jar"/>
+	<webService name="Federation REST Web Service API" resource="federation-webservice-${project.version}.jar"/>
 	<web name="Federation web files" resource="federation-web-${pom.version}.war"/>
 	<agents name="SAML Identity Provider (IDP)" resource="saml-idp-${pom.version}.jar">
 		<agent>

@@ -52,6 +52,14 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setEntityGroup(eg);
 		}
 
+		target.setPublicKey(source.getPublicKey());
+		target.setPrivateKey(source.getPrivateKey());
+		target.setCertificateChain(source.getCertificateChain());
+		target.setInternal(source.isInternal());
+		target.setDisableSSL(source.getDisableSSL());
+		target.setHostName(source.getHostName());
+		target.setStandardPort(source.getStandardPort());
+
 		if (source instanceof IdentityProviderEntity) {
 			target.setClasse("I"); //$NON-NLS-1$
 			// IdentityProvider
@@ -59,21 +67,15 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			IdentityProviderEntity idp = (IdentityProviderEntity) source;
 			// Heretats de VIP
 			target.setPublicId(idp.getPublicId());
-			target.setPublicKey(idp.getPublicKey());
-			target.setPrivateKey(idp.getPrivateKey());
-			target.setCertificateChain(idp.getCertificateChain());
 			// Propis
-			target.setInternal(idp.isInternal());
-			target.setHostName(idp.getHostName());
-			target.setStandardPort(idp.getStandardPort());
 			target.setClientCertificatePort(idp.getClientCertificatePort());
-			target.setDisableSSL(idp.getDisableSSL());
 			
 			target.setEnableKerberos(idp.getEnableKerberos());
 			target.setKerberosDomain(idp.getKerberosDomain());
 			target.setSsoCookieDomain(idp.getSsoCookieDomain());
 			target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSessionTimeout(idp.getSessionTimeout());
+			target.setIdentityBroker(idp.getIdentityBroker());
 			// Service providers
 			if (idp.getServiceProviderVirtualIdentityProvider() != null) {
 				Collection spse = idp.getServiceProviderVirtualIdentityProvider();
@@ -275,7 +277,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setSsoCookieDomain(source.getSsoCookieDomain());
 			idp.setSsoCookieName(source.getSsoCookieName());
 			idp.setSessionTimeout(source.getSessionTimeout());
-			
+			idp.setIdentityBroker(source.getIdentityBroker());
+
 			if (source.getServiceProvider() != null) {
 				// els transformem tots i es guarden a sps
 				List<FederationMemberEntity> sps = federationMemberToEntityList(source.getServiceProvider()); // federarionmember

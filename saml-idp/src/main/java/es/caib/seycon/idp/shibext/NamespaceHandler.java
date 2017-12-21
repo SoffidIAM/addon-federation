@@ -11,7 +11,7 @@ public class NamespaceHandler extends BaseSpringNamespaceHandler {
                                     new DefinitionParser());
         registerBeanDefinitionParser(MazingerDefinitionParser.SCHEMA_NAME,
                 new MazingerDefinitionParser());
-
+        
         registerBeanDefinitionParser(SoffidSAML2SLOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SoffidSAML2SLOProfileHandlerBeanDefinitionParser());
 

@@ -16,7 +16,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -26,6 +25,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMWriter;
@@ -41,6 +42,7 @@ import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+import com.soffid.iam.addons.federation.common.SamlValidationResults;
 
 import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -77,6 +79,7 @@ import com.soffid.iam.addons.federation.model.SamlProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
+import com.soffid.iam.addons.federation.service.impl.SAMLServiceInternal;
 import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Configuration;
@@ -85,10 +88,9 @@ import com.soffid.iam.api.MailDomain;
 import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PolicyCheckResult;
+import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
-
-import es.caib.seycon.ng.servei.ConfiguracioService;
 
 /**
  * @see es.caib.seycon.ng.servei.FederacioService
@@ -1610,6 +1612,84 @@ public class FederacioServiceImpl
 			}
 		}
 		return null;
+	}
+
+
+	SAMLServiceInternal delegate;
+	
+	SAMLServiceInternal getDelegate () throws Exception
+	{
+		if (delegate == null)
+		{
+			delegate = new SAMLServiceInternal();
+			delegate.setConfigurationService(getConfigurationService());
+			delegate.setFederationMemberEntityDao(getFederationMemberEntityDao());
+			delegate.setSamlRequestEntityDao( getSamlRequestEntityDao());
+			delegate.setAccountService(getAccountService());
+			delegate.setDispatcherService(getDispatcherService());
+			delegate.setUserDomainService(getUserDomainService());
+			delegate.setUserService(getUserService());
+			delegate.setSessionService ( getSessionService() );
+			delegate.setPasswordService(getPasswordService());
+		}
+		return delegate;
+	}
+
+	
+
+	@Override
+	protected SamlValidationResults handleAuthenticate(String serviceProviderName, String protocol,
+			Map<String, String> response, boolean autoProvision) throws Exception {
+		return getDelegate().authenticate ( serviceProviderName, protocol, response, autoProvision);
+	}
+
+	@Override
+	protected SamlRequest handleGenerateSamlRequest(String serviceProvider, String identityProvider,
+			String userName,
+			long sessionSeconds) throws Exception {
+		if (userName != null && !userName.trim().isEmpty())
+		{
+			for (FederationMemberEntity fm: getIdentityProviderEntityDao().findFMByPublicId(identityProvider))
+			{
+				String pattern = fm.getDomainExpression();
+				if (pattern != null && !pattern.trim().isEmpty())
+				{
+					Matcher m = Pattern.compile("^"+pattern+"$").matcher(userName);
+					if ( m.matches() && m.group(1) != null)
+						userName = m.group(1);
+				}
+			}
+		}
+		return getDelegate().generateSamlRequest (serviceProvider, identityProvider, userName, sessionSeconds);
+	}
+
+	@Override
+	protected SamlValidationResults handleValidateSessionCookie(String sessionCookie) throws Exception {
+		return getDelegate().validateSessionCookie(sessionCookie);
+	}
+
+	@Override
+	protected String handleSearchIdpForUser(String userName) throws Exception {
+		for (FederationMemberEntity fm: getFederationMemberEntityDao().loadAll())
+		{
+			if (fm instanceof IdentityProviderEntity)
+			{
+				String pattern = fm.getDomainExpression();
+				if (pattern != null && !pattern.trim().isEmpty())
+				{
+					if ( Pattern.matches("^"+pattern+"$", userName))
+						return ((IdentityProviderEntity) fm).getPublicId();
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	protected SamlValidationResults handleAuthenticate(String serviceProvider, String identityProvider, 
+			String user, String password, long sessionSeconds)
+			throws Exception {
+		return getDelegate().authenticate(serviceProvider, identityProvider, user, password, sessionSeconds);
 	}
 
 }

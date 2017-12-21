@@ -11,12 +11,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.opensaml.util.storage.StorageService;
-
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
+import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -52,6 +52,18 @@ public class UserPasswordFormServlet extends BaseForm {
             throws ServletException, IOException {
         super.doGet(req, resp);
 
+        String requestedUser = "";
+        String userReadonly = "dummy";
+        try {
+			requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
+					.getAuthenticiationRequestXmlObject()
+					.getSubject()
+					.getNameID()
+					.getValue();
+			if (requestedUser != null && ! requestedUser.trim().isEmpty())
+				userReadonly = "readonly";
+		} catch (Exception e1) {
+		}
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
         if (! amf.allowUserPassword())
             throw new ServletException (Messages.getString("UserPasswordFormServlet.methodNotAllowed")); //$NON-NLS-1$
@@ -83,6 +95,8 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("openIdRequestUrl", OpenIdRequestAction.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$
+            g.addArgument("requestedUser", requestedUser);
 
             g.addArgument("kerberosAllowed", 
             		ip.getEnableKerberos() != null && 

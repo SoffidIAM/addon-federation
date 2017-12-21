@@ -1,0 +1,32 @@
+<zk>
+Hola
+<div>
+	<label id="lvalid" value="qqq"/>
+</div>
+<div>
+	<label id="user" value="xxx"/>
+</div>
+
+<zscript><![CDATA[
+
+req = execution.getNativeRequest ();
+
+map = new java.util.HashMap ();
+for (p: req.getParameterMap().keySet()) {
+   map.put (p, req.getParameter(p));
+}
+
+sl = com.soffid.iam.addons.federation.FederationServiceLocator.instance();
+
+fs = sl.getFederacioService ();
+
+r = fs.authenticate("test", "POST",
+    map,
+    false);
+    
+// lvalid.value = r.isValid();
+lvalid.value = r.toString();
+
+]]></zscript>
+
+</zk>

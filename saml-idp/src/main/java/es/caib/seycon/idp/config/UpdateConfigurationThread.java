@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.service.AdditionalDataService;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.config.Config;
@@ -66,7 +67,10 @@ public class UpdateConfigurationThread extends Thread {
                     generateRelyingParties();
                 l = getLastPolicyUpdate();
                 if (l > lastPolicyUpdate)
+                {
                     generateAttributeFilter();
+                    generateAttributeResolver();
+                }
             } catch (Exception e) {
                 log.warn("Error testing for policy/federation changes", e);  //$NON-NLS-1$
             } 
@@ -78,6 +82,8 @@ public class UpdateConfigurationThread extends Thread {
         confDir = IdpConfig.getConfig().getConfDir();
 
         serverLocator = ServerLocator.getInstance();
+        
+        generateAttributeResolver();
         
         generateAttributeFilter();
 
@@ -144,6 +150,36 @@ public class UpdateConfigurationThread extends Thread {
         log.info(String.format("SEU Federation time-stamp: %s", DateFormat.getDateTimeInstance().format(new Date(l)))); //$NON-NLS-1$
         return l;
     }
+
+	private void generateAttributeResolver() throws IOException,
+			InternalErrorException, SAXException, ParserConfigurationException,
+			TransformerException, FileNotFoundException {
+
+		long l = getLastPolicyUpdate();
+		File f = new File(confDir, "attribute-resolver-new.xml"); //$NON-NLS-1$
+		FileOutputStream out = new FileOutputStream(f);
+		AttributeResolverGenerator afg = new AttributeResolverGenerator(
+				getAdditionalDateService());
+		afg.generate(out);
+		out.close();
+		File newFile = new File(confDir, "attribute-resolver.xml");
+		newFile.delete();
+		f.renameTo(newFile); //$NON-NLS-1$
+
+		log.info("Updated attribute-resolver.xml"); //$NON-NLS-1$
+
+		lastPolicyUpdate = l;
+	}
+
+	private AdditionalDataService getAdditionalDateService() throws IOException, InternalErrorException {
+    	ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    	Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+    	try {
+	    	return new RemoteServiceLocator().getAdditionalDataService();
+	    } finally {
+	    	Thread.currentThread().setContextClassLoader(oldClassLoader);
+	    }
+	}
 
 	private void generateAttributeFilter() throws IOException,
 			InternalErrorException, SAXException, ParserConfigurationException,

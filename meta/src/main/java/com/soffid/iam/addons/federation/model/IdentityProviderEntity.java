@@ -12,23 +12,8 @@ import com.soffid.mda.annotation.*;
 @Depends ({com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity.class})
 public abstract class IdentityProviderEntity extends com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity {
 
-	@Column (name="FED_INTERN",
-		defaultValue="false")
-	@Nullable
-	public boolean internal;
-
 	@ForeignKey (foreignColumn="FED_DFIP_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity> virtualIdentityProvider;
-
-	@Column (name="FED_HOST",
-		defaultValue="\"false\"")
-	@Nullable
-	public java.lang.String hostName;
-
-	@Column (name="FED_STDPORT",
-		defaultValue="\"false\"")
-	@Nullable
-	public java.lang.String standardPort;
 
 	@Column (name="FED_CCERPORT",
 		defaultValue="\"false\"")
@@ -43,4 +28,9 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Nullable
 	@Column (name="FED_SETIOU")
 	Long sessionTimeout;
+
+	@Description ("Act as a identity broker")
+	@Nullable
+	@Column (name="FED_BROKER", defaultValue="Boolean.FALSE")
+	Boolean identityBroker;
 }

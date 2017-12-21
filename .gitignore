@@ -8,3 +8,9 @@ target
 /web/.settings/org.eclipse.wst.jsdt.ui.superType.container
 /web/.settings/org.eclipse.wst.jsdt.ui.superType.name
 /web/.settings/org.eclipse.wst.validation.prefs
+/core/.settings/
+/web/.settings/
+/webservice/.classpath
+/webservice/.project
+/webservice/.settings/
+/webservice/target/

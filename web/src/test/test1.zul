@@ -1,0 +1,32 @@
+<zk>
+Hola
+<div>
+	<label id="method"/>
+</div>
+<div>
+	<label id="url"/>
+</div>
+
+<zscript><![CDATA[
+
+sl = com.soffid.iam.addons.federation.FederationServiceLocator.instance();
+
+fs = sl.getFederacioService ();
+
+
+req = fs.generateSamlRequest ("test", "soffid-idp", "admin2", 3600 );
+
+method.value = req.getMethod();
+url.value = req.getUrl();
+RelayState.value=req.getParameters().get("RelayState");
+SAMLRequest.value=req.getParameters().get("SAMLRequest");
+
+]]></zscript>
+<form xmlns="http://www.w3.org/1999/xhtml" method="post"
+	target="_blank"
+	action="${req.url}" >
+	<input name="RelayState" value="${req.parameters['RelayState']}" />
+	<input name="SAMLRequest" value="${req.parameters['SAMLRequest']}" />
+	<input type="submit" value="Enviar"/>
+</form>
+</zk>

@@ -16,9 +16,13 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.w3c.dom.Element;
 
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.sync.web.MetadataGenerator;
+import com.soffid.iam.api.DataType;
+import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.Tenant;
 import com.soffid.iam.sync.SoffidApplication;
 
@@ -60,8 +64,8 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1");
 		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241");
 		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42");
-		testAttribute("Surname", "SurName", "urn:oid:2.5.4.4");
-		testAttribute("Surnames (all)", "SurNames", "urn:oid:1.3.6.1.4.1.22896.3.1.5");
+		testAttribute("Surname", "Surname", "urn:oid:2.5.4.4");
+		testAttribute("Surnames (all)", "Surnames", "urn:oid:1.3.6.1.4.1.22896.3.1.5");
 		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20");
 		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3");
 		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11");
@@ -70,6 +74,12 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1");
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2");
 		
+    	for (DataType md: ServiceLocator.instance().getAdditionalDataService().findDataTypes(MetadataScope.USER))
+    	{
+    		testAttribute(md.getLabel(), "custom:"+md.getCode(), 
+    				"urn:oid:1.3.6.1.4.1.22896.3.1."+md.getId());
+        }
+
 		
 		DataSource ds = (DataSource) applicationContext.getBean("dataSource"); //$NON-NLS-1$
 		final Connection conn = ds.getConnection();
@@ -79,6 +89,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_CERTIFICATE=0 WHERE ALLOW_CERTIFICATE IS NULL"); //$NON-NLS-1$
 			executeSentence(conn, "UPDATE SC_FEDERA SET FED_KERBEROS=0 WHERE FED_KERBEROS IS NULL"); //$NON-NLS-1$
 			executeSentence(conn, "UPDATE SC_FEDERA SET FED_DISSSL=0 WHERE FED_DISSSL IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET FED_INTERN=0 WHERE FED_INTERN IS NULL"); //$NON-NLS-1$
 		} finally {
 			conn.close ();
 		}

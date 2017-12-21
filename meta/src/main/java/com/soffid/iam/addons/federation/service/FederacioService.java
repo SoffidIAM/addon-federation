@@ -5,9 +5,34 @@
 //
 
 package com.soffid.iam.addons.federation.service;
+import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.roles.federation_update;
+import com.soffid.iam.api.SamlRequest;
+import com.soffid.iam.model.SamlRequestEntity;
 import com.soffid.mda.annotation.*;
 
+import es.caib.seycon.ng.comu.Usuari;
+import es.caib.seycon.ng.servei.DadesAddicionalsService;
+import es.caib.seycon.ng.servei.DispatcherService;
+import es.caib.seycon.ng.servei.DominiService;
+import es.caib.seycon.ng.servei.DominiUsuariService;
+import es.caib.seycon.ng.servei.SessioService;
+import es.caib.seycon.ng.servei.UsuariService;
+import es.caib.seycon.ng.sync.servei.LogonService;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Federation Service.
+ * 
+ * Common services for user authentication:
+ * 
+ * - generateSamlRequest: generates a SAML request 
+ * - authenticate: parses and validates a SAML request, generating a sessino cookie
+ * - checkSessionCookie: parses and validates a SAML session cookie
+ * 
+ */
 import org.springframework.transaction.annotation.Transactional;
 
 @Service ( serverPath="/seycon/FederacioService",
@@ -44,7 +69,14 @@ import org.springframework.transaction.annotation.Transactional;
 	com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity.class,
 	es.caib.seycon.ng.servei.ConfiguracioService.class,
-	es.caib.seycon.ng.model.AuditoriaEntity.class})
+	es.caib.seycon.ng.model.AuditoriaEntity.class,
+	SamlRequestEntity.class,
+	DominiService.class,
+	DispatcherService.class,
+	DominiUsuariService.class,
+	SessioService.class,
+	LogonService.class
+})
 public abstract class FederacioService {
 
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_create.class})
@@ -374,6 +406,7 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
+
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public es.caib.seycon.ng.comu.Usuari registerOpenidUser(
 		java.lang.String account, 
@@ -384,4 +417,25 @@ public abstract class FederacioService {
 	 return null;
 	}
 	
+
+	@Description("Generates a SAML request to formard to the IdP")
+	SamlRequest generateSamlRequest (String serviceProvider, String identityProvider,
+			@Nullable String subject,
+			long sessionSeconds) {return null;}
+	
+	@Description("Checks SAML response")
+	SamlValidationResults authenticate(String serviceProviderName, String protocol, 
+			Map<String,String> response,
+			boolean autoProvision) {return null;}
+
+	@Description("Checks SAML response")
+	SamlValidationResults validateSessionCookie(String sessionCookie) {return null;}
+
+	@Description("Finds identity provider for subject")
+	String searchIdpForUser(String userName) {return null;}
+
+	@Description("Creates a virtual IdP session")
+	SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
+			String user, String password, long sessionSeconds) {return null;}
+
 }
