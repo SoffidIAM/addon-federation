@@ -232,9 +232,6 @@
 						} catch(Exception e) {
 							campCertificateChain.setValue("");
 						}
-						//pointer = ctx.getPointer(obj.value.getXPath());
-						//pointer.invalidate();
-						
 						if (filera instanceof Vbox) {
 							Vbox r = (Vbox) filera;
 							List fills = r.getChildren();
@@ -381,10 +378,11 @@
 					ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
 					ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
 					ctx.setValue("@federationMember/certificateChain",null);
-					campCertificateChain.getFellow("dada").setValue("");
-					//pointer = ctx.getPointer(obj.value.getXPath());
-					//pointer.invalidate();
-					
+					try {
+						campCertificateChain.getFellow("dada").setValue("");
+					} catch(Exception e) {
+						campCertificateChain.setValue("");
+					}
 					if (filera instanceof Vbox) {
 						Vbox r = (Vbox) filera;
 						List fills = r.getChildren();
@@ -1241,7 +1239,7 @@
 										</divVisible>
 										<divVisible bind="@federationMember/publicKey" valorNoVisible="null">
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain)" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, sp_certificateChain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, sp_certificatechain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
 										</divVisible>
 									</vbox>
