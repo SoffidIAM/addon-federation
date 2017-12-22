@@ -19,6 +19,7 @@ import java.security.Security;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -51,8 +52,12 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.joda.time.DateTime;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.config.InitializationService;
@@ -111,6 +116,8 @@ import org.opensaml.xmlsec.signature.support.SignaturePrevalidator;
 import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
 import org.opensaml.xmlsec.signature.support.Signer;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -126,7 +133,6 @@ import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordDomain;
 import com.soffid.iam.api.PasswordPolicy;
-import com.soffid.iam.api.PasswordValidation;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
@@ -150,7 +156,6 @@ import bsh.Interpreter;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
-import es.caib.seycon.ng.sync.servei.LogonService;
 import es.caib.seycon.util.Base64;
 
 public class SAMLServiceInternal {
@@ -681,15 +686,15 @@ public class SAMLServiceInternal {
 	private KeyPair getPrivateKey(String identityProvider) throws UnmarshallingException, SAXException, IOException, ParserConfigurationException, InternalErrorException {
 		for (FederationMemberEntity fm :federationMemberEntityDao.findFMByPublicId(identityProvider))
 		{
-			if (fm.getPrivateKey() != null && 
-					!fm.getPrivateKey().trim().isEmpty())
+			if (fm.getPrivateKey() != null && !fm.getPrivateKey().trim().isEmpty())
 			{
-		        // Now read the private and public key
-		        PEMReader pm = new PEMReader( new StringReader(fm.getPrivateKey()));
-		        KeyPair kp = (KeyPair) pm.readObject();
-		        pm.close();
-		        
-		        return kp;
+				// Now read the private and public key
+				PEMParser pemParser = new PEMParser(new StringReader(fm.getPrivateKey()));
+				Object object = pemParser.readObject();
+			    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+			    KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
+				pemParser.close();
+				return kp;
 			}
 		}
 		throw new InternalErrorException("Unable to find private key for service provider "+identityProvider);
@@ -705,17 +710,33 @@ public class SAMLServiceInternal {
 		});
 		for (FederationMemberEntity fm :federationMemberEntityDao.findFMByPublicId(identityProvider))
 		{
-	        PEMReader pm = new PEMReader( new StringReader(fm.getCertificateChain()));
+			//String publicCertX509 = null;	
+			PEMParser pemParser = new PEMParser(new StringReader(fm.getCertificateChain()));
+			JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
 	        List<Certificate> certs = new LinkedList<Certificate>();
-	        do
-	        {
-	        	Certificate cert = (Certificate) pm.readObject();
-	        	if (cert == null)
-	        		break;
-	        	certs.add(cert);
-	        } while (true);
-	        pm.close();
-
+			do {
+				Object object = pemParser.readObject();
+				if (object == null) break;
+				if (object instanceof X509CertificateHolder)
+				{
+					try
+					{
+						X509Certificate cert = converter2.getCertificate((X509CertificateHolder) object); 
+						//publicCertX509 = Base64.encodeBytes(cert.getEncoded());
+			        	if (cert == null)
+			        		break;
+			        	certs.add(cert);
+			        } catch (CertificateEncodingException e) {
+			            Logger log = LoggerFactory.getLogger(getClass ());
+			            log.warn("Error decoding certificate for public id "+fm.getName()); //$NON-NLS-1$
+			        } catch (CertificateException e) {
+			            Logger log = LoggerFactory.getLogger(getClass ());
+			            log.warn("Error decoding certificate for public id "+fm.getName()); //$NON-NLS-1$
+					}
+			        break;
+				}
+			} while (true);
+			pemParser.close();
 	        return certs;
 		}
 		throw new InternalErrorException("Unable to find certificate chain for service provider "+identityProvider);

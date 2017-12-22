@@ -6,6 +6,7 @@
 package com.soffid.iam.addons.federation.service;
 
 import java.io.ByteArrayInputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.security.Key;
 import java.security.KeyPair;
@@ -29,7 +30,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PEMWriter;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
@@ -1176,31 +1180,33 @@ public class FederacioServiceImpl
 		} catch (Throwable th) {
 			
 		}
-		java.io.StringReader srpr = new java.io.StringReader(fm.getPrivateKey());
-		org.bouncycastle.openssl.PEMReader prpr = new org.bouncycastle.openssl.PEMReader(srpr);
-		Object prKey = prpr.readObject();
-		if (prKey instanceof java.security.KeyPair) {
-			java.security.KeyPair kp = ((java.security.KeyPair) prKey);
-			_privateKey = kp.getPrivate();
-		} else if (prKey instanceof java.security.PrivateKey) {
-			_privateKey = (PrivateKey) prKey;
-		}
 
-		java.io.StringReader srpu = new java.io.StringReader(fm.getPublicKey());
-		org.bouncycastle.openssl.PEMReader prpu = new org.bouncycastle.openssl.PEMReader(srpu);
-		Object pubKey = prpu.readObject();
-		if (pubKey instanceof java.security.KeyPair) {
-			java.security.KeyPair kp = ((java.security.KeyPair) pubKey);
-			_publicKey = kp.getPublic();
-		} else if (pubKey instanceof java.security.PublicKey) {
-			_publicKey = (PublicKey) pubKey;
+		PEMParser pemParser = new PEMParser(new StringReader(fm.getPrivateKey()));
+		Object object = pemParser.readObject();
+		if (object instanceof KeyPair) {
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+		    KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
+			_privateKey = kp.getPrivate();
+		} else if (object instanceof PrivateKey) {
+			_privateKey = (PrivateKey) object;
 		}
+		pemParser.close();
+
+		pemParser = new PEMParser(new StringReader(fm.getPublicKey()));
+		object = pemParser.readObject();
+		if (object instanceof KeyPair) {
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+		    KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
+		    _publicKey = kp.getPublic();
+		} else if (object instanceof PrivateKey) {
+			_publicKey = (PublicKey) object;
+		}
+		pemParser.close();
 
 		org.bouncycastle.jce.PKCS10CertificationRequest pkcs10 = new org.bouncycastle.jce.PKCS10CertificationRequest("SHA1withRSA", //$NON-NLS-1$
 				new javax.security.auth.x500.X500Principal("CN=" + fm.getPublicId() + ",OU=" + fm.getEntityGroup().getName()), //$NON-NLS-1$ //$NON-NLS-2$
 				_publicKey, null, _privateKey, "SunRsaSign"); //$NON-NLS-1$
 		return new String(es.caib.seycon.util.Base64.encodeBytes(pkcs10.getEncoded()));
-
 	}
 
 	@Override

@@ -37,11 +37,14 @@ import javax.xml.transform.TransformerException;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
 import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMEncryptor;
-import org.bouncycastle.openssl.PEMReader;
-import org.bouncycastle.openssl.PEMWriter;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
@@ -49,16 +52,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-import es.caib.seycon.idp.client.ServerLocator;
-import es.caib.seycon.ng.exception.InternalErrorException;
-
-import com.soffid.iam.addons.federation.common.*;
+import com.soffid.iam.addons.federation.common.EntityGroupMember;
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.remote.RemoteServiceLocator;
 import com.soffid.iam.ssl.SeyconKeyStore;
 
+import es.caib.seycon.idp.client.ServerLocator;
+import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
 
@@ -272,45 +275,66 @@ public class IdpConfig {
             generator.setPublicKey(pair.getPublic());
             X509Certificate cert = generator.generate(pair.getPrivate(), "BC"); //$NON-NLS-1$
             
+    		JcaMiscPEMGenerator gen = new JcaMiscPEMGenerator(pair);
             StringWriter w = new StringWriter();
-            PEMWriter pw = new PEMWriter(w);
-            pw.writeObject(pair);
-            pw.close ();
+            PemWriter pemWriter = new PemWriter(w);
+
+            pemWriter.writeObject(gen);
+            pemWriter.close();
+
             federationMember.setPrivateKey(w.getBuffer().toString());
 
+            
             w = new StringWriter();
-            pw = new PEMWriter(w);
-            pw.writeObject(cert);
-            pw.close ();
+            pemWriter = new PemWriter(w);
+            pemWriter.writeObject(new JcaMiscPEMGenerator(cert) );
+            pemWriter.close();
             federationMember.setCertificateChain(w.getBuffer().toString());
             
 
             federationService.update(federationMember);
         }
         
+
         // Now read the private and public key
-        PEMReader pm = new PEMReader( new StringReader(federationMember.getPrivateKey()));
-        KeyPair kp = (KeyPair) pm.readObject();
+		PEMParser pemParser = new PEMParser(new StringReader(
+                federationMember.getPrivateKey()));
+		Object object = pemParser.readObject();
+	    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+		JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
+
+	    KeyPair kp;
+        kp = converter.getKeyPair((PEMKeyPair) object);
+		pemParser.close();
         Key k = kp.getPrivate();
+        
         if (federationMember.getCertificateChain() == null) 
         {
             throw new IOException ("Missing certificate chain"); //$NON-NLS-1$
         }
-        pm = new PEMReader( new StringReader(federationMember.getCertificateChain()));
+        
         List<Certificate> certs = new LinkedList<Certificate>();
-        do
-        {
-        	Certificate cert = (Certificate) pm.readObject();
-        	if (cert == null)
-        		break;
-        	certs.add(cert);
-        } while (true);
+		pemParser = new PEMParser(new StringReader(
+                federationMember.getCertificateChain()));
+		do {
+			object = pemParser.readObject();
+			if (object == null) break;
+			System.out.println(">>> object  ="+object);
+			System.out.println(">>> instance of ="+object.getClass());
+			if (object instanceof X509CertificateHolder)
+			{
+				certs.add(converter2.getCertificate((X509CertificateHolder) object));
+			}
+		} while (true);
 
         if (federationMember.getPublicKey() == null) {
+    		JcaMiscPEMGenerator gen = new JcaMiscPEMGenerator(kp.getPublic());
             StringWriter w = new StringWriter();
-            PEMWriter pw = new PEMWriter(w);
-            pw.writeObject(kp.getPublic());
-            pw.close ();
+            PemWriter pemWriter = new PemWriter(w);
+
+            pemWriter.writeObject(gen);
+            pemWriter.close();
+
             federationMember.setPublicKey(w.getBuffer().toString());
 
             federationService.update(federationMember);
@@ -372,16 +396,29 @@ public class IdpConfig {
         if (federationMember != null && (certChain == null || certChain.length() == 0))
             certChain = federationMember.getCertificateChain();
         
-        PEMReader pm = new PEMReader( new StringReader(certChain));
-        Certificate cert = (Certificate) pm.readObject();
         String publicCertX509 = null;
-        try {
-            if (cert != null)
-                publicCertX509 = Base64.encodeBytes(cert.getEncoded());
-        } catch (CertificateEncodingException e) {
-            Logger log = LoggerFactory.getLogger(getClass ());
-            log.warn("Error decoding certificate for public id "+fm.getPublicId()); //$NON-NLS-1$
-        }
+		PEMParser pemParser = new PEMParser(new StringReader(certChain));
+		JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
+		do {
+			Object object = pemParser.readObject();
+			if (object == null) break;
+			if (object instanceof X509CertificateHolder)
+			{
+				try
+				{
+					X509Certificate cert = converter2.getCertificate((X509CertificateHolder) object); 
+					publicCertX509 = Base64.encodeBytes(cert.getEncoded());
+		        } catch (CertificateEncodingException e) {
+		            Logger log = LoggerFactory.getLogger(getClass ());
+		            log.warn("Error decoding certificate for public id "+fm.getPublicId()); //$NON-NLS-1$
+		        } catch (CertificateException e) {
+		            Logger log = LoggerFactory.getLogger(getClass ());
+		            log.warn("Error decoding certificate for public id "+fm.getPublicId()); //$NON-NLS-1$
+				}
+		        break;
+			}
+		} while (true);
+
 
         File f = new File (confDir, fileName);
         
