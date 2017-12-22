@@ -227,7 +227,11 @@
 						ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
 						ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
 						ctx.setValue("@federationMember/certificateChain",null);
-						campCertificateChain.getFellow("dada").setValue("");
+						try {
+							campCertificateChain.getFellow("dada").setValue("");
+						} catch(Exception e) {
+							campCertificateChain.setValue("");
+						}
 						//pointer = ctx.getPointer(obj.value.getXPath());
 						//pointer.invalidate();
 						
