@@ -223,14 +223,14 @@
 						// 0 = publica, 1 = privada
 						fm.setPublicKey(res[0]);
 						fm.setPrivateKey(res[1]);
-						fm.setCertificateChain(null);
+						fm.setCertificateChain(res[2]);
 						ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
 						ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
-						ctx.setValue("@federationMember/certificateChain",null);
+						ctx.setValue("@federationMember/certificateChain",fm.getCertificateChain());
 						try {
-							campCertificateChain.getFellow("dada").setValue("");
+							campCertificateChain.getFellow("dada").setValue(res[2]);
 						} catch(Exception e) {
-							campCertificateChain.setValue("");
+							campCertificateChain.setValue(res[2]);
 						}
 						if (filera instanceof Vbox) {
 							Vbox r = (Vbox) filera;
