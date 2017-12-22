@@ -587,14 +587,22 @@ public class SAMLServiceInternal {
 	}
 
 	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, AuthnRequest req) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
+		// Get the marshaller factory
+		MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+		Marshaller marshaller = marshallerFactory.getMarshaller(req);
+		Element element = marshaller.marshall(req);
+
+		// Get certificates
 		List<Certificate> certs = getCertificateChain(serviceProvider);
 		if (certs == null || certs.isEmpty())
-			return req.getDOM();
+			return element;
 		
 		KeyPair pk = getPrivateKey(serviceProvider);
 		if (pk == null)
 			throw new InternalErrorException ("Cannot find private key for "+serviceProvider);
 
+		
+		// Sign
 		Credential cred = new BasicX509Credential(
 				(X509Certificate) certs.get(0), 
 				pk.getPrivate());
@@ -607,14 +615,10 @@ public class SAMLServiceInternal {
 		keyInfo.detach();
 		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
-		
-		// Get the marshaller factory
-		MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
-		UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-		Marshaller marshaller = marshallerFactory.getMarshaller(req);
-		Element element = marshaller.marshall(req);
 		Signer.signObject(signature);
-		
+
+		// Unmarshall
+		UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
 		req = (AuthnRequest) unmarshallerFactory.getUnmarshaller(req.getDOM()).unmarshall(req.getDOM());
 		return marshallerFactory.getMarshaller(req).marshall(req);
 
