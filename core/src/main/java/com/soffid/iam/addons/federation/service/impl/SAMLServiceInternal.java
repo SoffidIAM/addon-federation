@@ -513,7 +513,6 @@ public class SAMLServiceInternal {
 				if (acs.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI))
 				{
 					req.setAssertionConsumerServiceURL(acs.getLocation());
-					req.setAssertionConsumerServiceIndex(acs.getIndex());
 				}
 			}
 			if (req.getAssertionConsumerServiceURL() == null)
@@ -615,6 +614,10 @@ public class SAMLServiceInternal {
 		keyInfo.detach();
 		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
+
+		marshaller = marshallerFactory.getMarshaller(req);
+		element = marshaller.marshall(req);
+
 		Signer.signObject(signature);
 
 		// Unmarshall
