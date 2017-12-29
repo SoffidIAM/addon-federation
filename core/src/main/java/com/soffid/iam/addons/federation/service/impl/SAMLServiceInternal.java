@@ -459,7 +459,13 @@ public class SAMLServiceInternal {
         
 	    decrypter = new Decrypter(new StaticKeyInfoCredentialResolver(shared), null, null);
 	    decrypter.setRootInNewDocument(true);
-	    return decrypter.decrypt(encryptedAssertion);
+	    Assertion assertion = decrypter.decrypt(encryptedAssertion);
+
+	    MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+		Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
+		Element element = marshaller.marshall(assertion);
+
+		return assertion;
 	}
 
 	private XMLObjectBuilderFactory builderFactory = null;
@@ -544,7 +550,7 @@ public class SAMLServiceInternal {
 			String xmlString = generateString(xml);
 			
 			r.getParameters().put("RelayState", newID);
-			r.getParameters().put("SAMLRequest", Base64.encodeBytes(xmlString.getBytes("UTF-8")));
+			r.getParameters().put("SAMLRequest", Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES));
 
 			
 			SamlRequestEntity reqEntity = samlRequestEntityDao.newSamlRequestEntity();
