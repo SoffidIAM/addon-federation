@@ -611,10 +611,17 @@ public class SAMLServiceInternal {
 		signature.setSigningCredential(cred);
 		signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA);
+//		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
 		KeyInfo keyInfo = getKeyInfo(serviceProvider);
 		keyInfo.detach();
 		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
+		
+		// Marshal again
+		marshaller = marshallerFactory.getMarshaller(req);
+		element = marshaller.marshall(req);
+		
+		// Sign
 		Signer.signObject(signature);
 
 		// Unmarshall
