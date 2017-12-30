@@ -76,7 +76,7 @@ public class SAMLSSORequest extends BaseForm {
 			{
 				resp.setContentType("text/html; charset=UTF-8");
 				StringBuffer sb = new StringBuffer();
-				sb.append(URLEncoder.encode(samlRequest.getUrl(), "UTF-8"))
+				sb.append(samlRequest.getUrl())
 					.append("?RelayState=")
 					.append(URLEncoder.encode(samlRequest.getParameters().get("RelayState"),"UTF-8"))
 					.append("&SAMLRequest=")
