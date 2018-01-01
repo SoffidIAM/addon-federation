@@ -66,7 +66,8 @@ public class SAMLSSOPostServlet extends BaseForm {
 			SamlValidationResults sl = federacioService.authenticate( cfg.getPublicId(), 
 					"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST", 
 					map, 
-					cfg.getFederationMember().isAllowRegister());
+					cfg.getFederationMember().getRegisterExternalIdentities() != null &&
+					cfg.getFederationMember().getRegisterExternalIdentities().booleanValue());
 
 			if (sl == null )
 			{
@@ -75,6 +76,13 @@ public class SAMLSSOPostServlet extends BaseForm {
 			else if ( !sl.isValid())
 			{
 				req.setAttribute("ERROR", sl.getFailureReason());
+			    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+			    dispatcher.forward(req, resp);
+			}
+			else if ( sl.getUser() == null)
+			{
+				req.setAttribute("ERROR", String.format("Remote user %s at %s is not registered",
+						sl.getPrincipalName(), sl.getIdentityProvider()));
 			    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
 			    dispatcher.forward(req, resp);
 			}

@@ -283,7 +283,9 @@ public class Autenticator {
         	shibbolethSession.getAuthenticationMethods().clear();
         }
         
-		((Saml2LoginContext)HttpServletHelper.getLoginContext(req)).setAuthenticationMethodInformation(null); 
+		Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
+		if (saml2LoginContext != null)
+			saml2LoginContext.setAuthenticationMethodInformation(null); 
 		
 		LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
         
