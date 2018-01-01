@@ -121,6 +121,10 @@ public class FederationMember {
 	@Nullable
 	Boolean identityBroker;
 
+	@Description ("Register new identities from remote identity providers")
+	@Nullable
+	Boolean registerExternalIdentities;
+
 	@Description("Domain expression (regular expression) to detect users from this domain")
 	@Nullable
 	public String domainExpression;

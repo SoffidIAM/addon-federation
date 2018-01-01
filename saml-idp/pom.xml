@@ -185,6 +185,7 @@
 									<include>jargs:jargs</include>
 
 									<include>org.scribe:scribe</include>
+									<include>bouncycastle:bcprov-jdk16</include>
 									
 									<!-- 
 									<include>org.mozilla.javascript:rhino</include>
@@ -197,6 +198,17 @@
 									 -->
 								</includes>								
 							</artifactSet>
+							<filters>
+							  <filter>
+								<artifact>bouncycastle:bcprov-jdk16</artifact>
+							    <includes>
+							      <include>**</include>
+							    </includes>
+							    <excludes>
+							      <exclude>META-INF/**</exclude>
+							    </excludes>
+							  </filter>
+							</filters>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/spring.handlers</resource>
@@ -352,6 +364,11 @@
 			<groupId>com.soffid.iam.addon.remember-password</groupId>
 			<artifactId>remember-password-core</artifactId>
 			<version>2.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>bouncycastle</groupId>
+			<artifactId>bcprov-jdk16</artifactId>
+			<version>140</version>
 		</dependency>
 	</dependencies>
 	<reporting>

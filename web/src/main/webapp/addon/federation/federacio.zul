@@ -223,14 +223,15 @@
 						// 0 = publica, 1 = privada
 						fm.setPublicKey(res[0]);
 						fm.setPrivateKey(res[1]);
-						fm.setCertificateChain(null);
+						fm.setCertificateChain(res[2]);
 						ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
 						ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
-						ctx.setValue("@federationMember/certificateChain",null);
-						campCertificateChain.getFellow("dada").setValue("");
-						//pointer = ctx.getPointer(obj.value.getXPath());
-						//pointer.invalidate();
-						
+						ctx.setValue("@federationMember/certificateChain",fm.getCertificateChain());
+						try {
+							campCertificateChain.getFellow("dada").setValue(res[2]);
+						} catch(Exception e) {
+							campCertificateChain.setValue(res[2]);
+						}
 						if (filera instanceof Vbox) {
 							Vbox r = (Vbox) filera;
 							List fills = r.getChildren();
@@ -377,10 +378,11 @@
 					ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
 					ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
 					ctx.setValue("@federationMember/certificateChain",null);
-					campCertificateChain.getFellow("dada").setValue("");
-					//pointer = ctx.getPointer(obj.value.getXPath());
-					//pointer.invalidate();
-					
+					try {
+						campCertificateChain.getFellow("dada").setValue("");
+					} catch(Exception e) {
+						campCertificateChain.setValue("");
+					}
 					if (filera instanceof Vbox) {
 						Vbox r = (Vbox) filera;
 						List fills = r.getChildren();
@@ -692,7 +694,11 @@
 						StringBuffer plantilla = new StringBuffer();
 						plantilla.append("<EntityDescriptor entityID=\""+formPublicId+"\"\n");
 						plantilla.append("		xmlns=\"urn:oasis:names:tc:SAML:2.0:metadata\"\n");
-						plantilla.append("		xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\n");
+						plantilla.append("		xmlns:alg=\"urn:oasis:names:tc:SAML:metadata:algsupport\"\n");
+						plantilla.append("      xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\n");
+						plantilla.append("  <Extensions>\n");
+						plantilla.append("	    <alg:DigestMethod Algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/>\n");
+						plantilla.append("	</Extensions>\n");
 						plantilla.append("	<SPSSODescriptor protocolSupportEnumeration=\"urn:oasis:names:tc:SAML:2.0:protocol\">\n");
 						if (!myCertificate.isEmpty()) plantilla.append(myCertificate);
 						plantilla.append("		<NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>\n");
@@ -738,6 +744,7 @@
 						id_mailSender1.getFellow("dada").disabled = true;
 						id_mailSender1.getFellow("dada").setConstraint( "" );
 					}
+					registerExternalCheckbox.setDisabled( ! actAsBrokerCheckbox.isChecked() );
 					scriptParse.refresh();
 				}	
 
@@ -1095,7 +1102,13 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.broker')}"/>
-									<checkbox bind="@federationMember/identityBroker" disabled="${!canModifyFI}" onCheck=""/>
+									<checkbox bind="@federationMember/identityBroker" disabled="${!canModifyFI}"
+										id="actAsBrokerCheckbox" 
+										onCheck="registerExternalCheckbox.setDisabled( ! self.isChecked() )"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.registerExternal')}"/>
+									<checkbox id="registerExternalCheckbox" bind="@federationMember/registerExternalIdentities" disabled="${!canModifyFI}" onCheck=""/>
 								</row>
 								
 							</rows>
@@ -1237,7 +1250,7 @@
 										</divVisible>
 										<divVisible bind="@federationMember/publicKey" valorNoVisible="null">
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain)" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, sp_certificateChain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, sp_certificatechain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
 										</divVisible>
 									</vbox>

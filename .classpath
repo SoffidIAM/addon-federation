@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="common/target/src"/>
-	<classpathentry kind="src" path="core/src/main/java"/>
-	<classpathentry kind="src" path="core/src/test/java"/>
-	<classpathentry kind="src" path="core/target/src"/>
-	<classpathentry kind="src" path="core/target/src-test"/>
-	<classpathentry kind="src" path="core/target/template"/>
-	<classpathentry kind="src" path="meta/src/main/java"/>
-	<classpathentry kind="src" path="meta/target/common"/>
-	<classpathentry kind="src" path="meta/target/core"/>
-	<classpathentry kind="src" path="meta/target/core-src"/>
-	<classpathentry kind="src" path="meta/target/core-test"/>
-	<classpathentry kind="src" path="meta/target/sync"/>
-	<classpathentry kind="src" path="saml-idp/src/main/java"/>
-	<classpathentry kind="src" path="web/src/main/java"/>
 	<classpathentry kind="lib" path="addon/target/classes/federation-common-1.0.6-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="addon/target/classes/federation-core-1.0.6-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="addon/target/classes/saml-idp-1.0.6-SNAPSHOT.jar"/>

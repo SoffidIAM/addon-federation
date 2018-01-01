@@ -17,7 +17,6 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -33,17 +32,14 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMDecryptorProvider;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMEncryptor;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.PEMReader;
-import org.bouncycastle.openssl.PEMWriter;
 import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMEncryptorBuilder;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.w3c.dom.Document;
@@ -52,14 +48,20 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import es.caib.seycon.ng.exception.InternalErrorException;
+import com.soffid.iam.addons.federation.common.ConditionType;
+import com.soffid.iam.addons.federation.common.EntityGroupMember;
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.PolicyCondition;
+import com.soffid.iam.addons.federation.common.SAMLProfile;
+import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
+import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.idp.client.ServerLocator;
-import com.soffid.iam.addons.federation.common.*; 
-import com.soffid.iam.addons.federation.service.*;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class RelyingPartyGenerator {
     final static String AFP_NAMESPACE = "urn:mace:shibboleth:2.0:afp"; //$NON-NLS-1$
@@ -205,6 +207,7 @@ public class RelyingPartyGenerator {
                 federationMember.getPrivateKey()));
 		Object object = pemParser.readObject();
 	    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+		JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
 	    KeyPair kp;
         kp = converter.getKeyPair((PEMKeyPair) object);
 		pemParser.close();
@@ -234,11 +237,12 @@ public class RelyingPartyGenerator {
 		do {
 			object = pemParser.readObject();
 			if (object == null) break;
-			if (object instanceof X509Certificate)
+			if (object instanceof X509CertificateHolder)
 			{
+				X509Certificate cert = converter2.getCertificate((X509CertificateHolder) object);
 		        writer = new StringWriter();
 		        pemWriter = new PemWriter(writer);
-		        pemWriter.writeObject(new JcaMiscPEMGenerator( object ) );
+		        pemWriter.writeObject(new JcaMiscPEMGenerator( cert ) );
 		        pemWriter.close();
 		        certNode.setTextContent(writer.getBuffer().toString());
 		        break;
