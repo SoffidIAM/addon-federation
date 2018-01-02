@@ -1,4 +1,4 @@
-package com.soffid.iam.addons.federation.rest;
+package com.soffid.iam.addons.federation.rest.util;
 
 import java.io.IOException;
 import java.util.Enumeration;

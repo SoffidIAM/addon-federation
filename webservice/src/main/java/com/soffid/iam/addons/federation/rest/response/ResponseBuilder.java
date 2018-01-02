@@ -1,9 +1,11 @@
-package com.soffid.iam.addons.federation.rest;
+package com.soffid.iam.addons.federation.rest.response;
 
 import java.net.URI;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import com.soffid.iam.addons.federation.rest.Messages;
 
 public class ResponseBuilder {
 

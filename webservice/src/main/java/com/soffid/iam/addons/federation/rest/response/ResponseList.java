@@ -1,4 +1,4 @@
-package com.soffid.iam.addons.federation.rest;
+package com.soffid.iam.addons.federation.rest.response;
 
 import java.util.Collection;
 
