@@ -76,6 +76,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSessionTimeout(idp.getSessionTimeout());
 			target.setIdentityBroker(idp.getIdentityBroker());
+			target.setRegisterExternalIdentities(idp.getRegisterExternalIdentities());
 			// Service providers
 			if (idp.getServiceProviderVirtualIdentityProvider() != null) {
 				Collection spse = idp.getServiceProviderVirtualIdentityProvider();
@@ -278,7 +279,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setSsoCookieName(source.getSsoCookieName());
 			idp.setSessionTimeout(source.getSessionTimeout());
 			idp.setIdentityBroker(source.getIdentityBroker());
-
+			idp.setRegisterExternalIdentities(source.getRegisterExternalIdentities());
+			
 			if (source.getServiceProvider() != null) {
 				// els transformem tots i es guarden a sps
 				List<FederationMemberEntity> sps = federationMemberToEntityList(source.getServiceProvider()); // federarionmember

@@ -154,7 +154,9 @@ import com.soffid.iam.service.saml.SAML20ResponseValidator;
 import bsh.EvalError;
 import bsh.Interpreter;
 import es.caib.seycon.ng.comu.AccountType;
+import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.NeedsAccountNameException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
 
@@ -235,17 +237,23 @@ public class SAMLServiceInternal {
 		for ( EncryptedAssertion encryptedAssertion: saml2Response.getEncryptedAssertions())
 		{
 			Assertion assertion = decrypt (serviceProviderName,encryptedAssertion);
-			if (validateAssertion(identityProvider, serviceProviderName, assertion, result))
+			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
-				return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
+				if (assertion.isSigned() || response.isEmpty())
+					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
+				else
+					result.setFailureReason("Response or assertion are not signed. Signatue is required");
 			}
 		}
 		
 		for ( Assertion assertion: saml2Response.getAssertions())
 		{
-			if (validateAssertion(identityProvider, serviceProviderName, assertion, result))
+			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
-				return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
+				if (assertion.isSigned() || response.isEmpty())
+					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
+				else
+					result.setFailureReason("Response or assertion are not signed. Signatue is required");
 			}
 		}
 		
@@ -270,14 +278,15 @@ public class SAMLServiceInternal {
 			return result;
 		}
 		
-		if (nameID.getFormat().equals(NameID.PERSISTENT) ||
+		if (nameID.getFormat() == null || 
+				nameID.getFormat().equals(NameID.PERSISTENT) ||
 				nameID.getFormat().equals(NameID.TRANSIENT) ||
 				nameID.getFormat().equals(NameID.UNSPECIFIED) ||
 				nameID.getFormat().equals(NameID.EMAIL))
 		{
 			String user = nameID.getValue();
-			result.setValid(true);
 			result.setPrincipalName(user);
+			result.setValid(true);
 			for (AttributeStatement attStmt: assertion.getAttributeStatements())
 			{
 				for (Attribute att: attStmt.getAttributes())
@@ -413,6 +422,18 @@ public class SAMLServiceInternal {
 					additionalData.create(data);
 				}
 			}
+			// Register account
+			try {
+				accountService.createAccount(u, dispatcher, result.getPrincipalName());
+			} catch (NeedsAccountNameException e) {
+				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+						result.getPrincipalName(),
+						dispatcher.getName()));
+			} catch (AccountAlreadyExistsException e) {
+				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+						result.getPrincipalName(),
+						dispatcher.getName()));
+			}
 		}
 		return null;
 	}
@@ -461,10 +482,6 @@ public class SAMLServiceInternal {
 	    decrypter.setRootInNewDocument(true);
 	    Assertion assertion = decrypter.decrypt(encryptedAssertion);
 
-	    MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
-		Marshaller marshaller = marshallerFactory.getMarshaller(assertion);
-		Element element = marshaller.marshall(assertion);
-
 		return assertion;
 	}
 
@@ -491,25 +508,6 @@ public class SAMLServiceInternal {
 			
 			SamlRequest r = new SamlRequest();
 			r.setParameters(new HashMap<String, String>());
-			for (SingleSignOnService sss : idpssoDescriptor.getSingleSignOnServices()) {
-				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI)) {
-					r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
-					r.setUrl(sss.getLocation());
-					req.setProtocolBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
-					req.setDestination(sss.getLocation());
-					break;
-				}
-				if (sss.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
-					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
-					r.setUrl(sss.getLocation());
-					req.setDestination(sss.getLocation());
-					req.setProtocolBinding(SAMLConstants.SAML2_POST_BINDING_URI);
-					break;
-				}
-			}
-			if (r.getUrl() == null)
-				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
-
 			SPSSODescriptor spsso = sp.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
 			if (spsso == null)
 				throw new InternalErrorException("Unable to find SP SSO Profile "+serviceProvider);
@@ -550,7 +548,28 @@ public class SAMLServiceInternal {
 			String xmlString = generateString(xml);
 			
 			r.getParameters().put("RelayState", newID);
-			r.getParameters().put("SAMLRequest", Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES));
+			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			r.getParameters().put("SAMLRequest", encodedRequest);
+
+			for (SingleSignOnService sss : idpssoDescriptor.getSingleSignOnServices()) {
+				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
+						encodedRequest.length() <= 4000) { // Max GET length is usually 8192
+					r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+					r.setUrl(sss.getLocation());
+					req.setProtocolBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+					req.setDestination(sss.getLocation());
+					break;
+				}
+				if (sss.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
+					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
+					r.setUrl(sss.getLocation());
+					req.setDestination(sss.getLocation());
+					req.setProtocolBinding(SAMLConstants.SAML2_POST_BINDING_URI);
+					break;
+				}
+			}
+			if (r.getUrl() == null)
+				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
 
 			
 			SamlRequestEntity reqEntity = samlRequestEntityDao.newSamlRequestEntity();
@@ -615,15 +634,18 @@ public class SAMLServiceInternal {
 		Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
 		signature.setSigningCredential(cred);
 		signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA);
+//		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA);
+		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
 		KeyInfo keyInfo = getKeyInfo(serviceProvider);
 		keyInfo.detach();
 		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
-
+		
+		// Marshal again
 		marshaller = marshallerFactory.getMarshaller(req);
 		element = marshaller.marshall(req);
-
+		
+		// Sign
 		Signer.signObject(signature);
 
 		// Unmarshall
@@ -774,11 +796,9 @@ public class SAMLServiceInternal {
 		this.samlRequestEntityDao = samlRequestEntityDao;
 	}
 
-    private boolean validateAssertion (String identityProvider, String serviceProvider, Assertion assertion, SamlValidationResults result2) 
+    private boolean validateAssertion (String identityProvider, String serviceProvider, Response saml2Response, Assertion assertion, SamlValidationResults result2) 
     		throws InternalErrorException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
-    {
-    	SAML20AssertionValidator validator = getValidator(identityProvider, serviceProvider);
-    	
+    {    	
     	HashMap<String, Object> params = new HashMap<String, Object>();
     	params.put(
                 SAML2AssertionValidationParameters.COND_VALID_AUDIENCES, 
@@ -795,24 +815,28 @@ public class SAMLServiceInternal {
 
     	org.opensaml.saml.common.assertion.ValidationContext ctx = new ValidationContext(params);
 
-		ValidationResult result = validator.validate(assertion, ctx);
-		if (result != ValidationResult.VALID)
-		{
-			result2.setFailureReason(ctx.getValidationFailureMessage());
-			log.info("Error validating SAML message: "+ctx.getValidationFailureMessage());
-		}
+    	if (assertion.isSigned())
+    	{
+	    	SAML20AssertionValidator validator = getValidator(identityProvider, serviceProvider);
+			ValidationResult result = validator.validate(assertion, ctx);
+			if (result != ValidationResult.VALID)
+			{
+				result2.setFailureReason(ctx.getValidationFailureMessage());
+				log.info("Error validating SAML message: "+ctx.getValidationFailureMessage());
+			}
+    	}
 		
 		if ( ! validDate (assertion.getIssueInstant(), result2))
 			return false;
 
-		return result == ValidationResult.VALID ;
+		return true ;
     	
     }
 
 	private boolean validDate(DateTime issueInstant, SamlValidationResults result2) {
 		if (issueInstant == null)
 		{
-			result2.setFailureReason("Error validatig assertion: issueInstant is miising");
+			result2.setFailureReason("Error validatig assertion: issueInstant is missing");
 			log.info(result2.getFailureReason());
 			return false;
 		}
@@ -897,40 +921,43 @@ public class SAMLServiceInternal {
     	return new SAML20AssertionValidator(conditionValidators, subjectConfirmationValidators, statementValidators, signatureTrustEngine, signaturePrevalidator);
 	}
 
-    private boolean validateResponse (String identityProvider, String serviceProvider, Response assertion, SamlValidationResults result2) 
+    private boolean validateResponse (String identityProvider, String serviceProvider, Response response, SamlValidationResults result2) 
     		throws InternalErrorException, AssertionValidationException, CertificateException, UnmarshallingException, SAXException, IOException, ParserConfigurationException
     {
     	SAML20ResponseValidator validator = getResponseValidator(identityProvider);
     	
-    	org.opensaml.saml.common.assertion.ValidationContext ctx = new ValidationContext();
-    	
-		ValidationResult result = validator.validate(assertion, ctx);
-		if (result != ValidationResult.VALID)
-		{
-			log.info("Error validating SAML message: "+ctx.getValidationFailureMessage());
-			result2.setFailureReason(ctx.getValidationFailureMessage());
-		}
+    	if (response.isSigned())
+    	{
+	    	org.opensaml.saml.common.assertion.ValidationContext ctx = new ValidationContext();
+	    	
+			ValidationResult result = validator.validate(response, ctx);
+			if (result != ValidationResult.VALID)
+			{
+				log.info("Error validating SAML message: "+ctx.getValidationFailureMessage());
+				result2.setFailureReason(ctx.getValidationFailureMessage());
+			}
+    	}
 		
-		if ( ! validDate (assertion.getIssueInstant(), result2))
+		if ( ! validDate (response.getIssueInstant(), result2))
 		{
 			return false;
 		}
 		
-		if ( assertion.getStatus() == null || assertion.getStatus().getStatusCode() == null)
+		if ( response.getStatus() == null || response.getStatus().getStatusCode() == null)
 		{
 			result2.setFailureReason("Response does not contain status");
 			log.info(result2.getFailureReason());
 			return false;
 		}
 		
-		if ( ! assertion.getStatus().getStatusCode().getValue().equals(StatusCode.SUCCESS))
+		if ( ! response.getStatus().getStatusCode().getValue().equals(StatusCode.SUCCESS))
 		{
-			result2.setFailureReason("Authentication failed Status "+assertion.getStatus().getStatusCode().getValue());
+			result2.setFailureReason("Authentication failed Status "+response.getStatus().getStatusCode().getValue());
 			log.info(result2.getFailureReason());
 			return false;
 		}
 
-    	return result == ValidationResult.VALID ;
+    	return true ;
     	
     }
 
@@ -1071,7 +1098,7 @@ public class SAMLServiceInternal {
 		}
 		for ( UserType ut: userDomainService.findAllUserType())
 		{
-			PasswordPolicy pp = userDomainService.findPolicyByTypeAndPasswordDomain(ut.getCode(), "EXTERNAL_SAML");
+			PasswordPolicy pp = userDomainService.findPolicyByTypeAndPasswordDomain(ut.getCode(), EXTERNAL_SAML_PASSWORD_DOMAIN);
 			if (pp == null)
 			{
 				pp = new PasswordPolicy();
@@ -1084,6 +1111,7 @@ public class SAMLServiceInternal {
 				pp.setMaximumPeriod(3650L);
 				pp.setMaximumPeriodExpired(3650L);
 				pp.setType("A");
+				pp.setPasswordDomainCode(EXTERNAL_SAML_PASSWORD_DOMAIN);
 				userDomainService.create(pp);
 			}
 		}
@@ -1098,6 +1126,8 @@ public class SAMLServiceInternal {
 			createExternalPasswordDomain();
 			s = new com.soffid.iam.api.System();
 			s.setName("SAML "+publicId);
+			if (s.getName().length() > 25)
+				s.setName("SAML #" + System.currentTimeMillis() );
 			s.setDescription("External IDP "+publicId);
 			s.setAuthoritative(false);
 			s.setAccessControl(false);

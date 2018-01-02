@@ -33,4 +33,9 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Nullable
 	@Column (name="FED_BROKER", defaultValue="Boolean.FALSE")
 	Boolean identityBroker;
+
+	@Description ("Register new identities from remote identity providers")
+	@Nullable
+	@Column (name="FED_REGEXT", defaultValue="Boolean.FALSE")
+	Boolean registerExternalIdentities;
 }
