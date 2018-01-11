@@ -23,7 +23,6 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -39,11 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.x500.style.RFC4519Style;
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
@@ -57,7 +52,6 @@ import org.bouncycastle.x509.X509V3CertificateGenerator;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
 import com.soffid.iam.addons.federation.common.AttributePolicyCondition;
-
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -66,30 +60,13 @@ import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
-
-import es.caib.seycon.ng.comu.TypeEnumeration;
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.exception.SeyconException;
-import es.caib.seycon.ng.exception.UnknownUserException;
-
 import com.soffid.iam.addons.federation.model.AttributeConditionEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntity;
+import com.soffid.iam.addons.federation.model.AttributeEntityDao;
 import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
-import com.soffid.iam.model.AuditEntity;
-import com.soffid.iam.model.Parameter;
-import com.soffid.iam.model.PasswordDomainEntity;
-import com.soffid.iam.model.PasswordPolicyEntity;
-import com.soffid.iam.model.SystemEntity;
-import com.soffid.iam.model.UserDataEntity;
-import com.soffid.iam.model.UserEntity;
-import com.soffid.iam.service.ConfigurationService;
-import com.soffid.iam.utils.AutoritzacionsUsuari;
-import com.soffid.iam.utils.MailUtils;
-import com.soffid.iam.utils.Security;
-import com.soffid.iam.addons.federation.model.AttributeEntityDao;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
 import com.soffid.iam.addons.federation.model.PolicyEntity;
 import com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity;
@@ -114,6 +91,22 @@ import com.soffid.iam.api.PolicyCheckResult;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
+import com.soffid.iam.model.AuditEntity;
+import com.soffid.iam.model.Parameter;
+import com.soffid.iam.model.PasswordDomainEntity;
+import com.soffid.iam.model.PasswordPolicyEntity;
+import com.soffid.iam.model.SystemEntity;
+import com.soffid.iam.model.UserDataEntity;
+import com.soffid.iam.model.UserEntity;
+import com.soffid.iam.service.ConfigurationService;
+import com.soffid.iam.utils.AutoritzacionsUsuari;
+import com.soffid.iam.utils.MailUtils;
+import com.soffid.iam.utils.Security;
+
+import es.caib.seycon.ng.comu.TypeEnumeration;
+import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.SeyconException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 /**
  * @see es.caib.seycon.ng.servei.FederacioService
@@ -1240,7 +1233,7 @@ public class FederacioServiceImpl
 
 		PEMParser pemParser = new PEMParser(new StringReader(fm.getPrivateKey()));
 		Object object = pemParser.readObject();
-		if (object instanceof KeyPair) {
+		if (object instanceof PEMKeyPair) {
 			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
 		    KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
 			_privateKey = kp.getPrivate();
@@ -1251,11 +1244,10 @@ public class FederacioServiceImpl
 
 		pemParser = new PEMParser(new StringReader(fm.getPublicKey()));
 		object = pemParser.readObject();
-		if (object instanceof KeyPair) {
+		if (object instanceof SubjectPublicKeyInfo) {
 			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-		    KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
-		    _publicKey = kp.getPublic();
-		} else if (object instanceof PrivateKey) {
+			_publicKey = converter.getPublicKey((SubjectPublicKeyInfo) object);
+		} else if (object instanceof PublicKey) {
 			_publicKey = (PublicKey) object;
 		}
 		pemParser.close();
@@ -1753,6 +1745,12 @@ public class FederacioServiceImpl
 			String user, String password, long sessionSeconds)
 			throws Exception {
 		return getDelegate().authenticate(serviceProvider, identityProvider, user, password, sessionSeconds);
+	}
+
+	@Override
+	protected SamlRequest handleGenerateSamlLogoutRequest(String serviceProvider, String identityProvider,
+			String subject, boolean force, boolean backChannel) throws Exception {
+		return  getDelegate().generateSamlLogout(serviceProvider, identityProvider, subject, force, backChannel);
 	}
 
 }
