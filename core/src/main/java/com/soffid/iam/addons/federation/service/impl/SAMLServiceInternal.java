@@ -546,13 +546,9 @@ public class SAMLServiceInternal {
 			}
 
 			Element xml = sign (serviceProvider, builderFactory, req);
-			
 			String xmlString = generateString(xml);
-			
-			r.getParameters().put("RelayState", newID);
 			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-			r.getParameters().put("SAMLRequest", encodedRequest);
-
+			
 			for (SingleSignOnService sss : idpssoDescriptor.getSingleSignOnServices()) {
 				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
 						encodedRequest.length() <= 4000) { // Max GET length is usually 8192
@@ -573,7 +569,18 @@ public class SAMLServiceInternal {
 			if (r.getUrl() == null)
 				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
 
-			
+
+			// Sign again
+			xml = sign (serviceProvider, builderFactory, req);
+			xmlString = generateString(xml);
+
+			// Encode base 64
+			encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			r.getParameters().put("SAMLRequest", encodedRequest);
+			r.getParameters().put("RelayState", newID);
+
+
+			// Record
 			SamlRequestEntity reqEntity = samlRequestEntityDao.newSamlRequestEntity();
 			reqEntity.setHostName(serviceProvider);
 			reqEntity.setDate(new Date());
