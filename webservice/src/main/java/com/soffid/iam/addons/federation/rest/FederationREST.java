@@ -123,6 +123,24 @@ public class FederationREST {
 		}
 	}
 
+	@Path("/generate-saml-logout-request")
+	@POST
+	public Response generateSAMLLogoutRequest(RequestJSON request)
+//			@QueryParam("serviceProvider") @DefaultValue("") String serviceProviderName,
+//			@QueryParam("identityProvider") @DefaultValue("") String identityProvider,
+//			@QueryParam("user") @DefaultValue("") String user,
+//			@QueryParam("sessionSeconds") @DefaultValue("3600") String sessionSeconds)
+	{
+		try {
+		FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
+		SamlRequest r = federationService.generateSamlRequest(request.getServiceProviderName(),
+				request.getIdentityProvider(), request.getUser(), Long.parseLong(request.getSessionSeconds()));
+		return ResponseBuilder.responseOk(r);
+		} catch (Exception e) {
+			return ResponseBuilder.errorGeneric(e);
+		}
+	}
+
 	public static void main (String [ ] args) {
 		String pattern = "(aaa.com)|(bbb)";
 		String userName = "aaa";

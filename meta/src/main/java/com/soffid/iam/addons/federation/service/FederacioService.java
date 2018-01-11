@@ -423,6 +423,15 @@ public abstract class FederacioService {
 			@Nullable String subject,
 			long sessionSeconds) {return null;}
 	
+	@Description("Generates a SAML request to perform global logout. Use forced when "
+			+ "is the system admin who enforces the logout. Leave to false when is "
+			+ "the user who requests to log out. \n"
+			+ "Enable backchannel to enable SAML logout process.")
+	SamlRequest generateSamlLogoutRequest (String serviceProvider, String identityProvider,
+			String subject,
+			boolean forced,
+			boolean backChannel) {return null;}
+	
 	@Description("Checks SAML response")
 	SamlValidationResults authenticate(String serviceProviderName, String protocol, 
 			Map<String,String> response,

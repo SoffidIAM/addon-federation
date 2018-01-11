@@ -88,6 +88,7 @@ import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.EncryptedAssertion;
 import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.StatusCode;
@@ -98,6 +99,7 @@ import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
+import org.opensaml.saml.saml2.metadata.SingleLogoutService;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.saml.security.impl.SAMLSignatureProfileValidator;
 import org.opensaml.security.credential.BasicCredential;
@@ -589,6 +591,79 @@ public class SAMLServiceInternal {
 		}
 	}
 	
+	public SamlRequest generateSamlLogout(String serviceProvider, String identityProvider, String userName, boolean forced, boolean backChannel) throws InternalErrorException {
+		try {
+			// Get the assertion builder based on the assertion element name
+			SAMLObjectBuilder<LogoutRequest> builder = (SAMLObjectBuilder<LogoutRequest>) builderFactory.getBuilder(LogoutRequest.DEFAULT_ELEMENT_NAME);
+			 
+			EntityDescriptor idp = getIdpMetadata(identityProvider);
+			if (idp == null)
+				throw new InternalErrorException(String.format("Unable to find Identity Provider metadata"));
+			IDPSSODescriptor idpssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
+
+			EntityDescriptor sp = getSpMetadata(serviceProvider);
+			
+			// Create the assertion
+			LogoutRequest req = builder.buildObject( );
+			
+			String newID = generateRandomId();
+			
+			SamlRequest r = new SamlRequest();
+			r.setParameters(new HashMap<String, String>());
+			SPSSODescriptor spsso = sp.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
+			if (spsso == null)
+				throw new InternalErrorException("Unable to find SP SSO Profile "+serviceProvider);
+			boolean found = false;
+			req.setID(newID);
+			req.setIssueInstant(new DateTime ());
+			NameID nameId = ((SAMLObjectBuilder<NameID>) builderFactory.getBuilder(NameID.DEFAULT_ELEMENT_NAME)).buildObject();
+			req.setNameID(nameId);
+			req.setReason(forced ? "urn:oasis:names:tc:SAML:2.0:logout:udmin": "urn:oasis:names:tc:SAML:2.0:logout:user");
+			nameId.setValue(userName);
+			
+			Issuer issuer = ( (SAMLObjectBuilder<Issuer>) builderFactory.getBuilder(Issuer.DEFAULT_ELEMENT_NAME)).buildObject();
+			issuer.setValue( serviceProvider );
+			
+			req.setIssuer( issuer );
+
+			Element xml = sign (serviceProvider, builderFactory, req);
+			
+			String xmlString = generateString(xml);
+			
+			r.getParameters().put("RelayState", newID);
+			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			r.getParameters().put("SAMLRequest", encodedRequest);
+
+			for (SingleLogoutService sss : idpssoDescriptor.getSingleLogoutServices()) {
+				if (sss.getBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI) &&  backChannel) { // Max GET length is usually 8192
+					r.setMethod(SAMLConstants.SAML2_SOAP11_BINDING_URI);
+					r.setUrl(sss.getLocation());
+					break;
+				}
+				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
+						encodedRequest.length() <= 4000 && !backChannel) { // Max GET length is usually 8192
+					r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+					r.setUrl(sss.getLocation());
+					break;
+				}
+				if (sss.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI) && !backChannel) {
+					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
+					r.setUrl(sss.getLocation());
+					break;
+				}
+			}
+			if (r.getUrl() == null)
+				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
+
+			return r;
+		} catch (Exception e) {
+			if (e instanceof InternalErrorException)
+				throw (InternalErrorException) e;
+			else
+				throw new InternalErrorException(e.getMessage(), e);
+		}
+	}
+	
 	private String generateRandomId() throws NoSuchAlgorithmException {
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
         Hex encoder = new Hex();
@@ -610,7 +685,7 @@ public class SAMLServiceInternal {
 		return xmlString;
 	}
 
-	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, AuthnRequest req) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
+	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, org.opensaml.saml.saml2.core.RequestAbstractType req) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
 		// Get the marshaller factory
 		MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 		Marshaller marshaller = marshallerFactory.getMarshaller(req);

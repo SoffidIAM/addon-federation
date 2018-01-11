@@ -26,6 +26,7 @@ public class RequestJSON {
 	String protocol = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST";
 //	String serviceProviderName = null;
 	
+
 	public String getDomain() {
 		return domain;
 	}

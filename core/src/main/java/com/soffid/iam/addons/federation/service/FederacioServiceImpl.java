@@ -1755,4 +1755,10 @@ public class FederacioServiceImpl
 		return getDelegate().authenticate(serviceProvider, identityProvider, user, password, sessionSeconds);
 	}
 
+	@Override
+	protected SamlRequest handleGenerateSamlLogoutRequest(String serviceProvider, String identityProvider,
+			String subject, boolean force, boolean backChannel) throws Exception {
+		return  getDelegate().generateSamlLogout(serviceProvider, identityProvider, subject, force, backChannel);
+	}
+
 }
