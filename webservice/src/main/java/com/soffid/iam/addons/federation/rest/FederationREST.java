@@ -1,5 +1,6 @@
 package com.soffid.iam.addons.federation.rest;
 
+import javax.ejb.EJB;
 import javax.servlet.annotation.HttpConstraint;
 import javax.servlet.annotation.ServletSecurity;
 import javax.ws.rs.Consumes;
@@ -9,7 +10,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.rest.json.GenerateSAMLLogoutRequestJSON;
 import com.soffid.iam.addons.federation.rest.json.GenerateSAMLRequestJSONRequest;
@@ -24,9 +24,10 @@ import com.soffid.iam.api.SamlRequest;
 @Path("/federation/rest")
 @Produces({ "application/rest+json", "application/json" })
 @Consumes({ "application/rest+json", "application/json" })
-@ServletSecurity(@HttpConstraint(rolesAllowed = { "federation:query" }))
 public class FederationREST {
-
+	@EJB 
+	com.soffid.iam.addons.federation.service.ejb.FederacioService federationService;
+	
 	@Path("/validate-domain")
 	@POST
 	public Response validateDomain(ValidateDomainJSONRequest request) {
@@ -36,7 +37,6 @@ public class FederationREST {
 				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyDomain");
 
 			// Domain validation
-			FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
 			String idp = federationService.searchIdpForUser("dummy@" + request.getDomain());
 			if (idp == null) {
 				ValidateDomainJSONResponse response = new ValidateDomainJSONResponse();
@@ -68,7 +68,6 @@ public class FederationREST {
 				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyPassword");
 
 			// Authentication validation
-			FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
 			SamlValidationResults r = federationService.authenticate(request.getServiceProviderName(),
 					request.getIdentityProvider(), request.getUser(), request.getPassword(),
 					Long.parseLong(request.getSessionSeconds()));
@@ -89,7 +88,6 @@ public class FederationREST {
 				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyIdentityProvider");
 
 			// Generate request
-			FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
 			SamlRequest r = federationService.generateSamlRequest(request.getServiceProviderName(),
 					request.getIdentityProvider(), request.getUser(), Long.parseLong(request.getSessionSeconds()));
 			return ResponseBuilder.responseOk(r);
@@ -111,7 +109,6 @@ public class FederationREST {
 				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyServiceProviderName");
 
 			// Generate request
-			FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
 			SamlValidationResults r = federationService.authenticate(request.getServiceProviderName(),
 					request.getProtocol(), request.getResponse(),
 					request.getAutoProvision() == null ? false : request.getAutoProvision().booleanValue());
@@ -134,7 +131,6 @@ public class FederationREST {
 			if (request.getUser() == null || request.getUser().trim().isEmpty())
 				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyUser");
 
-			FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
 			SamlRequest r = federationService.generateSamlLogoutRequest(request.getServiceProviderName(),
 					request.getIdentityProvider(), request.getUser(),
 					request.isForce(),

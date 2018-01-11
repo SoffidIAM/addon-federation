@@ -6,6 +6,7 @@
 
 package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.model.SamlRequestEntity;
@@ -418,11 +419,13 @@ public abstract class FederacioService {
 	}
 	
 
+	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Generates a SAML request to formard to the IdP")
 	SamlRequest generateSamlRequest (String serviceProvider, String identityProvider,
 			@Nullable String subject,
 			long sessionSeconds) {return null;}
 	
+	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Generates a SAML request to perform global logout. Use forced when "
 			+ "is the system admin who enforces the logout. Leave to false when is "
 			+ "the user who requests to log out. \n"
@@ -432,17 +435,21 @@ public abstract class FederacioService {
 			boolean forced,
 			boolean backChannel) {return null;}
 	
+	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Checks SAML response")
 	SamlValidationResults authenticate(String serviceProviderName, String protocol, 
 			Map<String,String> response,
 			boolean autoProvision) {return null;}
 
+	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Checks SAML response")
 	SamlValidationResults validateSessionCookie(String sessionCookie) {return null;}
 
+	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Finds identity provider for subject")
 	String searchIdpForUser(String userName) {return null;}
 
+	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Creates a virtual IdP session")
 	SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
 			String user, String password, long sessionSeconds) {return null;}

@@ -52,4 +52,10 @@
 		<descripcio>See identify federations</descripcio>
 		<ambit>Identify Federation</ambit>
 	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation:serviceProvider</codi>
+		<descripcio>Act as a service provider</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
 </autoritzacions>
