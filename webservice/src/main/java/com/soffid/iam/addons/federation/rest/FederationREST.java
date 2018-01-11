@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response.Status;
 
 import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.rest.json.GenerateSAMLLogoutRequestJSON;
 import com.soffid.iam.addons.federation.rest.json.GenerateSAMLRequestJSONRequest;
 import com.soffid.iam.addons.federation.rest.json.ParseSAMLResponseJSONRequest;
 import com.soffid.iam.addons.federation.rest.json.ValidateCredentialsJSONRequest;
@@ -86,8 +87,6 @@ public class FederationREST {
 				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyServiceProviderName");
 			if (request.getIdentityProvider() == null || request.getIdentityProvider().trim().isEmpty())
 				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyIdentityProvider");
-			if (request.getUser() == null || request.getUser().trim().isEmpty())
-				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyUser");
 
 			// Generate request
 			FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
@@ -124,17 +123,23 @@ public class FederationREST {
 
 	@Path("/generate-saml-logout-request")
 	@POST
-	public Response generateSAMLLogoutRequest(RequestJSON request)
-//			@QueryParam("serviceProvider") @DefaultValue("") String serviceProviderName,
-//			@QueryParam("identityProvider") @DefaultValue("") String identityProvider,
-//			@QueryParam("user") @DefaultValue("") String user,
-//			@QueryParam("sessionSeconds") @DefaultValue("3600") String sessionSeconds)
+	public Response generateSAMLLogoutRequest(GenerateSAMLLogoutRequestJSON request)
 	{
 		try {
-		FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
-		SamlRequest r = federationService.generateSamlRequest(request.getServiceProviderName(),
-				request.getIdentityProvider(), request.getUser(), Long.parseLong(request.getSessionSeconds()));
-		return ResponseBuilder.responseOk(r);
+			// Parameters validation
+			if (request.getServiceProviderName() == null || request.getServiceProviderName().trim().isEmpty())
+				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyServiceProviderName");
+			if (request.getIdentityProvider() == null || request.getIdentityProvider().trim().isEmpty())
+				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyIdentityProvider");
+			if (request.getUser() == null || request.getUser().trim().isEmpty())
+				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptyUser");
+
+			FederacioService federationService = FederationServiceLocator.instance().getFederacioService();
+			SamlRequest r = federationService.generateSamlLogoutRequest(request.getServiceProviderName(),
+					request.getIdentityProvider(), request.getUser(),
+					request.isForce(),
+					request.isBackChannel());
+			return ResponseBuilder.responseOk(r);
 		} catch (Exception e) {
 			return ResponseBuilder.errorGeneric(e);
 		}
