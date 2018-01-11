@@ -1,9 +1,9 @@
-package com.soffid.iam.addons.federation.rest;
+package com.soffid.iam.addons.federation.rest.json;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ValidateCredentialsJSON {
+public class ValidateCredentialsJSONResponse {
 
 	String authentication = null;
 	String principalName = null;

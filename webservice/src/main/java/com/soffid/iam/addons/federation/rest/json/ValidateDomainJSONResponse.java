@@ -1,6 +1,6 @@
-package com.soffid.iam.addons.federation.rest;
+package com.soffid.iam.addons.federation.rest.json;
 
-public class ValidateDomainJSON {
+public class ValidateDomainJSONResponse {
 
 	String exists = null;
 	String identityProvider = null;
