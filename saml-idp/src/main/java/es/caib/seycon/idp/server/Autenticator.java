@@ -103,49 +103,71 @@ public class Autenticator {
     public boolean validateCookie (HttpServletRequest req, HttpServletResponse resp) 
     		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException
     {
+    	LOG.info("validateCookie() - Begin");
         HttpSession session = req.getSession();
         IdpConfig config = IdpConfig.getConfig();
         
-        String relyingParty = (String) session.
-                getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        String relyingParty = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        LOG.info("validateCookie() - relyingParty: "+relyingParty);
         
-        if (relyingParty == null)
-        	return false;
+        if (relyingParty == null){
+			LOG.info("validateCookie() - End with false: relyingParty == null");
+			return false;
+		}
 
     	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
-        if (ip == null)
-        	return false;
+    	LOG.info("validateCookie() - identityProviderForRelyingParty: "+ip);
+        if (ip == null){
+			LOG.info("validateCookie() - End with false: identityProviderForRelyingParty == null");
+			return false;
+		}
     	
+        LOG.info("validateCookie() - getSsoCookieName: "+ip.getSsoCookieName());
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
         	for (Cookie c: req.getCookies())
         	{
+        		LOG.info("validateCookie() - cookie: "+c.getName());
         		if (c.getName().equals(ip.getSsoCookieName()))
         		{
-    				if (checkExternalCookie(req, resp, config, c))
+    				if (checkExternalCookie(req, resp, config, c)) {
+    					LOG.info("validateCookie() - End with true: checkExternalCookie is true");
     					return true;
+    				} else {
+    					LOG.info("validateCookie() - checkExternalCookie is false");
+    				}
         		}
         	}
         }
+        LOG.info("validateCookie() - End with: false");
         return false;
     }
 
 	private boolean checkExternalCookie(HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+		LOG.info("checkExternalCookie()");
 		String value = c.getValue();
+		LOG.info("checkExternalCookie() - cookie.value: "+c.getValue());
 		FederacioService fs = new RemoteServiceLocator().getFederacioService();
 		SamlValidationResults check = fs.validateSessionCookie(value);
+		LOG.info("checkExternalCookie() - fs.validateSessionCookie(): "+c.getValue());
+		LOG.info("checkExternalCookie() - check.isValid(): "+check.isValid());
+		LOG.info("checkExternalCookie() - check.getUser(): "+check.getUser());
 		if (check.isValid() && check.getUser() != null)
 		{
 			Collection<UserAccount> accounts = new com.soffid.iam.remote.RemoteServiceLocator()
 					.getServerService()
 					.getUserAccounts(check.getUser().getId(), config.getSystem().getName());
+			LOG.info("checkExternalCookie() - check.getUser().getId(): "+check.getUser().getId());
+			LOG.info("checkExternalCookie() - config.getSystem().getName(): "+config.getSystem().getName());
+			LOG.info("checkExternalCookie() - accounts: "+accounts);
 			if (accounts == null || accounts.isEmpty())
 			{
-				LOG.info("User "+check.getUser().getUserName()+" has no account on "+config.getSystem().getName());
+				LOG.info("checkExternalCookie() - User "+check.getUser().getUserName()+" has no account on "+config.getSystem().getName());
 			}
 			else
 			{
+				LOG.info("checkExternalCookie() - User "+check.getUser().getUserName()+" has account on "+config.getSystem().getName());
 				String user = accounts.iterator().next().getName();
 		        String requestedUser = "";
 		        try {
@@ -156,18 +178,24 @@ public class Autenticator {
 							.getValue();
 				} catch (Exception e1) {
 				}
+		        LOG.info("checkExternalCookie() - requestedUser: "+requestedUser);
 		        if (! requestedUser.isEmpty() && !user.equals(requestedUser))
 		        {
-					LOG.info("Service provider requests login for "+requestedUser+" but "+user+" is authenticated instead");
+					LOG.info("checkExternalCookie() - Service provider requests login for "+requestedUser+" but "+user+" is authenticated instead");
 		            HttpSession session = req.getSession();
 		            session.removeAttribute(SessionConstants.SEU_USER);
+		            LOG.info("checkExternalCookie() - return false");
 		            return false;
 		        }
-		        else
+		        else {
+		        	LOG.info("checkExternalCookie() - do: autenticate()");
 		        	autenticate(user, req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
+		        }
+		        LOG.info("checkExternalCookie() - return true");
 				return true;
 			}
 		}
+		LOG.info("checkExternalCookie() - return check.isValid(): "+check.isValid());
 		return check.isValid();
 	}
 

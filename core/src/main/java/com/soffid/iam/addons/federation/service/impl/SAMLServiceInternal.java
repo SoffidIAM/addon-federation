@@ -1007,12 +1007,14 @@ public class SAMLServiceInternal {
 	}
 
 	public SamlValidationResults validateSessionCookie(String sessionCookie) throws InternalErrorException {
+		log.info("handleValidateSessionCookie()");
 		User u = null;
 		try {
 			u = checkSamlCookie(sessionCookie);
 		} catch (Exception e) {
 			// Ignore validation exceptions
 		}
+		log.info("handleValidateSessionCookie() - u: "+u);
 		if ( u == null )
 		{
 			try {
@@ -1033,21 +1035,39 @@ public class SAMLServiceInternal {
 		else
 			r.setValid(false);
 		
+		log.info("handleValidateSessionCookie() - r: "+r);
 		return r;
 	}
 
 	private User checkSamlCookie(String value) 
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+
+		log.info("checkSamlCookie()");
 		String[] split = value.split(":");
+		log.info("checkSamlCookie() - split: "+split);
+		log.info("checkSamlCookie() - split.lenght: "+split.length);
 		if (split.length != 2)
 			return null;
+
 		SamlRequestEntity entity = samlRequestEntityDao.findByExternalId(split[0]);
-		SamlValidationResults r = new SamlValidationResults();
-		if (entity == null || entity.getExpirationDate() == null ||
+		log.info("checkSamlCookie() - entity: "+entity);
+		if (entity != null) {
+			log.info("checkSamlCookie() - entity.getExpirationDate(): "+entity.getExpirationDate());
+			log.info("checkSamlCookie() - new Date(): "+new Date());
+			log.info("checkSamlCookie() - entity.getExpirationDate().before(new Date()): "+entity.getExpirationDate().before(new Date()));
+			log.info("checkSamlCookie() - entity.getKey(): "+entity.getKey());
+		}
+		if (entity == null || 
+				entity.getExpirationDate() == null ||
 				entity.getExpirationDate().before(new Date()) ||
 				! entity.getKey().equals(split[1]))
 		{
 			User u = userService.findUserByUserName(entity.getUser());
+			log.info("checkSamlCookie() - u: "+u);
+			if (u != null) {
+				log.info("checkSamlCookie() - u.getActive().booleanValue(): "+u.getActive().booleanValue());
+			}
+			log.info("checkSamlCookie() - new Date(): "+new Date());
 			if (u != null && u.getActive().booleanValue())
 			{
 				return u;
@@ -1062,20 +1082,27 @@ public class SAMLServiceInternal {
 	private User checkIdpCookie(String value) throws InternalErrorException, IOException, NoSuchAlgorithmException,
 			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
 			CertificateException, NoSuchProviderException, SignatureException {
+		log.info("checkIdpCookie()");
 		int separator = value.indexOf('_');
+		log.info("checkIdpCookie() - separator: "+separator);
 		if (separator > 0)
 		{
 			String hash = value.substring(separator+1);
 			Long id = Long.decode(value.substring(0, separator));
+			log.info("checkIdpCookie() - id: "+id);
 			for (Session sessio: sessionService.getActiveSessions(id))
 			{
 				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				log.info("checkIdpCookie() - digest: "+digest);
 				String digestString = Base64.encodeBytes(digest);
+				log.info("checkIdpCookie() - digestString: "+digestString);
 				if (digestString.equals(hash))
 				{
 					User u = userService.findUserByUserName(sessio.getUserName());
+					log.info("checkIdpCookie() - u: "+u);
 					if (u != null && u.getActive().booleanValue())
 					{
+						log.info("checkIdpCookie() - return u");
 						return u;
 					}
 				}
