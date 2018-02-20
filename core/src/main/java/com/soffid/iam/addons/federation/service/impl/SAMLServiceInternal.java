@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -1121,12 +1122,13 @@ public class SAMLServiceInternal {
 		return r;
 	}
 
-	private User checkSamlCookie(String value) 
+	private User checkSamlCookie(String cookie)
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
 
 		log.info("checkSamlCookie()");
+		String value = URLDecoder.decode(cookie,"UTF-8");
+		log.info("checkSamlCookie() - decoded: "+value);
 		String[] split = value.split(":");
-		log.info("checkSamlCookie() - split: "+split);
 		log.info("checkSamlCookie() - split.lenght: "+split.length);
 		if (split.length != 2)
 			return null;
@@ -1139,26 +1141,25 @@ public class SAMLServiceInternal {
 			log.info("checkSamlCookie() - entity.getExpirationDate().before(new Date()): "+entity.getExpirationDate().before(new Date()));
 			log.info("checkSamlCookie() - entity.getKey(): "+entity.getKey());
 		}
-		if (entity == null || 
-				entity.getExpirationDate() == null ||
-				entity.getExpirationDate().before(new Date()) ||
-				! entity.getKey().equals(split[1]))
+		if (entity!=null && entity.getExpirationDate()!=null && !entity.getExpirationDate().before(new Date()) && entity.getKey().equals(split[1]))
 		{
+			log.info("checkSamlCookie() - entity.getUser(): "+entity.getUser());
 			User u = userService.findUserByUserName(entity.getUser());
-			log.info("checkSamlCookie() - u: "+u);
+			log.info("checkSamlCookie() - findUserByUserName: "+u);
 			if (u != null) {
 				log.info("checkSamlCookie() - u.getActive().booleanValue(): "+u.getActive().booleanValue());
 			}
-			log.info("checkSamlCookie() - new Date(): "+new Date());
-			if (u != null && u.getActive().booleanValue())
-			{
+			if (u != null && u.getActive().booleanValue()) {
+				log.info("checkSamlCookie() - user is active");
 				return u;
-			}
-			else
+			} else {
+				log.info("checkSamlCookie() - user null or not active");
 				return null;
-		}
-		else
+			}
+		} else {
+			log.info("checkSamlCookie() - entity null or expirationDate false or key!=split[1]");
 			return null;
+		}
 	}
 
 	private User checkIdpCookie(String value) throws InternalErrorException, IOException, NoSuchAlgorithmException,
