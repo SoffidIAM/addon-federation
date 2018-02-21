@@ -195,6 +195,12 @@ public class SAMLServiceInternal {
 	
 	public SamlValidationResults authenticate(String serviceProviderName, String protocol, Map<String, String> response,
 			boolean autoProvision) throws Exception {
+		
+		log.info("authenticate() - serviceProviderName: "+serviceProviderName);
+		log.info("authenticate() - protocol: "+protocol);
+		log.info("authenticate() - response: "+response);
+		log.info("authenticate() - autoProvision: "+autoProvision);
+		
 		String samlResponse = response.get("SAMLResponse");
 		
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -224,6 +230,7 @@ public class SAMLServiceInternal {
 
 		String originalrequest = saml2Response.getInResponseTo();
 		SamlRequestEntity requestEntity = samlRequestEntityDao.findByExternalId(originalrequest);
+		log.info("authenticate() - requestEntity: "+requestEntity);
 		if (requestEntity == null)
 		{
 			result.setFailureReason("Received authentication response for unknown request "+originalrequest);
@@ -242,6 +249,7 @@ public class SAMLServiceInternal {
 			Assertion assertion = decrypt (serviceProviderName,encryptedAssertion);
 			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
+				log.info("authenticate() - in encryptedAssertion");
 				if (assertion.isSigned() || response.isEmpty())
 					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 				else
@@ -253,6 +261,7 @@ public class SAMLServiceInternal {
 		{
 			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
+				log.info("authenticate() - in assertion");
 				if (assertion.isSigned() || response.isEmpty())
 					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 				else
@@ -265,6 +274,9 @@ public class SAMLServiceInternal {
 
 	private SamlValidationResults createAuthenticationRecord(String identityProvider, String serviceProviderName, SamlRequestEntity requestEntity, Assertion assertion,
 			boolean provision) throws InternalErrorException {
+		
+		log.info("createAuthenticationRecord()");
+		
 		SamlValidationResults result = new SamlValidationResults();
 		result.setValid(false);
 		Subject subject = assertion.getSubject();
@@ -273,14 +285,14 @@ public class SAMLServiceInternal {
 			result.setFailureReason("Assertion does not contain subject information");
 			return result;
 		}
-		
+		log.info("createAuthenticationRecord() - subject: "+subject);
 		NameID nameID = subject.getNameID();
 		if (nameID == null)
 		{
 			result.setFailureReason("Assertion does not contain nameID information");
 			return result;
 		}
-		
+		log.info("createAuthenticationRecord() - nameID: "+nameID);
 		if (nameID.getFormat() == null || 
 				nameID.getFormat().equals(NameID.PERSISTENT) ||
 				nameID.getFormat().equals(NameID.TRANSIENT) ||
@@ -288,6 +300,7 @@ public class SAMLServiceInternal {
 				nameID.getFormat().equals(NameID.EMAIL))
 		{
 			String user = nameID.getValue();
+			log.info("createAuthenticationRecord() - user: "+user);
 			result.setPrincipalName(user);
 			result.setValid(true);
 			for (AttributeStatement attStmt: assertion.getAttributeStatements())
@@ -332,25 +345,36 @@ public class SAMLServiceInternal {
 		requestEntity.setKey(sb.toString());
 		result.setIdentityProvider(identityProvider);
 		result.setUser( searchUser (assertion, result, provision )  );
-		if (result.getUser() != null)
+		if (result.getUser() != null) {
+			log.info("createAuthenticationRecord() - requestEntity.setUser("+result.getUser().getUserName()+")");
 			requestEntity.setUser( result.getUser().getUserName() );
+		}
+		
 		result.setSessionCookie(requestEntity.getExternalId()+":"+requestEntity.getKey());
+		log.info("createAuthenticationRecord() - setSessionCookie(requestEntity.getExternalId()+\":\"+requestEntity.getKey())");
 		requestEntity.setFinished(true);
 		samlRequestEntityDao.update(requestEntity);
-
+		log.info("createAuthenticationRecord() - samlRequestEntityDao.update");
 		result.setValid(true);
 		return result;
 	}
 
 	private User searchUser(Assertion assertion, SamlValidationResults result, boolean provision) throws InternalErrorException {
+		
+		log.info("searchUser()");
+		
 		String issuer = assertion.getIssuer().getValue();
 
 		com.soffid.iam.api.System dispatcher = createSamlDispatcher(issuer);
+		log.info("searchUser() - result.getPrincipalName(): "+result.getPrincipalName());
+		log.info("searchUser() - dispatcher.getName(): "+dispatcher.getName());
 		Account account = accountService.findAccount( result.getPrincipalName() , dispatcher.getName());
+		log.info("searchUser() - account: "+account);
 		if (account != null)
 		{
 			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
 			{
+				log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
 				return account.getOwnerUsers().iterator().next();
 			}
 			if ( ! account.getType().equals(AccountType.IGNORED))
@@ -359,6 +383,7 @@ public class SAMLServiceInternal {
 						dispatcher.getName()));
 		}
 		
+		log.info("searchUser() - provision: "+provision);
 		if (provision)
 		{
 			User u = new User();
@@ -375,6 +400,9 @@ public class SAMLServiceInternal {
 			u.setProfileServer("null");
 			u.setMailServer("null");
 			Map<String,Object> attributes = new HashMap<String, Object>();
+			log.info("searchUser() - java user created...");
+			
+			
 			for (FederationMemberEntity fm: federationMemberEntityDao.findFMByPublicId(issuer))
 			{
 				if (fm instanceof IdentityProviderEntity)
@@ -386,7 +414,7 @@ public class SAMLServiceInternal {
 							interpreter.set("user", u); //$NON-NLS-1$
 							interpreter.set("attributes", attributes); //$NON-NLS-1$
 							interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
-							
+							log.info("searchUser() - execute scriptParse");
 							Object r = interpreter.eval( fm.getScriptParse() );
 							if (Boolean.FALSE.equals(r))
 								return null;
@@ -398,7 +426,10 @@ public class SAMLServiceInternal {
 
 				}
 			}
+			log.info("searchUser() - trying to create the user...");
 			u = userService.create(u);
+			log.info("searchUser() - user created!");
+			log.info("searchUser() - u.getShortName(): "+u.getShortName());
 			for (String att: attributes.keySet())
 			{
 				Collection<DataType> md = additionalData.findDataTypesByScopeAndName(MetadataScope.USER, att);
@@ -423,11 +454,13 @@ public class SAMLServiceInternal {
 					}
 					data.setUser(u.getUserName());
 					additionalData.create(data);
+					log.info("searchUser() - additionalData created: "+data.getAttribute());
 				}
 			}
 			// Register account
 			try {
 				accountService.createAccount(u, dispatcher, result.getPrincipalName());
+				log.info("searchUser() - account created");
 			} catch (NeedsAccountNameException e) {
 				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
 						result.getPrincipalName(),
@@ -438,6 +471,7 @@ public class SAMLServiceInternal {
 						dispatcher.getName()));
 			}
 		}
+		log.info("searchUser() - return null");
 		return null;
 	}
 
