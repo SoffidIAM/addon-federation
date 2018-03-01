@@ -686,7 +686,7 @@
 						// Optionally, the SSL check could be checked to be disabled
 						Boolean formDisableSSL = ctx.getValue("@federationMember/disableSSL");
 						String myProtocol = "https";
-						if (formDisableSSL.booleanValue()==true) {
+						if (formDisableSSL!=null && formDisableSSL.booleanValue()==true) {
 							myProtocol = "http";
 						}
 

@@ -37,6 +37,8 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.X509Name;
@@ -117,6 +119,8 @@ public class FederacioServiceImpl
 	private static final String EMAIL = "EMAIL"; //$NON-NLS-1$
 	private static final String RECOVER_KEY = "RecoverKey"; //$NON-NLS-1$
 	private static final String ACTIVATION_KEY = "ActivationKey"; //$NON-NLS-1$
+
+	Log log = LogFactory.getLog(getClass());
 
 	/**
 	 * @see es.caib.seycon.ng.servei.FederacioService#create(com.soffid.iam.addons.federation.common.EntityGroup)
@@ -1720,6 +1724,7 @@ public class FederacioServiceImpl
 
 	@Override
 	protected SamlValidationResults handleValidateSessionCookie(String sessionCookie) throws Exception {
+		log.info("handleValidateSessionCookie()");
 		return getDelegate().validateSessionCookie(sessionCookie);
 	}
 

@@ -1,5 +1,6 @@
 package com.soffid.iam.addons.federation.service;
 
+import java.security.Security;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -13,6 +14,7 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -61,6 +63,10 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
  	
 	@Override
 	protected void handleConsoleBoot() throws Exception {
+
+		if (Security.getProvider("BC") == null)
+			Security.addProvider( new BouncyCastleProvider());
+
 		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1");
 		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241");
 		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42");

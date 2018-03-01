@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -194,6 +195,12 @@ public class SAMLServiceInternal {
 	
 	public SamlValidationResults authenticate(String serviceProviderName, String protocol, Map<String, String> response,
 			boolean autoProvision) throws Exception {
+		
+		log.info("authenticate() - serviceProviderName: "+serviceProviderName);
+		log.info("authenticate() - protocol: "+protocol);
+		log.info("authenticate() - response: "+response);
+		log.info("authenticate() - autoProvision: "+autoProvision);
+		
 		String samlResponse = response.get("SAMLResponse");
 		
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -223,6 +230,7 @@ public class SAMLServiceInternal {
 
 		String originalrequest = saml2Response.getInResponseTo();
 		SamlRequestEntity requestEntity = samlRequestEntityDao.findByExternalId(originalrequest);
+		log.info("authenticate() - requestEntity: "+requestEntity);
 		if (requestEntity == null)
 		{
 			result.setFailureReason("Received authentication response for unknown request "+originalrequest);
@@ -241,6 +249,7 @@ public class SAMLServiceInternal {
 			Assertion assertion = decrypt (serviceProviderName,encryptedAssertion);
 			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
+				log.info("authenticate() - in encryptedAssertion");
 				if (assertion.isSigned() || response.isEmpty())
 					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 				else
@@ -252,6 +261,7 @@ public class SAMLServiceInternal {
 		{
 			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
+				log.info("authenticate() - in assertion");
 				if (assertion.isSigned() || response.isEmpty())
 					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 				else
@@ -264,6 +274,9 @@ public class SAMLServiceInternal {
 
 	private SamlValidationResults createAuthenticationRecord(String identityProvider, String serviceProviderName, SamlRequestEntity requestEntity, Assertion assertion,
 			boolean provision) throws InternalErrorException {
+		
+		log.info("createAuthenticationRecord()");
+		
 		SamlValidationResults result = new SamlValidationResults();
 		result.setValid(false);
 		Subject subject = assertion.getSubject();
@@ -272,14 +285,14 @@ public class SAMLServiceInternal {
 			result.setFailureReason("Assertion does not contain subject information");
 			return result;
 		}
-		
+		log.info("createAuthenticationRecord() - subject: "+subject);
 		NameID nameID = subject.getNameID();
 		if (nameID == null)
 		{
 			result.setFailureReason("Assertion does not contain nameID information");
 			return result;
 		}
-		
+		log.info("createAuthenticationRecord() - nameID: "+nameID);
 		if (nameID.getFormat() == null || 
 				nameID.getFormat().equals(NameID.PERSISTENT) ||
 				nameID.getFormat().equals(NameID.TRANSIENT) ||
@@ -287,6 +300,7 @@ public class SAMLServiceInternal {
 				nameID.getFormat().equals(NameID.EMAIL))
 		{
 			String user = nameID.getValue();
+			log.info("createAuthenticationRecord() - user: "+user);
 			result.setPrincipalName(user);
 			result.setValid(true);
 			for (AttributeStatement attStmt: assertion.getAttributeStatements())
@@ -331,25 +345,36 @@ public class SAMLServiceInternal {
 		requestEntity.setKey(sb.toString());
 		result.setIdentityProvider(identityProvider);
 		result.setUser( searchUser (assertion, result, provision )  );
-		if (result.getUser() != null)
+		if (result.getUser() != null) {
+			log.info("createAuthenticationRecord() - requestEntity.setUser("+result.getUser().getUserName()+")");
 			requestEntity.setUser( result.getUser().getUserName() );
+		}
+		
 		result.setSessionCookie(requestEntity.getExternalId()+":"+requestEntity.getKey());
+		log.info("createAuthenticationRecord() - setSessionCookie(requestEntity.getExternalId()+\":\"+requestEntity.getKey())");
 		requestEntity.setFinished(true);
 		samlRequestEntityDao.update(requestEntity);
-
+		log.info("createAuthenticationRecord() - samlRequestEntityDao.update");
 		result.setValid(true);
 		return result;
 	}
 
 	private User searchUser(Assertion assertion, SamlValidationResults result, boolean provision) throws InternalErrorException {
+		
+		log.info("searchUser()");
+		
 		String issuer = assertion.getIssuer().getValue();
 
 		com.soffid.iam.api.System dispatcher = createSamlDispatcher(issuer);
+		log.info("searchUser() - result.getPrincipalName(): "+result.getPrincipalName());
+		log.info("searchUser() - dispatcher.getName(): "+dispatcher.getName());
 		Account account = accountService.findAccount( result.getPrincipalName() , dispatcher.getName());
+		log.info("searchUser() - account: "+account);
 		if (account != null)
 		{
 			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
 			{
+				log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
 				return account.getOwnerUsers().iterator().next();
 			}
 			if ( ! account.getType().equals(AccountType.IGNORED))
@@ -358,6 +383,7 @@ public class SAMLServiceInternal {
 						dispatcher.getName()));
 		}
 		
+		log.info("searchUser() - provision: "+provision);
 		if (provision)
 		{
 			User u = new User();
@@ -374,6 +400,9 @@ public class SAMLServiceInternal {
 			u.setProfileServer("null");
 			u.setMailServer("null");
 			Map<String,Object> attributes = new HashMap<String, Object>();
+			log.info("searchUser() - java user created...");
+			
+			
 			for (FederationMemberEntity fm: federationMemberEntityDao.findFMByPublicId(issuer))
 			{
 				if (fm instanceof IdentityProviderEntity)
@@ -385,7 +414,7 @@ public class SAMLServiceInternal {
 							interpreter.set("user", u); //$NON-NLS-1$
 							interpreter.set("attributes", attributes); //$NON-NLS-1$
 							interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
-							
+							log.info("searchUser() - execute scriptParse");
 							Object r = interpreter.eval( fm.getScriptParse() );
 							if (Boolean.FALSE.equals(r))
 								return null;
@@ -397,7 +426,10 @@ public class SAMLServiceInternal {
 
 				}
 			}
+			log.info("searchUser() - trying to create the user...");
 			u = userService.create(u);
+			log.info("searchUser() - user created!");
+			log.info("searchUser() - u.getShortName(): "+u.getShortName());
 			for (String att: attributes.keySet())
 			{
 				Collection<DataType> md = additionalData.findDataTypesByScopeAndName(MetadataScope.USER, att);
@@ -422,11 +454,13 @@ public class SAMLServiceInternal {
 					}
 					data.setUser(u.getUserName());
 					additionalData.create(data);
+					log.info("searchUser() - additionalData created: "+data.getAttribute());
 				}
 			}
 			// Register account
 			try {
 				accountService.createAccount(u, dispatcher, result.getPrincipalName());
+				log.info("searchUser() - account created");
 			} catch (NeedsAccountNameException e) {
 				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
 						result.getPrincipalName(),
@@ -437,6 +471,7 @@ public class SAMLServiceInternal {
 						dispatcher.getName()));
 			}
 		}
+		log.info("searchUser() - return null");
 		return null;
 	}
 
@@ -1089,12 +1124,14 @@ public class SAMLServiceInternal {
 	}
 
 	public SamlValidationResults validateSessionCookie(String sessionCookie) throws InternalErrorException {
+		log.info("handleValidateSessionCookie()");
 		User u = null;
 		try {
 			u = checkSamlCookie(sessionCookie);
 		} catch (Exception e) {
 			// Ignore validation exceptions
 		}
+		log.info("handleValidateSessionCookie() - u: "+u);
 		if ( u == null )
 		{
 			try {
@@ -1115,49 +1152,74 @@ public class SAMLServiceInternal {
 		else
 			r.setValid(false);
 		
+		log.info("handleValidateSessionCookie() - r: "+r);
 		return r;
 	}
 
-	private User checkSamlCookie(String value) 
+	private User checkSamlCookie(String cookie)
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+
+		log.info("checkSamlCookie()");
+		String value = URLDecoder.decode(cookie,"UTF-8");
+		log.info("checkSamlCookie() - decoded: "+value);
 		String[] split = value.split(":");
+		log.info("checkSamlCookie() - split.lenght: "+split.length);
 		if (split.length != 2)
 			return null;
+
 		SamlRequestEntity entity = samlRequestEntityDao.findByExternalId(split[0]);
-		SamlValidationResults r = new SamlValidationResults();
-		if (entity == null || entity.getExpirationDate() == null ||
-				entity.getExpirationDate().before(new Date()) ||
-				! entity.getKey().equals(split[1]))
-		{
-			User u = userService.findUserByUserName(entity.getUser());
-			if (u != null && u.getActive().booleanValue())
-			{
-				return u;
-			}
-			else
-				return null;
+		log.info("checkSamlCookie() - entity: "+entity);
+		if (entity != null) {
+			log.info("checkSamlCookie() - entity.getExpirationDate(): "+entity.getExpirationDate());
+			log.info("checkSamlCookie() - new Date(): "+new Date());
+			log.info("checkSamlCookie() - entity.getExpirationDate().before(new Date()): "+entity.getExpirationDate().before(new Date()));
+			log.info("checkSamlCookie() - entity.getKey(): "+entity.getKey());
 		}
-		else
+		if (entity!=null && entity.getExpirationDate()!=null && !entity.getExpirationDate().before(new Date()) && entity.getKey().equals(split[1]))
+		{
+			log.info("checkSamlCookie() - entity.getUser(): "+entity.getUser());
+			User u = userService.findUserByUserName(entity.getUser());
+			log.info("checkSamlCookie() - findUserByUserName: "+u);
+			if (u != null) {
+				log.info("checkSamlCookie() - u.getActive().booleanValue(): "+u.getActive().booleanValue());
+			}
+			if (u != null && u.getActive().booleanValue()) {
+				log.info("checkSamlCookie() - user is active");
+				return u;
+			} else {
+				log.info("checkSamlCookie() - user null or not active");
+				return null;
+			}
+		} else {
+			log.info("checkSamlCookie() - entity null or expirationDate false or key!=split[1]");
 			return null;
+		}
 	}
 
 	private User checkIdpCookie(String value) throws InternalErrorException, IOException, NoSuchAlgorithmException,
 			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
 			CertificateException, NoSuchProviderException, SignatureException {
+		log.info("checkIdpCookie()");
 		int separator = value.indexOf('_');
+		log.info("checkIdpCookie() - separator: "+separator);
 		if (separator > 0)
 		{
 			String hash = value.substring(separator+1);
 			Long id = Long.decode(value.substring(0, separator));
+			log.info("checkIdpCookie() - id: "+id);
 			for (Session sessio: sessionService.getActiveSessions(id))
 			{
 				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				log.info("checkIdpCookie() - digest: "+digest);
 				String digestString = Base64.encodeBytes(digest);
+				log.info("checkIdpCookie() - digestString: "+digestString);
 				if (digestString.equals(hash))
 				{
 					User u = userService.findUserByUserName(sessio.getUserName());
+					log.info("checkIdpCookie() - u: "+u);
 					if (u != null && u.getActive().booleanValue())
 					{
+						log.info("checkIdpCookie() - return u");
 						return u;
 					}
 				}
