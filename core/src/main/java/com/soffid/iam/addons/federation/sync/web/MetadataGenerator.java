@@ -37,6 +37,7 @@ import org.xml.sax.SAXParseException;
 
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.sync.ServerServiceLocator;
 import com.soffid.iam.utils.Security;
@@ -139,7 +140,11 @@ public class MetadataGenerator extends HttpServlet {
                 return false;
         } else {
             FederationMember fm = eg.getFederationMember();
-            if (fm != null && fm.getMetadades() != null) {
+            if (fm != null && fm.getMetadades() != null &&
+            		(fm.getClasse().equals("S") ||
+            		  fm.getIdpType().equals(IdentityProviderType.SOFFID) ||
+            		  fm.getIdpType().equals(IdentityProviderType.SAML))) 
+            {
                 String md = fm.getMetadades();
                 
                 try {

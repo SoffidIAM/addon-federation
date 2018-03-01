@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="" ,
@@ -15,6 +16,9 @@ import com.soffid.mda.annotation.*;
 	es.caib.seycon.ng.model.TipusUsuariEntity.class,
 	es.caib.seycon.ng.model.GrupEntity.class})
 public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addons.federation.model.FederationMemberEntity {
+	@Column(name="FED_TYPE")
+	@Nullable
+	public IdentityProviderType idpType;
 
 	@Column (name="FED_PUBID")
 	public java.lang.String publicId;

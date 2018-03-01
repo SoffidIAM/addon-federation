@@ -545,13 +545,13 @@ public class SAMLServiceInternal {
 				req.setSubject(newSubject );
 			}
 
-			Element xml = sign (serviceProvider, builderFactory, req);
-			String xmlString = generateString(xml);
-			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			KeyPair pk = getPrivateKey(serviceProvider);
+			if (pk == null)
+				throw new InternalErrorException ("Cannot find private key for "+serviceProvider);
 			
 			for (SingleSignOnService sss : idpssoDescriptor.getSingleSignOnServices()) {
 				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
-						encodedRequest.length() <= 4000) { // Max GET length is usually 8192
+						pk == null) { // Max GET length is usually 8192
 					r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 					r.setUrl(sss.getLocation());
 					req.setProtocolBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
@@ -571,11 +571,11 @@ public class SAMLServiceInternal {
 
 
 			// Sign again
-			xml = sign (serviceProvider, builderFactory, req);
-			xmlString = generateString(xml);
+			Element xml = sign (serviceProvider, builderFactory, req);
+			String xmlString = generateString(xml);
 
 			// Encode base 64
-			encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
 			r.getParameters().put("SAMLRequest", encodedRequest);
 			r.getParameters().put("RelayState", newID);
 

@@ -14,6 +14,7 @@ import java.util.List;
 
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.model.GroupEntity;
 import com.soffid.iam.model.UserTypeEntity;
 
@@ -67,6 +68,13 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			IdentityProviderEntity idp = (IdentityProviderEntity) source;
 			// Heretats de VIP
 			target.setPublicId(idp.getPublicId());
+			if (idp.getIdpType() == null)
+				target.setIdpType(idp.isInternal()? IdentityProviderType.SOFFID: IdentityProviderType.SAML);
+			else
+			{
+				target.setIdpType(idp.getIdpType());
+				target.setInternal(idp.getIdpType().equals(IdentityProviderType.SOFFID));
+			}
 			// Propis
 			target.setClientCertificatePort(idp.getClientCertificatePort());
 			
@@ -98,6 +106,14 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Obtenim l'instància
 			VirtualIdentityProviderEntity vip = (VirtualIdentityProviderEntity) source;
 			// Heretats de VIP
+			if (vip.getIdpType() == null)
+				target.setIdpType(vip.isInternal()? IdentityProviderType.SOFFID: IdentityProviderType.SAML);
+			else
+			{
+				target.setIdpType(vip.getIdpType());
+				target.setInternal(vip.getIdpType().equals(IdentityProviderType.SOFFID));
+			}
+
 			target.setPublicId(vip.getPublicId());
 			target.setPrivateKey(vip.getPrivateKey());
 			target.setPublicKey(vip.getPublicKey());
@@ -260,6 +276,15 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// IdentityProvider
 			IdentityProviderEntity idp = (IdentityProviderEntity) target;
 			// Heretats de VIP
+			if (source.getIdpType() == null)
+				idp.setIdpType(source.getInternal() != null && source.getInternal().booleanValue()? 
+						IdentityProviderType.SOFFID: IdentityProviderType.SAML);
+			else
+			{
+				idp.setIdpType(source.getIdpType());
+				idp.setInternal(source.getIdpType().equals(IdentityProviderType.SOFFID));
+			}
+
 			idp.setPublicId(source.getPublicId());
 			idp.setPublicKey(source.getPublicKey());
 			idp.setPrivateKey(source.getPrivateKey());
@@ -326,6 +351,15 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// VirtualIdentityProvider
 			VirtualIdentityProviderEntity vip = (VirtualIdentityProviderEntity) target;
 			// Heretats de VIP
+			if (source.getIdpType() == null)
+				vip.setIdpType(source.getInternal() != null && source.getInternal().booleanValue()? 
+						IdentityProviderType.SOFFID: IdentityProviderType.SAML);
+			else
+			{
+				vip.setIdpType(source.getIdpType());
+				vip.setInternal(source.getIdpType().equals(IdentityProviderType.SOFFID));
+			}
+
 			vip.setPublicId(source.getPublicId());
 			vip.setPrivateKey(source.getPrivateKey());
 			vip.setPublicKey(source.getPublicKey());

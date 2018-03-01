@@ -21,7 +21,11 @@ public class DefaultServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String s = "web"+req.getPathInfo(); //$NON-NLS-1$
-        InputStream in = DefaultServlet.class.getClassLoader().getResourceAsStream(s);
+        InputStream in = DefaultServlet.class.getClassLoader().getParent().getResourceAsStream(s);
+        if (in == null)
+        	in = DefaultServlet.class.getClassLoader().getParent().getResourceAsStream(s);
+        if (in == null)
+        	in = DefaultServlet.class.getClassLoader().getResourceAsStream(s);
         if (in == null) {
             throw new ServletException("Page not found "+req.getPathInfo()); //$NON-NLS-1$
         } else {

@@ -13,6 +13,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
 
 import com.soffid.iam.lang.MessageFactory;
+import com.soffid.iam.utils.ConfigurationCache;
 
 @WebFilter(filterName = "Language", urlPatterns = {"/*"})
 public class LanguageFilter implements Filter {
@@ -39,7 +40,7 @@ public class LanguageFilter implements Filter {
 			}
 		}
 		if (idioma == null) {
-			if (System.getProperty("soffid.language.default") == null)
+			if (ConfigurationCache.getProperty("soffid.language.default") == null)
 				idioma = new Locale("en", "US"); //$NON-NLS-1$ //$NON-NLS-2$
 			else
 				idioma = new Locale(System.getProperty("soffid.language.default"));

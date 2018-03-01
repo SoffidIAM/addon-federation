@@ -191,7 +191,12 @@ public class HtmlGenerator {
             ResourceBundle rb) throws TextFormatException, IOException {
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
         resp.setContentType("text/html; charset=UTF-8"); //$NON-NLS-1$
-        InputStream in = HtmlGenerator.class.getResourceAsStream(page);
+        
+        InputStream in = getClass().getClassLoader().getParent().getResourceAsStream("es/caib/seycon/idp/ui/"+page);
+        if (in == null)
+        	in = getClass().getClassLoader().getParent().getResourceAsStream("com/soffid/iam/idp/ui/"+page);
+        if (in == null)
+        	in = HtmlGenerator.class.getResourceAsStream(page);
         new TextFormatter().formatTemplate(in, resp.getOutputStream(), rb,
                 internalParams);
     }

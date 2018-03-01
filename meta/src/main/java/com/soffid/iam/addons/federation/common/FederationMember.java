@@ -55,6 +55,9 @@ public class FederationMember {
 	public com.soffid.iam.addons.federation.common.FederationMember defaultIdentityProvider;
 
 	@Nullable
+	public IdentityProviderType idpType;
+
+	@Nullable
 	public java.lang.Boolean internal;
 
 	@Nullable
