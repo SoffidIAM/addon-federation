@@ -273,6 +273,18 @@ public class Autenticator {
         }
 	}
 
+    
+    public String getUserAccount (String user) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException
+    {
+    	String dispatcher = IdpConfig.getConfig().getSystem().getName();
+    	for ( UserAccount account: new RemoteServiceLocator().getAccountService().findUsersAccounts(user, dispatcher))
+    	{
+    		if (! account.isDisabled())
+    			return account.getName();
+    	}
+    	throw new InternalErrorException("Not authorized to log in");
+    }
+    
 	public void autenticate (String user, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
     	autenticate(user, req, resp, type, type, externalAuth);
     }

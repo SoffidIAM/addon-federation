@@ -19,6 +19,7 @@ import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.api.SamlRequest;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 
@@ -43,8 +44,13 @@ public class SAMLSSORequest extends BaseForm {
     	String user = req.getParameter("user");
     	String idp = req.getParameter("idp");
 
-    	try {
-			IdpConfig cfg = IdpConfig.getConfig();
+        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
+        if (! amf.allowBroker())
+            throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
+
+        try {
+
+	    	IdpConfig cfg = IdpConfig.getConfig();
 			FederacioService federacioService = new RemoteServiceLocator().getFederacioService();
 			
 			Long timeOut = cfg.getFederationMember().getSessionTimeout();

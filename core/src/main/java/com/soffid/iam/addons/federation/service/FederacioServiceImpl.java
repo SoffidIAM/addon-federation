@@ -1132,9 +1132,15 @@ public class FederacioServiceImpl
 	@Override
 	protected Collection<FederationMember> handleFindFederationMemberByEntityGroupAndPublicIdAndTipus(String entityGroupName,
 			String publicId, String tipus) throws Exception {
-		String selectI = "select fm from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm where (:tipusFM='I') and (:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and (:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
-		String selectV = "select fm from com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm where (:tipusFM='V') and (:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and (:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
-		String selectS = "select fm from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm where (:tipusFM='S') and (:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and (:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
+		String selectI = "select fm from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm where (:tipusFM='I') and"
+				+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and "
+				+ "(:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
+		String selectV = "select fm from com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm where (:tipusFM='V') and "
+				+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and "
+				+ "(:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
+		String selectS = "select fm from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm where (:tipusFM='S') and "
+				+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and "
+				+ "(:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
 		String select = "I".equals(tipus) ? selectI : "S".equals(tipus) ? selectS : selectV; //$NON-NLS-1$ //$NON-NLS-2$
 		Collection fms = getFederationMemberEntityDao().query(select,
 				new Parameter[] {
@@ -1681,6 +1687,7 @@ public class FederacioServiceImpl
 		if (delegate == null)
 		{
 			delegate = new SAMLServiceInternal();
+			delegate.setAdditionalData(getAdditionalDataService());
 			delegate.setConfigurationService(getConfigurationService());
 			delegate.setFederationMemberEntityDao(getFederationMemberEntityDao());
 			delegate.setSamlRequestEntityDao( getSamlRequestEntityDao());
@@ -1756,6 +1763,13 @@ public class FederacioServiceImpl
 	protected SamlRequest handleGenerateSamlLogoutRequest(String serviceProvider, String identityProvider,
 			String subject, boolean force, boolean backChannel) throws Exception {
 		return  getDelegate().generateSamlLogout(serviceProvider, identityProvider, subject, force, backChannel);
+	}
+
+	@Override
+	protected User handleFindAccountOwner(String principalName, String identityProvider, Map<String, Object> properties,
+			boolean autoProvision)
+			throws Exception {
+		return getDelegate().findAccountOwner(principalName, identityProvider, properties, autoProvision);
 	}
 
 }

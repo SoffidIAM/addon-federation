@@ -12,6 +12,8 @@ import javax.servlet.http.HttpSession;
 
 import org.opensaml.util.storage.StorageService;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
@@ -22,8 +24,10 @@ import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.idp.ui.openid.OpenIdRequestAction;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserPasswordFormServlet extends BaseForm {
 
@@ -107,13 +111,69 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("certAllowed", ip.isAllowCertificate() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("externalLogin", generateExternalLogin(ip));
             g.generate(resp, "loginPage.html"); //$NON-NLS-1$
         } catch (Exception e) {
             throw new ServletException(e);
 		}
     }
 
-    @Override
+    private String generateExternalLogin(FederationMember ip) throws InternalErrorException, IOException {
+    	if (ip.getIdentityBroker() != null && ! ip.getIdentityBroker().booleanValue())
+    		return "";
+    	
+    	StringBuffer options = new StringBuffer();
+    	if (ip.getEnableKerberos().booleanValue())
+    		options.append("<li><a class=\"openidlink\" href=\""+NtlmAction.URI+"\"><img class=\"openidbutton\" src=\"/img/kerberos.png\"></img></a></li>");
+    	if (ip.getIdentityBroker() != null && ip.getIdentityBroker().booleanValue())
+    	{
+	    	for (FederationMember fm: new RemoteServiceLocator().getFederacioService().findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "I"))
+	    	{
+	    		if (! fm.getInternal().booleanValue() && 
+	    				(fm.getDomainExpression() == null || fm.getDomainExpression().trim().isEmpty()))
+	    		{
+	    			if (fm.getIdpType().equals(IdentityProviderType.GOOGLE))
+	    			{
+	    				options.append("<li><a class=\"openidlink\" href=\"" + OauthRequestAction.URI+"?id="+fm.getPublicId()+"\">"
+	    						+ "<img class=\"openidbutton\" src=\"/img/google.png\"></img></a></li>"); 
+	    				
+	    			}
+	    			else if (fm.getIdpType().equals(IdentityProviderType.FACEBOOK))
+	    			{
+	    				options.append("<li><a class=\"openidlink\" href=\"" + OauthRequestAction.URI+"?id="+fm.getPublicId()+"\">"
+	    						+ "<img class=\"openidbutton\" src=\"/img/facebook.png\"></img></a></li>"); 
+	    				
+	    			}
+	    			else if (fm.getIdpType().equals(IdentityProviderType.LINKEDIN))
+	    			{
+	    				options.append("<li><a class=\"openidlink\" href=\"" + OauthRequestAction.URI+"?id="+fm.getPublicId()+"\">"
+	    						+ "<img class=\"openidbutton\" src=\"/img/linkedin.png\"></img></a></li>"); 
+	    				
+	    			}
+	    			else if (fm.getIdpType().equals(IdentityProviderType.SAML))
+	    			{
+	    				options.append("<li><a class=\"openidlink\" href=\"" + SAMLSSORequest.URI+"?idp="+fm.getPublicId()+"\">"
+	    						+  fm.getName()+"</a></li>"); 
+	    				
+	    			}
+	    			else if (fm.getIdpType().equals(IdentityProviderType.OPENID_CONNECT))
+	    			{
+	    				options.append("<li><a class=\"openidlink\" href=\"" + OauthRequestAction.URI+"?id="+fm.getPublicId()+"\">"
+	    						+  fm.getName()+"</a></li>"); 
+	    				
+	    			}
+	    		}
+	    	}
+    	}
+    	if (options.length() > 0)
+    	{
+			options.insert(0, "<div class=\"logintype\"  id =\"otherlogin\"><ul>");
+    		options.append("</ul></div>");
+    	}
+    	return options.toString();
+	}
+
+	@Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         doGet (req, resp);

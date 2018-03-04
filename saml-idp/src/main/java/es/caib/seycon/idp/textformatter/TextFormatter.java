@@ -62,6 +62,12 @@ public class TextFormatter {
                 b.append(rawText.subSequence(initialSearchIdx, idxLoop));
                 String tag = rawText.substring(idxLoop + openTagLength,
                         endTokenIdx);
+                boolean raw = false;
+                if (tag.startsWith("raw:"))
+                {
+                	raw = true;
+                	tag = tag.substring(4);
+                }
                 String value = (String) params.get(tag);
                 if (value == null) {
                     try {
@@ -72,7 +78,8 @@ public class TextFormatter {
                 }
                 else 
                 {
-                    value = value.replace("&", "&amp;").replace("'", "&apos;") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                	if (!raw)
+                		value = value.replace("&", "&amp;").replace("'", "&apos;") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                             .replace("\"", "&quot;").replace("<", "&lt;") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                             .replace(">", "&gt;"); //$NON-NLS-1$ //$NON-NLS-2$
                 }

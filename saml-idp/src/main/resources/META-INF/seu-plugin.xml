@@ -10,5 +10,6 @@
 		<javaClass>es.caib.seycon.idp.agent.IDPAgent</javaClass>
 		<userInterface>IDPAgent.zul</userInterface>
 		<enableAccessControl>N</enableAccessControl>
+		<enableAttributeMapping>true</enableAttributeMapping>
 	</agent>	
 </seuServerPlugin>

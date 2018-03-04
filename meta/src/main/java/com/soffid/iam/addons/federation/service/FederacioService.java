@@ -191,7 +191,7 @@ public abstract class FederacioService {
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.FederationMember> findFederationMemberByEntityGroupAndPublicIdAndTipus(
 		@Nullable java.lang.String entityGroupName, 
-		java.lang.String publicId, 
+		@Nullable java.lang.String publicId, 
 		java.lang.String tipus)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
@@ -453,5 +453,11 @@ public abstract class FederacioService {
 	@Description("Creates a virtual IdP session")
 	SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
 			String user, String password, long sessionSeconds) {return null;}
+
+
+	@Operation(grantees={federation_serviceProvider.class})
+	@Description("Creates a virtual IdP session")
+	Usuari findAccountOwner(String principalName, String identityProvider, 
+			Map<String, Object> properties, boolean autoProvision) {return null;}
 
 }

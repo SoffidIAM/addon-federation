@@ -4,6 +4,8 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Date;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.federation.idp.Main;
 import com.soffid.iam.sync.agent.Agent;
 import com.soffid.iam.sync.intf.AccessLogMgr;
@@ -19,36 +21,52 @@ public class IDPAgent extends Agent implements AccessLogMgr {
     static Main main = null;
     static Object lock = new Object();
     String newName;
+    boolean dummy = false;
 
     public IDPAgent() {
         super();
     }
 
+    public boolean isSingleton() 
+    {
+    	return true;
+    }
+    
     @Override
     public void init() throws Exception {
         super.init();
         newName = getSystem().getParam0();
         if (newName == null)
             throw new InternalErrorException("Missing idp publicId"); //$NON-NLS-1$
-        synchronized (lock) {
-            try {
-            	log.info("Staring dispatcher "+newName); //$NON-NLS-1$
-                if (! newName.equals(name)) { 
-                	log.info ("Existing dispatcher was "+main); //$NON-NLS-1$
-                    if (main != null) {
-                        log.info("Stopping IDP {}", name, null); //$NON-NLS-1$
-                        stopMain();
-                    }
-                    if (name == null)
-                        log.info("Starting IDP {} (Previous {})", newName, name); //$NON-NLS-1$
-                    main = new Main();
-                    main.start(newName, getSystem());
-                    name = newName;
-                }
-            } catch (Exception e) {
-                stopMain();
-                throw new InternalErrorException("Error starting IDP", e); //$NON-NLS-1$
-            }
+        
+        dummy = true;
+        for (FederationMember fm: 
+        	new RemoteServiceLocator().getFederacioService().findFederationMemberByEntityGroupAndPublicIdAndTipus(null, newName, "I"))
+        {
+        	if (fm.getInternal() != null && fm.getInternal().booleanValue())
+        	{
+        		dummy = false;
+		        synchronized (lock) {
+		            try {
+		            	log.info("Staring dispatcher "+newName); //$NON-NLS-1$
+		                if (! newName.equals(name)) { 
+		                	log.info ("Existing dispatcher was "+main); //$NON-NLS-1$
+		                    if (main != null) {
+		                        log.info("Stopping IDP {}", name, null); //$NON-NLS-1$
+		                        stopMain();
+		                    }
+		                    if (name == null)
+		                        log.info("Starting IDP {} (Previous {})", newName, name); //$NON-NLS-1$
+		                    main = new Main();
+		                    main.start(newName, getSystem());
+		                    name = newName;
+		                }
+		            } catch (Exception e) {
+		                stopMain();
+		                throw new InternalErrorException("Error starting IDP", e); //$NON-NLS-1$
+		            }
+		        }
+        	}
         }
     }
 
@@ -64,8 +82,10 @@ public class IDPAgent extends Agent implements AccessLogMgr {
 
 	public Collection<LogEntry> getLogFromDate(Date from)
 			throws RemoteException, InternalErrorException {
-        return LogRecorder.getInstance().getLogs(from);
-		// return null;
+		if (dummy)
+			return null;
+		else
+			return LogRecorder.getInstance().getLogs(from);
 	}
 
 }

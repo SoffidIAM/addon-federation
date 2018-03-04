@@ -9,8 +9,17 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.FederacioService;
 
 import es.caib.seycon.idp.oauth.consumer.FacebookConsumer;
+import es.caib.seycon.idp.oauth.consumer.GoogleConsumer;
+import es.caib.seycon.idp.oauth.consumer.LinkedinConsumer;
+import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
+import es.caib.seycon.idp.oauth.consumer.OAuthConsumer;
+import es.caib.seycon.idp.oauth.consumer.OpenidConnectConsumer;
+import es.caib.seycon.idp.openid.consumer.OpenidConsumer;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 
@@ -20,7 +29,7 @@ public class OauthRequestAction extends HttpServlet {
      * 
      */
     private static final long serialVersionUID = 1L;
-    public static final String URI = "/facebookRequest"; //$NON-NLS-1$
+    public static final String URI = "/oauthRequest"; //$NON-NLS-1$
 
     void generateError (HttpServletRequest req, HttpServletResponse resp, String msg) throws ServletException, IOException
     { 
@@ -31,7 +40,7 @@ public class OauthRequestAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-    	String id = req.getParameter("j_username");
+    	String id = req.getParameter("id");
         process(req, resp, id);
     }
 
@@ -41,7 +50,7 @@ public class OauthRequestAction extends HttpServlet {
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (! amf.allowUserPassword())
+        if (! amf.allowBroker())
             throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
 
         FederationMember ip;
@@ -54,7 +63,30 @@ public class OauthRequestAction extends HttpServlet {
 	        	return ;
 	        }
 	        
-	        FacebookConsumer consumer = new FacebookConsumer(ip);
+	        if (id == null)
+	        {
+	        	generateError(req, resp, "Missing id parameter");
+	        	return;
+	        }
+	        
+	        FederacioService fs = new RemoteServiceLocator().getFederacioService();
+	        OAuth2Consumer consumer = null;
+	        for (FederationMember fm: fs.findFederationMemberByEntityGroupAndPublicIdAndTipus(null, id, "I"))
+	        {
+	        	if (fm.getIdpType().equals(IdentityProviderType.FACEBOOK))
+	        		consumer = new FacebookConsumer(fm);
+	        	else if (fm.getIdpType().equals(IdentityProviderType.GOOGLE))
+	        		consumer = new GoogleConsumer(fm);
+	        	else if (fm.getIdpType().equals(IdentityProviderType.LINKEDIN))
+	        		consumer = new LinkedinConsumer(fm);
+	        	else if (fm.getIdpType().equals(IdentityProviderType.OPENID_CONNECT))
+	        		consumer = new OpenidConnectConsumer(fm);
+	        }
+	        
+	        if (consumer == null)
+	        {
+	        	generateError(req, resp, String.format("Unable to find identity provider %s", id));
+	        }
 	        
 	        consumer.store(session);
 	        

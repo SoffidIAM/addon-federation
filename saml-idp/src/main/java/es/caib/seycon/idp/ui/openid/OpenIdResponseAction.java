@@ -149,7 +149,9 @@ public class OpenIdResponseAction extends HttpServlet {
 	        	
 	        }
 	    	
-            new Autenticator().autenticate(id.getIdentifier(), req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, "OpenID "+consumer.getRelyingParty(), true);
+			Autenticator auth = new Autenticator();
+			String account = auth.getUserAccount(id.getIdentifier());
+            auth.autenticate(account, req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, consumer.getRelyingParty(), true);
 
 		} catch (InternalErrorException e) {
 			generateError(req, resp, e.getMessage());

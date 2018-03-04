@@ -19,6 +19,7 @@ public class EntityGroupMember {
 	public com.soffid.iam.addons.federation.common.EntityGroup entityGrupPare;
 
 	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue="new com.soffid.iam.addons.federation.common.FederationMember()")
 	public com.soffid.iam.addons.federation.common.FederationMember federationMember;
 
 }

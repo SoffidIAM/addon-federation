@@ -22,8 +22,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
-import com.github.scribejava.apis.FacebookApi;
 import com.github.scribejava.apis.GoogleApi20;
+import com.github.scribejava.apis.LinkedInApi20;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuthRequest;
@@ -35,12 +35,12 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-public class FacebookConsumer extends OAuth2Consumer 
+public class LinkedinConsumer extends OAuth2Consumer 
 {
 
 	static HashMap<String, Object> cfg = null;
 	
-	public FacebookConsumer(FederationMember fm)
+	public LinkedinConsumer(FederationMember fm)
 			throws ConsumerException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException,
 			KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException,
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException {
@@ -48,10 +48,10 @@ public class FacebookConsumer extends OAuth2Consumer
 
 		service = new ServiceBuilder(fm.getOauthKey())
 				.apiSecret(fm.getOauthSecret().getPassword())
-			    .scope("email")
+			    .scope("r_emailaddress r_basicprofile")
 			    .state(secretState)
 			    .callback(returnToUrl)
-			    .build(FacebookApi.instance());
+			    .build(LinkedInApi20.instance());
 
 	}
 
@@ -59,34 +59,30 @@ public class FacebookConsumer extends OAuth2Consumer
 		OAuth2AccessToken accessToken = parseResponse(httpReq);
 
 	    // Now let's go and ask for a protected resource!
-	    OAuthRequest request = new OAuthRequest(Verb.GET, "https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,verified");
+	    OAuthRequest request = new OAuthRequest(Verb.GET, "https://api.linkedin.com/v1/people/~:(id,lastName,firstName,headline,picture-url,email-address)?format=json");
 	    service.signRequest(accessToken, request);
-	    Response response =  service.execute(request);
+	    Response response = service.execute(request);
 	    
 	    Map<String,String> m =  (Map<String, String>) JSON.parse(response.getBody());
 	    
-	    System.out.println("NAME = "+m.get("name"));
-	    System.out.println("EMAIL = "+m.get("email"));
+	    principal = m.get("emailAddress");
+	    if (principal == null)
+	    	principal = m.get("id");
 	    
-	    
-	    attributes = new HashMap<String, Object>();
 	    attributes.putAll(m);
-	    attributes.put("givenName", m.get("first_name"));
-	    attributes.remove("first_name");
-	    attributes.put("sn", m.get("last_name"));
-	    attributes.remove("last_name");
-	    attributes.put("EMAIL", m.get("email"));
-	    attributes.remove("email");
-	    	
-	    if (m.containsKey("email") && "true".equals (m.get("verified")) || Boolean.TRUE.equals(m.get("verified")))
-	    {
-	    	principal = m.get("email");
-	    }
+	    attributes.put("EMAIL", m.get("emailAddress"));
+	    attributes.remove("emailAddress");
+	    attributes.put("givenName",  m.get("firstName"));
+	    attributes.remove("firstName");
+	    attributes.put("sn", m.get("lastName"));
+	    attributes.remove("lastName");
+	    
+	    
+
+	    if (principal != null)
+	    	return true;
 	    else
-	    {
-	    	principal = m.get("sub");
-	    }
-	    return true;
+	    	throw new InternalErrorException ("Cannot get linkedin profile");
 	    
 	}
 

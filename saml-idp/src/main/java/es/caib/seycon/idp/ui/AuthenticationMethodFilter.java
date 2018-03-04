@@ -14,6 +14,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
+import org.jfree.util.Log;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -91,4 +93,19 @@ public class AuthenticationMethodFilter {
 
     	return config.findIdentityProviderForRelyingParty(relyingParty);
     }
+
+	public boolean allowBroker() 
+	{
+        FederationMember ip;
+		try {
+			ip = getIdentityProvider();
+		} catch (Exception e) {
+			LogFactory.getLog(getClass()).warn("Error gessing identity provider");
+			return false;
+		}
+        
+        if (ip == null) return false;
+    	if (ip.getIdentityBroker() != null && ! ip.getIdentityBroker().booleanValue()) return false;
+    	return allowUserPassword();
+	}
 }

@@ -5,12 +5,25 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.mda.annotation.*;
 
 @Entity (table="" ,
 		discriminatorValue="I" )
 @Depends ({com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity.class})
 public abstract class IdentityProviderEntity extends com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity {
+	@Column(name="FED_TYPE")
+	@Nullable
+	public IdentityProviderType idpType;
+
+	@Column(name="FED_OAUKEY")
+	@Nullable
+	public String oauthKey;
+
+	@Column(name="FED_OAUSEC")
+	@Nullable
+	public String oauthSecret;
+
 
 	@ForeignKey (foreignColumn="FED_DFIP_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity> virtualIdentityProvider;

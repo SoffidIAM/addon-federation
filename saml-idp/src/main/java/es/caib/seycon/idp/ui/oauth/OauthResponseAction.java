@@ -21,7 +21,8 @@ import com.soffid.iam.sync.service.ServerService;
 import com.soffid.iam.util.NameParser;
 
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.oauth.consumer.FacebookConsumer;
+import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
+import es.caib.seycon.idp.oauth.consumer.OAuthConsumer;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
@@ -34,7 +35,7 @@ public class OauthResponseAction extends HttpServlet {
      * 
      */
     private static final long serialVersionUID = 1L;
-    public static final String URI = "/facebookResponse"; //$NON-NLS-1$
+    public static final String URI = "/oauthResponse"; //$NON-NLS-1$
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -68,85 +69,31 @@ public class OauthResponseAction extends HttpServlet {
 	        	return;
 	        }
 	        
-	        FacebookConsumer consumer = FacebookConsumer.fromSesssion(session);
+	        OAuth2Consumer consumer = OAuth2Consumer.fromSesssion(session);
 	        
 	        if (consumer == null)
 	        {
-	        	generateError (req, resp, "Your session has been expired. Unexpected Oauth response");
+	        	generateError (req, resp, "Your session has been expired. Unexpected oAuth response");
 	        	return;
 	        }
 	        
-	        String user = consumer.verifyResponse(req);
-	        
-	        if (user == null)
+	        if (! consumer.verifyResponse(req))
 	        {
 	        	generateError (req, resp, "Authentication failed");
 	        	return;
 	        }
 
 	        
-	    	LogonService logonService = new RemoteServiceLocator().getLogonService();
-	    	ServerService serverService = new RemoteServiceLocator().getServerService();
-	        
-	    	User usuari;
-	    	try {
-	    		usuari = serverService.getUserInfo(user, IdpConfig.getConfig().getSystem().getName());
-	    	}
-	    	catch (es.caib.seycon.ng.exception.UnknownUserException e)
-	        {
-	    		if (! ip.isAllowRegister())
-	    		{
-		        	generateError (req, resp, "Not authorized to register as a new user");
-	    			return;
-	    		}
-	    		else
-	    		{
-            		usuari = new User();
-            		usuari.setUserName("?");
-            		if (consumer.getFullName() != null)
-            		{
-            			usuari.setFullName(consumer.getFullName());
-            			NameParser np = new NameParser();
-            			String name [] = np.parse(consumer.getFullName(), 2);
-            			if (name.length >= 1)
-            				usuari.setFirstName(name[0]);
-            			if (name.length >= 2)
-            				usuari.setFirstName(name[1]);
-            		}
-            		if (consumer.getFirstName() != null)
-            			usuari.setFirstName(consumer.getFirstName());
-            		if (consumer.getLastName() != null)
-            			usuari.setLastName(consumer.getLastName());
-            		
-            		if (usuari.getFirstName() == null)
-            			usuari.setFirstName("?");
-            		if (usuari.getLastName() == null)
-            			usuari.setLastName("?");
-            		
-            		usuari.setActive(Boolean.TRUE);
-            		usuari.setPrimaryGroup(ip.getGroupToRegister());
-            		usuari.setCreatedDate(Calendar.getInstance());
-            		usuari.setMultiSession(Boolean.FALSE);
-            		usuari.setMailServer("null");
-            		usuari.setHomeServer("null");
-            		usuari.setProfileServer("null");
-            		usuari.setUserType(ip.getUserTypeToRegister());
-            		usuari.setComments(String.format("OAuth registered from IP %s", req.getRemoteAddr()));
-            		
-            		Map<String,String> dades = new HashMap<String, String>();
-            		dades.put ("EMAIL", consumer.getEmail());
-            		dades.put (REGISTER_SERVICE_PROVIDER, consumer.getRelyingParty());
-            		
-            		IdpConfig config = IdpConfig.getConfig();
-            		
-            		usuari = config.getFederationService().registerOpenidUser(user, config.getSystem().getName(), usuari, dades);
-            		
-          			new RemoteServiceLocator().getServerService().propagateOBUser(usuari);
-	    		}
-	        	
-	        }
-	    	
-            new Autenticator().autenticate(user, req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, "FacebookConnect", true);
+   			User u = new RemoteServiceLocator().getFederacioService().findAccountOwner(consumer.getPrincipal (), 
+   					consumer.getRelyingParty(), 
+   					consumer.getAttributes(), 
+   					ip.getRegisterExternalIdentities() != null && ip.getRegisterExternalIdentities().booleanValue());
+
+   			if (u == null)
+   				throw new InternalErrorException("Not authorized");
+			Autenticator auth = new Autenticator();
+			String account = auth.getUserAccount(u.getUserName());
+            auth.autenticate(account, req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, consumer.getRelyingParty(), true);
 
 		} catch (InternalErrorException e) {
 			generateError(req, resp, e.getMessage());

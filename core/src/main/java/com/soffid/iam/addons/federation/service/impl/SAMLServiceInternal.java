@@ -24,6 +24,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -157,6 +158,7 @@ import com.soffid.iam.service.saml.SAML20ResponseValidator;
 import bsh.EvalError;
 import bsh.Interpreter;
 import es.caib.seycon.ng.comu.AccountType;
+import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.NeedsAccountNameException;
@@ -365,138 +367,55 @@ public class SAMLServiceInternal {
 		
 		String issuer = assertion.getIssuer().getValue();
 
-		com.soffid.iam.api.System dispatcher = createSamlDispatcher(issuer);
-		log.info("searchUser() - result.getPrincipalName(): "+result.getPrincipalName());
-		log.info("searchUser() - dispatcher.getName(): "+dispatcher.getName());
-		Account account = accountService.findAccount( result.getPrincipalName() , dispatcher.getName());
-		log.info("searchUser() - account: "+account);
-		if (account != null)
-		{
-			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
-			{
-				log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
-				return account.getOwnerUsers().iterator().next();
-			}
-			if ( ! account.getType().equals(AccountType.IGNORED))
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						result.getPrincipalName(),
-						dispatcher.getName()));
-		}
-		
-		log.info("searchUser() - provision: "+provision);
-		if (provision)
-		{
-			User u = new User();
-			u.setActive(true);
-			u.setUserName(issuer + "#" +result.getPrincipalName());
-			u.setFirstName( toSingleString( result, "urn:oid:2.5.4.42", "givenName") );
-			u.setLastName ( toSingleString( result, "urn:oid:2.5.4.4", "sn")) ;
-			u.setUserType("E");
-			u.setPrimaryGroup("world");
-			u.setComments(String.format("Autoprovisioned from %s identity provider", issuer));
-			u.setCreatedByUser(u.getUserName());
-			u.setCreatedDate(Calendar.getInstance());
-			u.setHomeServer("null");
-			u.setProfileServer("null");
-			u.setMailServer("null");
-			Map<String,Object> attributes = new HashMap<String, Object>();
-			log.info("searchUser() - java user created...");
-			
-			
-			for (FederationMemberEntity fm: federationMemberEntityDao.findFMByPublicId(issuer))
-			{
-				if (fm instanceof IdentityProviderEntity)
-				{
-					if (fm.getScriptParse() != null && ! fm.getScriptParse().trim().isEmpty())
-					{
-						try {
-							Interpreter interpreter = new Interpreter();
-							interpreter.set("user", u); //$NON-NLS-1$
-							interpreter.set("attributes", attributes); //$NON-NLS-1$
-							interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
-							log.info("searchUser() - execute scriptParse");
-							Object r = interpreter.eval( fm.getScriptParse() );
-							if (Boolean.FALSE.equals(r))
-								return null;
-						} catch (EvalError e) {
-							throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", issuer),
-									e);
-						}
-					}
-
-				}
-			}
-			log.info("searchUser() - trying to create the user...");
-			u = userService.create(u);
-			log.info("searchUser() - user created!");
-			log.info("searchUser() - u.getShortName(): "+u.getShortName());
-			for (String att: attributes.keySet())
-			{
-				Collection<DataType> md = additionalData.findDataTypesByScopeAndName(MetadataScope.USER, att);
-				Object v = attributes.get(att);
-				if (md != null && ! md.isEmpty() && v != null)
-				{
-					UserData data = new UserData();
-					data.setAttribute(att);
-					if ( v instanceof Calendar )
-					{
-						data.setDateValue( (Calendar) v );
-					}
-					else if ( v instanceof Date )
-					{
-						Calendar c = Calendar.getInstance();
-						c.setTime( (Date) v );
-						data.setDateValue(c);
-					}
-					else
-					{
-						data.setValue(v.toString());
-					}
-					data.setUser(u.getUserName());
-					additionalData.create(data);
-					log.info("searchUser() - additionalData created: "+data.getAttribute());
-				}
-			}
-			// Register account
-			try {
-				accountService.createAccount(u, dispatcher, result.getPrincipalName());
-				log.info("searchUser() - account created");
-			} catch (NeedsAccountNameException e) {
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						result.getPrincipalName(),
-						dispatcher.getName()));
-			} catch (AccountAlreadyExistsException e) {
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						result.getPrincipalName(),
-						dispatcher.getName()));
-			}
-		}
-		log.info("searchUser() - return null");
-		return null;
+		return findAccountOwner (result.getPrincipalName(), issuer, (Map<String,? extends Object>) result.getAttributes(), provision);
 	}
 
 	private String toSingleString(SamlValidationResults result, String oid, String friendlyName) {
-		String s = toSingleString(result.getAttributes().get(oid));
+		return toSingleString(result.getAttributes(), oid, friendlyName);
+	}
+
+	private String toSingleString(Map att, String oid, String friendlyName) {
+		String s = toSingleString(att.get(oid));
 		if ( s == null)
-			s = toSingleString(result.getAttributes().get(friendlyName));
+			s = toSingleString(att.get(friendlyName));
 		return s;
 	}
 
-	private String toSingleString(List<String> set) {
-		if (set == null || set.isEmpty())
+	private String toSingleString(Object object) {
+		if (object == null)
 			return null;
-		else
+		else if (object.getClass().isArray())
 		{
 			String r = null;
-			for ( String s: set)
+			for (Object o: (Object[]) object)
 			{
-				if (r == null)
-					r = s;
-				else
-					r = r + " " + s;
+				if (r == null) r = toSingleString(o);
+				else r = r + " " + toSingleString(o);
 			}
 			return r;
 		}
+		else if (object instanceof Collection)
+		{
+			String r = null;
+			for (Object o: (Collection) object)
+			{
+				if (r == null) r = toSingleString(o);
+				else r = r + " " + toSingleString(o);
+			}
+			return r;
+		} 
+		else if (object instanceof Map)
+		{
+			String r = null;
+			for (Object k: ((Map) object).keySet())
+			{
+				if (r == null) r = toSingleString(k) + ":"+toSingleString(((Map) object).get(k));
+				else r = r + " " + toSingleString(k) + ":"+toSingleString(((Map) object).get(k));
+			}
+			return r;
+		}
+		else
+			return object.toString();
 	}
 
 	private Assertion decrypt(String serviceProvider, EncryptedAssertion encryptedAssertion) throws Exception {		
@@ -1269,9 +1188,9 @@ public class SAMLServiceInternal {
 		{
 			createExternalPasswordDomain();
 			s = new com.soffid.iam.api.System();
-			s.setName("SAML "+publicId);
+			s.setName(publicId);
 			if (s.getName().length() > 25)
-				s.setName("SAML #" + System.currentTimeMillis() );
+				s.setName("#" + System.currentTimeMillis() );
 			s.setDescription("External IDP "+publicId);
 			s.setAuthoritative(false);
 			s.setAccessControl(false);
@@ -1426,6 +1345,176 @@ public class SAMLServiceInternal {
 
 	public void setPasswordService(PasswordService passwordService) {
 		this.passwordService = passwordService;
+	}
+
+
+	public User findAccountOwner(String principalName, String identityProvider, Map<String, ? extends Object> map,
+			boolean autoProvision) throws InternalErrorException
+	{
+		log.info("searchUser()");
+		
+		com.soffid.iam.api.System dispatcher = createSamlDispatcher(identityProvider);
+		Account account = accountService.findAccount( principalName , dispatcher.getName());
+		log.info("searchUser() - account: "+account);
+		if (account != null)
+		{
+			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
+			{
+				log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
+				updateAccountAttributes ( account, map);
+				return account.getOwnerUsers().iterator().next();
+			}
+			if ( ! account.getType().equals(AccountType.IGNORED))
+				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+						principalName,
+						dispatcher.getName()));
+		}
+		// Update account attributes
+		
+		log.info("searchUser() - provision: "+autoProvision);
+		if (autoProvision)
+		{
+			User u = new User();
+			u.setActive(true);
+			u.setUserName(identityProvider + "#" +principalName);
+			u.setFirstName( toSingleString( map, "urn:oid:2.5.4.42", "givenName") );
+			u.setLastName ( toSingleString( map, "urn:oid:2.5.4.4", "sn")) ;
+			u.setUserType("E");
+			u.setPrimaryGroup("world");
+			u.setComments(String.format("Autoprovisioned from %s identity provider", identityProvider));
+			u.setCreatedByUser(u.getUserName());
+			u.setCreatedDate(Calendar.getInstance());
+			u.setHomeServer("null");
+			u.setProfileServer("null");
+			u.setMailServer("null");
+			Map<String,Object> attributes = (Map<String, Object>) map;
+
+			for (FederationMemberEntity fm: federationMemberEntityDao.findFMByPublicId(identityProvider))
+			{
+				if (fm instanceof IdentityProviderEntity)
+				{
+					if (fm.getScriptParse() != null && ! fm.getScriptParse().trim().isEmpty())
+					{
+						try {
+							Interpreter interpreter = new Interpreter();
+							interpreter.set("user", u); //$NON-NLS-1$
+							interpreter.set("attributes", attributes); //$NON-NLS-1$
+							interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
+							log.info("searchUser() - execute scriptParse");
+							Object r = interpreter.eval( fm.getScriptParse() );
+							if ( r == null || r.equals(Boolean.FALSE))
+							{
+								return null;
+							}
+							else if ( ! (r instanceof String))
+							{
+								throw new InternalErrorException("Autoprovision script for "+identityProvider+" returned an object of class "+r.getClass().toString()+" when it should return a String object");
+							}
+							else
+							{
+								u.setUserName((String) r);
+							}
+						} catch (EvalError e) {
+							throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", identityProvider),
+									e);
+						}
+					}
+	
+				}
+			}
+			
+			
+			
+			log.info("searchUser() - trying to create the user...");
+			User u2 = userService.findUserByUserName(u.getUserName());
+			if (u2 != null) u = u2;
+			else u = userService.create(u);
+			log.info("searchUser() - user created!");
+			log.info("searchUser() - u.getShortName(): "+u.getShortName());
+			for (String att: attributes.keySet())
+			{
+				Collection<DataType> md = additionalData.findDataTypesByScopeAndName(MetadataScope.USER, att);
+				Object v = attributes.get(att);
+				if (md != null && ! md.isEmpty() && v != null && md.iterator().next().getCode().equals(att))
+				{
+					UserData data = new UserData();
+					data.setAttribute(att);
+					if ( v instanceof Calendar )
+					{
+						data.setDateValue( (Calendar) v );
+					}
+					else if ( v instanceof Date )
+					{
+						Calendar c = Calendar.getInstance();
+						c.setTime( (Date) v );
+						data.setDateValue(c);
+					}
+					else
+					{
+						data.setValue(v.toString());
+					}
+					data.setUser(u.getUserName());
+					additionalData.create(data);
+					log.info("searchUser() - additionalData created: "+data.getAttribute());
+				}
+			}
+			// Register account
+			try {
+				account = accountService.createAccount(u, dispatcher, principalName);
+				updateAccountAttributes ( account, map);
+				log.info("searchUser() - account created");
+			} catch (NeedsAccountNameException e) {
+				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+						principalName,
+						dispatcher.getName()));
+			} catch (AccountAlreadyExistsException e) {
+				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+						principalName,
+						dispatcher.getName()));
+			}
+			return u;
+		}
+		else
+			return null;
+	}
+
+	private void updateAccountAttributes(Account account, Map<String, ? extends Object> attributes) throws InternalErrorException {
+		for (String att: attributes.keySet())
+		{
+			DataType md = additionalData.findSystemDataType(account.getSystem(), att);
+			Object v = attributes.get(att);
+			if (v != null)
+			{
+				if (md == null)
+				{
+					md = new DataType();
+					md.setSystemName(account.getSystem());
+					md.setCode(att);
+					md.setLabel(att);
+					md.setType(TypeEnumeration.STRING_TYPE);
+					md.setOrder(0L);
+					additionalData.create(md);
+				}
+
+				UserData data = new UserData();
+				data.setAccountName(account.getName());
+				data.setSystemName(account.getSystem());
+				data.setAttribute(att);
+				if ( v instanceof Calendar )
+				{
+					data.setValue( DateFormat.getDateTimeInstance().format((Calendar) v ));
+				}
+				else if ( v instanceof Date )
+				{
+					data.setValue( DateFormat.getDateTimeInstance().format((Date) v ));
+				}
+				else
+				{
+					data.setValue(v.toString());
+				}
+				accountService.updateAccountAttribute(data);
+			}
+		}
 	}
 
 }

@@ -15,6 +15,7 @@ import java.util.List;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.api.Password;
 import com.soffid.iam.model.GroupEntity;
 import com.soffid.iam.model.UserTypeEntity;
 
@@ -75,6 +76,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setIdpType(idp.getIdpType());
 				target.setInternal(idp.getIdpType().equals(IdentityProviderType.SOFFID));
 			}
+			target.setOauthKey(idp.getOauthKey());
+			target.setOauthSecret(idp.getOauthSecret() == null ? null: Password.decode(idp.getOauthSecret()));
 			// Propis
 			target.setClientCertificatePort(idp.getClientCertificatePort());
 			
@@ -106,14 +109,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Obtenim l'instància
 			VirtualIdentityProviderEntity vip = (VirtualIdentityProviderEntity) source;
 			// Heretats de VIP
-			if (vip.getIdpType() == null)
-				target.setIdpType(vip.isInternal()? IdentityProviderType.SOFFID: IdentityProviderType.SAML);
-			else
-			{
-				target.setIdpType(vip.getIdpType());
-				target.setInternal(vip.getIdpType().equals(IdentityProviderType.SOFFID));
-			}
-
 			target.setPublicId(vip.getPublicId());
 			target.setPrivateKey(vip.getPrivateKey());
 			target.setPublicKey(vip.getPublicKey());
@@ -284,6 +279,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				idp.setIdpType(source.getIdpType());
 				idp.setInternal(source.getIdpType().equals(IdentityProviderType.SOFFID));
 			}
+			idp.setOauthKey(source.getOauthKey());
+			idp.setOauthSecret(source.getOauthSecret() == null ? null: source.getOauthSecret().toString());
 
 			idp.setPublicId(source.getPublicId());
 			idp.setPublicKey(source.getPublicKey());
@@ -351,15 +348,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// VirtualIdentityProvider
 			VirtualIdentityProviderEntity vip = (VirtualIdentityProviderEntity) target;
 			// Heretats de VIP
-			if (source.getIdpType() == null)
-				vip.setIdpType(source.getInternal() != null && source.getInternal().booleanValue()? 
-						IdentityProviderType.SOFFID: IdentityProviderType.SAML);
-			else
-			{
-				vip.setIdpType(source.getIdpType());
-				vip.setInternal(source.getIdpType().equals(IdentityProviderType.SOFFID));
-			}
-
 			vip.setPublicId(source.getPublicId());
 			vip.setPrivateKey(source.getPrivateKey());
 			vip.setPublicKey(source.getPublicKey());

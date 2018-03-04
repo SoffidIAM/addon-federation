@@ -4,6 +4,7 @@
 <?component name="input_criteri" macro-uri="/comu/input_criteri.zul"?>
 <?component name="input_dada" macro-uri="/comu/input_dada.zul"?>
 <?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
+<?component name="input_password" macro-uri="/comu/input_password.zul"?>
 <frame xmlns:h="http://www.w3.org/1999/xhtml"> 
 
 	<style src="~./styles/estil.css"/>
@@ -129,8 +130,8 @@
 					tipusP = mpare.getTipus();
 					// Restricció perquè nomes els IDP interns tinguen fills
 					FederationMember fm = mpare.getFederationMember();
-					if ("IDP".equals(tipusP) && ! Boolean.TRUE.equals( fm.getInternal())) {
-						throw new Exception ("Error: Només els Identity Providers marcats com a Internal poden tindre Virtual Identity Provider fills.");
+					if ("IDP".equals(tipusP) && ! IdentityProviderType.SOFFID.equals(fm.getIdpType())) {
+						throw new Exception ("Only a Soffid IdP can contain Virtual Identity Provider fills.");
 					}
 					if (!"ARREL".equals(tipusP) && !"IDP_ROOT".equals(tipusP) 
 						&& !"SP_ROOT".equals(tipusP) &&  !"IDP".equals(tipusP) ) {
@@ -224,9 +225,9 @@
 						fm.setPublicKey(res[0]);
 						fm.setPrivateKey(res[1]);
 						fm.setCertificateChain(res[2]);
-						ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
-						ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
-						ctx.setValue("@federationMember/certificateChain",fm.getCertificateChain());
+						ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
+						ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
+						ctx.setValue("/federationMember/certificateChain",fm.getCertificateChain());
 						try {
 							campCertificateChain.getFellow("dada").setValue(res[2]);
 						} catch(Exception e) {
@@ -240,7 +241,7 @@
 								if (c instanceof Div) {
 									divv = (Div) c;
 									// Lo rebindeamos i voilà...
-									divv.setBind("@federationMember/publicKey");
+									divv.setBind("/federationMember/publicKey");
 								}
 							}
 						}
@@ -333,9 +334,9 @@
 						fm.setPublicKey(res[1]);
 						fm.setPrivateKey(res[0]);
 						fm.setCertificateChain(res[2]);
-						ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
-						ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
-						ctx.setValue("@federationMember/certificateChain",fm.getCertificateChain());
+						ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
+						ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
+						ctx.setValue("/federationMember/certificateChain",fm.getCertificateChain());
 						certificateChain.getFellow("dada").setValue(res[2]);
 						//pointer = ctx.getPointer(obj.value.getXPath());
 						//pointer.invalidate();
@@ -348,7 +349,7 @@
 								if (c instanceof Div) {
 									divv = (Div) c;
 									// Lo rebindeamos i voilà...
-									divv.setBind("@federationMember/publicKey");
+									divv.setBind("/federationMember/publicKey");
 								}
 							}
 						}
@@ -375,9 +376,9 @@
 					fm.setPublicKey(null);
 					fm.setPrivateKey(null);
 					fm.setCertificateChain(null);
-					ctx.setValue("@federationMember/publicKey",fm.getPublicKey());
-					ctx.setValue("@federationMember/privateKey",fm.getPrivateKey());
-					ctx.setValue("@federationMember/certificateChain",null);
+					ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
+					ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
+					ctx.setValue("/federationMember/certificateChain",null);
 					try {
 						campCertificateChain.getFellow("dada").setValue("");
 					} catch(Exception e) {
@@ -391,7 +392,7 @@
 							if (c instanceof Div) {
 								divv = (Div) c;
 								// Lo rebindeamos i voilà...
-								divv.setBind("@federationMember/publicKey");
+								divv.setBind("/federationMember/publicKey");
 							}
 						}
 					}
@@ -471,7 +472,7 @@
 			<tree autocommit="false" dataPath="/model:/" fixedLayout="true" height="96%" id="treebox" imageBinding="${imgFM}" onSelect="select()" pageSize="19" rows="${fileres}">
 				<treeitemfinder bind="." open="true" path="/entitygroupmember">
 					<treerow>
-						<treecellimage bind="@descripcio" imageBind="@tipus"/>
+						<treecellimage bind="/descripcio" imageBind="/tipus"/>
 					</treerow>
 				</treeitemfinder>
 			</tree>
@@ -512,13 +513,13 @@
 										EGPare = mpare.getEntityGrupPare();
 										//Missatgebox.info ("tipus PARE = "+tipusP + " amb eg="+EGPare);
 										nodeActual.setEntityGrupPare(EGPare);
-										ctx.setValue("@entityGrupPare",EGPare);
+										ctx.setValue("/entityGrupPare",EGPare);
 										if ("SP_ROOT".equals(tipusP) || "IDP_ROOT".equals(tipusP) 
 											||"IDP".equals(tipusP) ||"SP".equals(tipusP) ) {
 											
-											FederationMember fmn = new FederationMember();
+											FederationMember fmn = nodeActual.getFederationMember();
 											fmn.setEntityGroup(EGPare); //el mateix q el pare
-											//ctx.setValue("@federationMember/entityGroup",EGPare);
+											//ctx.setValue("/federationMember/entityGroup",EGPare);
 											
 											classe="I"; //idp per defecte
 											if ( "SP_ROOT".equals(tipusP) || "SP".equals(tipusP) ) {
@@ -535,8 +536,7 @@
 											}
 											nodeActual.setTipus(tipusN);
 											fmn.setClasse(classe);
-											nodeActual.setFederationMember(fmn);
-											ctx.setValue("@federationMember",fmn);
+											ctx.setValue("/federationMember",fmn);
 //											mostraPanel(tipusN);
 										} else if ("ARREL".equals(tipusP)){ // la resta (incloent ARREL)
 											// Crearem un fill de tipus entitygroup
@@ -546,7 +546,7 @@
 											// Aquí sempre es NOU EG (!!)
 											nouEG = new EntityGroup();
 											nodeActual.setEntityGrupPare(nouEG);
-											ctx.setValue("@entityGrupPare",nouEG);
+											ctx.setValue("/entityGrupPare",nouEG);
 											
 //											mostraPanel("EG");																				
 										} 
@@ -567,37 +567,6 @@
 							//Missatgebox.info ("tipus #"+tipus+"# pare="+registre.getParent());
 							// Deshabilitem els camps si correspon de hostname-related
 							// sinó és internal (i es Idp)
-							if ("IDP".equals(tipus)) {
-								marcat = nodeActual.getFederationMember().getInternal();
-								if (marcat == null) marcat = false;
-								hostname.getFellow("dada").setDisabled(!marcat);
-								port1.getFellow("dada").setDisabled(!marcat);
-								port2.getFellow("dada").setDisabled(!marcat);
-								certificatechain.getFellow("dada").setDisabled(!marcat);
-								metadades.setDisabled(marcat);
-								organization.getFellow("dada").setDisabled(!marcat);
-								contact.getFellow("dada").setDisabled(!marcat);
-								id_allowCertificate1.setDisabled(!marcat);
-								id_allowRecover1.setDisabled(!marcat);
-								id_allowRegister1.setDisabled(!marcat);
-								Vbox pbox = r_publicKey;
-								for (Iterator it = pbox.getChildren().iterator(); it.hasNext(); ) { 
-									Component c = (Component) it.next();
-									if (c instanceof Button) {
-										Button b = (Button) c;
-										b.setDisabled(!marcat);
-									} else if (c instanceof Div) {
-										Div d = (Div) c;
-										for (Iterator dit = d.getChildren().iterator(); dit.hasNext(); ) {
-											Component cd = (Component) dit.next();
-											if (cd instanceof Button) {
-												Button b = (Button) cd;
-												b.setDisabled(!marcat);
-											}		
-										}
-									}
-								}									
-							}
 							mostraPanel(tipus);
 						}
 						enableSPComponents();
@@ -620,23 +589,22 @@
 							EntityGroupMember eg = (EntityGroupMember) ins;
 							FederationMember fm = eg.getFederationMember();
 							eg.setDescripcio(fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""));
-							ctx.setValue("@descripcio",eg.getDescripcio());
+							ctx.setValue("/descripcio",eg.getDescripcio());
 						}
 					}
 				}
 
 				void generateMetadata() {
-
-					// Only for internal=false
-					if (!sp_id_internal1.isChecked()) return;
-
 					// Recover the form values
 					ds = form.getDataSource();
 					ctx = ds.getJXPathContext();
-					formPublicId = ctx.getValue("@federationMember/publicId");
-					formHostName = ctx.getValue("@federationMember/hostName");
-					formStandardPort = ctx.getValue("@federationMember/standardPort");
-					formAssertionPath = ctx.getValue("@federationMember/assertionPath");
+					idpType = ctx.getValue("/federationMember/idpType");
+					if (! IdentityProviderType.SOFFID.equals(idpType))
+						return;
+					formPublicId = ctx.getValue("/federationMember/publicId");
+					formHostName = ctx.getValue("/federationMember/hostName");
+					formStandardPort = ctx.getValue("/federationMember/standardPort");
+					formAssertionPath = ctx.getValue("/federationMember/assertionPath");
 
 					// Review if we have all the needed data
 					boolean missingData = false;
@@ -656,7 +624,7 @@
 					} else {
 
 						// Optionally, we can include the certificate chain
-						String formCertificateChain = ctx.getValue("@federationMember/certificateChain");
+						String formCertificateChain = ctx.getValue("/federationMember/certificateChain");
 						String myCertificate = "";
 						if (formCertificateChain!=null && !formCertificateChain.isEmpty()){
 							formCertificateChain = formCertificateChain.trim();
@@ -684,7 +652,7 @@
 						}
 
 						// Optionally, the SSL check could be checked to be disabled
-						Boolean formDisableSSL = ctx.getValue("@federationMember/disableSSL");
+						Boolean formDisableSSL = ctx.getValue("/federationMember/disableSSL");
 						String myProtocol = "https";
 						if (formDisableSSL!=null && formDisableSSL.booleanValue()==true) {
 							myProtocol = "http";
@@ -713,14 +681,57 @@
 			
 				void enableIDPComponents ()
 				{
-					visible = id_internal1.isChecked();
+					IdentityProviderType idpType = es.caib.zkib.datasource.XPathUtils.getValue(form, "/federationMember/idpType");
+					System.out.println("idptype = "+idpType.toString());
+					marcat = IdentityProviderType.SOFFID.equals(idpType);
+					if (marcat == null) marcat = false;
+					hostname.getFellow("dada").setDisabled(!marcat);
+					port1.getFellow("dada").setDisabled(!marcat);
+					port2.getFellow("dada").setDisabled(!marcat);
+					certificatechain.getFellow("dada").setDisabled(!marcat);
+					metadades.setDisabled(marcat);
+					organization.getFellow("dada").setDisabled(!marcat);
+					contact.getFellow("dada").setDisabled(!marcat);
+					id_allowCertificate1.setDisabled(!marcat);
+					id_allowRecover1.setDisabled(!marcat);
+					id_allowRegister1.setDisabled(!marcat);
+					Vbox pbox = r_publicKey;
+					for (Iterator it = pbox.getChildren().iterator(); it.hasNext(); ) { 
+						Component c = (Component) it.next();
+						if (c instanceof Button) {
+							Button b = (Button) c;
+							b.setDisabled(!marcat);
+						} else if (c instanceof Div) {
+							Div d = (Div) c;
+							for (Iterator dit = d.getChildren().iterator(); dit.hasNext(); ) {
+								Component cd = (Component) dit.next();
+								if (cd instanceof Button) {
+									Button b = (Button) cd;
+									b.setDisabled(!marcat);
+								}		
+							}
+						}
+					}									
+
+					metadadesRow.setVisible(IdentityProviderType.SOFFID.equals( idpType ) ||
+							IdentityProviderType.SAML.equals( idpType ) ||
+							IdentityProviderType.OPENID_CONNECT.equals( idpType ));
+					oauthKeyRow.setVisible(IdentityProviderType.FACEBOOK.equals( idpType ) ||
+							IdentityProviderType.GOOGLE.equals( idpType ) ||
+							IdentityProviderType.LINKEDIN.equals( idpType ) ||
+							IdentityProviderType.OPENID_CONNECT.equals( idpType ));
+					oauthSecretRow.setVisible(IdentityProviderType.FACEBOOK.equals( idpType ) ||
+							IdentityProviderType.GOOGLE.equals( idpType ) ||
+							IdentityProviderType.LINKEDIN.equals( idpType ) ||
+							IdentityProviderType.OPENID_CONNECT.equals( idpType ));
+					visible = IdentityProviderType.SOFFID.equals( idpType );
 					c = firstRowToHide;
 					while (c != null)
 					{
 						c.setVisible(visible);
 						c = c.getNextSibling();
 					}
-					if (id_allowRegister1.isChecked() && id_internal1.isChecked())
+					if (id_allowRegister1.isChecked() && visible)
 					{
 						id_groupToRegister1.getFellow("dada").disabled = false;
 						id_groupToRegister1.getFellow("dada").setConstraint( "no empty" );
@@ -732,7 +743,7 @@
 						id_groupToRegisterButton1.visible = false;
 						id_userTypeToRegister1.disabled = true;
 					}
-					if ((id_allowRegister1.isChecked() || id_allowRecover1.isChecked()) && id_internal1.isChecked())
+					if ((id_allowRegister1.isChecked() || id_allowRecover1.isChecked()) && visible)
 					{
 						id_mailHost1.getFellow("dada").disabled = false;
 						id_mailHost1.getFellow("dada").setConstraint( "no empty" );
@@ -761,14 +772,16 @@
 
 				void enableVIPComponents ()
 				{
-					visible = id_internal1.isChecked();
+					idpType = es.caib.zkib.datasource.XPathUtils.getValue(form, "/federationMember/idpType");
+
+					visible = idpType.equals( IdentityProviderType.SOFFID );
 					c = firstRowToHide;
 					while (c != null)
 					{
 						c.setVisible(visible);
 						c = c.getNextSibling();
 					}
-					if (id_allowRegister1.isChecked() && id_internal1.isChecked())
+					if (id_allowRegister1.isChecked() && visible)
 					{
 						id_groupToRegister1.getFellow("dada").disabled = false;
 						id_groupToRegister1.getFellow("dada").setConstraint( "no empty" );
@@ -780,7 +793,7 @@
 						id_groupToRegisterButton1.visible = false;
 						id_userTypeToRegister1.disabled = true;
 					}
-					if ((id_allowRegister1.isChecked() || id_allowRecover1.isChecked()) && id_internal1.isChecked())
+					if ((id_allowRegister1.isChecked() || id_allowRecover1.isChecked()) && visible)
 					{
 						id_mailHost1.getFellow("dada").disabled = false;
 						id_mailHost1.getFellow("dada").setConstraint( "no empty" );
@@ -814,11 +827,11 @@
 									<rows>
 										<row>
 											<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
-											<input_dada bind="@descripcio" id="detall_name" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+											<input_dada bind="/descripcio" id="detall_name" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 										</row>
 										<row visible="false">
 											<input_etiqueta value="${c:l('federacio.zul.MetatadaUrl')}"/>
-											<input_dada bind="@entityGrupPare/metadataUrl" id="detall_metadataUrl" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+											<input_dada bind="/entityGrupPare/metadataUrl" id="detall_metadataUrl" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 										</row>
 									</rows>
 								</grid>
@@ -831,7 +844,7 @@
 							<rows>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Tipus')}"/>
-									<listbox bind="@federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
+									<listbox bind="/federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
 										<listitem label="${c:l('federacio.zul.VirtualIdentityProvi')}" value="V"/>												
 										<listitem label="${c:l('federacio.zul.IdentityProvider')}" value="I"/>
 										<listitem label="${c:l('federacio.zul.ServiceProvider')}" value="S"/>
@@ -840,59 +853,72 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.EntityGroup')}"/>
-									<input_dada bind="@entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
+									<input_dada bind="/entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.IdpType')} :"/>
+									<listbox mold="select" bind="/federationMember/idpType" dataPath="/model:/idptype"
+										disabled="${!canModifyFI}" id="id_internal1">
+										<dataitem bind="/value">
+											<listcell bind="/literal"/>
+										</dataitem>
+										<attribute name="onSelect">
+											enableIDPComponents();
+											IdentityProviderType idpType = self.getSelectedItem().getValue();
+											if (idpType.equals (IdentityProviderType.GOOGLE))
+											{
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://google.com");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Google");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+													"{\"discoveryUrl\":\"https://accounts.google.com/.well-known/openid-configuration\"}");
+											}
+											if (idpType.equals (IdentityProviderType.FACEBOOK))
+											{
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://facebook.com");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Facebook");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+													"");
+											}
+											if (idpType.equals (IdentityProviderType.LINKEDIN))
+											{
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://linkedin.com");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Linkedin");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+													"");
+											}
+											if (idpType.equals (IdentityProviderType.OPENID_CONNECT))
+											{
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "");
+												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+													"{\n \"authorization_endpoint\": \"https://server/oauth2/auth\",\n"+
+													" \"token_endpoint\": \"https://server/oauth2/token\",\n"+
+ 													" \"userinfo_endpoint\": \"https://server/oauth2/userinfo\",\n"+
+													" \"scopes_supported\": [ \"openid\",\"email\",\"profile\"]\n}");
+											}
+											
+											{
+												es.caib.zkib.binder.BindContext bctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(form);
+												bctx.getDataSource().sendEvent(new es.caib.zkib.events.XPathRerunEvent(bctx.getDataSource(),bctx.getXPath()) );
+											}
+											
+										</attribute>
+									</listbox>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
-									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" 
+									<textbox bind="/federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" 
 										readonly="${!canModifyFI}" width="98%"
 										id="idpPublicId"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
-									<textbox bind="@federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<textbox bind="/federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
 								</row>
-								<row>
-									<input_etiqueta value="${c:l('federacio.zul.Internal?')}"/>
-									<checkbox bind="@federationMember/internal" disabled="${!canModifyFI}" id="id_internal1">
-										<attribute name="onCheck">
-											hostname.getFellow("dada").setDisabled(!self.isChecked());
-											port1.getFellow("dada").setDisabled(!self.isChecked());
-											port2.getFellow("dada").setDisabled(!self.isChecked());
-											id_disableSSL.setDisabled(!self.isChecked());
-											certificatechain.getFellow("dada").setDisabled(!self.isChecked());
-											metadades.setDisabled(self.isChecked());
-											organization.getFellow("dada").setDisabled(!self.isChecked());
-											contact.getFellow("dada").setDisabled(!self.isChecked());
-											id_allowCertificate1.setDisabled(!self.isChecked());
-											id_allowRecover1.setDisabled(!self.isChecked());
-											id_allowRegister1.setDisabled(!self.isChecked());
-											
-											Vbox pbox = r_publicKey;
-											for (Iterator it = pbox.getChildren().iterator(); it.hasNext(); ) { 
-												Component c = (Component) it.next();
-												if (c instanceof Button) {
-													Button b = (Button) c;
-													b.setDisabled(!self.isChecked());
-												} else if (c instanceof Div) {
-													Div d = (Div) c;
-													for (Iterator dit = d.getChildren().iterator(); dit.hasNext(); ) {
-														Component cd = (Component) dit.next();
-														if (cd instanceof Button) {
-															Button b = (Button) cd;
-															b.setDisabled(!self.isChecked());
-														}		
-													}
-												}
-											}
-											enableIDPComponents ();
-										</attribute>
-									</checkbox>
-								</row>
-								<row>
+								<row id="metadadesRow">
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
 									<textbox sclass="textbox" 
-										bind="@federationMember/metadades" id="metadades" readonly="${!canModifyFI}" rows="4" width="98%">
+										bind="/federationMember/metadades" id="metadades" readonly="${!canModifyFI}" rows="4" width="98%">
 										<attribute name="onChange"><![CDATA[
 							                try {
 							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -919,15 +945,39 @@
 										</attribute>
 									</textbox>
 								</row>
+								<row id="oauthKeyRow">
+									<input_etiqueta value="${c:l('federacio.zul.oAuthKey')}"/>
+									<textbox sclass="textbox"
+										bind="/federationMember/oauthKey" readonly="${!canModifyFI}"
+										width="98%"/>
+								</row>
+								<row id="oauthSecretRow">
+									<input_etiqueta value="${c:l('federacio.zul.oAuthKey')}"/>
+									<input_password
+										bind="/federationMember/oauthSecret" lectura="${!canModifyFI}"
+										width="98%"/>
+								</row>
 								<row>
-									<input_etiqueta value="${c:l('federacio.zul.DomainExpression')}"/>
-									<input_dada bind="@federationMember/domainExpression" id="domainExpression" 
+									<hbox widths="*,24px">
+										<input_etiqueta value="${c:l('federacio.zul.DomainExpression')}"/>
+										<imageclic 
+											src="/img/info.png"
+											title="If you wish to redirect users to this identity provider, based on the typed user name, you should add the regular expressin that matches its name"
+										/>
+									</hbox>
+									<input_dada bind="/federationMember/domainExpression" id="domainExpression" 
 											lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
-									<input_etiqueta value="${c:l('federacio.zul.ScriptParse')}"/>
+									<hbox widths="*,24px">
+										<input_etiqueta value="${c:l('federacio.zul.ScriptParse')}"/>
+										<imageclic 
+											src="/img/info.png"
+											title="If you wish to automatically provision users that are authenticated by this IdP, write an script to provision it, and return its user name"
+										/>
+									</hbox>
 									<div>
-										<codemirror bind="@federationMember/scriptParse" id="scriptParse"
+										<codemirror bind="/federationMember/scriptParse" id="scriptParse"
 												linenumbers="true" visible="true" 
 												readonly="${!canModifyFI}"
 												height="10em" language="java" style="width:98%">
@@ -938,7 +988,7 @@
 										<div style="display: table;">
 											<div style="dislay: table-row;">
 												<label style="display:table-cell;  width:10em;" value="serviceLocator:"/>
-												<label style="display:table-cell;" value="${c:l('rules.var1')}"/>
+												<label style="display:table-cell;" value="${c:l('federacio.zul.serviceLocator')}"/>
 											</div>
 											<div style="dislay: table-row;">
 												<label style="display:table-cell;  width:10em;" value="principal:"/>
@@ -949,6 +999,10 @@
 												<label style="display:table-cell;" value="${c:l('federacio.zul.attributes')}"/>
 											</div>
 											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="user:"/>
+												<label style="display:table-cell;" value="${c:l('federacio.zul.user')}"/>
+											</div>
+											<div style="dislay: table-row;">
 												<label style="display:table-cell;  width:10em;" value="return value:"/>
 												<label style="display:table-cell;" value="${c:l('federacio.zul.returnValue')}"/>
 											</div>
@@ -957,21 +1011,21 @@
 								</row>
 								<row  id="firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
-									<input_dada bind="@federationMember/organization" id="organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<input_dada bind="/federationMember/organization" id="organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.contact')}"/>
-									<input_dada bind="@federationMember/contact" id="contact" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<input_dada bind="/federationMember/contact" id="contact" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Hostname')}"/>
-									<input_dada bind="@federationMember/hostName" disabled="true" id="hostname" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<input_dada bind="/federationMember/hostName" disabled="true" id="hostname" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.PortStandard')}"/>
 									<div>
-										<input_dada bind="@federationMember/standardPort" disabled="true" id="port1" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
-										<checkbox bind="@federationMember/disableSSL" disabled="${!canModifyFI}"
+										<input_dada bind="/federationMember/standardPort" disabled="true" id="port1" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
+										<checkbox bind="/federationMember/disableSSL" disabled="${!canModifyFI}"
 													id="id_disableSSL" onCheck="">
 										</checkbox>
 										<input_etiqueta value="${c:l('federacio.zul.disableSSL')}"/>
@@ -979,22 +1033,22 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.PortCertificatClient')}"/>
-									<input_dada bind="@federationMember/clientCertificatePort" disabled="true" id="port2" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
+									<input_dada bind="/federationMember/clientCertificatePort" disabled="true" id="port2" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.certificateChain')}"/>
-									<input_dada bind="@federationMember/certificateChain" disabled="true" id="certificatechain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+									<input_dada bind="/federationMember/certificateChain" disabled="true" id="certificatechain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
 								</row>								
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicKey')}"/>
 									<vbox id="r_publicKey">
-										<divVisible bind="@federationMember/publicKey" valorVisible="null">
+										<divVisible bind="/federationMember/publicKey" valorVisible="null">
 											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 											<separator/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, certificatechain)" width="200px"/>
 										</divVisible>
-										<divVisible bind="@federationMember/publicKey" valorNoVisible="null">
+										<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
@@ -1003,30 +1057,30 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.timeout')}"/>
-									<input_dada bind="@federationMember/sessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
+									<input_dada bind="/federationMember/sessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ssoCookieName')}"/>
-									<input_dada bind="@federationMember/ssoCookieName" lectura="${!canModifyFI}" maxim="120"/>
+									<input_dada bind="/federationMember/ssoCookieName" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ssoCookieDomain')}"/>
-									<input_dada bind="@federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
+									<input_dada bind="/federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.enableKerberos')}"/>
 									<div>
-										<checkbox bind="@federationMember/enableKerberos" disabled="${!canModifyFI}"
+										<checkbox bind="/federationMember/enableKerberos" disabled="${!canModifyFI}"
 													onCheck="">
 										</checkbox>
 										<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
-										<input_dada bind="@federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+										<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
 									</div>
 								</row>
 								<row>
 									<space/>
 									<hbox>
-									<checkbox bind="@federationMember/allowRecover" disabled="${!canModifyFI}"
+									<checkbox bind="/federationMember/allowRecover" disabled="${!canModifyFI}"
 												id="id_allowRecover1"  onCheck="enableIDPComponents()">
 									</checkbox>
 									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
@@ -1035,7 +1089,7 @@
 								<row>
 									<space></space>
 									<hbox>
-									<checkbox bind="@federationMember/allowCertificate" disabled="${!canModifyFI}"
+									<checkbox bind="/federationMember/allowCertificate" disabled="${!canModifyFI}"
 												id="id_allowCertificate1"  onCheck="enableIDPComponents()">
 									</checkbox>
 									<input_etiqueta value="${c:l('federacio.zul.allowCertificate')}"/>
@@ -1045,7 +1099,7 @@
 									<space></space>
 									<vbox>
 										<hbox>
-											<checkbox bind="@federationMember/allowRegister" disabled="${!canModifyFI}"
+											<checkbox bind="/federationMember/allowRegister" disabled="${!canModifyFI}"
 													id="id_allowRegister1"  onCheck="enableIDPComponents()">
 											</checkbox>
 											<input_etiqueta value="${c:l('federacio.zul.allowRegister')}"/>
@@ -1055,17 +1109,17 @@
 											<listbox 
 												dataPath="/model:/userType" id="id_userTypeToRegister1"
 												mold="select"
-												bind="@federationMember/userTypeToRegister" disabled="${!canModifyFI}">
-												<dataitem bind="@codi">
+												bind="/federationMember/userTypeToRegister" disabled="${!canModifyFI}">
+												<dataitem bind="/codi">
 													<listcelllabel
-														bind="@codi" labelBind="@descripcio" />
+														bind="/codi" labelBind="/descripcio" />
 												</dataitem>
 											</listbox>
 										</hbox>
 										<hbox>
 											<input_etiqueta value="${c:l('usuaris.zul.Grupprimari-2')}" width_custom="8em"/>
 											<input_dada id="id_groupToRegister1"
-													bind="@federationMember/groupToRegister" mascara="no empty"
+													bind="/federationMember/groupToRegister" mascara="no empty"
 													lectura="${!canModifyFI}"
 													width_custom="8em" />
 											<separator width="0px" />
@@ -1090,25 +1144,25 @@
 									<input_etiqueta value="${c:l('federacio.zul.mailHost')}" width_custom="8em"/>
 									<input_dada 
 											id = "id_mailHost1"
-											bind="@federationMember/mailHost" mascara="no empty"
+											bind="/federationMember/mailHost" mascara="no empty"
 											lectura="${!canModifyFI}"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.mailSender')}" width_custom="8em"/>
 									<input_dada 
 											id = "id_mailSender1"
-											bind="@federationMember/mailSenderAddress" mascara="no empty"
+											bind="/federationMember/mailSenderAddress" mascara="no empty"
 											lectura="${!canModifyFI}"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.broker')}"/>
-									<checkbox bind="@federationMember/identityBroker" disabled="${!canModifyFI}"
+									<checkbox bind="/federationMember/identityBroker" disabled="${!canModifyFI}"
 										id="actAsBrokerCheckbox" 
 										onCheck="registerExternalCheckbox.setDisabled( ! self.isChecked() )"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.registerExternal')}"/>
-									<checkbox id="registerExternalCheckbox" bind="@federationMember/registerExternalIdentities" disabled="${!canModifyFI}" onCheck=""/>
+									<checkbox id="registerExternalCheckbox" bind="/federationMember/registerExternalIdentities" disabled="${!canModifyFI}" onCheck=""/>
 								</row>
 								
 							</rows>
@@ -1122,8 +1176,8 @@
 							<rows>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Tipus')}"/>
-									<!-- <input_dada bind="@federationMember/classe" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/> -->
-									<listbox bind="@federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
+									<!-- <input_dada bind="/federationMember/classe" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/> -->
+									<listbox bind="/federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
 										<listitem label="${c:l('federacio.zul.VirtualIdentityProvi')}" value="V"/>												
 										<listitem label="${c:l('federacio.zul.IdentityProvider')}" value="I"/>
 										<listitem label="${c:l('federacio.zul.ServiceProvider')}" value="S"/>
@@ -1132,11 +1186,11 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.EntityGroup')}"/>
-									<input_dada bind="@entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
+									<input_dada bind="/entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Internal?')}"/>
-									<checkbox bind="@federationMember/internal" disabled="${!canModifyFI}" id="sp_id_internal1">
+									<checkbox bind="/federationMember/internal" disabled="${!canModifyFI}" id="sp_id_internal1">
 										<attribute name="onCheck">
 											sp_hostname.setDisabled(!self.isChecked());
 											sp_port1.setDisabled(!self.isChecked());
@@ -1169,13 +1223,13 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
-									<textbox id="spPublicId" bind="@federationMember/publicId" maxlength="255" 
+									<textbox id="spPublicId" bind="/federationMember/publicId" maxlength="255" 
 										onChange="canviaDescripcioEG();generateMetadata();" readonly="${!canModifyFI}" width="98%"/>
-									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
+									<!--input_dada bind="/descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
-									<textbox bind="@federationMember/name" maxlength="255" 
+									<textbox bind="/federationMember/name" maxlength="255" 
 										onChange="canviaDescripcioEG()" 
 										readonly="${!canModifyFI}" 
 										width="98%"/>
@@ -1184,22 +1238,22 @@
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
 									<textbox sclass="textbox"
 										id="sp_metadades" 
-										bind="@federationMember/metadades" readonly="${!canModifyFI}" rows="8"
+										bind="/federationMember/metadades" readonly="${!canModifyFI}" rows="8"
 										width="98%"/>
 								</row>
 								<row  id="sp_firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
-									<input_dada bind="@federationMember/organization" 
+									<input_dada bind="/federationMember/organization" 
 										id="sp_organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.contact')}"/>
-									<input_dada bind="@federationMember/contact" 
+									<input_dada bind="/federationMember/contact" 
 										id="sp_contact" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Hostname')}"/>
-									<textbox bind="@federationMember/hostName"
+									<textbox bind="/federationMember/hostName"
 										id="sp_hostname"
 										onChange="generateMetadata()"
 										readonly="${!canModifyFI}"
@@ -1209,12 +1263,12 @@
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.PortStandard')}"/>
 									<div>
-										<textbox bind="@federationMember/standardPort"
+										<textbox bind="/federationMember/standardPort"
 											id="sp_port1"
 											onChange="generateMetadata()"
 											readonly="${!canModifyFI}"
 											maxlength="20"/>
-										<checkbox bind="@federationMember/disableSSL" disabled="${!canModifyFI}"
+										<checkbox bind="/federationMember/disableSSL" disabled="${!canModifyFI}"
 													id="sp_id_disableSSL" style="vertical-align:-4px; margin-left:12px"
 													onCheck="generateMetadata()">
 										</checkbox>
@@ -1223,7 +1277,7 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.AssertionPath')}"/>
-									<textbox bind="@federationMember/assertionPath"
+									<textbox bind="/federationMember/assertionPath"
 										id="sp_assertionPath"
 										onChange="generateMetadata()"
 										readonly="${!canModifyFI}"
@@ -1232,7 +1286,7 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.certificateChain')}"/>
-									<textbox bind="@federationMember/certificateChain"
+									<textbox bind="/federationMember/certificateChain"
 										id="sp_certificatechain"
 										onChange="generateMetadata()"
 										readonly="${!canModifyFI}"
@@ -1242,13 +1296,13 @@
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicKey')}"/>
 									<vbox id="sp_r_publicKey">
-										<divVisible bind="@federationMember/publicKey" valorVisible="null">
+										<divVisible bind="/federationMember/publicKey" valorVisible="null">
 											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 											<separator/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, sp_certificatechain)" width="200px"/>
 										</divVisible>
-										<divVisible bind="@federationMember/publicKey" valorNoVisible="null">
+										<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, sp_certificatechain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
@@ -1257,7 +1311,7 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
-									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="@federationMember/uidExpression" />
+									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="/federationMember/uidExpression" />
 								</row>
 							</rows>
 						</grid>
@@ -1270,8 +1324,8 @@
 							<rows>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Classe')}"/>
-									<!-- <input_dada bind="@federationMember/classe" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/> -->
-									<listbox bind="@federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
+									<!-- <input_dada bind="/federationMember/classe" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/> -->
+									<listbox bind="/federationMember/classe" disabled="true" mold="select" onSelect="" style="font-size: 12px" width="200px">
 										<listitem label="${c:l('federacio.zul.VirtualIdentityProvi')}" value="V"/>												
 										<listitem label="${c:l('federacio.zul.IdentityProvider')}" value="I"/>
 										<listitem label="${c:l('federacio.zul.ServiceProvider')}" value="S"/>
@@ -1280,23 +1334,23 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.EntityGroup')}"/>
-									<input_dada bind="@entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
+									<input_dada bind="/entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
-									<!--input_dada bind="@descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
-									<textbox bind="@federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" 
+									<!--input_dada bind="/descripcio" maxim="255" width_custom="98%" lectura="${!canModifyFI}"/-->
+									<textbox bind="/federationMember/publicId" maxlength="255" onChange="canviaDescripcioEG()" 
 										id="vipPublicId"
 										readonly="${!canModifyFI}" width="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Name')}"/>
-									<textbox bind="@federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
+									<textbox bind="/federationMember/name" maxlength="255" onChange="canviaDescripcioEG()" readonly="${!canModifyFI}" width="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
 									<textbox sclass="textbox" 
-										bind="@federationMember/metadades" readonly="true" rows="4" width="98%">
+										bind="/federationMember/metadades" readonly="true" rows="4" width="98%">
 										<attribute name="onChange"><![CDATA[
 							                try {
 							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -1325,26 +1379,26 @@
 								</row>
 								<row id = "firstRowToHide2">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
-									<input_dada bind="@federationMember/organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<input_dada bind="/federationMember/organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.contact')}"/>
-									<input_dada bind="@federationMember/contact" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<input_dada bind="/federationMember/contact" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.certificateChain')}"/>
-									<input_dada bind="@federationMember/certificateChain" id="vip_certificateChain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+									<input_dada bind="/federationMember/certificateChain" id="vip_certificateChain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicKey')}"/>
 									<vbox>
-										<divVisible bind="@federationMember/publicKey" valorVisible="null">
+										<divVisible bind="/federationMember/publicKey" valorVisible="null">
 											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 											<separator/>
 											<button disabled="${!canModifyFI}" image="img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
 										</divVisible>
 										
-										<divVisible bind="@federationMember/publicKey" valorNoVisible="null">
+										<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
 											<button disabled="${!canModifyFI}" image="img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain)" style="margin-right:10px" width="200px"/>
 											<button disabled="${!canModifyFI}" image="img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
 											<button disabled="${!canModifyFI}" image="img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
@@ -1353,26 +1407,26 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ssoCookieName')}"/>
-									<input_dada bind="@federationMember/ssoCookieName" lectura="${!canModifyFI}" maxim="120"/>
+									<input_dada bind="/federationMember/ssoCookieName" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ssoCookieDomain')}"/>
-									<input_dada bind="@federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
+									<input_dada bind="/federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.enableKerberos')}"/>
 									<div>
-										<checkbox bind="@federationMember/enableKerberos" disabled="${!canModifyFI}"
+										<checkbox bind="/federationMember/enableKerberos" disabled="${!canModifyFI}"
 													onCheck="">
 										</checkbox>
 										<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
-										<input_dada bind="@federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+										<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
 									</div>
 								</row>
 								<row>
 									<space/>
 									<hbox>
-									<checkbox bind="@federationMember/allowRecover" disabled="${!canModifyFI}"
+									<checkbox bind="/federationMember/allowRecover" disabled="${!canModifyFI}"
 												id="id_allowRecover2"  onCheck="enableVIPComponents()">
 									</checkbox>
 									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
@@ -1381,7 +1435,7 @@
 								<row>
 									<space></space>
 									<hbox>
-									<checkbox bind="@federationMember/allowCertificate" disabled="${!canModifyFI}"
+									<checkbox bind="/federationMember/allowCertificate" disabled="${!canModifyFI}"
 												id="id_allowCertificate2"  onCheck="enableVIPComponents()">
 									</checkbox>
 									<input_etiqueta value="${c:l('federacio.zul.allowCertificate')}"/>
@@ -1391,7 +1445,7 @@
 									<space></space>
 									<vbox>
 										<hbox>
-											<checkbox bind="@federationMember/allowRegister" disabled="${!canModifyFI}"
+											<checkbox bind="/federationMember/allowRegister" disabled="${!canModifyFI}"
 													id="id_allowRegister2"  onCheck="enableVIPComponents()">
 											</checkbox>
 											<input_etiqueta value="${c:l('federacio.zul.allowRegister')}"/>
@@ -1402,9 +1456,9 @@
 												dataPath="/model:/userType" id="id_userTypeToRegister2"
 												mold="select"
 												bind="federationMember/userTypeToRegister" disabled="${!canModifyFI}">
-												<dataitem bind="@codi">
+												<dataitem bind="/codi">
 													<listcelllabel
-														bind="@codi" labelBind="@descripcio" />
+														bind="/codi" labelBind="/descripcio" />
 												</dataitem>
 											</listbox>
 										</hbox>
@@ -1462,7 +1516,7 @@
 									// No es comprova l'existencia
 									/*ds = g_pol.getDataSource(); 
 									ctx =  ds.getJXPathContext();
-									xpath = g_pol.getXPath() + "[@name = '" + nprofile.getName() + "']";
+									xpath = g_pol.getXPath() + "[/name = '" + nprofile.getName() + "']";
 									boolean jaExisteix = true;
 									try {
 										valor = ctx.getValue(xpath);
@@ -1479,27 +1533,27 @@
 										xpath = g_profiles.getXPath() + modelProxy.getBind(position); //Missatgebox.info ("nou xpath "+xpath);
 										pointer =ctx.createPath (xpath);
 										ctx2 = ctx.getRelativeContext(pointer);
-										ctx2.setValue("@id", nprofile.getId());
-										ctx2.setValue("@classe", nprofile.getClasse());
-										ctx2.setValue("@signResponses", nprofile.getSignResponses());
-										ctx2.setValue("@signAssertions", nprofile.getSignAssertions());
-										ctx2.setValue("@signRequests", nprofile.getSignRequests());
-										ctx2.setValue("@enabled", nprofile.getEnabled());
-										ctx2.setValue("@outboundArtifactType", nprofile.getOutboundArtifactType());
-										ctx2.setValue("@assertionLifetime", nprofile.getAssertionLifetime());
-										ctx2.setValue("@encryptAssertions", nprofile.getEncryptAssertions());
-										ctx2.setValue("@encryptNameIds", nprofile.getEncryptNameIds());
-										ctx2.setValue("@assertionProxyCount", nprofile.getAssertionProxyCount());
-										ctx2.setValue("@includeAttributeStatement", nprofile.getIncludeAttributeStatement());
-										ctx2.setValue("@localityAddress", nprofile.getLocalityAddress());
-										ctx2.setValue("@localityDNSName", nprofile.getLocalityDNSName());
-										ctx2.setValue("@maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
+										ctx2.setValue("/id", nprofile.getId());
+										ctx2.setValue("/classe", nprofile.getClasse());
+										ctx2.setValue("/signResponses", nprofile.getSignResponses());
+										ctx2.setValue("/signAssertions", nprofile.getSignAssertions());
+										ctx2.setValue("/signRequests", nprofile.getSignRequests());
+										ctx2.setValue("/enabled", nprofile.getEnabled());
+										ctx2.setValue("/outboundArtifactType", nprofile.getOutboundArtifactType());
+										ctx2.setValue("/assertionLifetime", nprofile.getAssertionLifetime());
+										ctx2.setValue("/encryptAssertions", nprofile.getEncryptAssertions());
+										ctx2.setValue("/encryptNameIds", nprofile.getEncryptNameIds());
+										ctx2.setValue("/assertionProxyCount", nprofile.getAssertionProxyCount());
+										ctx2.setValue("/includeAttributeStatement", nprofile.getIncludeAttributeStatement());
+										ctx2.setValue("/localityAddress", nprofile.getLocalityAddress());
+										ctx2.setValue("/localityDNSName", nprofile.getLocalityDNSName());
+										ctx2.setValue("/maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
 										
 										// Guardem el id del identityprovider
 										dsForm = form.getDataSource(); 
 										ctxIdp =  dsForm.getJXPathContext(); 
-										idp = ctxIdp.getValue("@federationMember"); //Missatgebox.info ("IDP "+idp);
-										ctx2.setValue("@identityProvider", idp);
+										idp = ctxIdp.getValue("/federationMember"); //Missatgebox.info ("IDP "+idp);
+										ctx2.setValue("/identityProvider", idp);
 								    //}										
 										pointer.invalidate ();
 									]]>
@@ -1523,26 +1577,26 @@
 										ctx2 = ctx.getRelativeContext(pointer);
 										// Atributs
 										// El id el mantenim..
-										ctx2.setValue("@classe", nprofile.getClasse());
-										ctx2.setValue("@signResponses", nprofile.getSignResponses());
-										ctx2.setValue("@signAssertions", nprofile.getSignAssertions());
-										ctx2.setValue("@signRequests", nprofile.getSignRequests());
-										ctx2.setValue("@enabled", nprofile.getEnabled());
-										ctx2.setValue("@outboundArtifactType", nprofile.getOutboundArtifactType());
-										ctx2.setValue("@assertionLifetime", nprofile.getAssertionLifetime());
-										ctx2.setValue("@encryptAssertions", nprofile.getEncryptAssertions());
-										ctx2.setValue("@encryptNameIds", nprofile.getEncryptNameIds());
-										ctx2.setValue("@assertionProxyCount", nprofile.getAssertionProxyCount());
-										ctx2.setValue("@includeAttributeStatement", nprofile.getIncludeAttributeStatement());
-										ctx2.setValue("@localityAddress", nprofile.getLocalityAddress());
-										ctx2.setValue("@localityDNSName", nprofile.getLocalityDNSName());
-										ctx2.setValue("@maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
+										ctx2.setValue("/classe", nprofile.getClasse());
+										ctx2.setValue("/signResponses", nprofile.getSignResponses());
+										ctx2.setValue("/signAssertions", nprofile.getSignAssertions());
+										ctx2.setValue("/signRequests", nprofile.getSignRequests());
+										ctx2.setValue("/enabled", nprofile.getEnabled());
+										ctx2.setValue("/outboundArtifactType", nprofile.getOutboundArtifactType());
+										ctx2.setValue("/assertionLifetime", nprofile.getAssertionLifetime());
+										ctx2.setValue("/encryptAssertions", nprofile.getEncryptAssertions());
+										ctx2.setValue("/encryptNameIds", nprofile.getEncryptNameIds());
+										ctx2.setValue("/assertionProxyCount", nprofile.getAssertionProxyCount());
+										ctx2.setValue("/includeAttributeStatement", nprofile.getIncludeAttributeStatement());
+										ctx2.setValue("/localityAddress", nprofile.getLocalityAddress());
+										ctx2.setValue("/localityDNSName", nprofile.getLocalityDNSName());
+										ctx2.setValue("/maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
 										
 										// Guardem el identityprovider (no cal..)
 										dsForm = form.getDataSource(); 
 										ctxIdp =  dsForm.getJXPathContext(); 
-										idp = ctxIdp.getValue("@federationMember"); //Missatgebox.info ("IDP "+idp);
-										ctx2.setValue("@identityProvider", idp);
+										idp = ctxIdp.getValue("/federationMember"); //Missatgebox.info ("IDP "+idp);
+										ctx2.setValue("/identityProvider", idp);
 										pointer.invalidate ();
 									} else {
 										Missatgebox.avis(String.format(
@@ -1558,7 +1612,7 @@
 									<column width="25px"/>
 								</columns>
 								<datarow>
-									<input_dada bind="@classe" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+									<input_dada bind="/classe" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 									<imageclic src="~./img/vincula.gif" tooltip="vincula">
 										<attribute name="onClick">
 											if (canModifyFI) {
@@ -1581,7 +1635,7 @@
 												xpath = dataRow.getXPath();	
 												dataSource = g_profiles.getDataSource();
 												context = dataSource.getJXPathContext();
-												dada = context.getValue(xpath+"/@classe");
+												dada = context.getValue(xpath+"/classe");
 												Missatgebox.confirmaOK_CANCEL(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.SegurBorrar"), new Object [] {dada}),
 													org.zkoss.util.resource.Labels.getLabel("federacio.Borra"),
 													new EventListener() {
@@ -1610,19 +1664,19 @@
 							</button>							
 						</tabpanel>
 						<tabpanel id="tp_rel" visible="false">
-							<divVisible bind="@federationMember/@classe" valorVisible="S">
+							<divVisible bind="/federationMember/classe" valorVisible="S">
 							<!-- en els SP està a modo lectura -->
-							<grid dataPath="@federationMember/@virtualIdentityProvider" id="g_vipProvider">
+							<grid dataPath="/federationMember/virtualIdentityProvider" id="g_vipProvider">
 								<columns visible="false">
 									<column width="*"/>
 								</columns>
 								<datarow>
-									<input_dada bind="@publicId" lectura="true" width_custom="98%"/>
+									<input_dada bind="/publicId" lectura="true" width_custom="98%"/>
 								</datarow>
 							</grid>
 							</divVisible>
 						
-							<divVisible bind="@federationMember/@classe" valorVisible="V">
+							<divVisible bind="/federationMember/classe" valorVisible="V">
 							<!-- NOMES PER ALS VIRTUAL IDENTITY PROVIDERS -->
 							<grid id="g_defaultIDP">
 								<attribute name="onActualitza">
@@ -1650,7 +1704,7 @@
 								<rows>
 									<row>
 										<input_etiqueta value="${c:l('federacio.zul.IdentityProviderPare')}"/>
-										<input_dada bind="@federationMember/@defaultIdentityProvider/publicId" id="tb_defaultIDP" lectura="true" width_custom="98%"/>
+										<input_dada bind="/federationMember/defaultIdentityProvider/publicId" id="tb_defaultIDP" lectura="true" width_custom="98%"/>
 										<imageclic src="~./img/vincula.gif" tooltip="vincula">
 											<attribute name="onClick"><![CDATA[
 												if (canModifyFI) {
@@ -1677,7 +1731,7 @@
 							<separator height="10px"/>
 							<input_etiqueta value="${c:l('federacio.zul.ServiceProviders')}"/>
 							<separator height="3px"/>
-							<grid dataPath="@federationMember/@serviceProvider" id="g_serviceProvider">
+							<grid dataPath="/federationMember/serviceProvider" id="g_serviceProvider">
 								<attribute name="onActualitza"><![CDATA[
 									if (canModifyFI) {
 										FederationMember nouSP = (FederationMember)event.getData();
@@ -1705,11 +1759,11 @@
 											pointer = ctx.getPointer(xpath);	
 											ctx2 = ctx.getRelativeContext(pointer);
 											// Valor
-											ctx2.setValue("@federationMember/@serviceProvider", sps);
+											ctx2.setValue("/federationMember/serviceProvider", sps);
 											//pointer.invalidate();																
 
 											g_serviceProvider.clear();
-											g_serviceProvider.setDataPath("@federationMember/@serviceProvider");
+											g_serviceProvider.setDataPath("/federationMember/serviceProvider");
 										}										
 									}									
 								]]></attribute>								
@@ -1718,7 +1772,7 @@
 									<column width="25px"/>
 								</columns>
 								<datarow>
-									<input_dada bind="@publicId" lectura="true" width_custom="98%"/>
+									<input_dada bind="/publicId" lectura="true" width_custom="98%"/>
 									<imageclic src="~./img/list-remove.gif">
 									<attribute name="onClick"><![CDATA[
 										if (canDeleteFI) {
@@ -1752,9 +1806,9 @@
 															pointer = ctx.getPointer(xpath);	
 															ctx2 = ctx.getRelativeContext(pointer);
 															// Valor
-															ctx2.setValue("@federationMember/@serviceProvider",sps);
+															ctx2.setValue("/federationMember/serviceProvider",sps);
 															g_serviceProvider.clear();
-															g_serviceProvider.setDataPath("@federationMember/@serviceProvider");
+															g_serviceProvider.setDataPath("/federationMember/serviceProvider");
 														} else {
 															Missatgebox.error (org.zkoss.util.resource.Labels.getLabel("federacio.NoTrobatService2"));
 															return;		
@@ -1790,11 +1844,11 @@
 							</attribute>
 							</button>
 							</divVisible>
-							<divVisible bind="@federationMember/@classe" valorVisible="I">
+							<divVisible bind="/federationMember/classe" valorVisible="I">
 							<!-- NOMES PER ALS IDENTITY PROVIDERS -->
 							<input_etiqueta value="${c:l('federacio.zul.ServiceProviders')}"/>
 							<separator height="3px"/>
-							<grid dataPath="@federationMember/@serviceProvider" id="g_serviceProvider2">
+							<grid dataPath="/federationMember/serviceProvider" id="g_serviceProvider2">
 								<attribute name="onActualitza"><![CDATA[
 									if (canModifyFI) {
 										FederationMember nouSP = (FederationMember)event.getData();
@@ -1822,11 +1876,11 @@
 											pointer = ctx.getPointer(xpath);	
 											ctx2 = ctx.getRelativeContext(pointer);
 											// Valor
-											ctx2.setValue("@federationMember/@serviceProvider", sps);
+											ctx2.setValue("/federationMember/serviceProvider", sps);
 											//pointer.invalidate();																
 
 											g_serviceProvider2.clear();
-											g_serviceProvider2.setDataPath("@federationMember/@serviceProvider");
+											g_serviceProvider2.setDataPath("/federationMember/serviceProvider");
 										}										
 									}									
 								]]></attribute>								
@@ -1835,7 +1889,7 @@
 									<column width="25px"/>
 								</columns>
 								<datarow>
-									<input_dada bind="@publicId" lectura="true" width_custom="98%"/>
+									<input_dada bind="/publicId" lectura="true" width_custom="98%"/>
 									<imageclic src="~./img/list-remove.gif">
 									<attribute name="onClick"><![CDATA[
 										if (canDeleteFI) {
@@ -1869,9 +1923,9 @@
 															pointer = ctx.getPointer(xpath);	
 															ctx2 = ctx.getRelativeContext(pointer);
 															// Valor
-															ctx2.setValue("@federationMember/@serviceProvider",sps);
+															ctx2.setValue("/federationMember/serviceProvider",sps);
 															g_serviceProvider2.clear();
-															g_serviceProvider2.setDataPath("@federationMember/@serviceProvider");
+															g_serviceProvider2.setDataPath("/federationMember/serviceProvider");
 														} else {
 															Missatgebox.error (org.zkoss.util.resource.Labels.getLabel("federacio.NoTrobatService2"));
 															return;		
@@ -1949,7 +2003,7 @@
 						// No es comprova l'existencia
 						/*ds = g_pol.getDataSource(); 
 						ctx =  ds.getJXPathContext();
-						xpath = g_pol.getXPath() + "[@name = '" + npolicy.getName() + "']";
+						xpath = g_pol.getXPath() + "[/name = '" + npolicy.getName() + "']";
 						boolean jaExisteix = true;
 						try {
 							valor = ctx.getValue(xpath);
@@ -1966,10 +2020,10 @@
 							xpath = g_pol.getXPath() + modelProxy.getBind(position); //Missatgebox.info ("nou xpath "+xpath);
 							pointer =ctx.createPath (xpath);
 							ctx2 = ctx.getRelativeContext(pointer);
-							ctx2.setValue("@name", npolicy.getName());
-							//ctx2.setValue("@identityProvider", npolicy.getIdentityProvider());
-							ctx2.setValue("@attributePolicy", npolicy.getAttributePolicy());
-							ctx2.setValue("@condition", npolicy.getCondition());
+							ctx2.setValue("/name", npolicy.getName());
+							//ctx2.setValue("/identityProvider", npolicy.getIdentityProvider());
+							ctx2.setValue("/attributePolicy", npolicy.getAttributePolicy());
+							ctx2.setValue("/condition", npolicy.getCondition());
 							
 							pointer.invalidate ();
 						//}	
@@ -2008,10 +2062,10 @@
 							pointer = ctx.getPointer(xpath);	
 							ctx2 = ctx.getRelativeContext(pointer);
 							// Atributs
-							ctx2.setValue("@name", npolicy.getName());
-							//ctx2.setValue("@identityProvider", npolicy.getIdentityProvider());
-							ctx2.setValue("@attributePolicy", npolicy.getAttributePolicy());
-							ctx2.setValue("@condition", npolicy.getCondition());
+							ctx2.setValue("/name", npolicy.getName());
+							//ctx2.setValue("/identityProvider", npolicy.getIdentityProvider());
+							ctx2.setValue("/attributePolicy", npolicy.getAttributePolicy());
+							ctx2.setValue("/condition", npolicy.getCondition());
 							pointer.invalidate ();
 						} else {
 							Missatgebox.avis(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.PoliticaNoTrobada"), new Object [] {npolicy.getName()}),
@@ -2025,7 +2079,7 @@
 						<column align="center" label="${c:l('federacio.zul.')}" visible="${canDeleteFI}" width="25px"/>
 					</columns>
 					<datarow>
-						<input_etiqueta bind="@name" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
+						<input_etiqueta bind="/name" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 						<imageclic src="~./img/vincula.gif" tooltip="vincula">
 							<attribute name="onClick">
 								if (canModifyFI) {
@@ -2045,7 +2099,7 @@
 									xpath = dataRow.getXPath();	
 									dataSource = g_pol.getDataSource();
 									context = dataSource.getJXPathContext();
-									dada = context.getValue(xpath+"/@name");
+									dada = context.getValue(xpath+"/name");
 									Missatgebox.confirmaOK_CANCEL(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.SegurBorrarPolitica"), new Object [] {dada}),
 										org.zkoss.util.resource.Labels.getLabel("federacio.Borra"),
 										new EventListener() {

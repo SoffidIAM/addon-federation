@@ -5,7 +5,13 @@
 //
 
 package com.soffid.iam.addons.federation.common;
-import com.soffid.mda.annotation.*;
+
+import com.soffid.mda.annotation.Column;
+import com.soffid.mda.annotation.Description;
+import com.soffid.mda.annotation.Nullable;
+import com.soffid.mda.annotation.ValueObject;
+
+import es.caib.seycon.ng.comu.Password;
 
 @ValueObject 
 public class FederationMember {
@@ -55,7 +61,15 @@ public class FederationMember {
 	public com.soffid.iam.addons.federation.common.FederationMember defaultIdentityProvider;
 
 	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue="com.soffid.iam.addons.federation.common.IdentityProviderType.SAML")
 	public IdentityProviderType idpType;
+
+	@Nullable
+	public String oauthKey;
+
+	@Nullable
+	public Password oauthSecret;
+
 
 	@Nullable
 	public java.lang.Boolean internal;

@@ -3,6 +3,17 @@
 <zkib-model>
 
 	<datanode name="federacioIdentitats">
+		<finder name="idptype" type="idptype">
+			<script-finder>
+				list = new java.util.LinkedList();
+//				list.add (new String(""));
+				for (l: com.soffid.iam.addons.federation.common.IdentityProviderType.literals())
+				{
+					list.add (l);
+				}
+				return list;
+			</script-finder>
+		</finder>
 		<finder name="entitygroupmember" type="entitygroupmember">
 			<ejb-finder
 				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
@@ -151,5 +162,21 @@
 	</datanode>
 
 	<datanode name="userType"/>
+	
+	<datanode name="idptype" transient="true">
+		<custom-attribute name="literal">
+			if (instance.length() == 0)
+				return "";
+			else
+				return org.zkoss.util.resource.Labels.getLabel("idpType."+instance);
+		</custom-attribute>
+		<custom-attribute name="value">
+			if (instance.length() == 0)
+				return "- Select value -";
+			else
+				return com.soffid.iam.addons.federation.common.IdentityProviderType.fromString(instance);
+		</custom-attribute>
+
+	</datanode>
 	
 </zkib-model>

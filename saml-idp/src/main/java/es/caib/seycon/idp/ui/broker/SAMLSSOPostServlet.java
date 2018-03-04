@@ -1,13 +1,6 @@
 package es.caib.seycon.idp.ui.broker;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -15,7 +8,6 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -32,8 +24,6 @@ import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class SAMLSSOPostServlet extends BaseForm {
 
@@ -88,7 +78,9 @@ public class SAMLSSOPostServlet extends BaseForm {
 			}
 			else
 			{
-			    new Autenticator().autenticate(sl.getUser().getUserName(), req, resp, AuthnContext.PPT_AUTHN_CTX, true);
+				Autenticator auth = new Autenticator();
+				String account = auth.getUserAccount(sl.getUser().getUserName());
+			    auth.autenticate(account, req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, true);
 			}
 		} catch (Exception e) {
 			req.setAttribute("ERROR", e.toString());
