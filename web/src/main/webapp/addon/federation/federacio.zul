@@ -9,7 +9,11 @@
 
 	<style src="~./styles/estil.css"/>
 
-	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml"/>
+	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml">
+		<attribute name="onCommit">
+			esquema.hideFormulari();
+		</attribute>
+	</datamodel>
 	
 	<script src='~./js/codemirror/java-classes.js'/>
 	<zscript src="/comu/netejaCriteris.zul"/>
@@ -122,7 +126,11 @@
 		}
 		
 		void onInserir () {
-			arbre = esquema.getFellow("lista").getFellow("treebox");
+			Tree  arbre = esquema.getFellow("lista").getFellow("treebox");
+			if (arbre.getSelectedItem() == null)
+			{
+				arbre.setSelectedItem( arbre.getTreechildren().getFirstChild()) ;
+			}
 			if (arbre.getSelectedCount()!=0) {// si no dóna error mostrem detalls
 				Object pare = arbre.getSelectedItem().getValue().getInstance(); 
 				if (pare instanceof EntityGroupMember) {
@@ -138,7 +146,7 @@
 						throw new Exception ("Error: Aquest tipus de node no admet fills");
 					}
 				}
-			showDetall();		
+				showDetall();		
 			}
 			
 		}
@@ -713,6 +721,8 @@
 						}
 					}									
 
+					autoprovisionScriptRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
+					autoprovisionPatternRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
 					metadadesRow.setVisible(IdentityProviderType.SOFFID.equals( idpType ) ||
 							IdentityProviderType.SAML.equals( idpType ) ||
 							IdentityProviderType.OPENID_CONNECT.equals( idpType ));
@@ -921,24 +931,31 @@
 										bind="/federationMember/metadades" id="metadades" readonly="${!canModifyFI}" rows="4" width="98%">
 										<attribute name="onChange"><![CDATA[
 							                try {
-							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
-							                    dbFactory.setNamespaceAware(true);
-							                    javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-							                    org.w3c.dom.Document newDoc = dBuilder.parse(new org.xml.sax.InputSource(new java.io.StringReader(self.getValue())));
-							                    org.w3c.dom.NodeList nl = newDoc.getChildNodes();
-							                    for (int i = 0; i < nl.getLength(); i++) {
-							                        org.w3c.dom.Node n = nl.item(i);
-							                        if (n instanceof org.w3c.dom.Element)
-							                        {
-							                        	String id = n.getAttribute("entityID");
-							                        	if (id != null)
-							                        	{
-							                        		es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
-							                        		idpPublicId.setValue( id );
-							                        	}
-							                        }
-							                    }
-							                } catch (SAXParseException e) {
+							                	IdentityProviderType idpType = es.caib.zkib.datasource.XPathUtils.getValue(self, "/federationMember/idpType");
+							                	if (idpType.equals( IdentityProviderType.SAML) ||
+							                			idpType.equals( IdentityProviderType.SOFFID))
+							                	{
+								                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+								                    dbFactory.setNamespaceAware(true);
+								                    javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+								                    org.w3c.dom.Document newDoc = dBuilder.parse(new org.xml.sax.InputSource(new java.io.StringReader(self.getValue())));
+								                    org.w3c.dom.NodeList nl = newDoc.getChildNodes();
+								                    for (int i = 0; i < nl.getLength(); i++) {
+								                        org.w3c.dom.Node n = nl.item(i);
+								                        if (n instanceof org.w3c.dom.Element)
+								                        {
+								                        	String id = n.getAttribute("entityID");
+								                        	if (id != null)
+								                        	{
+								                        		es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+								                        		idpPublicId.setValue( id );
+								                        	}
+								                        }
+								                    }
+							                	} else if (idpType.equals( IdentityProviderType.OPENID_CONNECT) ) {
+							                		json = new org.json.JSONObject( self.getValue() );
+							                	}
+							                } catch (org.xml.sax.SAXParseException e) {
 							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
 							                }
 										]]>
@@ -952,12 +969,12 @@
 										width="98%"/>
 								</row>
 								<row id="oauthSecretRow">
-									<input_etiqueta value="${c:l('federacio.zul.oAuthKey')}"/>
+									<input_etiqueta value="${c:l('federacio.zul.oAuthSecret')}"/>
 									<input_password
 										bind="/federationMember/oauthSecret" lectura="${!canModifyFI}"
 										width="98%"/>
 								</row>
-								<row>
+								<row id="autoprovisionPatternRow">
 									<hbox widths="*,24px">
 										<input_etiqueta value="${c:l('federacio.zul.DomainExpression')}"/>
 										<imageclic 
@@ -968,7 +985,7 @@
 									<input_dada bind="/federationMember/domainExpression" id="domainExpression" 
 											lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
 								</row>
-								<row>
+								<row id="autoprovisionScriptRow">
 									<hbox widths="*,24px">
 										<input_etiqueta value="${c:l('federacio.zul.ScriptParse')}"/>
 										<imageclic 
@@ -1574,7 +1591,7 @@
 									}	
 									if (jaExisteix) {
 										pointer = ctx.getPointer(xpath);	
-										ctx2 = ctx.getRelativeContext(pointer);
+										ctx2 = ctx.getRelatpaiveContext(pointer);
 										// Atributs
 										// El id el mantenim..
 										ctx2.setValue("/classe", nprofile.getClasse());

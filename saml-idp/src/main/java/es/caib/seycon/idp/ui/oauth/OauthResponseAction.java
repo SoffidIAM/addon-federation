@@ -1,9 +1,6 @@
 package es.caib.seycon.idp.ui.oauth;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -16,13 +13,8 @@ import org.opensaml.saml2.core.AuthnContext;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.User;
-import com.soffid.iam.sync.service.LogonService;
-import com.soffid.iam.sync.service.ServerService;
-import com.soffid.iam.util.NameParser;
 
-import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
-import es.caib.seycon.idp.oauth.consumer.OAuthConsumer;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;

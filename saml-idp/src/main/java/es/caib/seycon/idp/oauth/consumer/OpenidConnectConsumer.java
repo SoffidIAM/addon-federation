@@ -34,6 +34,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.util.Base64;
 
 public class OpenidConnectConsumer extends OAuth2Consumer 
 {
@@ -41,6 +42,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	HashMap<String, Object> cfg = null;
 	public String accessTokenEndpoint;
 	public String authorizationBaseUrl;
+	private String userInfoEndpoint;
 	
 	public OpenidConnectConsumer(FederationMember fm)
 			throws ConsumerException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException,
@@ -82,6 +84,8 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		if (authorizationBaseUrl == null)
 			throw new InternalErrorException("Missing authorization_endpoint member in "+fm.getName()+" metadata");
 
+		userInfoEndpoint = (String) cfg.get("userinfo_endpoint");
+
 		serviceBuilder.state(secretState)
 			    .callback(returnToUrl)
 			    .build( new CustomOAuthService());
@@ -91,24 +95,61 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	public boolean verifyResponse(HttpServletRequest httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {
 		OAuth2AccessToken accessToken = parseResponse(httpReq);
 
-		String userInfo = (String) cfg.get("userinfo_endpoint");
-	    // Now let's go and ask for a protected resource!
-	    OAuthRequest request = new OAuthRequest(Verb.GET, userInfo);
-	    service.signRequest(accessToken, request);
-	    Response response = service.execute(request);
+		Map<String,String> r = (Map<String, String>) JSON.parse(accessToken.getRawResponse());
+		String idToken = r.get("id_token");
+		Map<String,String> m = new HashMap<String, String>();
+		if (idToken != null)
+		{
+			String[] split = idToken.split("\\.");
+			
+			String openIdB64 = split[1];
+			while (openIdB64.length() % 4 != 0)
+				openIdB64 += "=";
+			String openIdToken = new String(Base64.decode(openIdB64));
+			m = (Map<String, String>) JSON.parse( openIdToken);
+			if (userInfoEndpoint != null && ! userInfoEndpoint.isEmpty())
+			{
+			    OAuthRequest request = new OAuthRequest(Verb.GET, userInfoEndpoint);
+			    service.signRequest(accessToken, request);
+			    Response response =  service.execute(request);
+			    
+			    Map<String, String> m2 = (Map<String, String>) JSON.parse(response.getBody());
+			    for (String k: m2.keySet())
+			    	m.put(k, m2.get(k));
+			}
+		} 
+		else if (userInfoEndpoint == null || userInfoEndpoint.isEmpty())
+		{
+			throw new IOException("Token does not contain an open ID Connect token, and no userinfo_endpoint specified");
+		} else {
+		    // Now let's go and ask for a protected resource!
+		    OAuthRequest request = new OAuthRequest(Verb.GET, userInfoEndpoint);
+		    service.signRequest(accessToken, request);
+		    Response response =  service.execute(request);
+		    
+		    m =  (Map<String, String>) JSON.parse(response.getBody());
+
+		}
+		
 	    
-	    Map<String,String> m =  (Map<String, String>) JSON.parse(response.getBody());
-	    
-	    System.out.println("NAME = "+m.get("name"));
-	    System.out.println("EMAIL = "+m.get("email"));
-	    
-	    principal = m.get("email");
+	    attributes = new HashMap<String, Object>();
 	    attributes.putAll(m);
-	    attributes.put("givenName",  m.get("first_name"));
-	    attributes.put("sn", m.get("last_name"));
-	    
-	    
-    	return true;
+	    attributes.put("givenName", m.get("given_name"));
+	    attributes.remove("given_name");
+	    attributes.put("sn", m.get("family_name"));
+	    attributes.remove("family_name");
+	    attributes.put("EMAIL", m.get("email"));
+	    attributes.remove("email");
+	    	
+	    if (m.containsKey("email") && "true".equals (m.get("email_verified")) || Boolean.TRUE.equals(m.get("email_verified")))
+	    {
+	    	principal = m.get("email");
+	    }
+	    else
+	    {
+	    	principal = m.get("sub");
+	    }
+	    return true;
 	    
 	}
 
