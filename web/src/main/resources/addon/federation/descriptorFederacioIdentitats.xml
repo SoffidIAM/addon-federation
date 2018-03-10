@@ -69,7 +69,7 @@
 		<finder name="profile" type="profile">
 			<ejb-finder
 				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
-				method="findProfilesByFederationMember" if="${instance.federationMember != null}">
+				method="findProfilesByFederationMember" if="${instance.federationMember != null &amp;&amp; instance.federationMember.classe != null}">
 				<parameter value="${instance.federationMember}" />
 			</ejb-finder>
 			<new-instance-bean
