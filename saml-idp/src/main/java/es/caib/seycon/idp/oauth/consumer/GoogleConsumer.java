@@ -1,6 +1,5 @@
 package es.caib.seycon.idp.oauth.consumer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,19 +21,11 @@ import javax.servlet.http.HttpServletRequest;
 import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.Claim;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.github.scribejava.core.model.OAuthRequest;
-import com.github.scribejava.core.model.Response;
-import com.github.scribejava.core.model.Verb;
 import com.soffid.iam.addons.federation.common.FederationMember;
 
-import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
