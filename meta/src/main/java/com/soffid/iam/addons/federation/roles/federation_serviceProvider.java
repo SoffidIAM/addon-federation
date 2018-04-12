@@ -7,6 +7,6 @@
 package com.soffid.iam.addons.federation.roles;
 import com.soffid.mda.annotation.*;
 
-@Role (name="federation:create" )
+@Role (name="federation:serviceProvider" )
 public abstract class federation_serviceProvider {
 }

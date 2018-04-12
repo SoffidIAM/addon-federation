@@ -442,8 +442,12 @@ public abstract class FederacioService {
 			boolean autoProvision) {return null;}
 
 	@Operation(grantees={federation_serviceProvider.class})
-	@Description("Checks SAML response")
+	@Description("Validates SAML cookie")
 	SamlValidationResults validateSessionCookie(String sessionCookie) {return null;}
+
+	@Operation(grantees={federation_serviceProvider.class})
+	@Description("Expires SAML cookie")
+	void expireSessionCookie(String sessionCookie) {}
 
 	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Finds identity provider for subject")
