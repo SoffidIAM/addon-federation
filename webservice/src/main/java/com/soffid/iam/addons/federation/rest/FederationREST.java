@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.rest.json.ExpireSessionJSONRequest;
 import com.soffid.iam.addons.federation.rest.json.GenerateSAMLLogoutRequestJSON;
 import com.soffid.iam.addons.federation.rest.json.GenerateSAMLRequestJSONRequest;
 import com.soffid.iam.addons.federation.rest.json.ParseSAMLResponseJSONRequest;
@@ -72,6 +73,22 @@ public class FederationREST {
 					request.getIdentityProvider(), request.getUser(), request.getPassword(),
 					Long.parseLong(request.getSessionSeconds()));
 			return ResponseBuilder.responseOk(r);
+		} catch (Exception e) {
+			return ResponseBuilder.errorGeneric(e);
+		}
+	}
+
+	@Path("/expire-session")
+	@POST
+	public Response expireSession(ExpireSessionJSONRequest request) {
+		try {
+			// Parameters validation
+			if (request.getSessionId() == null || request.getSessionId().trim().isEmpty())
+				return ResponseBuilder.errorCustom(Status.BAD_REQUEST, "EmptySessionId");
+
+			// Authentication validation
+			federationService.expireSessionCookie(request.getSessionId());
+			return ResponseBuilder.responseOk(request);
 		} catch (Exception e) {
 			return ResponseBuilder.errorGeneric(e);
 		}

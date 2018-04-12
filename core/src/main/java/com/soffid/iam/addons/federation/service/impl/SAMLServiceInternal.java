@@ -1208,10 +1208,15 @@ public class SAMLServiceInternal {
 	}
 
 	private com.soffid.iam.api.System findDispatcher(String publicId) throws InternalErrorException {
-		for (com.soffid.iam.api.System d: dispatcherService.findDispatchersByFilter(null, ES_CAIB_SEYCON_IDP_AGENT_IDP_AGENT, null, null, null, null))
-		{
-			if (d.getParam0().equals(publicId))
-				return d;
+		com.soffid.iam.utils.Security.nestedLogin(com.soffid.iam.utils.Security.ALL_PERMISSIONS);
+		try {
+			for (com.soffid.iam.api.System d: dispatcherService.findDispatchersByFilter(null, ES_CAIB_SEYCON_IDP_AGENT_IDP_AGENT, null, null, null, null))
+			{
+				if (publicId.equals(d.getParam0()))
+					return d;
+			}
+		} finally {
+			com.soffid.iam.utils.Security.nestedLogoff();
 		}
 		return null;
 	}
@@ -1481,38 +1486,82 @@ public class SAMLServiceInternal {
 	private void updateAccountAttributes(Account account, Map<String, ? extends Object> attributes) throws InternalErrorException {
 		for (String att: attributes.keySet())
 		{
-			DataType md = additionalData.findSystemDataType(account.getSystem(), att);
-			Object v = attributes.get(att);
-			if (v != null)
+			if (att.length() < 25)
 			{
-				if (md == null)
+				DataType md = additionalData.findSystemDataType(account.getSystem(), att);
+				Object v = attributes.get(att);
+				if (v != null)
 				{
-					md = new DataType();
-					md.setSystemName(account.getSystem());
-					md.setCode(att);
-					md.setLabel(att);
-					md.setType(TypeEnumeration.STRING_TYPE);
-					md.setOrder(0L);
-					additionalData.create(md);
+					if (md == null)
+					{
+						md = new DataType();
+						md.setSystemName(account.getSystem());
+						md.setCode(att);
+						md.setLabel(att);
+						md.setType(TypeEnumeration.STRING_TYPE);
+						md.setOrder(0L);
+						additionalData.create(md);
+					}
+	
+					UserData data = new UserData();
+					data.setAccountName(account.getName());
+					data.setSystemName(account.getSystem());
+					data.setAttribute(att);
+					if ( v instanceof Calendar )
+					{
+						data.setValue( DateFormat.getDateTimeInstance().format((Calendar) v ));
+					}
+					else if ( v instanceof Date )
+					{
+						data.setValue( DateFormat.getDateTimeInstance().format((Date) v ));
+					}
+					else
+					{
+						data.setValue(v.toString());
+					}
+					accountService.updateAccountAttribute(data);
 				}
+			}
+		}
+	}
 
-				UserData data = new UserData();
-				data.setAccountName(account.getName());
-				data.setSystemName(account.getSystem());
-				data.setAttribute(att);
-				if ( v instanceof Calendar )
+	public void expireSessionCookie(String cookie) throws InternalErrorException, UnsupportedEncodingException, NoSuchAlgorithmException {
+		String value = URLDecoder.decode(cookie,"UTF-8");
+		
+		// First. Remove Federation core cookie
+		String[] split = value.split(":");
+		if (split.length == 2)
+		{
+			SamlRequestEntity entity = samlRequestEntityDao.findByExternalId(split[0]);
+			if (entity != null) {
+				entity.setExpirationDate(new Date());
+				samlRequestEntityDao.update(entity);
+				User u = userService.findUserByUserName(entity.getUser());
+				for (Session sessio: sessionService.getActiveSessions(u.getId()))
 				{
-					data.setValue( DateFormat.getDateTimeInstance().format((Calendar) v ));
+					if (sessio.getUrl() != null)
+					{
+						sessionService.destroySession(sessio);
+					}
+					
 				}
-				else if ( v instanceof Date )
+			}
+		}
+		// Second. Remove IDP session generated  cookie
+		int separator = value.indexOf('_');
+		if (separator > 0)
+		{
+			String hash = value.substring(separator+1);
+			Long id = Long.decode(value.substring(0, separator));
+			for (Session sessio: sessionService.getActiveSessions(id))
+			{
+				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				String digestString = Base64.encodeBytes(digest);
+				if (digestString.equals(hash))
 				{
-					data.setValue( DateFormat.getDateTimeInstance().format((Date) v ));
+					sessionService.destroySession(sessio);
 				}
-				else
-				{
-					data.setValue(v.toString());
-				}
-				accountService.updateAccountAttribute(data);
+				
 			}
 		}
 	}

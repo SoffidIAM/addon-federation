@@ -1772,4 +1772,9 @@ public class FederacioServiceImpl
 		return getDelegate().findAccountOwner(principalName, identityProvider, properties, autoProvision);
 	}
 
+	@Override
+	protected void handleExpireSessionCookie(String sessionCookie) throws Exception {
+		getDelegate().expireSessionCookie(sessionCookie);
+	}
+
 }
