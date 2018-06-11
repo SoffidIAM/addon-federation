@@ -603,12 +603,17 @@
 				}
 
 				void generateMetadata() {
+					
+					// This method is only invoked by the SP form.
+					// This metadata generation is only valid for SP internal.
+					// The metadata of the SP external will be copied in the meetadata field.
+					if (!sp_id_internal1.isChecked()) return;
+					
 					// Recover the form values
 					ds = form.getDataSource();
 					ctx = ds.getJXPathContext();
 					idpType = ctx.getValue("/federationMember/idpType");
-					if (! IdentityProviderType.SOFFID.equals(idpType))
-						return;
+					
 					formPublicId = ctx.getValue("/federationMember/publicId");
 					formHostName = ctx.getValue("/federationMember/hostName");
 					formStandardPort = ctx.getValue("/federationMember/standardPort");
@@ -690,7 +695,6 @@
 				void enableIDPComponents ()
 				{
 					IdentityProviderType idpType = es.caib.zkib.datasource.XPathUtils.getValue(form, "/federationMember/idpType");
-					System.out.println("idptype = "+idpType.toString());
 					marcat = IdentityProviderType.SOFFID.equals(idpType);
 					if (marcat == null) marcat = false;
 					hostname.getFellow("dada").setDisabled(!marcat);
@@ -777,6 +781,12 @@
 					{
 						c.setVisible(visible);
 						c = c.getNextSibling();
+					}
+					
+					if (sp_id_internal1.isChecked()) {
+						sp_metadades.setDisabled(true);
+					} else {
+						sp_metadades.setDisabled(false);
 					}
 				}	
 
@@ -1214,7 +1224,6 @@
 											sp_assertionPath.setDisabled(!self.isChecked());
 											sp_id_disableSSL.setDisabled(!self.isChecked());
 											sp_certificatechain.setDisabled(!self.isChecked());
-											sp_metadades.setDisabled(self.isChecked());
 											sp_organization.getFellow("dada").setDisabled(!self.isChecked());
 											sp_contact.getFellow("dada").setDisabled(!self.isChecked());
 											Vbox pbox = sp_r_publicKey;
