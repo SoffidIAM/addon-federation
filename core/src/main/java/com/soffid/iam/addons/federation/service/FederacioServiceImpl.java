@@ -1674,6 +1674,8 @@ public class FederacioServiceImpl
 				pwcc.close();
 				
 				return new String [] { swpr.toString(), swpu.toString(), swcc.toString()};
+			} else {
+				throw new SeyconException(Messages.getString("FederacioServiceImpl.CertificateWithoutPrivateKey")); //$NON-NLS-1$
 			}
 		}
 		return null;
