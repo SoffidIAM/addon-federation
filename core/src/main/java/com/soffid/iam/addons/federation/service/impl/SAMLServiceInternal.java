@@ -686,8 +686,8 @@ public class SAMLServiceInternal {
 
 		// Unmarshall
 		UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-		req = (AuthnRequest) unmarshallerFactory.getUnmarshaller(req.getDOM()).unmarshall(req.getDOM());
-		return marshallerFactory.getMarshaller(req).marshall(req);
+		XMLObject req2 = unmarshallerFactory.getUnmarshaller(req.getDOM()).unmarshall(req.getDOM());
+		return marshallerFactory.getMarshaller(req).marshall(req2);
 
 	}
 
