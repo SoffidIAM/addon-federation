@@ -1604,7 +1604,7 @@
 									}	
 									if (jaExisteix) {
 										pointer = ctx.getPointer(xpath);	
-										ctx2 = ctx.getRelatpaiveContext(pointer);
+										ctx2 = ctx.getRelativeContext(pointer);
 										// Atributs
 										// El id el mantenim..
 										ctx2.setValue("/classe", nprofile.getClasse());
