@@ -255,7 +255,7 @@ public class SAMLServiceInternal {
 				if (assertion.isSigned() || response.isEmpty())
 					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 				else
-					result.setFailureReason("Response or assertion are not signed. Signatue is required");
+					result.setFailureReason("Response or assertion are not signed. Signature is required");
 			}
 		}
 		
@@ -578,43 +578,50 @@ public class SAMLServiceInternal {
 			req.setID(newID);
 			req.setIssueInstant(new DateTime ());
 			NameID nameId = ((SAMLObjectBuilder<NameID>) builderFactory.getBuilder(NameID.DEFAULT_ELEMENT_NAME)).buildObject();
-			req.setNameID(nameId);
-			req.setReason(forced ? "urn:oasis:names:tc:SAML:2.0:logout:udmin": "urn:oasis:names:tc:SAML:2.0:logout:user");
 			nameId.setValue(userName);
+			req.setNameID(nameId);
+
+			req.setReason(forced ? "urn:oasis:names:tc:SAML:2.0:logout:udmin": "urn:oasis:names:tc:SAML:2.0:logout:user");
 			
 			Issuer issuer = ( (SAMLObjectBuilder<Issuer>) builderFactory.getBuilder(Issuer.DEFAULT_ELEMENT_NAME)).buildObject();
 			issuer.setValue( serviceProvider );
 			
 			req.setIssuer( issuer );
 
-			Element xml = sign (serviceProvider, builderFactory, req);
 			
-			String xmlString = generateString(xml);
-			
-			r.getParameters().put("RelayState", newID);
-			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-			r.getParameters().put("SAMLRequest", encodedRequest);
-
+			String encodedRequest = null;
 			for (SingleLogoutService sss : idpssoDescriptor.getSingleLogoutServices()) {
 				if (sss.getBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI) &&  backChannel) { // Max GET length is usually 8192
 					r.setMethod(SAMLConstants.SAML2_SOAP11_BINDING_URI);
 					r.setUrl(sss.getLocation());
+
+					encodedRequest = signAndEncode(serviceProvider, req, sss);
 					break;
 				}
 				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
-						encodedRequest.length() <= 4000 && !backChannel) { // Max GET length is usually 8192
-					r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
-					r.setUrl(sss.getLocation());
-					break;
+						!backChannel) { // Max GET length is usually 8192
+					encodedRequest = signAndEncode(serviceProvider, req, sss);
+					if (encodedRequest.length() <= 4000)
+					{
+						r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+						r.setUrl(sss.getLocation());
+						break;
+					}
 				}
 				if (sss.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI) && !backChannel) {
 					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
 					r.setUrl(sss.getLocation());
+					encodedRequest = signAndEncode(serviceProvider, req, sss);
 					break;
 				}
 			}
 			if (r.getUrl() == null)
 				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
+			
+			
+			r.getParameters().put("RelayState", newID);
+			r.getParameters().put("SAMLRequest", encodedRequest);
+
 
 			return r;
 		} catch (Exception e) {
@@ -624,7 +631,26 @@ public class SAMLServiceInternal {
 				throw new InternalErrorException(e.getMessage(), e);
 		}
 	}
+
+	private String signAndEncode(String serviceProvider, LogoutRequest req, SingleLogoutService sss)
+			throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
+			NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException,
+			MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException,
+			SAXException, ParserConfigurationException, TransformerConfigurationException,
+			TransformerFactoryConfigurationError, TransformerException, UnsupportedEncodingException {
+		String encodedRequest;
+		req.setDestination( sss.getLocation() );
+		Element xml = sign (serviceProvider, builderFactory, req);
+		String xmlString = generateString(xml);
+		encodedRequest  = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+		return encodedRequest;
+	}
 	
+	private String generateLogoutRequest(LogoutRequest req) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private String generateRandomId() throws NoSuchAlgorithmException {
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
         Hex encoder = new Hex();
