@@ -601,7 +601,7 @@ public class SAMLServiceInternal {
 				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
 						!backChannel) { // Max GET length is usually 8192
 					encodedRequest = signAndEncode(serviceProvider, req, sss);
-					if (encodedRequest.length() <= 4000)
+					if (encodedRequest.length() <= 2000)
 					{
 						r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 						r.setUrl(sss.getLocation());
