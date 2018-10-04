@@ -86,6 +86,10 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
 		generator = new SecureRandomIdentifierGenerator();
 	}
 
+    private static String[] candidateNameIdFormat = new String [] {
+			NameID.PERSISTENT, NameID.TRANSIENT,NameID.UNSPECIFIED,NameID.EMAIL
+    };
+    
 	/**
      * Process and respond to a SAML LogoutRequest message. This is a very simplified version
      * because it doesn't propagate the logout to any SPs. It just handles the IdP session(s)
@@ -95,6 +99,7 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
      * @param outTransport  outgoing transport object
      * @throws ProfileException if an error occurs during profile execution
      */
+    
     protected void processLogoutRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport)
             throws ProfileException {
 
@@ -120,9 +125,32 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
             // Get session corresponding to NameID. This is limited to one session, which means
             // we can't know if more than one might have been issued for a particular NameID.
             SessionManager<Session> sessionManager = getSessionManager();
-            String nameIDIndex = getSessionIndexFromNameID(requestContext.getSubjectNameIdentifier());
-            log.debug("Querying SessionManager based on NameID '{}'", nameIDIndex);
-            Session indexedSession = sessionManager.getSession(nameIDIndex);
+            NameID nameId = requestContext.getSubjectNameIdentifier();
+            String nameIDIndex = null;
+            Session indexedSession = null;
+            if (nameId.getFormat() == null)
+            {
+	            indexedSession = sessionManager.getSession(nameId.getValue());
+            	if (indexedSession == null)
+            	{
+	            	for (String nameFormat: candidateNameIdFormat)
+	            	{
+	            		nameId.setFormat(nameFormat);
+	            		nameId.setNameQualifier( requestContext.getLocalEntityId() );
+	                	nameIDIndex = getSessionIndexFromNameID( nameId );
+	    	            log.debug("Querying SessionManager based on NameID '{}'", nameIDIndex);
+	    	            indexedSession = sessionManager.getSession(nameIDIndex);
+	                	if (indexedSession != null)
+	                		break;
+	            	}
+            	}
+            }
+            else
+            {
+            	nameIDIndex = getSessionIndexFromNameID( nameId );
+	            log.debug("Querying SessionManager based on NameID '{}'", nameIDIndex);
+	            indexedSession = sessionManager.getSession(nameIDIndex);
+            }
             
             Status status = null;
             
@@ -130,27 +158,15 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
                 // No session matched.
                 log.info("LogoutRequest did not reference an active session.");
                 status = buildStatus(StatusCode.SUCCESS_URI, null, null);
-//                status = buildStatus(StatusCode.REQUESTER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI, null);
-            } else if (!indexedSession.getServicesInformation().keySet().contains(
-                    requestContext.getInboundMessageIssuer())) {
-                // Session matched, but it's not associated with the requesting SP.
-                indexedSession = null;
-                log.warn("Requesting entity is not a participant in the referenced session.");
-                // status = buildStatus(StatusCode.REQUESTER_URI, StatusCode.UNKNOWN_PRINCIPAL_URI, null);
-                status = buildStatus(StatusCode.SUCCESS_URI, null, null);
             } else if (getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
                 // For SOAP, there's no active session and all we're doing is destroying the matched one.
                 // If there are other service records attached, then it's a partial logout.
-                if (indexedSession.getServicesInformation().keySet().size() > 1) {
-                    status = requestLogout(requestContext, indexedSession);
-                } else {
-                	try {
-						new Autenticator().notifyLogout (indexedSession);
-					} catch (Exception e) {
-						log.warn("Error closing soffid session", e);
-					}
-                    status = buildStatus(StatusCode.SUCCESS_URI, null, null);
-                }
+                 status = requestLogout(requestContext, indexedSession);
+            	try {
+					new Autenticator().notifyLogout (indexedSession);
+				} catch (Exception e) {
+					log.warn("Error closing soffid session", e);
+				}
             } else {
                 // Get active session and compare it to the matched one.
                 Session activeSession = getUserSession(inTransport);
@@ -352,7 +368,7 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
 		HttpClientBuilder clientBuilder = new HttpClientBuilder();
 		clientBuilder.setHttpsProtocolSocketFactory(new TLSProtocolSocketFactory(null, buildNoTrustTrustManager()));
 		 
-		HttpSOAPClient soapClient = new HttpSOAPClient(clientBuilder.buildClient(), getParserPool());
+		HttpSOAPClient soapClient = new DebugHttpSoapClient(clientBuilder.buildClient(), getParserPool());
 		 
 		// Send the message
 		try {
