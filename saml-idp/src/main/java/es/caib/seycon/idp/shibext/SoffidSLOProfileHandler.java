@@ -368,7 +368,8 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
 		HttpClientBuilder clientBuilder = new HttpClientBuilder();
 		clientBuilder.setHttpsProtocolSocketFactory(new TLSProtocolSocketFactory(null, buildNoTrustTrustManager()));
 		 
-		HttpSOAPClient soapClient = new DebugHttpSoapClient(clientBuilder.buildClient(), getParserPool());
+//		HttpSOAPClient soapClient = new DebugHttpSoapClient(clientBuilder.buildClient(), getParserPool());
+		HttpSOAPClient soapClient = new HttpSOAPClient(clientBuilder.buildClient(), getParserPool());
 		 
 		// Send the message
 		try {
