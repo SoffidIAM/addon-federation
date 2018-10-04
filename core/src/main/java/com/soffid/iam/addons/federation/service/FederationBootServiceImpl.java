@@ -90,12 +90,13 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		DataSource ds = (DataSource) applicationContext.getBean("dataSource"); //$NON-NLS-1$
 		final Connection conn = ds.getConnection();
 		try {
-			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_REGISTER=0 WHERE ALLOW_REGISTER IS NULL"); //$NON-NLS-1$
-			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_RECOVER=0 WHERE ALLOW_RECOVER IS NULL"); //$NON-NLS-1$
-			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_CERTIFICATE=0 WHERE ALLOW_CERTIFICATE IS NULL"); //$NON-NLS-1$
-			executeSentence(conn, "UPDATE SC_FEDERA SET FED_KERBEROS=0 WHERE FED_KERBEROS IS NULL"); //$NON-NLS-1$
-			executeSentence(conn, "UPDATE SC_FEDERA SET FED_DISSSL=0 WHERE FED_DISSSL IS NULL"); //$NON-NLS-1$
-			executeSentence(conn, "UPDATE SC_FEDERA SET FED_INTERN=0 WHERE FED_INTERN IS NULL"); //$NON-NLS-1$
+			String f = conn.getMetaData().getDatabaseProductName().equalsIgnoreCase("PostgreSQL") ? "false" : "0";
+			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_REGISTER="+f+" WHERE ALLOW_REGISTER IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_RECOVER="+f+" WHERE ALLOW_RECOVER IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET ALLOW_CERTIFICATE="+f+" WHERE ALLOW_CERTIFICATE IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET FED_KERBEROS="+f+" WHERE FED_KERBEROS IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET FED_DISSSL="+f+" WHERE FED_DISSSL IS NULL"); //$NON-NLS-1$
+			executeSentence(conn, "UPDATE SC_FEDERA SET FED_INTERN="+f+" WHERE FED_INTERN IS NULL"); //$NON-NLS-1$
 		} finally {
 			conn.close ();
 		}
