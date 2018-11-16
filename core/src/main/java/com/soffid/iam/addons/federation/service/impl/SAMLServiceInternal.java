@@ -616,7 +616,7 @@ public class SAMLServiceInternal {
 				}
 			}
 			if (r.getUrl() == null)
-				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
+				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s", idp.getEntityID()));
 			
 			
 			r.getParameters().put("RelayState", newID);
