@@ -1306,6 +1306,16 @@ public class SAMLServiceInternal {
 
 	public SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
 			String user, String password, long sessionSeconds ) throws InternalErrorException, RemoteException, NoSuchAlgorithmException {
+		Account acc = accountService.findAccount(user, identityProvider);
+		if (acc == null)
+		{
+			SamlValidationResults r = new SamlValidationResults();
+			r.setValid(false);
+			r.setFailureReason("Unknown account");
+			r.setIdentityProvider(identityProvider);
+			r.setPrincipalName(user);
+			return r;
+		}
 		boolean v = passwordService.checkPassword(user, identityProvider, new Password(password), 
 				true, false);
 		SamlValidationResults r = new SamlValidationResults();
