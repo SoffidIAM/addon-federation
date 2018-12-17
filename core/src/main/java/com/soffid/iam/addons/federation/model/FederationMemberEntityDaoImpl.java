@@ -81,12 +81,24 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Propis
 			target.setClientCertificatePort(idp.getClientCertificatePort());
 			
-			target.setEnableKerberos(idp.getEnableKerberos());
+			target.setAuthenticationMethods(idp.getAuthenticationMethods());
+			if (target.getAuthenticationMethods() == null)
+			{
+				StringBuffer s = new StringBuffer();
+				s.append("P ");
+				if (idp.isAllowCertificate())
+					s.append("C ");
+				if (idp.getEnableKerberos() != null && idp.getEnableKerberos().booleanValue())
+					s.append("K ");
+				if (idp.getIdentityBroker() != null && idp.getIdentityBroker().booleanValue())
+					s.append("E ");
+				target.setAuthenticationMethods(s.toString().trim());
+				
+			}
 			target.setKerberosDomain(idp.getKerberosDomain());
 			target.setSsoCookieDomain(idp.getSsoCookieDomain());
 			target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSessionTimeout(idp.getSessionTimeout());
-			target.setIdentityBroker(idp.getIdentityBroker());
 			target.setRegisterExternalIdentities(idp.getRegisterExternalIdentities());
 			// Service providers
 			if (idp.getServiceProviderVirtualIdentityProvider() != null) {
@@ -114,7 +126,18 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setPublicKey(vip.getPublicKey());
 			target.setCertificateChain(vip.getCertificateChain());
 			
-			target.setEnableKerberos(vip.getEnableKerberos());
+			target.setAuthenticationMethods(vip.getAuthenticationMethods());
+			if (target.getAuthenticationMethods() == null)
+			{
+				StringBuffer s = new StringBuffer();
+				s.append("P ");
+				if (vip.isAllowCertificate())
+					s.append("C ");
+				if (vip.getEnableKerberos() != null && vip.getEnableKerberos().booleanValue())
+					s.append("K ");
+				target.setAuthenticationMethods(s.toString().trim());
+				
+			}
 			target.setKerberosDomain(vip.getKerberosDomain());
 			target.setSsoCookieDomain(vip.getSsoCookieDomain());
 			target.setSsoCookieName(vip.getSsoCookieName());
@@ -143,10 +166,16 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Obtenim l'instància
 			ServiceProviderEntity sp = (ServiceProviderEntity) source;
 			// Heretats de VIP
+			target.setServiceProviderType(sp.getServiceProviderType());
 			target.setPublicId(sp.getPublicId());
 			target.setNameIdFormat(sp.getNameIdFormat());
 			target.setCertificateChain(sp.getCertificateChain());
 			target.setUidExpression(sp.getUidExpression());
+			target.setOpenidFlow(sp.getOpenidFlow());
+			target.setOpenidGrantType(sp.getOpenidGrantType());
+			target.setOpenidClientId(sp.getOpenidClientId());
+			target.setOpenidSecret(sp.getOpenidSecret());
+			target.setOpenidUrl(sp.getOpenidUrl());
 			// Virtual Identity Provider (informatiu)
 			// Service providers
 			if (sp.getServiceProviderVirtualIdentityProvider() != null) {
@@ -169,7 +198,18 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 	private void generateRegisterValues(
 			com.soffid.iam.addons.federation.common.FederationMember target,
 			VirtualIdentityProviderEntity vip) {
-		target.setAllowCertificate(vip.isAllowCertificate());
+		target.setAuthenticationMethods(vip.getAuthenticationMethods());
+		if (target.getAuthenticationMethods() == null)
+		{
+			StringBuffer s = new StringBuffer();
+			s.append("P ");
+			if (vip.isAllowCertificate())
+				s.append("C ");
+			if (vip.getEnableKerberos() != null && vip.getEnableKerberos().booleanValue())
+				s.append("K ");
+			target.setAuthenticationMethods(s.toString().trim());
+			
+		}
 		target.setAllowRecover(vip.isAllowRecover());
 		target.setAllowRegister(vip.isAllowRegister());
 		target.setUserTypeToRegister(vip.getUserTypeToRegister() == null? null :
@@ -296,11 +336,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setDisableSSL(source.getDisableSSL());
 			
 			idp.setKerberosDomain(source.getKerberosDomain());
-			idp.setEnableKerberos(source.getEnableKerberos());
+			idp.setAuthenticationMethods(source.getAuthenticationMethods());
 			idp.setSsoCookieDomain(source.getSsoCookieDomain());
 			idp.setSsoCookieName(source.getSsoCookieName());
 			idp.setSessionTimeout(source.getSessionTimeout());
-			idp.setIdentityBroker(source.getIdentityBroker());
 			idp.setRegisterExternalIdentities(source.getRegisterExternalIdentities());
 			
 			if (source.getServiceProvider() != null) {
@@ -355,7 +394,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				vip.setCertificateChain(source.getCertificateChain());
 
 			vip.setKerberosDomain(source.getKerberosDomain());
-			vip.setEnableKerberos(source.getEnableKerberos());
+			vip.setAuthenticationMethods(source.getAuthenticationMethods());
 			vip.setSsoCookieDomain(source.getSsoCookieDomain());
 			vip.setSsoCookieName(source.getSsoCookieName());
 
@@ -412,11 +451,17 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Obtenim l'instància
 			ServiceProviderEntity sp = (ServiceProviderEntity) target;
 			// Heretats de VIP
+			sp.setServiceProviderType( source.getServiceProviderType() );
 			sp.setPublicId(source.getPublicId());
 			sp.setNameIdFormat(source.getNameIdFormat());
 			sp.setUidExpression(source.getUidExpression());
 			if (source.getCertificateChain() != null)
 				sp.setCertificateChain(source.getCertificateChain());
+			sp.setOpenidFlow(source.getOpenidFlow());
+			sp.setOpenidGrantType(source.getOpenidGrantType());
+			sp.setOpenidClientId(source.getOpenidClientId());
+			sp.setOpenidSecret(source.getOpenidSecret());
+			sp.setOpenidUrl(source.getOpenidUrl());
 			
 			// Aquí no guardem la relació SP-VIP (ServiceProviderVirtualIdentityProviderEntity)
 			
@@ -428,7 +473,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 	private void updateRegisterAttributes(
 			com.soffid.iam.addons.federation.common.FederationMember source,
 			VirtualIdentityProviderEntity vip)  {
-		vip.setAllowCertificate(source.isAllowCertificate());
+		vip.setAuthenticationMethods(source.getAuthenticationMethods());
 		vip.setAllowRecover(source.isAllowRecover());
 		vip.setAllowRegister(source.isAllowRegister());
 		vip.setMailHost(source.getMailHost());

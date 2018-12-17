@@ -31,7 +31,7 @@ public class PasswordChangeForm extends BaseForm {
             {
             	session.setAttribute("changepass-return-url", req.getParameter("return"));
             }
-            String user = (String) session.getAttribute("seu-user"); //$NON-NLS-1$
+            String user = (String) session.getAttribute(SessionConstants.SEU_USER); //$NON-NLS-1$
             if (user == null) {
                 throw new ServletException(Messages.getString("PasswordChangeForm.expired.session")); //$NON-NLS-1$
             }

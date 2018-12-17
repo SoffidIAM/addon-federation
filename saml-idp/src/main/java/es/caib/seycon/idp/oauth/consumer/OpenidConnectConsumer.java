@@ -86,9 +86,10 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 
 		userInfoEndpoint = (String) cfg.get("userinfo_endpoint");
 
-		serviceBuilder.state(secretState)
+		service = serviceBuilder.state(secretState)
 			    .callback(returnToUrl)
 			    .build( new CustomOAuthService());
+
 
 	}
 

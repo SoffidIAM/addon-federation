@@ -2,6 +2,7 @@ package es.caib.seycon.idp.ui.oauth;
 
 import java.io.IOException;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -16,6 +17,7 @@ import com.soffid.iam.api.User;
 
 import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -83,10 +85,19 @@ public class OauthResponseAction extends HttpServlet {
 
    			if (u == null)
    				throw new InternalErrorException("Not authorized");
-			Autenticator auth = new Autenticator();
-			String account = auth.getUserAccount(u.getUserName());
-            auth.autenticate(account, req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, consumer.getRelyingParty(), true);
 
+    		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+    		Autenticator auth = new Autenticator();
+    		String account = auth.getUserAccount(u.getUserName());
+    		ctx.authenticated(account, "E");
+    		ctx.store(req);
+    		if ( ctx.isFinished())
+    		{
+	            auth.autenticate2(account, getServletContext(), req, resp, ctx.getUsedMethod(), consumer.getRelyingParty(), true);
+    		} else {
+    		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+    		    dispatcher.forward(req, resp);
+    		}
 		} catch (InternalErrorException e) {
 			generateError(req, resp, e.getMessage());
 		} catch (Exception e) {

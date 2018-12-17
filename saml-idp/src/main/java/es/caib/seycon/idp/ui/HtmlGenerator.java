@@ -2,6 +2,7 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -22,12 +23,16 @@ import org.opensaml.saml2.metadata.Organization;
 import org.opensaml.saml2.metadata.OrganizationDisplayName;
 import org.opensaml.saml2.metadata.OrganizationURL;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.idp.textformatter.TextFormatter;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class HtmlGenerator {
     public static final String ORGANIZATION_NAME = "seu-organization-name"; //$NON-NLS-1$
@@ -52,7 +57,7 @@ public class HtmlGenerator {
     }
     
     public HtmlGenerator(ServletContext ctx, HttpServletRequest request)
-            throws ServletException {
+            throws ServletException, IOException {
         internalParams = new HashMap<String, String>();
         langs = new LinkedList<Locale>();
 
@@ -94,6 +99,14 @@ public class HtmlGenerator {
         String entityId = (String) session
                 .getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
 
+        Collection<FederationMember> members;
+		try {
+			members = new RemoteServiceLocator().getFederacioService()
+					.findFederationMemberByEntityGroupAndPublicIdAndTipus(null, entityId, "S");
+		} catch (InternalErrorException e1) {
+			throw new ServletException("Error getting server properties", e1);
+		}
+        FederationMember fm = members.isEmpty() ? null: members.iterator().next();
         EntityDescriptor md = HttpServletHelper.getRelyingPartyMetadata(
                 entityId, relyingPartyConfigurationManager);
 
@@ -130,7 +143,7 @@ public class HtmlGenerator {
                 internalParams.put("organizationUrl", selectLocalized(urls2)); //$NON-NLS-1$
                 if (orgName == null)
                     header = String.format (rb.getString("login.wellcome2"),  //$NON-NLS-1$
-                    		md.getEntityID()) ;
+                    		entityId) ;
                 else
                 	header = String.format (rb.getString("login.wellcome"),  //$NON-NLS-1$
                 		orgName) ;
@@ -140,8 +153,12 @@ public class HtmlGenerator {
                 header = String.format (rb.getString("login.wellcome2"),  //$NON-NLS-1$
                 		md.getEntityID()) ;
             }
+        } else if (fm != null) {
+            header = String.format (rb.getString("login.wellcome"), entityId) ; //$NON-NLS-1$
+            internalParams.put("organizationName", fm.getOrganization()); //$NON-NLS-1$
+            internalParams.put("organizationUrl", ""); //$NON-NLS-1$
         } else {
-            header = String.format (rb.getString("login.wellcome"), (String) session.getAttribute(ORGANIZATION_NAME)) ; //$NON-NLS-1$
+            header = String.format (rb.getString("login.wellcome"), entityId) ; //$NON-NLS-1$
             internalParams.put("organizationName", (String) session.getAttribute(ORGANIZATION_NAME)); //$NON-NLS-1$
             internalParams.put("organizationUrl", (String) session.getAttribute(ORGANIZATION_URL)); //$NON-NLS-1$
         }

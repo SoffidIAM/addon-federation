@@ -21,6 +21,7 @@ import com.soffid.iam.addons.federation.service.FederacioService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
@@ -78,9 +79,20 @@ public class SAMLSSOPostServlet extends BaseForm {
 			}
 			else
 			{
-				Autenticator auth = new Autenticator();
-				String account = auth.getUserAccount(sl.getUser().getUserName());
-			    auth.autenticate(account, req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, true);
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        		ctx.authenticated(sl.getUser().getUserName(), "E");
+        		ctx.store(req);
+        		if ( ctx.isFinished())
+        		{
+					Autenticator auth = new Autenticator();
+					String account = auth.getUserAccount(sl.getUser().getUserName());
+					auth.autenticate2(account, getServletContext(), req, resp, ctx.getUsedMethod(), true);
+        		}
+        		else
+        		{
+        		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+        		    dispatcher.forward(req, resp);
+        		}
 			}
 		} catch (Exception e) {
 			req.setAttribute("ERROR", e.toString());

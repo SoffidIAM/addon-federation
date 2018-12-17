@@ -14,7 +14,7 @@ sl = com.soffid.iam.addons.federation.FederationServiceLocator.instance();
 fs = sl.getFederacioService ();
 
 
-req = fs.generateSamlRequest ("test", "soffid-idp", "admin2", 3600 );
+req = fs.generateSamlRequest ("test", "soffid-idp", null, 3600 );
 
 method.value = req.getMethod();
 url.value = req.getUrl();

@@ -20,6 +20,7 @@ import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
 import es.caib.seycon.idp.oauth.consumer.OAuthConsumer;
 import es.caib.seycon.idp.oauth.consumer.OpenidConnectConsumer;
 import es.caib.seycon.idp.openid.consumer.OpenidConsumer;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 
@@ -49,13 +50,13 @@ public class OauthRequestAction extends HttpServlet {
 		HttpSession session = req.getSession();
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 
-        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (! amf.allowBroker())
+		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        if (! ctx.getNextFactor().contains("E"))
             throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
 
         FederationMember ip;
 		try {
-			ip = amf.getIdentityProvider();
+			ip = ctx.getIdentityProvider();
         
 	        if (ip == null)
 	        {

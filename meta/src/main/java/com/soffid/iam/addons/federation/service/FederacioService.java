@@ -61,6 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
 	com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity.class,
 	com.soffid.iam.addons.federation.model.ServiceProviderEntity.class,
 	com.soffid.iam.addons.federation.model.AttributeConditionEntity.class,
+	com.soffid.iam.addons.federation.model.ProfileEntity.class,
 	com.soffid.iam.addons.federation.model.SamlProfileEntity.class,
 	com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity.class,
 	com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity.class,
@@ -187,6 +188,7 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
+
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.FederationMember> findFederationMemberByEntityGroupAndPublicIdAndTipus(
@@ -196,6 +198,15 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
+
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public com.soffid.iam.addons.federation.common.FederationMember findFederationMemberByClientID(
+		java.lang.String clientId)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.Policy> findPolicies()

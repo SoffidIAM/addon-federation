@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ import com.soffid.iam.util.NameParser;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.consumer.OpenidConsumer;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -149,9 +151,18 @@ public class OpenIdResponseAction extends HttpServlet {
 	        	
 	        }
 	    	
-			Autenticator auth = new Autenticator();
-			String account = auth.getUserAccount(id.getIdentifier());
-            auth.autenticate(account, req, resp, AuthnContext.UNSPECIFIED_AUTHN_CTX, consumer.getRelyingParty(), true);
+    		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+    		Autenticator auth = new Autenticator();
+    		String account = auth.getUserAccount(id.getIdentifier());
+    		ctx.authenticated(account, "E");
+    		ctx.store(req);
+    		if ( ctx.isFinished())
+    		{
+	            auth.autenticate2(account, getServletContext(), req, resp, ctx.getUsedMethod(), consumer.getRelyingParty(), true);
+    		} else {
+    		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+    		    dispatcher.forward(req, resp);
+    		}
 
 		} catch (InternalErrorException e) {
 			generateError(req, resp, e.getMessage());

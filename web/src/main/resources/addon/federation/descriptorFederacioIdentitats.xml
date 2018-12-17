@@ -14,11 +14,22 @@
 				return list;
 			</script-finder>
 		</finder>
+		<finder name="sptype" type="sptype">
+			<script-finder>
+				list = new java.util.LinkedList();
+//				list.add (new String(""));
+				for (l: com.soffid.iam.addons.federation.common.ServiceProviderType.literals())
+				{
+					list.add (l);
+				}
+				return list;
+			</script-finder>
+		</finder>
 		<finder name="entitygroupmember" type="entitygroupmember">
 			<ejb-finder
 				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findEntityGroupByNom" if="${queryEnabled}">
-				<parameter value="${name}" />
+				<parameter value="-ARREL-" />
 			</ejb-finder>
 			<new-instance-bean
 				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
@@ -40,10 +51,7 @@
 			</ejb-finder>
 		</finder>		
 			
-	</datanode>
-
-	<datanode name="atribut">
-		<finder name="atribut" type="atribut">
+		<finder name="atribut" type="atributObject">
 			<ejb-finder
 				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findAtributs" if="${queryEnabled}">
@@ -52,8 +60,36 @@
 				<parameter value="${oid}" />
 			</ejb-finder>
 			<new-instance-bean
-				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
+				className="com.soffid.iam.addons.federation.common.Attribute" />
 		</finder>
+
+	</datanode>
+
+	<datanode name="atribut">
+		<finder name="atribut" type="atributObject">
+			<ejb-finder
+				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
+				method="findAtributs" if="${queryEnabled}">
+				<parameter value="${name}" />
+				<parameter value="${shortname}" />
+				<parameter value="${oid}" />
+			</ejb-finder>
+		</finder>
+	</datanode>
+
+	<datanode name="atributObject">
+		<ejb-handler
+			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
+			<insert-method method="create" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<delete-method method="delete">
+				<parameter value="${instance}" />
+			</delete-method>
+			<update-method method="update">
+				<parameter value="${instance}" />
+			</update-method>
+		</ejb-handler>
 	</datanode>
 
 	<datanode name="entitygroupmember">
@@ -179,4 +215,20 @@
 
 	</datanode>
 	
+	<datanode name="sptype" transient="true">
+		<custom-attribute name="literal">
+			if (instance.length() == 0)
+				return "";
+			else
+				return org.zkoss.util.resource.Labels.getLabel("spType."+instance);
+		</custom-attribute>
+		<custom-attribute name="value">
+			if (instance.length() == 0)
+				return "- Select value -";
+			else
+				return com.soffid.iam.addons.federation.common.ServiceProviderType.fromString(instance);
+		</custom-attribute>
+
+	</datanode>
+
 </zkib-model>

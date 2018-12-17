@@ -9,15 +9,17 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.LogFactory;
-import org.jfree.util.Log;
 import org.opensaml.saml2.core.AuthnContext;
 
+import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -94,18 +96,38 @@ public class AuthenticationMethodFilter {
     	return config.findIdentityProviderForRelyingParty(relyingParty);
     }
 
-	public boolean allowBroker() 
-	{
-        FederationMember ip;
-		try {
-			ip = getIdentityProvider();
-		} catch (Exception e) {
-			LogFactory.getLog(getClass()).warn("Error gessing identity provider");
-			return false;
+	private Set<String> guessAuthenticationMethods(String publicId, String clientId) throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+		IdpConfig config = IdpConfig.getConfig();
+		FederationMember fm = guessFederationMember (publicId, clientId);
+
+		HashSet<String> methods = new HashSet<String>(); 
+		for ( String s: fm.getAuthenticationMethods().split(" "))
+		{
+			methods.add(s);
 		}
-        
-        if (ip == null) return false;
-    	if (ip.getIdentityBroker() != null && ! ip.getIdentityBroker().booleanValue()) return false;
-    	return allowUserPassword();
+		return methods;
+
 	}
+
+	private FederationMember guessFederationMember(String publicId, String clientId) throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+		IdpConfig config = IdpConfig.getConfig();
+		EntityGroupMember m = new EntityGroupMember();
+		m.setTipus("IDP");
+		m.setFederationMember(config.getFederationMember());
+		m.setEntityGrupPare( config.getFederationMember().getEntityGroup() );
+		for (EntityGroupMember children: config.getFederationService().findChildren(m))
+		{
+			FederationMember vip = children.getFederationMember();
+			for (FederationMember sp: vip.getServiceProvider())
+			{
+				if (clientId != null && clientId.equals( sp.getOpenidClientId() ) ||
+						publicId != null && publicId.equals(sp.getPublicId()))
+				{
+					return vip;
+				}
+			}
+		}
+		return config.getFederationMember();
+	}
+
 }

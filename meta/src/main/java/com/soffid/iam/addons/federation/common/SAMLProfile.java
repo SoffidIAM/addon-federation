@@ -57,4 +57,12 @@ public class SAMLProfile {
 	@Nullable
 	public com.soffid.iam.addons.federation.common.FederationMember identityProvider;
 
+	@Nullable
+	String authorizationEndpoint;
+	
+	@Nullable
+	String tokenEndpoint;
+
+	@Nullable
+	String userInfoEndpoint;
 }

@@ -17,6 +17,7 @@ import es.caib.seycon.BadPasswordException;
 import es.caib.seycon.InvalidPasswordException;
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class PasswordChangeRequiredAction extends HttpServlet {
@@ -71,7 +72,14 @@ public class PasswordChangeRequiredAction extends HttpServlet {
             dispatcher.forward(req, resp);
         } else {
         	try {
-        		new Autenticator().autenticate(user, req, resp, AuthnContext.PPT_AUTHN_CTX, false);
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        		ctx.authenticated(user, "P");
+        		ctx.store(req);
+        		if ( ctx.isFinished())
+        		{
+        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+        			return;
+        		}
         	} catch (Exception e)
         	{
                 error = Messages.getString("PasswordChangeRequiredAction.internal.error")+e.toString(); //$NON-NLS-1$

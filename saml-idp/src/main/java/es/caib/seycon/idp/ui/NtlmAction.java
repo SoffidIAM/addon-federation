@@ -14,6 +14,7 @@ import com.soffid.iam.sync.engine.kerberos.KerberosManager;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.comu.Challenge;
 import es.caib.seycon.ng.comu.Sessio;
@@ -82,7 +83,14 @@ public class NtlmAction extends HttpServlet {
 	        {
 	        	if (!account.isDisabled())
 	        	{
-	                new Autenticator().autenticate(account.getName(), req, resp, AuthnContext.KERBEROS_AUTHN_CTX, false);
+            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+            		ctx.authenticated(account.getName(), "K");
+            		ctx.store(req);
+            		if ( ctx.isFinished())
+            		{
+            			new Autenticator().autenticate2(account.getName(), getServletContext(), req, resp, ctx.getUsedMethod(), false);
+            			return;
+            		}
 	                return;
 	        	}
 	        }

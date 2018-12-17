@@ -22,4 +22,11 @@ public class Attribute {
 	@Nullable
 	public java.lang.String name;
 
+	@Nullable
+	public java.lang.String openidName;
+	
+
+	@Nullable
+	public java.lang.String value;
+
 }

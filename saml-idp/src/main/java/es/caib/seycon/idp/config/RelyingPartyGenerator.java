@@ -298,7 +298,6 @@ public class RelyingPartyGenerator {
     private void addProfiles(FederationMember fm) throws InternalErrorException {
         for (Iterator itSP = fm.getServiceProvider().iterator(); itSP.hasNext();) {
             FederationMember sp = (FederationMember) itSP.next();
-
             Element node = doc.createElementNS(RP_NAMESPACE, "RelyingParty"); //$NON-NLS-1$
             node.setAttribute("provider", fm.getPublicId()); //$NON-NLS-1$
             node.setAttribute("id", sp.getPublicId()); //$NON-NLS-1$
@@ -322,48 +321,50 @@ public class RelyingPartyGenerator {
                 .findProfilesByFederationMember(fm);
         for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
             SAMLProfile profile = (SAMLProfile) it.next();
-            Element profileNode = doc.createElementNS(RP_NAMESPACE,
-                    "ProfileConfiguration"); //$NON-NLS-1$
-            node.appendChild(profileNode);
-            SamlProfileEnumeration type = profile.getClasse();
-            profileNode.setAttribute("xsi:type", "saml:" + type.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
-
-            generateSignAssertions(profile, profileNode);
-            generateSignResponses(profile, profileNode);
-            generateSignRequests(profile, profileNode);
-
-            if (type.equals(SamlProfileEnumeration.SAML1_AR)) {
-            } else if (type.equals(SamlProfileEnumeration.SAML1_AQ)) {
-                generateOutboundArtifactType(profile, profileNode);
-                generateAssertionLifetime(profile, profileNode);
-            } else if (type.equals(SamlProfileEnumeration.SAML2_AR)) {
-                generateEncryptAssertions(profile, profileNode);
-                generateEncryptNameIds(profile, profileNode);
-            } else if (type.equals(SamlProfileEnumeration.SAML1_AQ)) {
-                generateOutboundArtifactType(profile, profileNode);
-                generateAssertionLifetime(profile, profileNode);
-                generateAssertionProxyCount(profile, profileNode);
-                generateEncryptAssertions(profile, profileNode);
-                generateEncryptNameIds(profile, profileNode);
-            } else if (type.equals(SamlProfileEnumeration.SAML2_SSO)) {
-                generateOutboundArtifactType(profile, profileNode);
-                generateAssertionLifetime(profile, profileNode);
-                generateMaximumSPSessionLifetime(profile, profileNode);
-                generateAssertionProxyCount(profile, profileNode);
-                generateEncryptAssertions(profile, profileNode);
-                generateEncryptNameIds(profile, profileNode);
-                generateSingleLogoutProfile (node);
-            } else if (type.equals(SamlProfileEnumeration.SAML2_ECP)) {
-                generateIncludeAttributeStatement(profile, profileNode);
-                generateOutboundArtifactType(profile, profileNode);
-                generateAssertionLifetime(profile, profileNode);
-                generateLocalityAddress(profile, profileNode);
-                generateLocalityDNSName(profile, profileNode);
-                generateAssertionProxyCount(profile, profileNode);
-                generateEncryptAssertions(profile, profileNode);
-                generateEncryptNameIds(profile, profileNode);
+            if (! profile.getClasse().equals( SamlProfileEnumeration.OPENID) )
+            {
+	            Element profileNode = doc.createElementNS(RP_NAMESPACE,
+	                    "ProfileConfiguration"); //$NON-NLS-1$
+	            node.appendChild(profileNode);
+	            SamlProfileEnumeration type = profile.getClasse();
+	            profileNode.setAttribute("xsi:type", "saml:" + type.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
+	
+	            generateSignAssertions(profile, profileNode);
+	            generateSignResponses(profile, profileNode);
+	            generateSignRequests(profile, profileNode);
+	
+	            if (type.equals(SamlProfileEnumeration.SAML1_AR)) {
+	            } else if (type.equals(SamlProfileEnumeration.SAML1_AQ)) {
+	                generateOutboundArtifactType(profile, profileNode);
+	                generateAssertionLifetime(profile, profileNode);
+	            } else if (type.equals(SamlProfileEnumeration.SAML2_AR)) {
+	                generateEncryptAssertions(profile, profileNode);
+	                generateEncryptNameIds(profile, profileNode);
+	            } else if (type.equals(SamlProfileEnumeration.SAML1_AQ)) {
+	                generateOutboundArtifactType(profile, profileNode);
+	                generateAssertionLifetime(profile, profileNode);
+	                generateAssertionProxyCount(profile, profileNode);
+	                generateEncryptAssertions(profile, profileNode);
+	                generateEncryptNameIds(profile, profileNode);
+	            } else if (type.equals(SamlProfileEnumeration.SAML2_SSO)) {
+	                generateOutboundArtifactType(profile, profileNode);
+	                generateAssertionLifetime(profile, profileNode);
+	                generateMaximumSPSessionLifetime(profile, profileNode);
+	                generateAssertionProxyCount(profile, profileNode);
+	                generateEncryptAssertions(profile, profileNode);
+	                generateEncryptNameIds(profile, profileNode);
+	                generateSingleLogoutProfile (node);
+	            } else if (type.equals(SamlProfileEnumeration.SAML2_ECP)) {
+	                generateIncludeAttributeStatement(profile, profileNode);
+	                generateOutboundArtifactType(profile, profileNode);
+	                generateAssertionLifetime(profile, profileNode);
+	                generateLocalityAddress(profile, profileNode);
+	                generateLocalityDNSName(profile, profileNode);
+	                generateAssertionProxyCount(profile, profileNode);
+	                generateEncryptAssertions(profile, profileNode);
+	                generateEncryptNameIds(profile, profileNode);
+	            }
             }
-
         }
     }
 

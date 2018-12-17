@@ -24,7 +24,7 @@ public class PasswordChangedForm extends BaseForm {
             super.doGet(req, resp);
             HttpSession session = req.getSession();
             
-            String user = (String) session.getAttribute("seu-user"); //$NON-NLS-1$
+            String user = (String) session.getAttribute(SessionConstants.SEU_USER); //$NON-NLS-1$
             if (user == null) {
                 throw new ServletException("Expired session"); //$NON-NLS-1$
             }

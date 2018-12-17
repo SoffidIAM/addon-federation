@@ -29,9 +29,18 @@ public abstract class AttributeEntity {
 	@ForeignKey (foreignColumn="ATP_ATT_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.AttributePolicyEntity> attributePolicy;
 
+	@Column (name="ATT_OPIDNA")
+	@Nullable
+	public java.lang.String openidName;
+	
 	@Column (name="ATT_NAME")
 	@Nullable
 	public java.lang.String name;
+	
+
+	@Column (name="ATT_EXPR", length=2000)
+	@Nullable
+	public java.lang.String value;
 	
 	@Column(name="ATT_TEN_ID")
 	@Nullable

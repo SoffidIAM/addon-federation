@@ -24,4 +24,6 @@ public class SamlProfileEnumeration {
 
 	public java.lang.String SAML_PRO="SAMLProfile";
 
+	public java.lang.String OPENID="OpenidProfile";
+
 }

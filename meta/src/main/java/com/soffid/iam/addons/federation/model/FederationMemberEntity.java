@@ -129,6 +129,7 @@ public abstract class FederationMemberEntity {
 		java.lang.Long entityGroupId) {
 	 return null;
 	}
+
 	@DaoFinder("select fm "
 			+ "from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm "
 			+ "where (fm.id=:id) and fm.tenant.id=:tenantId")
@@ -186,4 +187,5 @@ public abstract class FederationMemberEntity {
 		java.lang.String publicId) {
 	 return null;
 	}
+
 }
