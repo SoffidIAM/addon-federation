@@ -165,24 +165,40 @@ public class IdpConfig {
     	return ip;
     }
 
-    private FederationMember findIdentityProviderForyRelyingParty (EntityGroupMember entityGroupMember, String relyingPartyId) throws InternalErrorException {
+    public Collection<FederationMember> findVirtualIdentityProviders () throws InternalErrorException {
+    	Collection<FederationMember> result = new LinkedList<FederationMember>();
     	
         Collection<EntityGroupMember> entities = federationService.findChildren(entityGroupMember);
         for (Iterator<EntityGroupMember> it2 = entities.iterator(); it2.hasNext(); ) {
             EntityGroupMember egm = it2.next();
             FederationMember fm = egm.getFederationMember();
             if (fm != null && fm.getClasse().equals("V")) {
-            	for ( FederationMember serviceProvider: fm.getServiceProvider())
-            	{
-            		if (serviceProvider.getClasse().equals("S") &&
-            				relyingPartyId.equals(serviceProvider.getPublicId()))
-            			return fm;
-            	}
+            	result.add(fm);
             }
-            fm = findIdentityProviderForyRelyingParty(egm, relyingPartyId);
-            if (fm != null)
-                return fm;
         }
+        return result;
+    }
+
+    private FederationMember findIdentityProviderForyRelyingParty (EntityGroupMember entityGroupMember, String relyingPartyId) throws InternalErrorException {
+    	if (relyingPartyId != null)
+    	{
+	        Collection<EntityGroupMember> entities = federationService.findChildren(entityGroupMember);
+	        for (Iterator<EntityGroupMember> it2 = entities.iterator(); it2.hasNext(); ) {
+	            EntityGroupMember egm = it2.next();
+	            FederationMember fm = egm.getFederationMember();
+	            if (fm != null && fm.getClasse().equals("V")) {
+	            	for ( FederationMember serviceProvider: fm.getServiceProvider())
+	            	{
+	            		if (serviceProvider.getClasse().equals("S") &&
+	            				relyingPartyId.equals(serviceProvider.getPublicId()))
+	            			return fm;
+	            	}
+	            }
+	            fm = findIdentityProviderForyRelyingParty(egm, relyingPartyId);
+	            if (fm != null)
+	                return fm;
+	        }
+    	}
         return null;
     }
     
@@ -301,19 +317,18 @@ public class IdpConfig {
                 federationMember.getPrivateKey()));
 		Object object = pemParser.readObject();
 	    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-		JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
 
-	    KeyPair kp;
-        kp = converter.getKeyPair((PEMKeyPair) object);
+	    keyPair = converter.getKeyPair((PEMKeyPair) object);
 		pemParser.close();
-        Key k = kp.getPrivate();
+        Key k = keyPair.getPrivate();
         
+        JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
         if (federationMember.getCertificateChain() == null) 
         {
             throw new IOException ("Missing certificate chain"); //$NON-NLS-1$
         }
         
-        List<Certificate> certs = new LinkedList<Certificate>();
+        certs = new LinkedList<Certificate>();
 		pemParser = new PEMParser(new StringReader(
                 federationMember.getCertificateChain()));
 		do {
@@ -328,7 +343,7 @@ public class IdpConfig {
 		} while (true);
 
         if (federationMember.getPublicKey() == null) {
-    		JcaMiscPEMGenerator gen = new JcaMiscPEMGenerator(kp.getPublic());
+    		JcaMiscPEMGenerator gen = new JcaMiscPEMGenerator(keyPair.getPublic());
             StringWriter w = new StringWriter();
             PemWriter pemWriter = new PemWriter(w);
 
@@ -542,6 +557,8 @@ public class IdpConfig {
     }
     
     UpdateConfigurationThread upc = null;
+	private KeyPair keyPair;
+	private List<Certificate> certs;
     public void generateFederationConfiguration () throws FileNotFoundException, SAXException, IOException, ParserConfigurationException, TransformerException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
 
         updateMetadata();
@@ -552,5 +569,21 @@ public class IdpConfig {
         upc.doStart();
 
     }
+
+	public KeyPair getKeyPair() {
+		return keyPair;
+	}
+
+	public void setKeyPair(KeyPair keyPair) {
+		this.keyPair = keyPair;
+	}
+
+	public List<Certificate> getCerts() {
+		return certs;
+	}
+
+	public void setCerts(List<Certificate> certs) {
+		this.certs = certs;
+	}
 
 }

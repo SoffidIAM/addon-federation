@@ -5,8 +5,6 @@
 <?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
 <zk xmlns:h="http://www.w3.org/1999/xhtml">
 
-	<style src="~./styles/estil.css"/>
-
 	<zscript src="/comu/netejaCriteris.zul"/>
 
 	<zscript>
@@ -39,6 +37,9 @@
 		buit.setSignResponses(SAMLRequirementEnumeration.CONDITIONAL);
 		buit.setSignAssertions(SAMLRequirementEnumeration.NEVER);
 		buit.setSignRequests(SAMLRequirementEnumeration.CONDITIONAL);
+		buit.setUserInfoEndpoint("/userinfo");
+		buit.setTokenEndpoint("/token");
+		buit.setAuthorizationEndpoint("/authorization");
 		return buit;
 	}
 	
@@ -124,6 +125,21 @@
 			listbox.getFellow("r_maximumSPSessionLifetime").setVisible(false);		
 		}
 	
+		if (SamlProfileEnumeration.OPENID.toString().equals(classe)) {
+			listbox.getFellow("r_authorizationEndpoint").setVisible(true);
+			listbox.getFellow("r_tokenEndpoint").setVisible(true);
+			listbox.getFellow("r_userinfoEndpoint").setVisible(true);
+			listbox.getFellow("r_signRequests").setVisible(false);
+			listbox.getFellow("r_signAssertions").setVisible(false);
+			listbox.getFellow("r_signResponses").setVisible(false);
+		} else {
+			listbox.getFellow("r_authorizationEndpoint").setVisible(false);
+			listbox.getFellow("r_tokenEndpoint").setVisible(false);
+			listbox.getFellow("r_userinfoEndpoint").setVisible(false);
+			listbox.getFellow("r_signRequests").setVisible(true);
+			listbox.getFellow("r_signAssertions").setVisible(true);
+			listbox.getFellow("r_signResponses").setVisible(true);
+		 }
 	}
 	
 	void carregaDades(SAMLProfile prof) {
@@ -252,6 +268,10 @@
 		} else {
 			listbox.getFellow("maximumSPSessionLifetime").setValue("");		
 		}
+		
+		listbox.getFellow ("authorizationEndpoint").setValue ( prof.getAuthorizationEndpoint() );
+		listbox.getFellow ("tokenEndpoint").setValue ( prof.getTokenEndpoint() );
+		listbox.getFellow ("userinfoEndpoint").setValue ( prof.getUserInfoEndpoint() );
 	}
 	]]>
 	</zscript>
@@ -284,7 +304,7 @@
 			event.stopPropagation();
 		</attribute>
 
-		<grid fixedLayout="true" id="profilebox">
+		<grid fixedLayout="true" id="profilebox" sclass="">
 		<zscript><![CDATA[
 	
 			ListModelList modelSAML = new ListModelList(SamlProfileEnumeration.literals());
@@ -357,7 +377,7 @@
 							</attribute>
 						</listbox>
 					</row>
-					<row>
+					<row id="r_signResponses">
 						<input_etiqueta value="${c:l('federa_profile.zul.signResponses')}"/>
 						<listbox disabled="${!canModifyFI}" id="signResponses" mold="select" style="font-size: 12px" width="200px">
 							<listitem label="${c:l('federa_profile.zul.NEVER')}" value="${_never}"/>
@@ -368,7 +388,7 @@
 							</attribute>
 						</listbox>
 					</row>
-					<row>
+					<row id="r_signAssertions">
 						<input_etiqueta value="${c:l('federa_profile.zul.signAssertions')}"/>
 						<listbox disabled="${!canModifyFI}" id="signAssertions" mold="select" style="font-size: 12px" width="200px">
 							<listitem label="${c:l('federa_profile.zul.NEVER')}" value="${_never}"/>
@@ -381,7 +401,7 @@
 							</attribute>
 						</listbox>						
 					</row>
-					<row>
+					<row  id="r_signRequests">
 						<input_etiqueta value="${c:l('federa_profile.zul.signRequests')}"/>
 						<listbox disabled="${!canModifyFI}" id="signRequests" mold="select" style="font-size: 12px" width="200px">
 							<listitem label="${c:l('federa_profile.zul.NEVER')}" value="${_never}"/>
@@ -481,6 +501,30 @@
 						<textbox id="maximumSPSessionLifetime" maxlength="255" readonly="${!canModifyFI}" width="98%">
 							<attribute name="onChange">
 								profile.setMaximumSPSessionLifetime(self.getValue());
+							</attribute>						
+						</textbox>
+					</row>
+					<row id="r_authorizationEndpoint">
+						<input_etiqueta value="${c:l('federa_profile.zul.authorizationEndpoint')}"/>
+						<textbox maxlength="255" readonly="${!canModifyFI}" width="98%" id="authorizationEndpoint">
+							<attribute name="onChange">
+								profile.setAuthorizationEndpoint(self.getValue());
+							</attribute>						
+						</textbox>
+					</row>
+					<row id="r_tokenEndpoint">
+						<input_etiqueta value="${c:l('federa_profile.zul.tokenEndpoint')}"/>
+						<textbox maxlength="255" readonly="${!canModifyFI}" width="98%" id="tokenEndpoint">
+							<attribute name="onChange">
+								profile.setTokenEndpoint(self.getValue());
+							</attribute>						
+						</textbox>
+					</row>
+					<row id="r_userinfoEndpoint">
+						<input_etiqueta value="${c:l('federa_profile.zul.userinfoEndpoint')}"/>
+						<textbox maxlength="255" readonly="${!canModifyFI}" width="98%" id="userinfoEndpoint">
+							<attribute name="onChange">
+								profile.setUserInfoEndpoint(self.getValue());
 							</attribute>						
 						</textbox>
 					</row>

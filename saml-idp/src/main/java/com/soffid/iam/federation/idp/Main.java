@@ -11,8 +11,10 @@ import java.security.SignatureException;
 import java.security.URIParameter;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.EventListener;
+import java.util.Iterator;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
@@ -37,6 +39,8 @@ import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.util.component.LifeCycle.Listener;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.ILoggerFactory;
@@ -44,19 +48,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.ContextLoaderListener;
 import org.xml.sax.SAXException;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.SAMLProfile;
+import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
+import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
+import es.caib.seycon.idp.openid.server.TokenEndpoint;
+import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.ui.ActivateUserAction;
 import es.caib.seycon.idp.ui.ActivatedFormServlet;
 import es.caib.seycon.idp.ui.AuthenticatedFilter;
 import es.caib.seycon.idp.ui.CertificateAction;
-import es.caib.seycon.idp.ui.CertificateForm;
 import es.caib.seycon.idp.ui.DefaultServlet;
 import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.idp.ui.LoginServlet;
@@ -77,8 +87,6 @@ import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
-import es.caib.seycon.idp.ui.SignatureAction;
-import es.caib.seycon.idp.ui.SignatureForm;
 import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
 import es.caib.seycon.idp.ui.UserPasswordAction;
@@ -96,7 +104,25 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 public class Main {
 
     private Server server;
+	private Throwable lastException = null;
+	private Listener listener = new Listener() {
+		public void lifeCycleStarting(LifeCycle event) {
+		}
 
+		public void lifeCycleStarted(LifeCycle event) {
+		}
+
+		public void lifeCycleFailure(LifeCycle event, Throwable cause) {
+			lastException = cause;
+		}
+
+		public void lifeCycleStopping(LifeCycle event) {
+		}
+
+		public void lifeCycleStopped(LifeCycle event) {
+		}
+		
+	};
 
     public void stop() throws Exception {
         for (Connector c: server.getConnectors())
@@ -153,12 +179,18 @@ public class Main {
     
             // Start
             server.setSendServerVersion(false);
+            server.addLifeCycleListener(listener );
+            lastException = null;
             server.start();
     
             if (server.isFailed() || server.getHandlers()[0].isFailed())
-                System.out.println("Failed!!"); //$NON-NLS-1$
-            else
-                System.out.println("Started!!"); //$NON-NLS-1$
+            {
+            	if (lastException != null)
+            		throw new InternalErrorException("Error starting IdP service", lastException);
+            	else
+            		throw new InternalErrorException("Unknown error starting IdP service");
+            	
+            }
         } finally {
             if (oldClassLoader != null)
                 Thread.currentThread().setContextClassLoader(oldClassLoader);
@@ -256,9 +288,12 @@ public class Main {
             NoSuchAlgorithmException, CertificateException,
             InternalErrorException, InvalidKeyException, IllegalStateException,
             NoSuchProviderException, SignatureException, LoginException {
-
+    	
         ServletContextHandler ctx = new ServletContextHandler(
                 ServletContextHandler.SESSIONS);
+        
+        ctx.addLifeCycleListener(listener );
+
         ctx.setContextPath("/"); //$NON-NLS-1$
         ctx.setClassLoader(Main.class.getClassLoader());
         server.setHandler(ctx);
@@ -314,27 +349,61 @@ public class Main {
         f.setName("LanguageFilter"); //$NON-NLS-1$
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
-        // Servlets
-        ServletHolder servlet = new ServletHolder(
-                edu.internet2.middleware.shibboleth.common.profile.ProfileRequestDispatcherServlet.class);
-        servlet.setInitOrder(1);
-        servlet.setName("ProfileRequestDispatcher"); //$NON-NLS-1$
-        ctx.addServlet(servlet, "/profile/*"); //$NON-NLS-1$
+        ServletHolder servlet;
+        if (useSamldProfile())
+        {
+	        // Servlets
+	        servlet = new ServletHolder(
+	                edu.internet2.middleware.shibboleth.common.profile.ProfileRequestDispatcherServlet.class);
+	        servlet.setInitOrder(1);
+	        servlet.setName("ProfileRequestDispatcher"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, "/profile/*"); //$NON-NLS-1$
+	
+	        servlet = new ServletHolder(
+	                edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("AuthenticationEngine"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, "/AuthnEngine"); //$NON-NLS-1$
+	
+	        servlet = new ServletHolder(
+	                edu.internet2.middleware.shibboleth.idp.StatusServlet.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("Status"); //$NON-NLS-1$
+	        servlet.setInitParameter("AllowedIPs", //$NON-NLS-1$
+	                "127.0.0.1/32 ::1/128"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, "/status"); //$NON-NLS-1$
+        }
+        SAMLProfile openIdProfile = useOpenidProfile();
+        if (openIdProfile != null)
+        {
+        	servlet = new ServletHolder(
+	                AuthorizationEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("AuthorizationEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getAuthorizationEndpoint() == null ? 
+	        				"/authorization": 
+	        				openIdProfile.getAuthorizationEndpoint()); //$NON-NLS-1$
 
-        servlet = new ServletHolder(
-                edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine.class);
-        servlet.setInitOrder(2);
-        servlet.setName("AuthenticationEngine"); //$NON-NLS-1$
-        ctx.addServlet(servlet, "/AuthnEngine"); //$NON-NLS-1$
+        	servlet = new ServletHolder(
+	                TokenEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("TokenEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getTokenEndpoint() == null ? 
+	        				"/token": 
+	        				openIdProfile.getTokenEndpoint()); //$NON-NLS-1$
 
-        servlet = new ServletHolder(
-                edu.internet2.middleware.shibboleth.idp.StatusServlet.class);
-        servlet.setInitOrder(2);
-        servlet.setName("Status"); //$NON-NLS-1$
-        servlet.setInitParameter("AllowedIPs", //$NON-NLS-1$
-                "127.0.0.1/32 ::1/128"); //$NON-NLS-1$
-        ctx.addServlet(servlet, "/status"); //$NON-NLS-1$
+        	servlet = new ServletHolder(
+	                UserInfoEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("UserinfoEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getUserInfoEndpoint() == null ? 
+	        				"/userinfo": 
+	        				openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
 
+        }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
         ctx.addServlet(UserPasswordFormServlet.class,
                 UserPasswordFormServlet.URI);
@@ -343,10 +412,7 @@ public class Main {
                 PasswordChangeRequiredForm.URI);
         ctx.addServlet(PasswordChangeRequiredAction.class,
                 PasswordChangeRequiredAction.URI);
-        ctx.addServlet(CertificateForm.class, CertificateForm.URI);
         ctx.addServlet(CertificateAction.class, CertificateAction.URI);
-        ctx.addServlet(SignatureForm.class, SignatureForm.URI);
-        ctx.addServlet(SignatureAction.class, SignatureAction.URI);
         ctx.addServlet(PasswordChangeForm.class, PasswordChangeForm.URI);
         ctx.addServlet(PasswordChangeAction.class, PasswordChangeAction.URI);
         ctx.addServlet(PasswordChangedForm.class, PasswordChangedForm.URI);
@@ -391,11 +457,8 @@ public class Main {
         errorHandler.addErrorPage(401, UserPasswordFormServlet.URI);
         errorHandler.addErrorPage(500, ErrorServlet.URI);
         
-        if (c.getFederationMember().getEnableKerberos() != null &&
-        		c.getFederationMember().getEnableKerberos().booleanValue())
-        {
-            configureSpnego(ctx, c);
-        }
+        if (needsKerberos(c))
+        	configureSpnego(ctx, c);
         	
 
         /**
@@ -421,6 +484,57 @@ public class Main {
         
 
     }
+
+	private boolean needsKerberos(IdpConfig c) throws InternalErrorException {
+		if (c.getFederationMember().getAuthenticationMethods() != null &&
+				c.getFederationMember().getAuthenticationMethods().contains("K"))
+			return true;
+		
+		for (FederationMember fm: c.findVirtualIdentityProviders())
+		{
+			if (fm.getAuthenticationMethods() != null && fm.getAuthenticationMethods().contains("K"))
+				return true;
+		}
+		return false;
+	}
+
+	private SAMLProfile useOpenidProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederacioService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.OPENID)) {
+            	return profile;
+            }
+        }
+        return null;
+	}
+
+	private boolean useSamldProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederacioService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.SAML1_AR) || 
+            		type.equals(SamlProfileEnumeration.SAML2_AR) || 
+            		type.equals(SamlProfileEnumeration.SAML1_AQ) ||
+            		type.equals(SamlProfileEnumeration.SAML2_SSO) || 
+            		type.equals(SamlProfileEnumeration.SAML2_ECP)) {
+            	return true;
+            }
+        }
+        return false;
+	}
 
 	private void configureSpnego(ServletContextHandler ctx, IdpConfig c) throws FileNotFoundException,
 			IOException, NoSuchAlgorithmException, LoginException {

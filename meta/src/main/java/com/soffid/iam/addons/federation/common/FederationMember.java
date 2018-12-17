@@ -91,13 +91,11 @@ public class FederationMember {
 
 	public boolean allowRegister;
 
-	public boolean allowCertificate;
-
 	public boolean allowRecover;
 
-	@Nullable
-	public Boolean enableKerberos;
-
+	@Nullable 
+	String authenticationMethods;
+	
 	@Nullable
 	public String kerberosDomain;
 	
@@ -134,10 +132,6 @@ public class FederationMember {
 	@Nullable
 	public String assertionPath;
 
-	@Description ("Act as a identity broker (only for identity providers)")
-	@Nullable
-	Boolean identityBroker;
-
 	@Description ("Register new identities from remote identity providers")
 	@Nullable
 	Boolean registerExternalIdentities;
@@ -149,4 +143,29 @@ public class FederationMember {
 	@Description("Script to parse the user name")
 	@Nullable
 	public String scriptParse;
+
+	@Description ("Service provider type")
+	@Nullable
+	ServiceProviderType serviceProviderType;
+
+	@Description("Open ID Secret")
+	@Nullable
+	public String openidSecret;
+
+	@Description("Open ID Client Id")
+	@Nullable
+	public String openidClientId;
+
+	@Description("Open ID URL")
+	@Nullable
+	public String openidUrl;
+
+	@Description("Open ID grant type")
+	@Nullable
+	public String openidGrantType;
+
+	@Description("Open ID Flow. Implicet / Authorisation code")
+	@Nullable
+	public String openidFlow;
+
 }

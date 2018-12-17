@@ -7,8 +7,6 @@
 <?component name="input_password" macro-uri="/comu/input_password.zul"?>
 <frame xmlns:h="http://www.w3.org/1999/xhtml"> 
 
-	<style src="~./styles/estil.css"/>
-
 	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml">
 		<attribute name="onCommit">
 			esquema.hideFormulari();
@@ -42,7 +40,7 @@
 		canModifyFI = canCreateFI || canUpdateFI;
 		
 		model.getVariables().declareVariable("queryEnabled", canQueryFederacions);
-		model.getVariables().declareVariable("name", "-ARREL-");
+//		model.getVariables().declareVariable("name", "-ARREL-");
 		
 		
 				
@@ -223,7 +221,7 @@
 						javax.naming.Context context = new javax.naming.InitialContext();		
 						com.soffid.iam.addons.federation.service.ejb.FederacioService federacioService = 
 								context.lookup(com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.JNDI_NAME);
-						String[] res = federacioService.generateKeys();
+						String[] res = federacioService.generateKeys(  );
 		
 						
 						ds = form.getDataSource();
@@ -444,6 +442,7 @@
 		<tabs>
 			<tab id="p_federationMembers" label="${c:l('federacio.zul.FederationMembers')}" width="180px"/>
 			<tab id="p_politiques" label="${c:l('federacio.zul.Polatiques')}"/>
+			<tab id="p_attributes" label="${c:l('federacio.zul.attributes')}"/>
 		</tabs>
 		<tabpanels>
 			<tabpanel id="tp_federationMembers">
@@ -779,11 +778,13 @@
 
 				void enableSPComponents ()
 				{
+					ServiceProviderType type = sp_type.getSelectedItem() == null ? null : sp_type.getSelectedItem().getValue();
+					boolean openid = ServiceProviderType.OPENID_CONNECT.equals( type);
 					boolean visible = sp_id_internal1.isChecked();
-					c = sp_firstRowToHide;
+					Component c = sp_firstRowToHide;
 					while (c != null)
 					{
-						c.setVisible(visible);
+						c.setVisible(visible && !openid);
 						c = c.getNextSibling();
 					}
 					
@@ -792,7 +793,16 @@
 					} else {
 						sp_metadades.setDisabled(false);
 					}
+					
+					r_sp_saml1.setVisible(!openid);
+					r_sp_saml2.setVisible(!openid);
+					r_sp_openid1.setVisible(openid);
+					r_sp_openid2.setVisible(openid);
+					r_sp_openid3.setVisible(openid);
+					r_sp_openid4.setVisible(openid);
+					r_sp_openid5.setVisible(openid);
 				}	
+				
 
 				void enableVIPComponents ()
 				{
@@ -1099,14 +1109,65 @@
 									<input_dada bind="/federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
-									<input_etiqueta value="${c:l('federacio.zul.enableKerberos')}"/>
+									<input_etiqueta value="${c:l('federacio.zul.allowedAuthenticationMethods')}"/>
 									<div>
-										<checkbox bind="/federationMember/enableKerberos" disabled="${!canModifyFI}"
-													onCheck="">
-										</checkbox>
-										<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
-										<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+										<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/federationMember/authenticationMethods">
+											<columns>
+												<column label="${c:l('federacio.zul.firstAuthentication') }"/>
+												<column label="${c:l('federacio.zul.password') }"/>
+												<column label="${c:l('federacio.zul.kerberos') }"/>
+												<column label="${c:l('federacio.zul.broker')}"/>
+												<column label="${c:l('federacio.zul.OTP') }"/>
+												<column label="${c:l('federacio.zul.Certificate') }"/>
+											</columns>
+											<rows>
+												<row>
+													<label value="${c:l('federacio.zul.password') }"/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.P') }"> <custom-attributes type="P"/></checkbox>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.kerberos') }"/>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.K') }"> <custom-attributes type="K"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.broker') }"/>
+													<label/>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="EO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="EC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.OTP') }"/>
+													<label />
+													<label />
+													<label />
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.Certificate') }"/>
+													<label/>
+													<label/>
+													<label />
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+												</row>
+											</rows>
+										</grid>
 									</div>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
+									<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<space/>
@@ -1220,6 +1281,18 @@
 									<input_dada bind="/entityGrupPare/name" lectura="true" maxim="255" width_custom="98%"/>
 								</row>
 								<row>
+									<input_etiqueta value="${c:l('federacio.zul.spType')} :"/>
+									<listbox mold="select" bind="/federationMember/serviceProviderType" dataPath="/model:/sptype"
+										disabled="${!canModifyFI}" id="sp_type">
+										<dataitem bind="/value">
+											<listcell bind="/literal"/>
+										</dataitem>
+										<attribute name="onSelect">
+											enableSPComponents();
+										</attribute>
+									</listbox>
+								</row>
+								<row id="r_sp_saml1">
 									<input_etiqueta value="${c:l('federacio.zul.Internal?')}"/>
 									<checkbox bind="/federationMember/internal" disabled="${!canModifyFI}" id="sp_id_internal1">
 										<attribute name="onCheck">
@@ -1264,7 +1337,7 @@
 										readonly="${!canModifyFI}" 
 										width="98%"/>
 								</row>
-								<row>
+								<row  id="r_sp_saml2">
 									<input_etiqueta value="${c:l('federacio.zul.metadades')}"/>
 									<textbox sclass="textbox"
 										id="sp_metadades" 
@@ -1342,6 +1415,32 @@
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
 									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="/federationMember/uidExpression" />
+								</row>
+								<row id="r_sp_openid1">
+									<input_etiqueta value="${c:l('federacio.zul.openidFlow')}"/>
+									<listbox mold="select" bind="/federationMember/openidFlow" >
+										<listitem label="${c:l('federacio.zul.openidFlow.implicit')}" value="implicit"></listitem>
+										<listitem label="${c:l('federacio.zul.openidFlow.authorizationCode')}" value="authorization_code"></listitem>
+									</listbox>
+								</row>
+								<row id="r_sp_openid2">
+									<input_etiqueta value="${c:l('federacio.zul.openidGrantType')}"/>
+									<listbox mold="select" bind="/federationMember/openidFlow" >
+										<listitem label="${c:l('federacio.zul.openidGrantType.password')}" value="password"></listitem>
+										<listitem label="${c:l('federacio.zul.openidGrantType.client_credentials')}" value="client_credentials"></listitem>
+									</listbox>
+								</row>
+								<row id="r_sp_openid3">
+									<input_etiqueta value="${c:l('federacio.zul.openidClientId')}"/>
+									<textbox  width="100%" bind="/federationMember/openidClientId" />
+								</row>
+								<row id="r_sp_openid4">
+									<input_etiqueta value="${c:l('federacio.zul.openidSecret')}"/>
+									<input_password width="100%" bind="/federationMember/openidSecret"/>
+								</row>
+								<row id="r_sp_openid5">
+									<input_etiqueta value="${c:l('federacio.zul.openidUrl')}"/>
+									<textbox  width="100%" bind="/federationMember/openidUrl" />
 								</row>
 							</rows>
 						</grid>
@@ -1444,14 +1543,65 @@
 									<input_dada bind="/federationMember/ssoCookieDomain" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
-									<input_etiqueta value="${c:l('federacio.zul.enableKerberos')}"/>
+									<input_etiqueta value="${c:l('federacio.zul.allowedAuthenticationMethods')}"/>
 									<div>
-										<checkbox bind="/federationMember/enableKerberos" disabled="${!canModifyFI}"
-													onCheck="">
-										</checkbox>
-										<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
-										<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+										<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/federationMember/authenticationMethods">
+											<columns>
+												<column label="${c:l('federacio.zul.firstAuthentication') }"/>
+												<column label="${c:l('federacio.zul.password') }"/>
+												<column label="${c:l('federacio.zul.kerberos') }"/>
+												<column label="${c:l('federacio.zul.broker')}"/>
+												<column label="${c:l('federacio.zul.OTP') }"/>
+												<column label="${c:l('federacio.zul.Certificate') }"/>
+											</columns>
+											<rows>
+												<row>
+													<label value="${c:l('federacio.zul.password') }"/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.P') }"> <custom-attributes type="P"/></checkbox>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.kerberos') }"/>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.K') }"> <custom-attributes type="K"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.broker') }"/>
+													<label/>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="EO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="EC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.OTP') }"/>
+													<label />
+													<label />
+													<label />
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.Certificate') }"/>
+													<label/>
+													<label/>
+													<label />
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+												</row>
+											</rows>
+										</grid>
 									</div>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
+									<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<space/>
@@ -1460,15 +1610,6 @@
 												id="id_allowRecover2"  onCheck="enableVIPComponents()">
 									</checkbox>
 									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
-									</hbox>
-								</row>
-								<row>
-									<space></space>
-									<hbox>
-									<checkbox bind="/federationMember/allowCertificate" disabled="${!canModifyFI}"
-												id="id_allowCertificate2"  onCheck="enableVIPComponents()">
-									</checkbox>
-									<input_etiqueta value="${c:l('federacio.zul.allowCertificate')}"/>
 									</hbox>
 								</row>
 								<row>
@@ -1578,6 +1719,9 @@
 										ctx2.setValue("/localityAddress", nprofile.getLocalityAddress());
 										ctx2.setValue("/localityDNSName", nprofile.getLocalityDNSName());
 										ctx2.setValue("/maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
+										ctx2.setValue("/tokenEndpoint", nprofile.getTokenEndpoint());
+										ctx2.setValue("/authorizationEndpoint", nprofile.getAuthorizationEndpoint());
+										ctx2.setValue("/userInfoEndpoint", nprofile.getUserInfoEndpoint());
 										
 										// Guardem el id del identityprovider
 										dsForm = form.getDataSource(); 
@@ -1621,6 +1765,9 @@
 										ctx2.setValue("/localityAddress", nprofile.getLocalityAddress());
 										ctx2.setValue("/localityDNSName", nprofile.getLocalityDNSName());
 										ctx2.setValue("/maximumSPSessionLifetime", nprofile.getMaximumSPSessionLifetime());
+										ctx2.setValue("/tokenEndpoint", nprofile.getTokenEndpoint());
+										ctx2.setValue("/authorizationEndpoint", nprofile.getAuthorizationEndpoint());
+										ctx2.setValue("/userInfoEndpoint", nprofile.getUserInfoEndpoint());
 										
 										// Guardem el identityprovider (no cal..)
 										dsForm = form.getDataSource(); 
@@ -2154,6 +2301,66 @@
 				</vbox>
 			</navegador>
 			</tabpanel>
+			<tabpanel>
+				<toolbar style="border-top:0.1px solid white;">
+					<insertbutton acces="${canCreateFI}" >
+						<attribute name="onClick"><![CDATA[
+							es.caib.zkib.datasource.XPathUtils.createPath(model, "/atribut");
+						]]></attribute>
+					</insertbutton>
+					<commitbutton datamodel="/model"/>
+					<undotreebutton datamodel="/model"/>
+				</toolbar>
+				<grid dataPath="/model:/atribut" fixedLayout="true" sclass="noBorderGrid">
+					<columns>
+						<column label="${c:l('federa_atribut.zul.Name-2') }" width="25%"></column>
+						<column label="${c:l('federa_atribut.zul.ShortName-2') }"  width="25%"></column>
+						<column label="${c:l('federa_atribut.zul.Oid') }"  width="25%"></column>
+						<column label="${c:l('federacio.zul.value') }"  width="25%"></column>
+						<column label="-"  width="32px"></column>
+					</columns>
+					<datarow>
+						<textbox bind="name" style="width:95%; margin-left: 8px; margn-right:8px"></textbox>
+						<textbox bind="shortName" style="width:95%; margin-left: 8px; margn-right:8px"></textbox>
+						<textbox bind="oid" style="width:95%; margin-left: 8px; margn-right:8px"></textbox>
+						<hbox>
+							<textbox bind="value"
+								style="width:95%; margin-left: 8px; margn-right:8px">
+							</textbox>
+							<imageclic src="/img/pencil.png" width="24px">
+								<attribute name="onClick"><![CDATA[
+									    Events.sendEvent(new Event ("onEdit", 
+								    		desktop.getPage("editor").getFellow("top"),
+								    		new Object[] {
+											    event.getTarget().getPreviousSibling(),
+											    new com.soffid.iam.addons.federation.web.ScriptEnviroment().getSystemVars(self)
+											}
+									    ));
+								]]></attribute>
+							</imageclic>
+						</hbox>
+						<imageclic src="~./img/list-remove.gif" visible="${canDeleteFI}">
+							<attribute name="onClick"><![CDATA[
+								if (canDeleteFI) {
+									String att = es.caib.zkib.datasource.XPathUtils.getValue(self, "name");
+									final es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+									Missatgebox.confirmaOK_CANCEL(String.format(org.zkoss.util.resource.Labels.getLabel("federacio.zul.confirmRemoveAttribute"), new Object [] {att}),
+											org.zkoss.util.resource.Labels.getLabel("federacio.Borra"),
+											new EventListener() {
+												public void onEvent(Event evt) {
+													if ("onOK".equals(evt.getName())) {
+														es.caib.zkib.datasource.XPathUtils.removePath(ctx.getDataSource(), ctx.getXPath());
+													}
+											    }
+											});															
+								}
+								
+							]]>
+							</attribute>
+						</imageclic>
+					</datarow>
+				</grid> 
+			</tabpanel>
 		</tabpanels>
 	</tabbox>
 	
@@ -2172,4 +2379,5 @@
 	<include src="/addon/federation/federationMember.zul"/>
 	<include src="/addon/federation/federa_profile.zul"/>
 	<include src="/grupsllista.zul" />
+ 	<include src="finestres/editor.zul"/>
 </frame>

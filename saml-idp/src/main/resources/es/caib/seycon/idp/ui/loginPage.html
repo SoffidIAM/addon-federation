@@ -54,7 +54,6 @@
 			{if passwordAllowed} 
 			<div class="logintype"  id ="passlogin">
 				<form method="post" action="${passwordLoginUrl}">
-					<input name="j_method"  id="j_method_usu-pas" type="hidden" value="U"/>
 					<div class="upinput">
 						${Username}: 
 						<input name="j_username" id="j_username" ${userReadonly}="readonly"
@@ -68,21 +67,29 @@
 				</form>
 			</div>
 			<p/>
-<!-- 
-			<div class="logintype"  id ="openidlogin">
-				<div>
-				${You can use your previous account from}
-				</div>
-				<div class="upbutton">
-					{if kerberosAllowed}
-					<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img></a>
-					{endif} 
-					<a class="openidlink" href="${openIdRequestUrl}?id=http://www.google.com/accounts/o8/id"><img class="openidbutton" src="/img/google.png"></img></a> 
-					<a class="openidlink" href="${openIdRequestUrl}?id=http://me.yahoo.com/"><img  class="openidbutton" src="/img/yahoo.png"></img></a> 
-					<a class="openidlink" href="${facebookRequestUrl}"><img class="openidbutton"  src="/img/facebook.png"></img></a> 
-				</div>
+			{endif}
+			{if otpAllowed} 
+			<div class="logintype"  id ="otplogin">
+				<form method="post" action="${otpLoginUrl}">
+					<div class="otpinput">
+						${Username}: 
+						<input name="j_username" id="j_username" ${userReadonly}="readonly"
+								type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
+						${OTPPin}:
+						<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+					</div>
+					<div class="upbutton">
+						<input id="loginpassbutton" name="formUCboton" type="submit" value="${Login}" />
+					</div>
+				</form>
 			</div>
-			 -->
+			<p/>
+			{endif}
+			{if kerberosAllowed} 
+			<div class="logintype"  id ="otplogin">
+    			<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img>${Kerberos}</a>
+			</div>
+			<p/>
 			{endif}
 			${raw:externalLogin}
 			{if ERROR}

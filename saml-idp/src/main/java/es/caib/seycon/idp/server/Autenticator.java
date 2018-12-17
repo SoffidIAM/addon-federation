@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.security.auth.Subject;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -49,6 +51,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSyste
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.openid.server.AuthorizationResponse;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.shibext.LogRecorder;
@@ -61,7 +64,7 @@ import es.caib.seycon.util.Base64;
 public class Autenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
 
-    private String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException
+    private String generateSession2 (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException
     {
         HttpSession session = req.getSession();
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
@@ -77,7 +80,7 @@ public class Autenticator {
         com.soffid.iam.api.Session sessio = new RemoteServiceLocator().getSessionService().registerWebSession(
         		user.getUserName(), config.getHostName(),
         		LanguageFilter.getRemoteIp(),
-        		url);
+        		url, type);
 
         SessionListener.registerSession(session, sessio.getId().toString());
         
@@ -96,78 +99,57 @@ public class Autenticator {
         	append (certString).append("|").
         	append(serverConfig.getServerList());
         
-        setCookie (req, resp, sessio, user, type);
+        setCookie2 (req, resp, sessio, user, type);
         return buffer.toString();
     }
     
-    public boolean validateCookie (HttpServletRequest req, HttpServletResponse resp) 
-    		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException
+    public boolean validateCookie (ServletContext ctx, HttpServletRequest req, HttpServletResponse resp) 
+    		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException, ServletException
     {
-    	LOG.info("validateCookie() - Begin");
         HttpSession session = req.getSession();
         IdpConfig config = IdpConfig.getConfig();
         
         String relyingParty = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
-        LOG.info("validateCookie() - relyingParty: "+relyingParty);
         
         if (relyingParty == null){
-			LOG.info("validateCookie() - End with false: relyingParty == null");
 			return false;
 		}
 
     	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
-    	LOG.info("validateCookie() - identityProviderForRelyingParty: "+ip);
         if (ip == null){
-			LOG.info("validateCookie() - End with false: identityProviderForRelyingParty == null");
 			return false;
 		}
     	
-        LOG.info("validateCookie() - getSsoCookieName: "+ip.getSsoCookieName());
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
         	for (Cookie c: req.getCookies())
         	{
-        		LOG.info("validateCookie() - cookie: "+c.getName());
         		if (c.getName().equals(ip.getSsoCookieName()))
         		{
-    				if (checkExternalCookie(req, resp, config, c)) {
-    					LOG.info("validateCookie() - End with true: checkExternalCookie is true");
+    				if (checkExternalCookie(ctx, req, resp, config, c) || 
+    						checkOwnCookie(ctx, req, resp, config, c))
     					return true;
-    				} else {
-    					LOG.info("validateCookie() - checkExternalCookie is false");
-    				}
         		}
         	}
         }
-        LOG.info("validateCookie() - End with: false");
         return false;
     }
 
-	private boolean checkExternalCookie(HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
-			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
-		LOG.info("checkExternalCookie()");
+	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
+			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException, ServletException {
 		String value = c.getValue();
-		LOG.info("checkExternalCookie() - cookie.value: "+c.getValue());
 		FederacioService fs = new RemoteServiceLocator().getFederacioService();
 		SamlValidationResults check = fs.validateSessionCookie(value);
-		LOG.info("checkExternalCookie() - fs.validateSessionCookie(): "+c.getValue());
-		LOG.info("checkExternalCookie() - check.isValid(): "+check.isValid());
-		LOG.info("checkExternalCookie() - check.getUser(): "+check.getUser());
 		if (check.isValid() && check.getUser() != null)
 		{
 			Collection<UserAccount> accounts = new com.soffid.iam.remote.RemoteServiceLocator()
 					.getServerService()
 					.getUserAccounts(check.getUser().getId(), config.getSystem().getName());
-			LOG.info("checkExternalCookie() - check.getUser().getId(): "+check.getUser().getId());
-			LOG.info("checkExternalCookie() - config.getSystem().getName(): "+config.getSystem().getName());
-			LOG.info("checkExternalCookie() - accounts: "+accounts);
 			if (accounts == null || accounts.isEmpty())
 			{
-				LOG.info("checkExternalCookie() - User "+check.getUser().getUserName()+" has no account on "+config.getSystem().getName());
 			}
 			else
 			{
-				LOG.info("checkExternalCookie() - User "+check.getUser().getUserName()+" has account on "+config.getSystem().getName());
 				String user = accounts.iterator().next().getName();
 		        String requestedUser = "";
 		        try {
@@ -178,30 +160,24 @@ public class Autenticator {
 							.getValue();
 				} catch (Exception e1) {
 				}
-		        LOG.info("checkExternalCookie() - requestedUser: "+requestedUser);
 		        if (! requestedUser.isEmpty() && !user.equals(requestedUser))
 		        {
-					LOG.info("checkExternalCookie() - Service provider requests login for "+requestedUser+" but "+user+" is authenticated instead");
 		            HttpSession session = req.getSession();
 		            session.removeAttribute(SessionConstants.SEU_USER);
-		            LOG.info("checkExternalCookie() - return false");
 		            return false;
 		        }
 		        else {
-		        	LOG.info("checkExternalCookie() - do: autenticate()");
-		        	autenticate(user, req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
+		        	autenticate2(user, ctx, req, resp, "E", true);
 		        }
-		        LOG.info("checkExternalCookie() - return true");
 				return true;
 			}
 		}
-		LOG.info("checkExternalCookie() - return check.isValid(): "+check.isValid());
 		return check.isValid();
 	}
 
-	private boolean checkOwnCookie(HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) throws InternalErrorException, IOException, NoSuchAlgorithmException,
+	private boolean checkOwnCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) throws InternalErrorException, IOException, NoSuchAlgorithmException,
 			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
-			CertificateException, NoSuchProviderException, SignatureException {
+			CertificateException, NoSuchProviderException, SignatureException, IllegalStateException, ServletException {
 		String value = c.getValue();
 		int separator = value.indexOf('_');
 		if (separator > 0)
@@ -222,7 +198,9 @@ public class Autenticator {
 						{
 							for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
 							{
-								autenticate(account.getName(), req, resp, AuthnContext.PREVIOUS_SESSION_AUTHN_CTX, true);
+								autenticate2(account.getName(), ctx, req, resp,  
+										sessio.getAuthenticationMethod() == null ? "E" : sessio.getAuthenticationMethod(), 
+										true);
 				        		return true;
 							}
 						}
@@ -237,7 +215,7 @@ public class Autenticator {
 	}
     
 
-    private void setCookie(HttpServletRequest req, HttpServletResponse resp,
+    private void setCookie2(HttpServletRequest req, HttpServletResponse resp,
 			Session sessio, User user, String type) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
         HttpSession session = req.getSession();
         IdpConfig config = IdpConfig.getConfig();
@@ -262,7 +240,7 @@ public class Autenticator {
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	resp.addCookie(cookie);
-        	if (AuthnContext.KERBEROS_AUTHN_CTX.equals(type))
+        	if (type != null && type.contains("K"))
         	{
         		Cookie cookie2 = new Cookie (ip.getSsoCookieName()+"_krb", "true");
         		cookie2.setMaxAge(60 * 24 * 3); // 3 monthis to remember kerberos usage
@@ -285,57 +263,86 @@ public class Autenticator {
     	throw new InternalErrorException("Not authorized to log in");
     }
     
-	public void autenticate (String user, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
-    	autenticate(user, req, resp, type, type, externalAuth);
+	public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, ServletException {
+    	autenticate2(user, ctx, req, resp, type, type, externalAuth);
     }
     
-    public void autenticate (String user, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
+    public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, ServletException {
 
         LOG.info("Remote user identified as "+user+". returning control back to authentication engine"); //$NON-NLS-1$ //$NON-NLS-2$
 
         HttpSession session = req.getSession();
-        session.setAttribute(SessionConstants.SEU_USER, user);
         
-        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
         String entityId = (String) session
-                .getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        session.setAttribute(SessionConstants.SEU_USER, user);
+		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
+		if (authCtx == null)
+		{
+			authCtx = new AuthenticationContext();
+			authCtx.setPublicId(entityId);
+			authCtx.initialize();
+		}
+		authCtx.setFirstFactor(type.substring(0, 1));
+		authCtx.setSecondFactor(type.substring(1));
+		authCtx.setStep(2);
+		authCtx.setUser(user);
+		authCtx.store(req);
 
-        Principal principal = new SessionPrincipal(user, 
-        		generateSession(req, resp, user, type, externalAuth));
-        
-        req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
-        req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, type);
-        req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
-        Set<Principal> principals = new HashSet<Principal> ();
-        Set<?> pubCredentals = new HashSet<Object>();
-        Set<?> privCredentials = new HashSet<Object>();
-        principals.add(principal);
-        Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
-        req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
-        
-        edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
-        		(edu.internet2.middleware.shibboleth.idp.session.Session) 
-        			req.getAttribute(
-        					edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-        if (shibbolethSession != null)
+        if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
-        	shibbolethSession.setSubject(userSubject);
-        	shibbolethSession.getAuthenticationMethods().clear();
-        }
-        
-		Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
-		if (saml2LoginContext != null)
-			saml2LoginContext.setAuthenticationMethodInformation(null); 
-		
-		LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
-        
-        if (returnPath == null) 
+	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
+	
+	        Principal principal = new SessionPrincipal(user, 
+	        		generateSession2(req, resp, user, type, externalAuth));
+	        
+	        req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
+	        req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY,  toSamlAuthenticationMethod(type));
+	        req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
+	        Set<Principal> principals = new HashSet<Principal> ();
+	        Set<?> pubCredentals = new HashSet<Object>();
+	        Set<?> privCredentials = new HashSet<Object>();
+	        principals.add(principal);
+	        Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
+	        req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
+	        
+	        edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
+	        		(edu.internet2.middleware.shibboleth.idp.session.Session) 
+	        			req.getAttribute(
+	        					edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+	        if (shibbolethSession != null)
+	        {
+	        	shibbolethSession.setSubject(userSubject);
+	        	shibbolethSession.getAuthenticationMethods().clear();
+	        }
+	        
+			Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
+			if (saml2LoginContext != null)
+				saml2LoginContext.setAuthenticationMethodInformation(null); 
+			
+			LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
+	        			
+	        if (returnPath == null) 
+	        {
+	            AuthenticationEngine.returnToAuthenticationEngine(req, resp);
+	        }
+	        else
+	        {
+	            resp.sendRedirect(returnPath);
+	        }
+        } 
+        else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
-            AuthenticationEngine.returnToAuthenticationEngine(req, resp);
+        	AuthorizationResponse.generateResponse(ctx, req, resp);
         }
         else
         {
-            resp.sendRedirect(returnPath);
+	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
+	        if (returnPath != null) 
+	        {
+	            resp.sendRedirect(returnPath);
+	        }
+        	
         }
     }
 
@@ -396,5 +403,63 @@ public class Autenticator {
 		        }
 			}
 		}
+	}
+	
+	public String toSamlAuthenticationMethod (String method)
+	{
+		if (method == null)
+			return null;
+		if (method.equals("P"))
+			return AuthnContext.PPT_AUTHN_CTX;
+		else if (method.equals("PO"))
+			return AuthnContext.MTFC_AUTHN_CTX;
+		else if (method.equals("PC"))
+			return AuthnContext.X509_AUTHN_CTX;
+		else if (method.equals("E"))
+			return AuthnContext.PREVIOUS_SESSION_AUTHN_CTX;
+		else if (method.equals("EO"))
+			return AuthnContext.MTFC_AUTHN_CTX;
+		else if (method.equals("EC"))
+			return AuthnContext.X509_AUTHN_CTX;
+		else if (method.equals("K"))
+			return AuthnContext.KERBEROS_AUTHN_CTX;
+		else if (method.equals("KO"))
+			return AuthnContext.MTFC_AUTHN_CTX;
+		else if (method.equals("KC"))
+			return AuthnContext.X509_AUTHN_CTX;
+		else if (method.equals("O"))
+			return AuthnContext.MTFC_AUTHN_CTX;
+		else if (method.equals("OC"))
+			return AuthnContext.X509_AUTHN_CTX;
+		else if (method.equals("C"))
+			return AuthnContext.X509_AUTHN_CTX;
+		else
+			return null;
+	}
+
+	public static String toSoffidAuthenticationMethod (String method)
+	{
+		if (method == null)
+			return null;
+		if (method.equals(AuthnContext.PPT_AUTHN_CTX))
+			return "P";
+		else if (method.equals(AuthnContext.KERBEROS_AUTHN_CTX))
+			return "K";
+		else if (method.equals(AuthnContext.MTFC_AUTHN_CTX))
+			return "KO";
+		else if (method.equals(AuthnContext.PASSWORD_AUTHN_CTX))
+			return "P";
+		else if (method.equals(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX))
+			return "E";
+		else if (method.equals(AuthnContext.SMARTCARD_AUTHN_CTX))
+			return "C";
+		else if (method.equals(AuthnContext.SMARTCARD_PKI_AUTHN_CTX))
+			return "C";
+		else if (method.equals(AuthnContext.SOFTWARE_PKI_AUTHN_CTX))
+			return "P";
+		else if (method.equals(AuthnContext.X509_AUTHN_CTX))
+			return "C";
+		else
+			return null;
 	}
 }
