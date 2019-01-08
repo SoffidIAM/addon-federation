@@ -43,13 +43,11 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	public String openidUrl;
 
-	@Column(name="FED_OIDGRA", length=50)
+	@Column(name="FED_OIDMEC", length=50)
+	@Description("Open ID mechanisms (comma separated list of values): Implicit, AuthorizationCode, Password, PasswordClientCredentals")
 	@Nullable
-	public String openidGrantType;
+	public String openidMechanism;
 
-	@Column(name="FED_OIDFLO", length=50)
-	@Nullable
-	public String openidFlow;
 	
 	@DaoFinder("select sp "
 			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity sp "

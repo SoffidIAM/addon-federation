@@ -7,9 +7,9 @@
 	<core name="Federation core classes" resource="federation-core-${pom.version}.jar"/>
 	<webService name="Federation REST Web Service API" resource="federation-webservice-${project.version}.jar"/>
 	<web name="Federation web files" resource="federation-web-${pom.version}.war"/>
-	<agents name="SAML Identity Provider (IDP)" resource="saml-idp-${pom.version}.jar">
+	<agents name="Soffid Identity Provider" resource="saml-idp-${pom.version}.jar">
 		<agent>
-			<name>SAML Identity Provider</name>
+			<name>Soffid Identity Provider</name>
 			<javaClass>es.caib.seycon.idp.agent.IDPAgent</javaClass>
 			<userInterface>IDPAgent.zul</userInterface>
 			<enableAccessControl>N</enableAccessControl>

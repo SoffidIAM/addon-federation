@@ -6,6 +6,9 @@
 
 package com.soffid.iam.addons.federation.common;
 
+import java.util.Set;
+
+import com.soffid.mda.annotation.Attribute;
 import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Description;
 import com.soffid.mda.annotation.Nullable;
@@ -160,12 +163,9 @@ public class FederationMember {
 	@Nullable
 	public String openidUrl;
 
-	@Description("Open ID grant type")
+	@Description("Open ID mechanisms: Implicit, AuthorizationCode, Password, PasswordClientCredentals")
+	@Attribute(defaultValue="new java.util.HashSet()")
 	@Nullable
-	public String openidGrantType;
-
-	@Description("Open ID Flow. Implicet / Authorisation code")
-	@Nullable
-	public String openidFlow;
+	public Set<String> openidMechanism;
 
 }

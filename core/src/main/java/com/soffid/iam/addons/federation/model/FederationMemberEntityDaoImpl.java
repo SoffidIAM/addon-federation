@@ -7,6 +7,7 @@ package com.soffid.iam.addons.federation.model;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -171,8 +172,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setNameIdFormat(sp.getNameIdFormat());
 			target.setCertificateChain(sp.getCertificateChain());
 			target.setUidExpression(sp.getUidExpression());
-			target.setOpenidFlow(sp.getOpenidFlow());
-			target.setOpenidGrantType(sp.getOpenidGrantType());
+			if (sp.getOpenidMechanism() == null || sp.getOpenidMechanism().isEmpty() )
+				target.setOpenidMechanism(new HashSet<String>());
+			else
+				target.setOpenidMechanism( new HashSet<String> ( Arrays.asList( sp.getOpenidMechanism().split(",") )) );
 			target.setOpenidClientId(sp.getOpenidClientId());
 			target.setOpenidSecret(sp.getOpenidSecret());
 			target.setOpenidUrl(sp.getOpenidUrl());
@@ -457,8 +460,13 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			sp.setUidExpression(source.getUidExpression());
 			if (source.getCertificateChain() != null)
 				sp.setCertificateChain(source.getCertificateChain());
-			sp.setOpenidFlow(source.getOpenidFlow());
-			sp.setOpenidGrantType(source.getOpenidGrantType());
+			StringBuffer sb = new StringBuffer();
+			for (String s: source.getOpenidMechanism())
+			{
+				if (sb.length()>0) sb.append(",");
+				sb.append(s);
+			}
+			sp.setOpenidMechanism(sb.toString());
 			sp.setOpenidClientId(source.getOpenidClientId());
 			sp.setOpenidSecret(source.getOpenidSecret());
 			sp.setOpenidUrl(source.getOpenidUrl());

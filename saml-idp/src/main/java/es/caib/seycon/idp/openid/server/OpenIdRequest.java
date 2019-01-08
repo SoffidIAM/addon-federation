@@ -1,5 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
+import java.util.HashSet;
+
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 public class OpenIdRequest {
@@ -17,6 +19,7 @@ public class OpenIdRequest {
 	String loginHint;
 	String acrValues;
 	FederationMember federationMember;
+	private HashSet<String> responseTypeSet;
 	
 	public String getScope() {
 		return scope;
@@ -35,6 +38,11 @@ public class OpenIdRequest {
 	}
 	public void setResponseType(String responseType) {
 		this.responseType = responseType;
+		responseTypeSet = new HashSet<String>();
+		for (String s: responseType.split(" +"))
+		{
+			responseTypeSet.add(s);
+		}
 	}
 	public String getRedirectUrl() {
 		return redirectUrl;
@@ -102,6 +110,10 @@ public class OpenIdRequest {
 	public void setFederationMember(FederationMember federationMember) {
 		this.federationMember = federationMember;
 	}
-	
-	
+	public HashSet<String> getResponseTypeSet() {
+		return responseTypeSet;
+	}
+	public void setResponseTypeSet(HashSet<String> responseTypeSet) {
+		this.responseTypeSet = responseTypeSet;
+	}
 }

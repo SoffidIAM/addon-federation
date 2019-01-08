@@ -208,12 +208,12 @@ public class AtributFederationElementFillTree extends FederationElementFillTree 
 		/*
 		 * totes.appendChild(lattributeId); totes.appendChild(attributeId);
 		 */
-		totes.appendChild(lattributeShortName);
-		totes.appendChild(attributeShortName);
+//		totes.appendChild(lattributeShortName);
+//		totes.appendChild(attributeShortName);
 		totes.appendChild(lattributeName);
 		totes.appendChild(attributeName);
-		totes.appendChild(lattributeOID);
-		totes.appendChild(attributeOID);
+//		totes.appendChild(lattributeOID);
+//		totes.appendChild(attributeOID);
 		// L'afegim al final
 		totes.appendChild(botoSelecionaAtribut);
 
@@ -223,6 +223,7 @@ public class AtributFederationElementFillTree extends FederationElementFillTree 
 		botoEsborrar.setAlign("right"); //$NON-NLS-1$
 		// només visible quan no és principal
 		botoEsborrar.setVisible(!principal);
+		
 
 		// botó per afegir
 		/*

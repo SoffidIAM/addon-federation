@@ -58,6 +58,7 @@ public class UserPasswordAction extends HttpServlet {
                         s.setAttribute(SessionConstants.SEU_TEMP_PASSWORD, new Password(p));
                         RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
                         dispatcher.forward(req, resp);
+                        return;
                     } else {
 	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 	            		ctx.authenticated(u, "P");
@@ -67,8 +68,13 @@ public class UserPasswordAction extends HttpServlet {
 	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
 	            			return;
 	            		}
+	            		else
+	            		{
+	            	        RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+	            	        dispatcher.forward(req, resp);
+	            	        return;
+	            		}
                     }
-                    return ;
                 } else {
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }

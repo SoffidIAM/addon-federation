@@ -10,6 +10,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,6 +31,7 @@ public class AuthenticationContext {
 	String secondFactor;
 	Set<String> nextFactor;
 	private String user;
+	private Set<String> allowedAuthenticationMethods;
 	
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
@@ -49,11 +51,13 @@ public class AuthenticationContext {
 	public void initialize () 
 		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
-        Set<String> allowed = findAllowedAuthenticationMethods();
+        allowedAuthenticationMethods = findAllowedAuthenticationMethods();
         if (requestedAuthenticationMethod != null)
-        	allowed.retainAll(requestedAuthenticationMethod);
+        {
+        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
+        }
         
-        if (allowed.isEmpty())
+        if (allowedAuthenticationMethods.isEmpty())
         	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         
         nextFactor = new HashSet<String>();
@@ -63,7 +67,7 @@ public class AuthenticationContext {
         
         if (nextFactor.isEmpty())
         {
-            for ( String allowedMethod: allowed)
+            for ( String allowedMethod: allowedAuthenticationMethods)
             {
            		nextFactor.add( allowedMethod.substring(0,1));
             }
@@ -79,7 +83,7 @@ public class AuthenticationContext {
         String method = getUsedMethod();
         
         Set<String> allowed = findAllowedAuthenticationMethods();
-        if (requestedAuthenticationMethod != null)
+        if (requestedAuthenticationMethod != null && ! requestedAuthenticationMethod.isEmpty())
         	allowed.retainAll(requestedAuthenticationMethod);
         
         if (allowed.isEmpty())
@@ -200,6 +204,12 @@ public class AuthenticationContext {
 	
 	public void authenticated (String user, String method) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
+		if ( step == 1 && method.equals(firstFactor))
+			return;
+		
+		if (step == 2 && method.equals(secondFactor))
+			return;
+		
 		if (! nextFactor.contains(method))
 			throw new InternalErrorException("Authentication method not allowed");
 
@@ -246,12 +256,24 @@ public class AuthenticationContext {
 	}
 
 	public void setSamlRequestedAuthenticationMethod(Set<String> samlMethods) {
-		requestedAuthenticationMethod = new HashSet<String>();
-		for (String method: samlMethods)
-		{
-			requestedAuthenticationMethod.add( Autenticator.toSoffidAuthenticationMethod(method));
+		if (samlMethods == null || samlMethods.isEmpty())
+			requestedAuthenticationMethod = null;
+		else {
+			requestedAuthenticationMethod = new HashSet<String>();
+			for (String method: samlMethods)
+			{
+				requestedAuthenticationMethod.addAll ( Autenticator.toSoffidAuthenticationMethod(method));
+			}
 		}
 		
+	}
+
+	public Set<String> getAllowedAuthenticationMethods() {
+		return allowedAuthenticationMethods;
+	}
+
+	public void setAllowedAuthenticationMethods(Set<String> allowedAuthenticationMethods) {
+		this.allowedAuthenticationMethods = allowedAuthenticationMethods;
 	}
 
 }

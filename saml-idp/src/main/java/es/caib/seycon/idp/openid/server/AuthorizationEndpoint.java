@@ -1,7 +1,8 @@
 package es.caib.seycon.idp.openid.server;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -9,9 +10,6 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -21,16 +19,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.soffid.iam.addons.federation.common.EntityGroup;
-import com.soffid.iam.addons.federation.common.EntityGroupMember;
-import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.api.Password;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
+import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.LoginServlet;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.SessionConstants;
-import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.InvalidPasswordException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationEndpoint extends HttpServlet {
 
@@ -44,7 +45,6 @@ public class AuthorizationEndpoint extends HttpServlet {
 	{
 		IdpConfig config;
 		OpenIdRequest r;
-		FederationMember fm;
 		try {
 			config = IdpConfig.getConfig();
 		
@@ -56,9 +56,9 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setResponseType(req.getParameter("response_type"));
 	    	r.setState(req.getParameter("state"));
 	    	r.setNonce(req.getParameter("nonce"));
-	    	
 	    	r.setFederationMember( config.getFederationService().findFederationMemberByClientID(r.getClientId()) );
-	    	
+	    	if (r.getFederationMember() != null)
+	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl());
 	    	HttpSession session = req.getSession(true);
 	    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
         	session.setAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM, null);
@@ -67,58 +67,45 @@ public class AuthorizationEndpoint extends HttpServlet {
 			throw new ServletException("Error parsing request paramenters", e);
 		}
     	
-    	checkParameters (r);
-    	if ( "implicit".equals( r.getFederationMember().getOpenidFlow()) )
-    	{
-    		try {
-    			implicitFlow (r, req, resp);
-			} catch (Exception e) {
-				throw new ServletException("Error processing authentication request", e);
-			}
-    	} else {
-    		try {
-				authorizationFlow (r, req, resp);
-			} catch (Exception e) {
-				throw new ServletException("Error processing authentication request", e);
-			}
-    	}
-	}
-
-	private void authorizationFlow(OpenIdRequest r, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
-		if ( ! "code".equals(r.getResponseType()))
-       		throw new ServletException("Expected response_type=code, but found: "+r.getResponseType());
-		
-		HttpSession session = req.getSession();
-		session.setAttribute(SessionConstants.OPENID_REQUEST, r);
-		session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
-		
-        RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);
-        dispatcher.forward(req, resp);
-	}
-
-	private void implicitFlow(OpenIdRequest r, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
-		if ( ! "id_token".equals(r.getResponseType()) && 
-				! "id_token token".equals(r.getResponseType() ))
-       		throw new ServletException("Expected response_type=id_token or response_type=id_token token, but found: "+r.getResponseType());
-		
-    	if (r.getNonce() == null)
-    		throw new ServletException("Nonce is required, but not received");
-
-    	HttpSession session = req.getSession();
-		session.setAttribute(SessionConstants.OPENID_REQUEST, r);
-		session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
-		String user = (String) session.getAttribute(SessionConstants.SEU_USER);
-
-		if (user != null)
-		{
-			AuthorizationResponse.generateResponse(getServletContext(), req, resp);
-		} else {
-            RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
-            dispatcher.forward(req, resp);
+    	if ( ! checkParameters (r, resp))
+    		return;
+    	
+    	try {
+	    	if ( ! r.getFederationMember().getOpenidMechanism().contains( "IM" ) && 
+	    		  r.getResponseType().contains("token"))
+	    	{
+	    		throw new ServletException("Not authorized to use implicit flow, requested response: "+r.getResponseType());
+	    	}
+	    	if ( ! r.getFederationMember().getOpenidMechanism().contains( "AC" ) && 
+		    		  r.getResponseType().contains("code"))
+	    	{
+	    		throw new ServletException("Not authorized to use athorization code flow, requested response: "+r.getResponseType());
+	    	}
+	    	HttpSession session = req.getSession();
+	    	session.setAttribute(SessionConstants.OPENID_REQUEST, r);
+	    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
+	    	
+    		clientCredentialsGrantType(req, resp);
+	    	
+    	} catch (Exception e) {
+            generateError(r, "server_error", e.toString(), resp);
 		}
 	}
 
-	private void checkParameters(OpenIdRequest r) throws ServletException {
+	private void clientCredentialsGrantType(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);
+		dispatcher.forward(req, resp);
+	}
+
+
+	private void generateError(OpenIdRequest r, String error, String description, HttpServletResponse resp) throws IOException {
+		resp.sendRedirect(r.getRedirectUrl()+"?error="+error+"&error_description="+
+				URLEncoder.encode(description, "UTF-8")+
+				(r.getState() != null ? "&state="+r.getState(): ""));
+	}
+
+	private boolean checkParameters(OpenIdRequest r, HttpServletResponse resp) throws ServletException, IOException {
     	boolean found  = false;
     	if (r.getScope() != null) {
 	    	for (String s: r.getScope().split(" +"))
@@ -126,25 +113,45 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    		if (s.equalsIgnoreCase("openid")) found = true;
 	    	}
     	}
+
     	if (! found)
-    		throw new ServletException("The requested scope does not contain the scope openid: "+r.getScope());
+    	{
+            generateError(r, "invalid_scope", "The requested scope does not contain the scope openid: "+r.getScope(), resp);
+            return false;
+    	}
 		
     	if (r.getFederationMember() == null)
-    		throw new ServletException("Unknown client id "+r.getClientId());
-    	
-//    	if (r.getState() == null)
-//    		throw new ServletException("State parameter is required but not found");
+    	{
+            generateError(r, "unauthorized_client", "Unknown client id "+r.getClientId(), resp);
+            return false;
+    	}
     	
     	if (r.getResponseType() == null)
-    		throw new ServletException("response_type parameter is required but not found");
+    	{
+            generateError(r, "unsupported_response_type", "Wrong value for response_type: "+r.getResponseType(), resp);
+            return false;
+    	}
     	
     	if ( ! "code".equals( r.getResponseType()) && 
+    			! "token".equals(r.getResponseType()) &&
     			! "id_token".equals(r.getResponseType()) &&
     			! "id_token token".equals(r.getResponseType()) &&
     			! "code id_token".equals(r.getResponseType()) &&
     			! "code token".equals(r.getResponseType()) &&
     			! "code id_token token".equals(r.getResponseType())
     			)
-       		throw new ServletException("Wrong value for response_type: "+r.getResponseType());
+    	{
+            generateError(r, "unsupported_response_type", "Wrong value for response_type: "+r.getResponseType(), resp);
+            return false;
+    	}
+
+    	
+    	Set<String> mechs = r.getFederationMember().getOpenidMechanism();
+    	if (! mechs.contains("IM") && ! mechs.contains("AC"))
+    	{
+            generateError(r, "unauthorized_client", "Client must use token endpoint with password grant_type", resp);
+            return false;
+    	}
+    	return true;
 	}
 }

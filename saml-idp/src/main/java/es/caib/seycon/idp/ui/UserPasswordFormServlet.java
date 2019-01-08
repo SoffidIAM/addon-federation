@@ -14,6 +14,9 @@ import org.opensaml.util.storage.StorageService;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.Challenge;
+import com.soffid.iam.api.User;
+import com.soffid.iam.service.OTPValidationService;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
@@ -24,7 +27,6 @@ import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
@@ -96,6 +98,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("kerberosUrl", NtlmAction.URI); //$NON-NLS-1$
             g.addArgument("passwordLoginUrl", UserPasswordAction.URI); //$NON-NLS-1$
             g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
+            g.addArgument("cancelUrl", CancelAction.URI); //$NON-NLS-1$
             g.addArgument("otpLoginUrl", OTPAction.URI); //$NON-NLS-1$
             g.addArgument("registerUrl", RegisterFormServlet.URI);
             g.addArgument("recoverUrl", PasswordRecoveryAction.URI);
@@ -104,16 +107,50 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$
             g.addArgument("requestedUser", requestedUser);
-
             g.addArgument("kerberosAllowed", ctx.getNextFactor().contains("K") ? "true" : "false"); 
             g.addArgument("kerberosDomain", ip.getKerberosDomain());
             g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
-            g.addArgument("otpAllowed",  ctx.getNextFactor().contains("O") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
+        	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
+        	
+            boolean otpAllowed = ctx.getNextFactor().contains("O");
+            if (otpAllowed && !requestedUser.trim().isEmpty())
+            {
+            	User user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
+            	OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
+            	
+            	Challenge ch = new Challenge();
+            	ch.setUser(user);
+	        	ch = v.selectToken(ch);
+	        	if (ch.getCardNumber() == null)
+	        	{
+	        		if ( ctx.getNextFactor().size() == 1)
+	        		{
+	        			g.addArgument("ERROR", Messages.getString("OTPAction.notoken")); //$NON-NLS-1$
+	        		}
+	            	g.addArgument("otpAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
+	        	}
+	        	else 
+	        	{
+	            	g.addArgument("otpAllowed",  "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	            	
+	            	g.addArgument("otpToken",  ch.getCardNumber()); //$NON-NLS-1$ //$NON-NLS-2$
+
+	        	}
+            }
+            else
+            {
+            	g.addArgument("otpAllowed",  otpAllowed ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("externalLogin", generateExternalLogin(ip, ctx));
-            g.generate(resp, "loginPage.html"); //$NON-NLS-1$
+        	if ( ctx.getStep() > 0 )
+        		g.generate(resp, "loginPage2.html"); //$NON-NLS-1$
+        	else
+        		g.generate(resp, "loginPage.html"); //$NON-NLS-1$
         } catch (Exception e) {
             throw new ServletException(e);
 		}

@@ -65,7 +65,20 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 			fds.create(att);
 		}
 		else
+		{
 			log.info("Attribute "+name+" exists");
+			Attribute att = atts.iterator().next();
+			if (att.getOpenidName() == null && openId != null)
+			{
+				att.setOpenidName(openId);
+				fds.update(att);
+			}
+			if (att.getValue() == null && value != null)
+			{
+				att.setValue(value);
+				fds.update(att);
+			}
+		}
  	}
  	
 	@Override
@@ -80,7 +93,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("Surname", "Surname", "urn:oid:2.5.4.4", "surname");
 		testAttribute("Surnames (all)", "Surnames", "urn:oid:1.3.6.1.4.1.22896.3.1.5", "surnames");
 		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20", "phone");
-		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3", "email");
+		testAttribute("Email address", "mail", "urn:oid:0.9.2342.19200300.100.1.3", "email");
 		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11", "ou");
 		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4", "user_type");
 		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");

@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -28,6 +27,11 @@ import com.soffid.iam.api.Account;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
+import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
+import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
+import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
+import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
+import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.BasicAttribute;
@@ -36,18 +40,10 @@ import edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.Sh
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.dataConnector.BaseDataConnector;
 import edu.internet2.middleware.shibboleth.common.profile.provider.SAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.session.Session;
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
-
-import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
-import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
-import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
-import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
-import com.soffid.iam.sync.service.ServerService;
-
-import bsh.Interpreter;
+import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class DataConnector extends BaseDataConnector {
 	

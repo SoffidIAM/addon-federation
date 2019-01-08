@@ -4,8 +4,6 @@
 <?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
 <zk xmlns:h="http://www.w3.org/1999/xhtml">
 
-	<style src="~./styles/estil.css"/>
-
 	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml"/>
 
 	<style>
@@ -233,6 +231,7 @@
 			// La primera condició no se pot esborrar (principal = true) [i no en té condició pare]
 			AttPolicy mainCond = new AttPolicy(filaAtribut.getFila().getTreechildren(), attPolicy.getAttributePolicyCondition(), true);
 		}
+		filaAtribut.selectAttribute();
 	}
 	// CARREGA DE DADES
 	void carregaDades(Policy policymod) {
@@ -316,21 +315,21 @@
 				</grid>
 				<separator/>
 				<label sclass="etiqueta" value="${c:l('policyCondition.zul.Condicia')}"/>
-				<tree fixedLayout="true" id="treepol">
+				<tree fixedLayout="true" id="treepol" width="95%">
 					<treecols visible="false">
-						<treecol label="${c:l('policyCondition.zul.Condicia')}" width="*"/>
-						<treecol label="${c:l('policyCondition.zul.')}" width="20px"/>
-						<treecol label="${c:l('policyCondition.zul.')}" width="20px"/>
+						<treecol label="${c:l('policyCondition.zul.Condicia')}"/>
+						<treecol label="${c:l('policyCondition.zul.')}" width="64px"/>
+						<treecol label="${c:l('policyCondition.zul.')}" width="64px"/>
 					</treecols>
 					<treechildren id="rows_policy" width="100%"/>
 				</tree>
 				<separator/>
 				<label sclass="etiqueta" value="${c:l('policyCondition.zul.Condicionsdatributs')}"/>
-				<tree fixedLayout="true" id="treeattpol">
+				<tree fixedLayout="true" id="treeattpol"  width="95%">
 					<treecols visible="false">
 						<treecol label="${c:l('policyCondition.zul.Value')}"/>
-						<treecol label="${c:l('policyCondition.zul.')}" width="25px"/>
-						<treecol label="${c:l('policyCondition.zul.')}" width="25px"/>
+						<treecol label="${c:l('policyCondition.zul.')}" width="64px"/>
+						<treecol label="${c:l('policyCondition.zul.')}" width="64px"/>
 					</treecols>
 					<treechildren id="rows_attPolicy"/>
 				</tree>

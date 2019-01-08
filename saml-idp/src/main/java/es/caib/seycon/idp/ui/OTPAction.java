@@ -31,21 +31,18 @@ public class OTPAction extends HttpServlet {
 
 	LogRecorder logRecorder = LogRecorder.getInstance();
 
-    public static final String URI = "/passwordLoginAction"; //$NON-NLS-1$
+    public static final String URI = "/otpLoginAction"; //$NON-NLS-1$
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (! amf.allowUserPassword())
-            throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
-        
 
-        String method = req.getParameter("j_method");
         String u = req.getParameter("j_username"); //$NON-NLS-1$
         String p = req.getParameter("j_password"); //$NON-NLS-1$
-        String error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
+        String error = "";
+        
        
         if (u == null || u.length() == 0) {
             error = Messages.getString("UserPasswordAction.missing.user.name"); //$NON-NLS-1$
@@ -61,17 +58,22 @@ public class OTPAction extends HttpServlet {
             	Challenge ch = new Challenge();
             	ch.setUser(user);
             	ch = v.selectToken(ch);
-                if (v.validatePin(ch, p)) {
+            	if (ch.getCardNumber() == null)
+            	{
+            		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
+                    logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
+            	}
+            	else if (v.validatePin(ch, p)) {
             		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-            		ctx.authenticated(u, "O");
+            		ctx.authenticated(u, "O"); //$NON-NLS-1$
             		ctx.store(req);
             		if ( ctx.isFinished())
             		{
             			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
             			return;
             		}
-                    return ;
                 } else {
+                	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }
             } catch (UnknownUserException e) {

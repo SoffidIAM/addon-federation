@@ -56,7 +56,7 @@ public class UserInfoEndpoint extends HttpServlet {
 		if ( t == null)
 		{
 			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			resp.addHeader("WWW-Authenticate", "error=\"invalid_token\"");
+			resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
 			return;
 		}
 			

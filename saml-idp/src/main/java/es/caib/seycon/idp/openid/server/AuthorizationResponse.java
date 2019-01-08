@@ -10,6 +10,7 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.LinkedList;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
@@ -38,15 +39,10 @@ public class AuthorizationResponse  {
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
-		if ( "code".equals(r.getResponseType()))
+		if ( r.getResponseTypeSet().contains("code"))
 			authorizationFlow (request, response);
-		else if ("id_token".equals(r.getResponseType()) || 
-			"id_token token".equals(r.getResponseType() ))
-			implicitFLow (ctx, request, response);
 		else
-			throw new ServletException ("Unexpecte response type "+r.getResponseType());
-		
-
+			implicitFLow (ctx, request, response);
 	}
 
 	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
@@ -56,6 +52,8 @@ public class AuthorizationResponse  {
 
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user);
+		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
+		token.setAuthenticationMethod(authenticationMethod);
 		h.generateToken (token);
 		
 		Map<String, Object>att  ;
@@ -68,17 +66,29 @@ public class AuthorizationResponse  {
 				url = r.getRedirectUrl();
 			if (url != null && ! url.isEmpty())
 			{
-				sb.append(url)
-					.append("?access_token=")
-					.append( URLEncoder.encode(  token.authorizationCode) )
-					.append("&token_type=bearer")
-					.append("&id_token=")
-					.append( URLEncoder.encode(openidToken , "UTF-8"))
-					.append("&expires_in=")
-					.append ( (token.expires - System.currentTimeMillis()) / 1000);
+				LinkedList<String> args = new LinkedList<String> ();
+				if (r.getResponseType().contains("code"))
+					args.add("code=" + URLEncoder.encode(  token.authorizationCode) );
+				if ( r.getResponseTypeSet().contains("token") )
+				{
+					args.add("access_token=" + URLEncoder.encode(  token.token) );
+					args.add("token_type=bearer");
+					args.add("expires_in=" +  (token.expires - System.currentTimeMillis()) / 1000);
+				}
+				if (r.getResponseTypeSet().contains("id_token"))
+					args.add("id_token=" + URLEncoder.encode(openidToken , "UTF-8"));
 				if ( r.getState() != null)
-					sb.append("&state=")
-					.append( URLEncoder.encode(r.getState() , "UTF-8"));
+					args.add("state=" + URLEncoder.encode(r.getState() , "UTF-8"));
+				boolean first = true;
+				sb.append(url);
+				for ( String arg: args)
+				{
+					if (first) sb.append('?');
+					else sb.append('&');
+					sb.append(arg);
+					first = false;
+				}
+				
 				response.sendRedirect(sb.toString());
 			} else {
 				ServletOutputStream out = response.getOutputStream();
@@ -89,23 +99,23 @@ public class AuthorizationResponse  {
 			
 		} catch (AttributeResolutionException e) {
 			log.warn("Error resolving attributes", e);
-			buildError(response, "Error resolving attributes");
+			buildError(response, r, "Error resolving attributes");
 			return;
 		} catch (AttributeFilteringException e) {
 			log.warn("Error filtering attributes", e);
-			buildError(response, "Error resolving attributes");
+			buildError(response, r, "Error resolving attributes");
 			return;
 		} catch (InternalErrorException e) {
 			log.warn("Error evaluating claims", e);
-			buildError(response, "Error resolving attributes");
+			buildError(response, r, "Error resolving attributes");
 			return;
 		} catch (JSONException e) {
 			log.warn("Error generating response", e);
-			buildError(response, "Error generating response");
+			buildError(response, r, "Error generating response");
 			return;
 		} catch (Throwable e) {
 			log.warn("Error generating open id token", e);
-			buildError(response, "Error generating open id token");
+			buildError(response, r, "Error generating open id token");
 			return;
 		}
 
@@ -113,20 +123,10 @@ public class AuthorizationResponse  {
 		
 	}
 
-	private static void buildError(HttpServletResponse resp, String string) throws IOException, ServletException {
-		JSONObject o = new JSONObject();
-		try {
-			o.put("error", string);
-		} catch (JSONException e) {
-			throw new ServletException("Error generating error message "+string, e);
-		}
-		resp.setContentType("application/json");
-		resp.addHeader("Cache-control", "no-store");
-		resp.addHeader("Pragma", "no-cache");
-		resp.setStatus(400);
-		ServletOutputStream out = resp.getOutputStream();
-		out.print( o.toString() );
-		out.close();
+	private static void buildError(HttpServletResponse resp, OpenIdRequest r, String description) throws IOException, ServletException {
+		resp.sendRedirect(r.getRedirectUrl()+"?error=server_error&error_description="+
+				URLEncoder.encode(description, "UTF-8")+
+				(r.getState() != null ? "&state="+r.getState(): ""));
 	}
 
 	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -136,6 +136,8 @@ public class AuthorizationResponse  {
 
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user);
+		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
+		token.setAuthenticationMethod(authenticationMethod);
 		
 		StringBuffer sb = new StringBuffer();
 		String url = r.getFederationMember().getOpenidUrl();

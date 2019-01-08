@@ -480,7 +480,8 @@
 				});			
 			</zscript>
 			
-			<tree autocommit="false" dataPath="/model:/" fixedLayout="true" height="96%" id="treebox" imageBinding="${imgFM}" onSelect="select()" pageSize="19" rows="${fileres}">
+			<tree autocommit="false" dataPath="/model:/" fixedLayout="true" height="96%" id="treebox" 
+				imageBinding="${imgFM}" onSelect="select()" pageSize="19" rows="${fileres}">
 				<treeitemfinder bind="." open="true" path="/entitygroupmember">
 					<treerow>
 						<treecellimage bind="/descripcio" imageBind="/tipus"/>
@@ -707,7 +708,6 @@
 					metadades.setDisabled(marcat);
 					organization.getFellow("dada").setDisabled(!marcat);
 					contact.getFellow("dada").setDisabled(!marcat);
-					id_allowCertificate1.setDisabled(!marcat);
 					id_allowRecover1.setDisabled(!marcat);
 					id_allowRegister1.setDisabled(!marcat);
 					Vbox pbox = r_publicKey;
@@ -728,6 +728,26 @@
 						}
 					}									
 
+					if ( IdentityProviderType.FACEBOOK.equals( idpType ) )
+					{
+						fed_ext_link.setVisible(true);
+						fed_ext_link.setDynamicProperty("href", "http://developers.facebook.com");
+					}
+					else if ( IdentityProviderType.GOOGLE.equals( idpType ) )
+					{
+						fed_ext_link.setVisible(true);
+						fed_ext_link.setDynamicProperty("href", "https://console.developers.google.com/apis/dashboard");
+					}
+					else if ( IdentityProviderType.LINKEDIN.equals( idpType ) )
+					{
+						fed_ext_link.setVisible(true);
+						fed_ext_link.setDynamicProperty("href", "https://www.linkedin.com/developer/apps/new");
+					}
+					else
+					{
+						fed_ext_link.setVisible(false);
+					}
+					
 					autoprovisionScriptRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
 					autoprovisionPatternRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
 					metadadesRow.setVisible(IdentityProviderType.SOFFID.equals( idpType ) ||
@@ -772,7 +792,6 @@
 						id_mailSender1.getFellow("dada").disabled = true;
 						id_mailSender1.getFellow("dada").setConstraint( "" );
 					}
-					registerExternalCheckbox.setDisabled( ! actAsBrokerCheckbox.isChecked() );
 					scriptParse.refresh();
 				}	
 
@@ -796,13 +815,32 @@
 					
 					r_sp_saml1.setVisible(!openid);
 					r_sp_saml2.setVisible(!openid);
-					r_sp_openid1.setVisible(openid);
+					updateOpenidMechanismListbox();
 					r_sp_openid2.setVisible(openid);
 					r_sp_openid3.setVisible(openid);
 					r_sp_openid4.setVisible(openid);
 					r_sp_openid5.setVisible(openid);
 				}	
 				
+				void updateOpenidMechanism() {
+					HashSet s = es.caib.zkib.datasource.XPathUtils.getValue(form, "/federationMember/openidMechanism");
+					s.clear();
+					for (Listitem item: lbOpenidMech.getSelectedItems())
+					{
+						s.add (item.getValue());
+					}
+					es.caib.zkib.datasource.XPathUtils.getValue(form, "/").update();	
+				}
+
+				void updateOpenidMechanismListbox() {
+					lbOpenidMech.setSelectedItem(null);					
+					HashSet s = es.caib.zkib.datasource.XPathUtils.getValue(form, "/federationMember/openidMechanism");
+					for ( Listitem item: lbOpenidMech.getItems())
+					{
+						if ( s.contains( item.getValue() ))
+							item.setSelected(true);
+					}
+				}
 
 				void enableVIPComponents ()
 				{
@@ -891,53 +929,56 @@
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.IdpType')} :"/>
-									<listbox mold="select" bind="/federationMember/idpType" dataPath="/model:/idptype"
-										disabled="${!canModifyFI}" id="id_internal1">
-										<dataitem bind="/value">
-											<listcell bind="/literal"/>
-										</dataitem>
-										<attribute name="onSelect">
-											enableIDPComponents();
-											IdentityProviderType idpType = self.getSelectedItem().getValue();
-											if (idpType.equals (IdentityProviderType.GOOGLE))
-											{
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://google.com");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Google");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
-													"{\"discoveryUrl\":\"https://accounts.google.com/.well-known/openid-configuration\"}");
-											}
-											if (idpType.equals (IdentityProviderType.FACEBOOK))
-											{
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://facebook.com");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Facebook");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
-													"");
-											}
-											if (idpType.equals (IdentityProviderType.LINKEDIN))
-											{
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://linkedin.com");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Linkedin");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
-													"");
-											}
-											if (idpType.equals (IdentityProviderType.OPENID_CONNECT))
-											{
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "");
-												es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
-													"{\n \"authorization_endpoint\": \"https://server/oauth2/auth\",\n"+
-													" \"token_endpoint\": \"https://server/oauth2/token\",\n"+
- 													" \"userinfo_endpoint\": \"https://server/oauth2/userinfo\",\n"+
-													" \"scopes_supported\": [ \"openid\",\"email\",\"profile\"]\n}");
-											}
-											
-											{
-												es.caib.zkib.binder.BindContext bctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(form);
-												bctx.getDataSource().sendEvent(new es.caib.zkib.events.XPathRerunEvent(bctx.getDataSource(),bctx.getXPath()) );
-											}
-											
-										</attribute>
-									</listbox>
+									<vbox>
+										<listbox mold="select" bind="/federationMember/idpType" dataPath="/model:/idptype"
+											disabled="${!canModifyFI}" id="id_internal1">
+											<dataitem bind="/value">
+												<listcell bind="/literal"/>
+											</dataitem>
+											<attribute name="onSelect">
+												enableIDPComponents();
+												IdentityProviderType idpType = self.getSelectedItem().getValue();
+												if (idpType.equals (IdentityProviderType.GOOGLE))
+												{
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://google.com");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Google");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+														"{\"discoveryUrl\":\"https://accounts.google.com/.well-known/openid-configuration\"}");
+												}
+												if (idpType.equals (IdentityProviderType.FACEBOOK))
+												{
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://facebook.com");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Facebook");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+														"");
+												}
+												if (idpType.equals (IdentityProviderType.LINKEDIN))
+												{
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "http://linkedin.com");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "Linkedin");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+														"");
+												}
+												if (idpType.equals (IdentityProviderType.OPENID_CONNECT))
+												{
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/publicId", "");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/name", "");
+													es.caib.zkib.datasource.XPathUtils.setValue(form, "/federationMember/metadades", 
+														"{\n \"authorization_endpoint\": \"https://server/oauth2/auth\",\n"+
+														" \"token_endpoint\": \"https://server/oauth2/token\",\n"+
+	 													" \"userinfo_endpoint\": \"https://server/oauth2/userinfo\",\n"+
+														" \"scopes_supported\": [ \"openid\",\"email\",\"profile\"]\n}");
+												}
+												
+												{
+													es.caib.zkib.binder.BindContext bctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(form);
+													bctx.getDataSource().sendEvent(new es.caib.zkib.events.XPathRerunEvent(bctx.getDataSource(),bctx.getXPath()) );
+												}
+												
+											</attribute>
+										</listbox>
+										<h:a id="fed_ext_link" href="" target="_blank">${c:l('federacio.zul.registerLink') }</h:a>
+									</vbox>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.publicId')}"/>
@@ -1170,33 +1211,18 @@
 									<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
-									<space/>
-									<hbox>
+									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
 									<checkbox bind="/federationMember/allowRecover" disabled="${!canModifyFI}"
 												id="id_allowRecover1"  onCheck="enableIDPComponents()">
 									</checkbox>
-									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
-									</hbox>
 								</row>
 								<row>
-									<space></space>
-									<hbox>
-									<checkbox bind="/federationMember/allowCertificate" disabled="${!canModifyFI}"
-												id="id_allowCertificate1"  onCheck="enableIDPComponents()">
-									</checkbox>
-									<input_etiqueta value="${c:l('federacio.zul.allowCertificate')}"/>
-									</hbox>
-								</row>
-								<row>
-									<space></space>
+									<input_etiqueta value="${c:l('federacio.zul.allowRegister')}"/>
 									<vbox>
 										<hbox>
 											<checkbox bind="/federationMember/allowRegister" disabled="${!canModifyFI}"
 													id="id_allowRegister1"  onCheck="enableIDPComponents()">
 											</checkbox>
-											<input_etiqueta value="${c:l('federacio.zul.allowRegister')}"/>
-										</hbox>	
-										<hbox>
 											<input_etiqueta value="${c:l('usuaris.zul.Tipus')}" width_custom="8em"/>
 											<listbox 
 												dataPath="/model:/userType" id="id_userTypeToRegister1"
@@ -1245,12 +1271,6 @@
 											id = "id_mailSender1"
 											bind="/federationMember/mailSenderAddress" mascara="no empty"
 											lectura="${!canModifyFI}"/>
-								</row>
-								<row>
-									<input_etiqueta value="${c:l('federacio.zul.broker')}"/>
-									<checkbox bind="/federationMember/identityBroker" disabled="${!canModifyFI}"
-										id="actAsBrokerCheckbox" 
-										onCheck="registerExternalCheckbox.setDisabled( ! self.isChecked() )"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.registerExternal')}"/>
@@ -1342,7 +1362,32 @@
 									<textbox sclass="textbox"
 										id="sp_metadades" 
 										bind="/federationMember/metadades" readonly="${!canModifyFI}" rows="8"
-										width="98%"/>
+										width="98%" >
+										<attribute name="onChange"><![CDATA[
+							                try {
+							                    javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+							                    dbFactory.setNamespaceAware(true);
+							                    javax.xml.parsers.DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+							                    org.w3c.dom.Document newDoc = dBuilder.parse(new org.xml.sax.InputSource(new java.io.StringReader(self.getValue())));
+							                    org.w3c.dom.NodeList nl = newDoc.getChildNodes();
+							                    for (int i = 0; i < nl.getLength(); i++) {
+							                        org.w3c.dom.Node n = nl.item(i);
+							                        if (n instanceof org.w3c.dom.Element)
+							                        {
+							                        	String id = n.getAttribute("entityID");
+							                        	if (id != null)
+							                        	{
+							                        		es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+							                        		vipPublicId.setValue( id );
+							                        	}
+							                        }
+							                    }
+							                } catch (SAXParseException e) {
+							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
+							                }
+										]]>
+										</attribute>
+									</textbox>
 								</row>
 								<row  id="sp_firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
@@ -1416,31 +1461,28 @@
 									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
 									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="/federationMember/uidExpression" />
 								</row>
-								<row id="r_sp_openid1">
-									<input_etiqueta value="${c:l('federacio.zul.openidFlow')}"/>
-									<listbox mold="select" bind="/federationMember/openidFlow" >
-										<listitem label="${c:l('federacio.zul.openidFlow.implicit')}" value="implicit"></listitem>
-										<listitem label="${c:l('federacio.zul.openidFlow.authorizationCode')}" value="authorization_code"></listitem>
-									</listbox>
-								</row>
 								<row id="r_sp_openid2">
-									<input_etiqueta value="${c:l('federacio.zul.openidGrantType')}"/>
-									<listbox mold="select" bind="/federationMember/openidFlow" >
-										<listitem label="${c:l('federacio.zul.openidGrantType.password')}" value="password"></listitem>
-										<listitem label="${c:l('federacio.zul.openidGrantType.client_credentials')}" value="client_credentials"></listitem>
+									<input_etiqueta value="${c:l('federacio.zul.openidFlow')}"/>
+									<listbox id="lbOpenidMech" multiple="true" onSelect="updateOpenidMechanism()" 
+										checkmark="true" >
+										<listitem label="${c:l('federacio.zul.openidFlow.implicit')}" value="IM"></listitem>
+										<listitem label="${c:l('federacio.zul.openidFlow.authorizationCode')}" value="AC"></listitem>
+										<listitem label="${c:l('federacio.zul.openidGrantType.password')}" value="PA"></listitem>
+										<listitem label="${c:l('federacio.zul.openidGrantType.password_client_credentials')}" 
+											value="PC"></listitem>
 									</listbox>
 								</row>
 								<row id="r_sp_openid3">
-									<input_etiqueta value="${c:l('federacio.zul.openidClientId')}"/>
-									<textbox  width="100%" bind="/federationMember/openidClientId" />
+									<input_etiqueta value="${c:l('federacio.zul.openidKey')}"/>
+									<textbox  width="100%" bind="/federationMember/openidClientId" onChange=""/>
 								</row>
 								<row id="r_sp_openid4">
 									<input_etiqueta value="${c:l('federacio.zul.openidSecret')}"/>
-									<input_password width="100%" bind="/federationMember/openidSecret"/>
+									<input_password width="100%" bind="/federationMember/openidSecret"  onChange=""/>
 								</row>
 								<row id="r_sp_openid5">
 									<input_etiqueta value="${c:l('federacio.zul.openidUrl')}"/>
-									<textbox  width="100%" bind="/federationMember/openidUrl" />
+									<textbox  width="100%" bind="/federationMember/openidUrl"  onChange="" />
 								</row>
 							</rows>
 						</grid>
@@ -2313,18 +2355,20 @@
 				</toolbar>
 				<grid dataPath="/model:/atribut" fixedLayout="true" sclass="noBorderGrid">
 					<columns>
-						<column label="${c:l('federa_atribut.zul.Name-2') }" width="25%"></column>
-						<column label="${c:l('federa_atribut.zul.ShortName-2') }"  width="25%"></column>
-						<column label="${c:l('federa_atribut.zul.Oid') }"  width="25%"></column>
-						<column label="${c:l('federacio.zul.value') }"  width="25%"></column>
+						<column label="${c:l('federa_atribut.zul.Name-2') }" width="15%"></column>
+						<column label="${c:l('federa_atribut.zul.ShortName-2') }"  width="15%"></column>
+						<column label="${c:l('federa_atribut.zul.Oid') }"  width="15%"></column>
+						<column label="${c:l('federa_atribut.zul.openidName') }"  width="15%"></column>
+						<column label="${c:l('federacio.zul.value') }" ></column>
 						<column label="-"  width="32px"></column>
 					</columns>
 					<datarow>
-						<textbox bind="name" style="width:95%; margin-left: 8px; margn-right:8px"></textbox>
-						<textbox bind="shortName" style="width:95%; margin-left: 8px; margn-right:8px"></textbox>
-						<textbox bind="oid" style="width:95%; margin-left: 8px; margn-right:8px"></textbox>
-						<hbox>
-							<textbox bind="value"
+						<textbox bind="name" style="width:95%; margin-left: 8px; margn-right:8px" onChange=""></textbox>
+						<textbox bind="shortName" style="width:95%; margin-left: 8px; margn-right:8px"  onChange=""></textbox>
+						<textbox bind="oid" style="width:95%; margin-left: 8px; margn-right:8px"  onChange=""></textbox>
+						<textbox bind="openidName" style="width:95%; margin-left: 8px; margn-right:8px" onChange=""></textbox>
+						<hbox widths="*,30px" width="100%">
+							<textbox bind="value" onChange="" multiline="true" rows="1"
 								style="width:95%; margin-left: 8px; margn-right:8px">
 							</textbox>
 							<imageclic src="/img/pencil.png" width="24px">

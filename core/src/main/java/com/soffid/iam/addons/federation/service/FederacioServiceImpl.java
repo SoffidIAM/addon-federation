@@ -101,6 +101,7 @@ import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.service.ConfigurationService;
+import com.soffid.iam.tomcat.SoffidPrincipal;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
@@ -312,6 +313,14 @@ public class FederacioServiceImpl
 				Collection<ProfileEntity> profileCol = idp.getProfiles();
 				for(ProfileEntity profile : profileCol){
 					getProfileEntityDao().remove(profile);
+				}
+				for (VirtualIdentityProviderEntity vip: idp.getVirtualIdentityProvider())
+				{
+					for(ProfileEntity profile : vip.getProfiles()){
+						getProfileEntityDao().remove(profile);
+					}
+					getVirtualIdentityProviderEntityDao().remove(vip);
+					
 				}
 				getIdentityProviderEntityDao().remove(idp);
 
@@ -613,8 +622,10 @@ public class FederacioServiceImpl
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.Policy policy) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
-			PolicyEntity entity = getPolicyEntityDao().policyToEntity(policy);
-
+			PolicyEntity entity = getPolicyEntityDao().load(policy.getId());
+			if (entity == null)
+				return;
+						
 			// AttributePolicyEntity [0..*]
 			if (entity.getAttributePolicy() != null && entity.getAttributePolicy().size() != 0) {
 				Collection attp = entity.getAttributePolicy();
@@ -648,33 +659,26 @@ public class FederacioServiceImpl
 					// getAttributePolicyEntityDao().update(ape);
 
 					// ara esborrem la AttributePolicy
-					getAttributePolicyEntityDao().remove(ape);
-					// I les seves condicions d'atribut
-					getAttributeConditionEntityDao().remove(allConditionAtt);
+					if (ape.getId() != null)
+					{
+						getAttributePolicyEntityDao().remove(ape);
+						// I les seves condicions d'atribut
+						getAttributeConditionEntityDao().remove(allConditionAtt);
+					}
+					it.remove();
 				}
 
 			}
 
-			ArrayList<PolicyConditionEntity> allCondition = new ArrayList();
-
-			// Es nova, hem de crear les policyCondition i les
-			// attributeCondition
-			if (entity.getCondition() != null) {
-				// Creem la policyCondition (i les seues condicions filles)
-				PolicyConditionEntity cond = entity.getCondition();
-
-				allCondition.add(cond);
-				// Obtenim les seues filles
-				getAllCondicionsFilles(cond.getCondition(), allCondition);
-			}
-
-			// Referencies a politiques i politiques d'atributs
-			// (atribut + attributeCondition)
+			
+			PolicyConditionEntity condition = entity.getCondition();
 			entity.setCondition(null);
-			entity.setAttributePolicy(null); // esborrem referencia
+			getPolicyEntityDao().update(entity);
+			getPolicyConditionEntityDao().remove(condition);
 			// I les seves condicions
-			getPolicyConditionEntityDao().remove(allCondition);
+			getAttributePolicyEntityDao().remove(entity.getAttributePolicy());
 			// I finalment esborrem la politica
+			entity.getAttributePolicy().clear(); // esborrem referencia
 			getPolicyEntityDao().remove(entity);
 
 			guardaDataModificacioPolitiques(); // guardem data

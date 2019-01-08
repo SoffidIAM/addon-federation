@@ -52,9 +52,9 @@
 	<div class="login">
 		<p class="loginheader"><img src="/img/logo.png" alt="Soffid logo" /> </p> 
 		<div class="loginbox"> 
-			<p class="header">${title}</p>
+			<p class="header">${title2}</p>
 			{if passwordAllowed} 
-			<div class="logintype"  id ="passlogin">
+			<div class="logintype2"  id ="passlogin">
 				<form method="post" action="${passwordLoginUrl}">
 					<div class="upinput">
 						${Username}: 
@@ -71,7 +71,7 @@
 			<p/>
 			{endif}
 			{if otpAllowed} 
-			<div class="logintype"  id ="otplogin">
+			<div class="logintype2"  id ="otplogin">
 				<form method="post" action="${otpLoginUrl}">
 					<div class="otpinput">
 						${Username}: 
@@ -88,7 +88,7 @@
 			<p/>
 			{endif}
 			{if kerberosAllowed} 
-			<div class="logintype"  id ="otplogin">
+			<div class="logintype2"  id ="otplogin">
     			<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img>${Kerberos}</a>
 			</div>
 			<p/>
@@ -99,7 +99,7 @@
 			{endif}
 			<p/>
 			{if certAllowed}
-			<div class="logintype"  id ="certlogin">
+			<div class="logintype2"  id ="certlogin">
 				<form method="post" action="https://${config.hostname}:${config.sslport}${certificateLoginUrl}">
 					<input name="j_method"  id="j_method_usu-pas" type="hidden" value="C"/>
 					<div class="upinput">
@@ -112,35 +112,8 @@
 			</div>
 			<p/>
 			{endif}
-			{if registerAllowed}
-			<div class="nologintype"  id ="registerlogin">
-				<form method="post" action="${registerUrl}">
-					<div class="upbuttoncert">
-						<input name="formUCboton" type="submit" value="${Register}"/>
-					</div>
-					<div class="upinputcert">${If you have no account, you can register yourself}</div>
-				</form>
-			</div>
-			<p>
-			{endif}
-			{if recoverAllowed}
-			<div class="nologintype"  id ="recoverlogin">
-				<form method="post" action="${recoverUrl}">
-					<input name="j_method"  id="j_method_usu-pas" type="hidden" value="U"/>
-					<div class="upinput">
-						<p>${recover.msg}</p>
-						${Email}:
-						<input name="email" id="email" type="text" />
-					</div>
-					<div class="upbutton">
-						<input name="formUCboton" type="submit" value="${Recover}"/>
-					</div>
-				</form>
-			</div>
-			<p>
-			{endif}
 			{if cancelAllowed}
-			<div class="cancellogintype" id="canceldiv">
+			<div class="cancellogintype">
 				<form method="post" action="${cancelUrl}">
 					<div class="upbuttoncert">
 						<input name="formUCboton" type="submit" value="${Cancel}"/>

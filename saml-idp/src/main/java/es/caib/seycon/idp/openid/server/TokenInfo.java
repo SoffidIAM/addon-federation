@@ -12,6 +12,7 @@ public class TokenInfo {
 	long created;
 	long expires;
 	long authentication;
+	private String authenticationMethod;
 	
 	public String getUser() {
 		return user;
@@ -66,5 +67,11 @@ public class TokenInfo {
 	}
 	public void setAuthentication(long authentication) {
 		this.authentication = authentication;
+	}
+	public String getAuthenticationMethod() {
+		return authenticationMethod;
+	}
+	public void setAuthenticationMethod(String authenticationMethod) {
+		this.authenticationMethod = authenticationMethod;
 	}
 }

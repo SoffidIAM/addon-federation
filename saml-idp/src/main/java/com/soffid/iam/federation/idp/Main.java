@@ -66,12 +66,14 @@ import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.ui.ActivateUserAction;
 import es.caib.seycon.idp.ui.ActivatedFormServlet;
 import es.caib.seycon.idp.ui.AuthenticatedFilter;
+import es.caib.seycon.idp.ui.CancelAction;
 import es.caib.seycon.idp.ui.CertificateAction;
 import es.caib.seycon.idp.ui.DefaultServlet;
 import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.NtlmAction;
+import es.caib.seycon.idp.ui.OTPAction;
 import es.caib.seycon.idp.ui.P3PFilter;
 import es.caib.seycon.idp.ui.PasswordChangeAction;
 import es.caib.seycon.idp.ui.PasswordChangeForm;
@@ -405,9 +407,11 @@ public class Main {
 
         }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
+        ctx.addServlet(CancelAction.class, CancelAction.URI);
         ctx.addServlet(UserPasswordFormServlet.class,
                 UserPasswordFormServlet.URI);
         ctx.addServlet(UserPasswordAction.class, UserPasswordAction.URI);
+        ctx.addServlet(OTPAction.class, OTPAction.URI);
         ctx.addServlet(PasswordChangeRequiredForm.class,
                 PasswordChangeRequiredForm.URI);
         ctx.addServlet(PasswordChangeRequiredAction.class,
@@ -544,7 +548,10 @@ public class Main {
 			throw new FileNotFoundException(f.getAbsolutePath());
 		}
 		Constraint constraint = new Constraint(Constraint.__SPNEGO_AUTH, "Soffid Identity Provider");
-        constraint.setRoles(new String[] { c.getFederationMember().getKerberosDomain()});
+        constraint.setRoles(new String[] { c.getFederationMember().getKerberosDomain(),
+        		c.getFederationMember().getKerberosDomain().toLowerCase(),
+        		c.getFederationMember().getKerberosDomain().toUpperCase()
+        		});
         constraint.setAuthenticate(true);
         
         ConstraintMapping constraintMapping = new ConstraintMapping();

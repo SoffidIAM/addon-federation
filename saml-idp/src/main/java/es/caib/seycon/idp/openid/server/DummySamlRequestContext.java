@@ -1,14 +1,5 @@
 package es.caib.seycon.idp.openid.server;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -21,7 +12,6 @@ import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
-import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.handler.HandlerChainResolver;
 import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.InTransport;
@@ -38,7 +28,6 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRe
 import edu.internet2.middleware.shibboleth.common.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class DummySamlRequestContext implements
 		SAMLProfileRequestContext {
@@ -364,7 +353,7 @@ public class DummySamlRequestContext implements
 	}
 
 	public String getPrincipalAuthenticationMethod() {
-		return "";
+		return token.getAuthenticationMethod();
 	}
 
 	public String getPrincipalName() {

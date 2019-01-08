@@ -15,6 +15,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -276,6 +277,7 @@ public class Autenticator {
         String entityId = (String) session
         		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
         session.setAttribute(SessionConstants.SEU_USER, user);
+        session.setAttribute(SessionConstants.AUTHENTICATION_USED, type);
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 		if (authCtx == null)
 		{
@@ -297,7 +299,7 @@ public class Autenticator {
 	        		generateSession2(req, resp, user, type, externalAuth));
 	        
 	        req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
-	        req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY,  toSamlAuthenticationMethod(type));
+	        req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, toSamlAuthenticationMethod(type));
 	        req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
 	        Set<Principal> principals = new HashSet<Principal> ();
 	        Set<?> pubCredentals = new HashSet<Object>();
@@ -437,29 +439,35 @@ public class Autenticator {
 			return null;
 	}
 
-	public static String toSoffidAuthenticationMethod (String method)
+	public static Collection<String> toSoffidAuthenticationMethod (String method)
 	{
+		String values[] = null;
 		if (method == null)
 			return null;
 		if (method.equals(AuthnContext.PPT_AUTHN_CTX))
-			return "P";
+			values = new String[] { "P", "K", "C", "O", "E", "PO", "PC", "KO", "KC" };
 		else if (method.equals(AuthnContext.KERBEROS_AUTHN_CTX))
-			return "K";
+			values = new String[] { "K", "KO", "KC", "C" };
 		else if (method.equals(AuthnContext.MTFC_AUTHN_CTX))
-			return "KO";
+			values = new String[] { "PO", "KO", "C", "EO" };
 		else if (method.equals(AuthnContext.PASSWORD_AUTHN_CTX))
-			return "P";
+			values = new String[] { "P", "K", "C", "O", "E" };
 		else if (method.equals(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX))
-			return "E";
+			values = new String[] { "P", "K", "C", "O", "E", "PO", "PC", "KO", "KC" };
 		else if (method.equals(AuthnContext.SMARTCARD_AUTHN_CTX))
-			return "C";
+			values = new String[] { "C", "CO" };
 		else if (method.equals(AuthnContext.SMARTCARD_PKI_AUTHN_CTX))
-			return "C";
+			values = new String[] { "C", "CO" };
 		else if (method.equals(AuthnContext.SOFTWARE_PKI_AUTHN_CTX))
-			return "P";
+			values = new String[] { "C", "CO" };
 		else if (method.equals(AuthnContext.X509_AUTHN_CTX))
-			return "C";
+			values = new String[] { "C", "CO" };
 		else
 			return null;
+		
+		if (values == null)
+			return null;
+		else
+			return Arrays.asList(values);
 	}
 }

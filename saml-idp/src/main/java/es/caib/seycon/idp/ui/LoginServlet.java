@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -31,7 +32,8 @@ public class LoginServlet extends LangSupportServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 	public static final String URI = "/login"; //$NON-NLS-1$
-
+	Log log = LogFactory.getLog(getClass());
+	
     void process (HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, IOException, ServletException {
         HttpSession session = req.getSession();
         
@@ -78,13 +80,18 @@ public class LoginServlet extends LangSupportServlet {
         	{
         		try {
         			authCtx.setPublicId(entityId);
-    				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
+        			if (method != null)
+        				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
+        			else
+        				authCtx.setSamlRequestedAuthenticationMethod(null);
+        				
 					if (authCtx.isPreviousAuthenticationMethodAllowed(req))
 					{
 						auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false);
 						return;
 					}
 				} catch (Exception e) {
+					log.warn ("Error authenticating user", e);
 					throw new ServletException("Error authenticating user", e);
 				}
         	}

@@ -41,7 +41,7 @@ public class HtmlGenerator {
     private Map<String, String> internalParams;
     private List<Locale> langs;
 
-    private ResourceBundle getResourceBundle ()
+    public ResourceBundle getResourceBundle ()
     {
     	for (Locale lang: langs)
     	{
