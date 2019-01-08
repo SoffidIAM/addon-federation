@@ -12,6 +12,7 @@ public class SessionInfo {
     Date creation;
     Date lastUpdate;
     String remoteIp;
+    String authenticationMethod;
     
     public String getRemoteIp() {
         return remoteIp;
@@ -55,6 +56,12 @@ public class SessionInfo {
     public void setIdpSession(Session idpSession) {
         this.idpSession = idpSession;
     }
+	public String getAuthenticationMethod() {
+		return authenticationMethod;
+	}
+	public void setAuthenticationMethod(String authenticationMethod) {
+		this.authenticationMethod = authenticationMethod;
+	}
     
     
 }

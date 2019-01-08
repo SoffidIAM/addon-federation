@@ -20,7 +20,7 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	public java.lang.String publicId;
 
 	@ForeignKey (foreignColumn="PRO_VIP_ID")
-	public java.util.Collection<com.soffid.iam.addons.federation.model.SamlProfileEntity> profiles;
+	public java.util.Collection<com.soffid.iam.addons.federation.model.ProfileEntity> profiles;
 
 	@Column (name="FED_DFIP_ID")
 	@Nullable
@@ -36,10 +36,6 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Column (name="ALLOW_RECOVER")
 	@Nullable
 	public boolean allowRecover;
-
-	@Column (name="ALLOW_CERTIFICATE")
-	@Nullable
-	public boolean allowCertificate;
 
 	@Column (name="USER_TYPE_TO_REGISTER")
 	@Nullable
@@ -61,6 +57,14 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public Boolean enableKerberos;
 
+	@Column (name="FED_AUTMET")
+	@Nullable
+	public String authenticationMethods;
+
+	@Column (name="ALLOW_CERTIFICATE")
+	@Nullable
+	public boolean allowCertificate;
+
 	@Column (name="FED_KRBDOM", length=128)
 	@Nullable
 	public String kerberosDomain;
@@ -74,3 +78,4 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	public String ssoCookieName;
 
 }
+

@@ -16,6 +16,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -23,6 +24,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.*;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.MetadataScope;
@@ -76,27 +78,32 @@ public class AttributeResolverGenerator {
      }
 
     @SuppressWarnings("rawtypes")
-    private void addCustomAttributes(Node root) throws InternalErrorException {
-    	for (DataType md: dataSvc.findDataTypes(MetadataScope.USER))
+    private void addCustomAttributes(Node root) throws InternalErrorException, DOMException, IOException {
+    	for ( Attribute att: new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null))
     	{
     		
-            Element node = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeDefinition"); //$NON-NLS-1$
-            node.setAttribute("xsi:type", "ad:Simple"); //$NON-NLS-1$
-            node.setAttribute("id", "custom:"+md.getCode()); //$NON-NLS-1$
-            node.setAttribute("sourceAttributeID", "custom:"+md.getCode()); //$NON-NLS-1$
-            
-            Element dependency = doc.createElementNS(RESOLVER_NAMESPACE, "Dependency"); //$NON-NLS-1$
-            dependency.setAttribute("ref", "seu"); //$NON-NLS-1$
-            node.appendChild(dependency);
-            
-            Element encoder = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeEncoder"); //$NON-NLS-1$
-            encoder.setAttribute("xsi:type", "enc:SAML2String"); //$NON-NLS-1$
-            encoder.setAttribute("name", "urn:oid:1.3.6.1.4.1.22896.3.1."+md.getId()); //$NON-NLS-1$
-            encoder.setAttribute("friendlyName", md.getCode()); //$NON-NLS-1$
-            node.appendChild(encoder);
-            
-            root.appendChild(node);
+    		if ( ! att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.3") && // mail
+    			!att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.1") && 
+    			!att.getOid().equals("urn:oid:1.3.6.1.4.1.22896.3.1.2")) // uid
+    		{
+		
+	            Element node = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeDefinition"); //$NON-NLS-1$
+	            node.setAttribute("xsi:type", "ad:Simple"); //$NON-NLS-1$
+	            node.setAttribute("id", att.getShortName()); //$NON-NLS-1$
+	            node.setAttribute("sourceAttributeID", att.getShortName().toLowerCase()); //$NON-NLS-1$
+	            
+	            Element dependency = doc.createElementNS(RESOLVER_NAMESPACE, "Dependency"); //$NON-NLS-1$
+	            dependency.setAttribute("ref", "seu"); //$NON-NLS-1$
+	            node.appendChild(dependency);
+	            
+	            Element encoder = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeEncoder"); //$NON-NLS-1$
+	            encoder.setAttribute("xsi:type", "enc:SAML2String"); //$NON-NLS-1$
+	            encoder.setAttribute("name", att.getOid()); //$NON-NLS-1$
+	            encoder.setAttribute("friendlyName", att.getShortName()); //$NON-NLS-1$
+	            node.appendChild(encoder);
+	            
+	            root.appendChild(node);
+    		}
         }
     }
-
 }

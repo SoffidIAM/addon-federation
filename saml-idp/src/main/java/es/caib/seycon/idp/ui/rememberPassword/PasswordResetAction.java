@@ -17,9 +17,11 @@ import es.caib.seycon.BadPasswordException;
 import es.caib.seycon.InvalidPasswordException;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.Messages;
+import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
 
 public class PasswordResetAction extends HttpServlet {
@@ -87,7 +89,16 @@ public class PasswordResetAction extends HttpServlet {
             dispatcher.forward(req, resp);
         } else {
         	try {
-        		new Autenticator().autenticate(user, req, resp, AuthnContext.PPT_AUTHN_CTX, false);
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        		ctx.authenticated(user, "P");
+        		ctx.store(req);
+        		if ( ctx.isFinished())
+        		{
+        			new Autenticator().autenticate2(user, getServletContext(), req, resp, ctx.getUsedMethod(), false);
+        		} else {
+        		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+        		    dispatcher.forward(req, resp);
+        		}
         	} 
         	catch (Exception e)
         	{

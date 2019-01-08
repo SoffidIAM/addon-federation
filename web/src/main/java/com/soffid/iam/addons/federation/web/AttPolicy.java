@@ -29,6 +29,7 @@ public class AttPolicy extends AtributFederationElementFillTree {
 					detach();
 				}
 			});
+			getBotoEsborrar().setVisible(true);
 		}
 
 		if (getBotoSelecionaAtribut() != null) {
@@ -138,4 +139,13 @@ public class AttPolicy extends AtributFederationElementFillTree {
 
 	}
 
+	public void selectAttribute ()
+	{
+		if (getAttributeName().isEmpty())
+		{
+			Object[] dades = { this, getAttributeName(), getAttributeShortName(),
+					getAttributeOID() };
+			Events.postEvent("onInicia", Executions.getCurrent().getDesktop().getPage("federacioAtributs").getFellow("esquema"), dades);
+		}
+	}
 }

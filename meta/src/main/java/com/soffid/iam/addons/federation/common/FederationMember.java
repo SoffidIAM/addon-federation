@@ -6,6 +6,9 @@
 
 package com.soffid.iam.addons.federation.common;
 
+import java.util.Set;
+
+import com.soffid.mda.annotation.Attribute;
 import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Description;
 import com.soffid.mda.annotation.Nullable;
@@ -91,13 +94,11 @@ public class FederationMember {
 
 	public boolean allowRegister;
 
-	public boolean allowCertificate;
-
 	public boolean allowRecover;
 
-	@Nullable
-	public Boolean enableKerberos;
-
+	@Nullable 
+	String authenticationMethods;
+	
 	@Nullable
 	public String kerberosDomain;
 	
@@ -134,10 +135,6 @@ public class FederationMember {
 	@Nullable
 	public String assertionPath;
 
-	@Description ("Act as a identity broker (only for identity providers)")
-	@Nullable
-	Boolean identityBroker;
-
 	@Description ("Register new identities from remote identity providers")
 	@Nullable
 	Boolean registerExternalIdentities;
@@ -149,4 +146,26 @@ public class FederationMember {
 	@Description("Script to parse the user name")
 	@Nullable
 	public String scriptParse;
+
+	@Description ("Service provider type")
+	@Nullable
+	ServiceProviderType serviceProviderType;
+
+	@Description("Open ID Secret")
+	@Nullable
+	public String openidSecret;
+
+	@Description("Open ID Client Id")
+	@Nullable
+	public String openidClientId;
+
+	@Description("Open ID URL")
+	@Nullable
+	public String openidUrl;
+
+	@Description("Open ID mechanisms: Implicit, AuthorizationCode, Password, PasswordClientCredentals")
+	@Attribute(defaultValue="new java.util.HashSet()")
+	@Nullable
+	public Set<String> openidMechanism;
+
 }

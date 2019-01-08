@@ -44,7 +44,12 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 			publish(getFederacioService(), FederacioService.REMOTE_PATH, "agent");
 	}
 
- 	private void testAttribute (String name, String shortName, String oid) throws InternalErrorException
+ 	private void testAttribute (String name, String shortName, String oid, String openId) throws InternalErrorException
+ 	{
+ 		testAttribute(name, shortName, oid, openId, null);
+ 	}
+ 	
+ 	private void testAttribute (String name, String shortName, String oid, String openId, String value) throws InternalErrorException
  	{
 		FederacioService fds = getFederacioService();
 		Collection<Attribute> atts = fds.findAtributs(name, null, null);
@@ -55,10 +60,25 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 			att.setName(name);
 			att.setOid(oid);
 			att.setShortName(shortName);
+			att.setOpenidName(openId);
+			att.setValue(null);
 			fds.create(att);
 		}
 		else
+		{
 			log.info("Attribute "+name+" exists");
+			Attribute att = atts.iterator().next();
+			if (att.getOpenidName() == null && openId != null)
+			{
+				att.setOpenidName(openId);
+				fds.update(att);
+			}
+			if (att.getValue() == null && value != null)
+			{
+				att.setValue(value);
+				fds.update(att);
+			}
+		}
  	}
  	
 	@Override
@@ -67,23 +87,23 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		if (Security.getProvider("BC") == null)
 			Security.addProvider( new BouncyCastleProvider());
 
-		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1");
-		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241");
-		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42");
-		testAttribute("Surname", "Surname", "urn:oid:2.5.4.4");
-		testAttribute("Surnames (all)", "Surnames", "urn:oid:1.3.6.1.4.1.22896.3.1.5");
-		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20");
-		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3");
-		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11");
-		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4");
-		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1");
-		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1");
-		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2");
+		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1", "sub");
+		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241", "full_name");
+		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42", "given_name");
+		testAttribute("Surname", "Surname", "urn:oid:2.5.4.4", "surname");
+		testAttribute("Surnames (all)", "Surnames", "urn:oid:1.3.6.1.4.1.22896.3.1.5", "surnames");
+		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20", "phone");
+		testAttribute("Email address", "mail", "urn:oid:0.9.2342.19200300.100.1.3", "email");
+		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11", "ou");
+		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4", "user_type");
+		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
+		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
+		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
 		
     	for (DataType md: ServiceLocator.instance().getAdditionalDataService().findDataTypes(MetadataScope.USER))
     	{
     		testAttribute(md.getLabel(), "custom:"+md.getCode(), 
-    				"urn:oid:1.3.6.1.4.1.22896.3.1."+md.getId());
+    				"urn:oid:1.3.6.1.4.1.22896.3.1."+md.getId(), md.getCode(), "attributes{\""+md.getCode()+"\"}");
         }
 
 		
@@ -192,18 +212,18 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 
 	@Override
 	protected void handleTenantBoot(Tenant arg0) throws Exception {
-		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1");
-		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241");
-		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42");
-		testAttribute("Surname", "SurName", "urn:oid:2.5.4.4");
-		testAttribute("Surnames (all)", "SurNames", "urn:oid:1.3.6.1.4.1.22896.3.1.5");
-		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20");
-		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3");
-		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11");
-		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4");
-		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1");
-		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1");
-		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2");
+		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1", "sub");
+		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241", "full_name");
+		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42", "given_name");
+		testAttribute("Surname", "Surname", "urn:oid:2.5.4.4", "surname");
+		testAttribute("Surnames (all)", "Surnames", "urn:oid:1.3.6.1.4.1.22896.3.1.5", "surnames");
+		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20", "phone");
+		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3", "email");
+		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11", "ou");
+		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4", "user_type");
+		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
+		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
+		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
 	}
 
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

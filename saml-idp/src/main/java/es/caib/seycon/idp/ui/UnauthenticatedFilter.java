@@ -22,6 +22,7 @@ public class UnauthenticatedFilter implements Filter {
             HttpServletRequest req = (HttpServletRequest) request;
             HttpSession session = req.getSession();
             session.removeAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
+        	session.setAttribute("soffid-session-type", "saml");
         }
         chain.doFilter(request, response);
     }

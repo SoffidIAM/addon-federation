@@ -27,12 +27,12 @@ public class PasswordChangeAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+    	resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
         HttpSession session = req.getSession();
-        String user = (String) session.getAttribute("seu-user"); //$NON-NLS-1$
+        String user = (String) session.getAttribute(SessionConstants.SEU_USER); //$NON-NLS-1$
         if (user == null ) {
             throw new ServletException(Messages.getString("PasswordChangeAction.2")); //$NON-NLS-1$
         }
-        resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 
         String p1 = req.getParameter("j_password1"); //$NON-NLS-1$
         String p2 = req.getParameter("j_password2"); //$NON-NLS-1$

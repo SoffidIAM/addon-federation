@@ -12,20 +12,24 @@ import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 /**
  * @see com.soffid.iam.addons.federation.model.SamlProfileEntity
  */
-public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model.SamlProfileEntityDaoBase {
+public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model.ProfileEntityDaoBase {
 	/**
 	 * @see com.soffid.iam.addons.federation.model.SamlProfileEntityDao#toSAMLProfile(com.soffid.iam.addons.federation.model.SamlProfileEntity,
 	 *      com.soffid.iam.addons.federation.common.SAMLProfile)
 	 */
-	public void toSAMLProfile(com.soffid.iam.addons.federation.model.SamlProfileEntity source, com.soffid.iam.addons.federation.common.SAMLProfile target) {
+	public void toSAMLProfile(com.soffid.iam.addons.federation.model.ProfileEntity source, com.soffid.iam.addons.federation.common.SAMLProfile target) {
 		// @todo verify behavior of toSAMLProfile
 		// en principi estan tots els atributs
 		super.toSAMLProfile(source, target);
 
-		// Les antigues booleanes
-		target.setSignResponses(SAMLRequirementEnumeration.fromLong(source.getSignResponses()));
-		target.setSignAssertions(SAMLRequirementEnumeration.fromLong(source.getSignAssertions()));
-		target.setSignRequests(SAMLRequirementEnumeration.fromLong(source.getSignRequests()));
+		if ( source instanceof SamlProfileEntity)
+		{
+			SamlProfileEntity entity = (SamlProfileEntity) source;
+			// Les antigues booleanes
+			target.setSignResponses(SAMLRequirementEnumeration.fromLong(entity.getSignResponses()));
+			target.setSignAssertions(SAMLRequirementEnumeration.fromLong(entity.getSignAssertions()));
+			target.setSignRequests(SAMLRequirementEnumeration.fromLong(entity.getSignRequests()));
+		}
 
 		// Discriminem segons la sub-classe
 		if (source instanceof Saml2ECPProfileEntity) {
@@ -99,6 +103,14 @@ public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.m
 
 			target.setOutboundArtifactType(entity.getOutboundArtifactType());
 			target.setAssertionLifetime(entity.getAssertionLifetime());
+		} else if (source instanceof OpenidProfileEntity) {
+			// heretats
+			target.setClasse(SamlProfileEnumeration.OPENID);
+			OpenidProfileEntity entity = (OpenidProfileEntity) source;
+			target.setAuthorizationEndpoint(entity.getAuthorizationEndpoint());
+			target.setEnabled(entity.isEnabled());
+			target.setTokenEndpoint(entity.getTokenEndpoint());
+			target.setUserInfoEndpoint(entity.getUserInfoEndpoint());
 		} else if (source instanceof SamlProfileEntity) {
 			// En teoria aquesta és abstracta
 			target.setClasse(SamlProfileEnumeration.SAML_PRO);
@@ -107,21 +119,13 @@ public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.m
 	}
 
 	/**
-	 * @see com.soffid.iam.addons.federation.model.SamlProfileEntityDao#toSAMLProfile(com.soffid.iam.addons.federation.model.SamlProfileEntity)
-	 */
-	public com.soffid.iam.addons.federation.common.SAMLProfile toSAMLProfile(final com.soffid.iam.addons.federation.model.SamlProfileEntity entity) {
-		// @todo verify behavior of toSAMLProfile
-		return super.toSAMLProfile(entity);
-	}
-
-	/**
 	 * Retrieves the entity object that is associated with the specified value
 	 * object from the object store. If no such entity object exists in the
 	 * object store, a new, blank entity is created
 	 */
-	private com.soffid.iam.addons.federation.model.SamlProfileEntity loadSamlProfileEntityFromSAMLProfile(
+	private com.soffid.iam.addons.federation.model.ProfileEntity loadProfileEntityFromSAMLProfile(
 			com.soffid.iam.addons.federation.common.SAMLProfile sAMLProfile) {
-		com.soffid.iam.addons.federation.model.SamlProfileEntity samlProfileEntity = null;
+		com.soffid.iam.addons.federation.model.ProfileEntity samlProfileEntity = null;
 		if (sAMLProfile.getId() != null) {
 			/*if (SamlProfileEnumeration.SAML2_ECP.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = findSAML2ECPPbyId(sAMLProfile.getId());
@@ -153,6 +157,10 @@ public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.m
 				samlProfileEntity = newSaml2AttributeQueryProfileEntity(); 
 			} else if (SamlProfileEnumeration.SAML1_AQ.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newSaml1AttributeQueryProfileEntity();
+			} else if (SamlProfileEnumeration.SAML1_AQ.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newSaml1AttributeQueryProfileEntity();
+			} else if (SamlProfileEnumeration.OPENID.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newOpenidProfileEntity();
 			} else {
 				samlProfileEntity = newSamlProfileEntity();
 			}
@@ -164,9 +172,9 @@ public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.m
 	/**
 	 * @see com.soffid.iam.addons.federation.model.SamlProfileEntityDao#sAMLProfileToEntity(com.soffid.iam.addons.federation.common.SAMLProfile)
 	 */
-	public com.soffid.iam.addons.federation.model.SamlProfileEntity sAMLProfileToEntity(com.soffid.iam.addons.federation.common.SAMLProfile sAMLProfile) {
+	public com.soffid.iam.addons.federation.model.ProfileEntity sAMLProfileToEntity(com.soffid.iam.addons.federation.common.SAMLProfile sAMLProfile) {
 		// @todo verify behavior of sAMLProfileToEntity
-		com.soffid.iam.addons.federation.model.SamlProfileEntity entity = this.loadSamlProfileEntityFromSAMLProfile(sAMLProfile);
+		com.soffid.iam.addons.federation.model.ProfileEntity entity = this.loadProfileEntityFromSAMLProfile(sAMLProfile);
 		this.sAMLProfileToEntity(sAMLProfile, entity, true);
 		return entity;
 	}
@@ -175,7 +183,7 @@ public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.m
 	 * @see com.soffid.iam.addons.federation.model.SamlProfileEntityDao#sAMLProfileToEntity(com.soffid.iam.addons.federation.common.SAMLProfile,
 	 *      com.soffid.iam.addons.federation.model.SamlProfileEntity)
 	 */
-	public void sAMLProfileToEntity(com.soffid.iam.addons.federation.common.SAMLProfile source, com.soffid.iam.addons.federation.model.SamlProfileEntity target,
+	public void sAMLProfileToEntity(com.soffid.iam.addons.federation.common.SAMLProfile source, com.soffid.iam.addons.federation.model.ProfileEntity target,
 			boolean copyIfNull) {
 		// @todo verify behavior of sAMLProfileToEntity
 		super.sAMLProfileToEntity(source, target, copyIfNull);
@@ -184,16 +192,20 @@ public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.m
 		// java.lang.String
 
 		// guardem el signresponses,signassertions, signrequests
-		if (source.getSignResponses() != null) {
-			target.setSignResponses(source.getSignResponses().getValue());
-		}
-
-		if (source.getSignAssertions() != null) {
-			target.setSignAssertions(source.getSignAssertions().getValue());
-		}
-
-		if (source.getSignRequests() != null) {
-			target.setSignRequests(source.getSignRequests().getValue());
+		if (target instanceof SamlProfileEntity)
+		{
+			SamlProfileEntity t = (SamlProfileEntity) target;
+			if (source.getSignResponses() != null) {
+				t.setSignResponses(source.getSignResponses().getValue());
+			}
+	
+			if (source.getSignAssertions() != null) {
+				t.setSignAssertions(source.getSignAssertions().getValue());
+			}
+	
+			if (source.getSignRequests() != null) {
+				t.setSignRequests(source.getSignRequests().getValue());
+			}
 		}
 
 		// VirtualIdentityProvider
@@ -270,6 +282,14 @@ public class SamlProfileEntityDaoImpl extends com.soffid.iam.addons.federation.m
 			entity.setEncryptNameIds(eni != null ? eni.getValue() : SAMLRequirementEnumeration.NEVER.getValue());
 			// propis
 			entity.setMaximumSPSessionLifetime(source.getMaximumSPSessionLifetime());
+			target = entity;
+		} else if (SamlProfileEnumeration.OPENID.equals(source.getClasse())) {
+			// heretats
+			OpenidProfileEntity entity = (OpenidProfileEntity) target;
+			entity.setAuthorizationEndpoint(source.getAuthorizationEndpoint());
+			entity.setEnabled(source.getEnabled());
+			entity.setTokenEndpoint(source.getTokenEndpoint());
+			entity.setUserInfoEndpoint(source.getUserInfoEndpoint());
 			target = entity;
 		} else {
 			// Res més... per als SAMLProfile

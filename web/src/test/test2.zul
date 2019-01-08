@@ -7,6 +7,16 @@ Hola
 	<label id="user" value="xxx"/>
 </div>
 
+<div>
+	<textbox id="cookie" value="xxx"/>
+	<button label="logout" >
+	<attribute name="onClick">
+	<![CDATA[
+	fs.expireSessionCookie(cookie.value);
+	]]></attribute>
+	</button>
+</div>
+
 <zscript><![CDATA[
 
 req = execution.getNativeRequest ();
@@ -26,7 +36,7 @@ r = fs.authenticate("test", "POST",
     
 // lvalid.value = r.isValid();
 lvalid.value = r.toString();
-
+cookie.value = r.sessionCookie;
 ]]></zscript>
 
 </zk>

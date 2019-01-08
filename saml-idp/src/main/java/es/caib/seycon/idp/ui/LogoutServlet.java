@@ -28,8 +28,6 @@ import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class LogoutServlet extends HttpServlet {
-
-    
     /**
 	 * 
 	 */
@@ -37,7 +35,17 @@ public class LogoutServlet extends HttpServlet {
 	public static final String URI = "/logout.jsp"; //$NON-NLS-1$
 
     void process (HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, IOException, ServletException {
-    	HttpSession session = req.getSession(false);
+    	expireSession(req);
+        HtmlGenerator g = new HtmlGenerator(getServletContext(), req);
+        try {
+			g.generate(resp, "logout.html"); //$NON-NLS-1$
+		} catch (TextFormatException e) {
+			throw new ServletException(e);
+		}
+    }
+
+	public static void expireSession(HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
     	if (session != null) 
     	{
             try 
@@ -70,13 +78,7 @@ public class LogoutServlet extends HttpServlet {
         
     		session.invalidate();
     	}
-        HtmlGenerator g = new HtmlGenerator(getServletContext(), req);
-        try {
-			g.generate(resp, "logout.html"); //$NON-NLS-1$
-		} catch (TextFormatException e) {
-			throw new ServletException(e);
-		}
-    }
+	}
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

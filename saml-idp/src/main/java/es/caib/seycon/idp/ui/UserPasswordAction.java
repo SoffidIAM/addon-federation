@@ -14,6 +14,7 @@ import com.soffid.iam.api.Password;
 
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -57,10 +58,23 @@ public class UserPasswordAction extends HttpServlet {
                         s.setAttribute(SessionConstants.SEU_TEMP_PASSWORD, new Password(p));
                         RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
                         dispatcher.forward(req, resp);
+                        return;
                     } else {
-                        new Autenticator().autenticate(u, req, resp, AuthnContext.PPT_AUTHN_CTX, false);
+	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+	            		ctx.authenticated(u, "P");
+	            		ctx.store(req);
+	            		if ( ctx.isFinished())
+	            		{
+	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+	            			return;
+	            		}
+	            		else
+	            		{
+	            	        RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+	            	        dispatcher.forward(req, resp);
+	            	        return;
+	            		}
                     }
-                    return ;
                 } else {
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }

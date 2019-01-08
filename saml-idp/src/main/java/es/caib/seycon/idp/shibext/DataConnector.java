@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import org.apache.commons.logging.LogFactory;
+
+import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederacioService;
@@ -25,6 +27,11 @@ import com.soffid.iam.api.Account;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
+import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
+import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
+import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
+import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
+import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.BasicAttribute;
@@ -33,16 +40,10 @@ import edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.Sh
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.dataConnector.BaseDataConnector;
 import edu.internet2.middleware.shibboleth.common.profile.provider.SAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.session.Session;
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
-
-import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
-import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
-import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
-import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
-import com.soffid.iam.sync.service.ServerService;
+import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class DataConnector extends BaseDataConnector {
 	
@@ -60,22 +61,28 @@ public class DataConnector extends BaseDataConnector {
         try {
         	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         	IdpConfig config = IdpConfig.getConfig();
+        	attributes = new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null);
 
         	User ui = server.getUserInfo(principal, config.getSystem().getName ());
             HashMap<String,BaseAttribute> m = new HashMap<String, BaseAttribute>();
+
+            String uid = evaluateUid (server, rpid, principal, ui);
+            addStringValue (ctx, m, "uid", uid); //$NON-NLS-1$
+            
+            addComputedAttributes(ctx, m);
             
             int i = ui.getFullName().indexOf(" "+ui.getLastName());
             if (i > 0)
             {
-	            addStringValue (m, "givenname", ui.getFullName().substring(0,i).trim()); //$NON-NLS-1$
-	            addStringValue (m, "surname", ui.getFullName().substring(i+1).trim()); //$NON-NLS-1$
+	            addStringValue (ctx, m, "givenname", ui.getFullName().substring(0,i).trim()); //$NON-NLS-1$
+	            addStringValue (ctx, m, "surname", ui.getFullName().substring(i+1).trim()); //$NON-NLS-1$
             }
             else
             {
-	            addStringValue (m, "givenname", ui.getFirstName()); //$NON-NLS-1$
-	            addStringValue (m, "surname", ui.getLastName()); //$NON-NLS-1$
+	            addStringValue (ctx, m, "givenname", ui.getFirstName()); //$NON-NLS-1$
+	            addStringValue (ctx, m, "surname", ui.getLastName()); //$NON-NLS-1$
             }
-            addStringValue (m, "fullname", ui.getFullName()); //$NON-NLS-1$
+            addStringValue (ctx, m, "fullname", ui.getFullName()); //$NON-NLS-1$
             
             BasicAttribute<String> b = new BasicAttribute<String>("surnames"); //$NON-NLS-1$
             LinkedList<String> l = new LinkedList<String>();
@@ -83,52 +90,39 @@ public class DataConnector extends BaseDataConnector {
             if (ui.getMiddleName() != null)
                 l.add (ui.getMiddleName());
             l.add(ui.getFirstName());
-            b.setValues(l);
-            m.put("surnames", b); //$NON-NLS-1$
+            addStringValues (ctx, m, "surnames", l); //$NON-NLS-1$
 
            
-            addStringValue (m, "surname1", ui.getLastName()); //$NON-NLS-1$
-            addStringValue (m, "surname2", ui.getMiddleName()); //$NON-NLS-1$
+            addStringValue (ctx, m, "surname1", ui.getLastName()); //$NON-NLS-1$
+            addStringValue (ctx, m, "surname2", ui.getMiddleName()); //$NON-NLS-1$
             if (ui.getShortName() != null) {
                 if (ui.getMailDomain() == null) 
-                    addStringValue (m, "email", ui.getShortName()); //$NON-NLS-1$
+                    addStringValue (ctx, m, "email", ui.getShortName()); //$NON-NLS-1$
                 else
-                    addStringValue (m, "email", ui.getShortName()+"@"+ui.getMailDomain()); //$NON-NLS-1$ //$NON-NLS-2$
+                    addStringValue (ctx, m, "email", ui.getShortName()+"@"+ui.getMailDomain()); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
                 UserData dada = server.getUserData(ui.getId(), "EMAIL"); //$NON-NLS-1$
                 if (dada != null)
-                    addStringValue (m, "email", dada.getValue()); //$NON-NLS-1$
+                    addStringValue (ctx, m, "email", dada.getValue()); //$NON-NLS-1$
             }
-            addStringValue (m, "group", ui.getPrimaryGroup()); //$NON-NLS-1$
-            addStringValue (m, "userType", ui.getUserType()); //$NON-NLS-1$
-            String uid = evaluateUid (server, rpid, principal, ui);
-			addStringValue (m, "uid", uid); //$NON-NLS-1$
+            addStringValue (ctx, m, "group", ui.getPrimaryGroup()); //$NON-NLS-1$
+            addStringValue (ctx, m, "userType", ui.getUserType()); //$NON-NLS-1$
 			ctx.setPrincipalName(uid);
 
 			UserData data = server.getUserData(ui.getId(), "PHONE"); //$NON-NLS-1$
             if (data != null)
-            	addStringValue (m, "telephoneNumber", data.getValue()); //$NON-NLS-1$
+            	addStringValue (ctx, m, "telephoneNumber", data.getValue()); //$NON-NLS-1$
             
-            collectRoles (m, server, ui);
+            if (!m.containsKey("memberof"))
+            	collectRoles (m, server, ui);
             
             Session session = ctx.getUserSession();
             if (session != null)
-                addStringValue (m, "sessionId", session.getSessionID()); //$NON-NLS-1$
+                addStringValue (ctx, m, "sessionId", session.getSessionID()); //$NON-NLS-1$
             
             SimpleDateFormat simpleDf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             simpleDf.setTimeZone(TimeZone.getTimeZone("GMT"));
             
-            for (UserData d: server.getUserData(ui.getId()))
-            {
-            	if (d.getDateValue() != null)
-            	{
-            		addStringValue(m, "custom:"+d.getAttribute(), simpleDf.format(d.getDateValue().getTime()));
-            	}
-            	else if (d.getValue() != null)
-            	{
-            		addStringValue(m, "custom:"+d.getAttribute(), d.getValue());
-            	}
-            }
             return m;
         } catch (Exception e) {
             throw new AttributeResolutionException(e);
@@ -136,16 +130,15 @@ public class DataConnector extends BaseDataConnector {
     }
 
     org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
+	private Collection<Attribute> attributes;
     
     private String evaluateUid(ServerService server, String rpid, String principal, User ui) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
     	String uid = ui.getUserName();
-    	log.info("Searching uid for relaying party "+rpid);
     	FederacioService fs = new RemoteServiceLocator().getFederacioService();
     	for (FederationMember member: fs.findFederationMemberByEntityGroupAndPublicIdAndTipus("%", rpid, "S"))
     	{
     		if (member.getUidExpression() != null && ! member.getUidExpression().trim().isEmpty())
     		{
-    			log.info("Evaluating expression "+member.getUidExpression());
     			ValueObjectMapper mapper = new ValueObjectMapper();
             	IdpConfig config = IdpConfig.getConfig();
     			Account account = server.getAccountInfo(principal, config.getSystem().getName());
@@ -156,7 +149,6 @@ public class DataConnector extends BaseDataConnector {
     			uid = result;
     		}
     	}
-		log.info("UID="+uid);
     	return uid;
     	
 	}
@@ -179,14 +171,55 @@ public class DataConnector extends BaseDataConnector {
         
     }
 
-    private void addStringValue(HashMap<String, BaseAttribute> m,
-            String name, String value) {
-        BasicAttribute<String> b = new BasicAttribute<String>(name);
-        b.setValues(Collections.singleton(value));
-        m.put(name, b);
+    private void addStringValue(SAMLProfileRequestContext ctx, HashMap<String, BaseAttribute> m,
+            String name, String value) throws Exception {
+    	addStringValues(ctx, m, name, Collections.singleton(value));
+    }
+    
+    private void addStringValues(SAMLProfileRequestContext ctx, HashMap<String, BaseAttribute> m,
+            String name, Collection<String> values) throws Exception {
+    	if (!m.containsKey(name))
+    	{
+            BasicAttribute<String> b = new BasicAttribute<String>(name);
+            b.setValues(values);
+            m.put(name, b);
+    	}
+    }
+    
+    private void addComputedAttributes (SAMLProfileRequestContext ctx, HashMap<String, BaseAttribute> m) throws Exception
+    {
+        Collection<String> values;
+		for ( Attribute attribute: attributes)
+        {
+  			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
+   			{
+   				BasicAttribute<String> b = new BasicAttribute<String>(attribute.getShortName().toLowerCase());
+      			values = evaluate (ctx, attribute);
+      			if (values != null)
+      				addStringValues(ctx, m, attribute.getShortName().toLowerCase(), values);
+        	}
+        }
     }
 
-    public void validate() throws AttributeResolutionException {
+    private Collection<String> evaluate(SAMLProfileRequestContext ctx, Attribute attribute) throws Exception{
+        IdpConfig c = IdpConfig.getConfig();
+    	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+        ObjectTranslator translator = new ObjectTranslator(c.getSystem(), server, new LinkedList<ExtensibleObjectMapping>());
+
+        String principal = ctx.getPrincipalName();
+        Account account = server.getAccountInfo(principal, c.getSystem().getName());
+        User user = server.getUserInfo(principal, c.getSystem().getName());
+        UserExtensibleObject eo = new UserExtensibleObject(account, user, server);
+        Object r = translator.eval(attribute.getValue(), eo);
+        if (r == null)
+        	return null;
+        else if (r instanceof Collection)
+        	return (Collection<String>) r;
+        else  
+        	return Collections.singleton( new ValueObjectMapper().toSingleString(r) );
+	}
+
+	public void validate() throws AttributeResolutionException {
     }
 
 }

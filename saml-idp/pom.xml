@@ -119,9 +119,7 @@
 
 									<include>xalan:xalan</include>
 									<include>org.apache.xerces:xercesImpl</include>
-									<!-- 
-									<include>org.apache.xerces:xml-apis</include>
-									 -->
+									<include>org.apache.xerces:xercesImpl</include>
 									<include>org.apache.xerces:serializer</include>
 
 									<include>org.apache.santuario:xmlsec</include>
@@ -136,12 +134,6 @@
 									
 									<include>org.apache.velocity:velocity</include>
 									<include>org.owasp.esapi:esapi</include>
-									<!-- 
-									<include>commons-logging:commons-logging</include>
-									<include>org.slf4j:jul-to-slf4j</include>
-									<include>org.slf4j:log4j-over-slf4j</include>
-									<include>org.slf4j:jcl-over-slf4j</include>
-									 -->
 
 									<include>ch.qos.logback:logback-core</include>
 									<include>ch.qos.logback:logback-classic</include>
@@ -188,15 +180,9 @@
 									<include>com.github.scribejava:scribejava-core</include>
 									<include>bouncycastle:bcprov-jdk16</include>
 									<include>com.auth0:java-jwt</include>
-									<!-- 
-									<include>org.mozilla.javascript:rhino</include>
-									<include>javax.scripting:scripting-api</include>
-									<include>javax.scripting:groovy-engine</include>
-									<include>javax.activation:activation</include>
-									<include>javax.scripting:js-engine</include>
-									<include>javax.scripting:jruby-engine</include>
-									<include>javax.scripting:jython-engine</include>
-									 -->
+									<include>com.fasterxml.jackson.core:jackson-core</include>
+									<include>com.fasterxml.jackson.core:jackson-databind</include>
+									<include>com.fasterxml.jackson.core:jackson-annotations</include>
 								</includes>								
 							</artifactSet>
 							<filters>
@@ -295,7 +281,7 @@
 		<dependency>
 			<groupId>com.soffid.iam.sync</groupId>
 			<artifactId>syncserver</artifactId>
-			<version>2.0.0-6</version>
+			<version>2.5.0-RC-1</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -376,6 +362,16 @@
 		    <artifactId>java-jwt</artifactId>
 		    <version>3.3.0</version>
 		</dependency>
+	    <dependency>
+	      <groupId>com.fasterxml.jackson.core</groupId>
+	      <artifactId>jackson-databind</artifactId>
+	      <version>2.9.2</version>
+	    </dependency>
+	    <dependency>
+	      <groupId>com.fasterxml.jackson.core</groupId>
+	      <artifactId>jackson-core</artifactId>
+	      <version>2.9.2</version>
+	    </dependency>
 	</dependencies>
 	<reporting>
 		<plugins>

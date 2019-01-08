@@ -77,7 +77,7 @@ import com.soffid.iam.addons.federation.model.Saml2ArtifactResolutionProfileEnti
 import com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity;
-import com.soffid.iam.addons.federation.model.SamlProfileEntity;
+import com.soffid.iam.addons.federation.model.ProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
@@ -101,6 +101,7 @@ import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.service.ConfigurationService;
+import com.soffid.iam.tomcat.SoffidPrincipal;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
@@ -309,9 +310,17 @@ public class FederacioServiceImpl
 			if (entity instanceof IdentityProviderEntity) {
 				// IDP
 				IdentityProviderEntity idp = (IdentityProviderEntity) entity;
-				Collection<SamlProfileEntity> profileCol = idp.getProfiles();
-				for(SamlProfileEntity profile : profileCol){
-					getSamlProfileEntityDao().remove(profile);
+				Collection<ProfileEntity> profileCol = idp.getProfiles();
+				for(ProfileEntity profile : profileCol){
+					getProfileEntityDao().remove(profile);
+				}
+				for (VirtualIdentityProviderEntity vip: idp.getVirtualIdentityProvider())
+				{
+					for(ProfileEntity profile : vip.getProfiles()){
+						getProfileEntityDao().remove(profile);
+					}
+					getVirtualIdentityProviderEntityDao().remove(vip);
+					
 				}
 				getIdentityProviderEntityDao().remove(idp);
 
@@ -356,8 +365,8 @@ public class FederacioServiceImpl
 	protected com.soffid.iam.addons.federation.common.SAMLProfile handleCreate(com.soffid.iam.addons.federation.common.SAMLProfile samlProfile)
 			throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canCreateAllIdentityFederation()) {
-			SamlProfileEntity entity = getSamlProfileEntityDao().sAMLProfileToEntity(samlProfile);
-			getSamlProfileEntityDao().create(entity);
+			ProfileEntity entity = getProfileEntityDao().sAMLProfileToEntity(samlProfile);
+			getProfileEntityDao().create(entity);
 
 			String desc = samlProfile.getClasse().toString();
 			if (entity.getVirtualIdentityProvider() != null) {
@@ -370,7 +379,7 @@ public class FederacioServiceImpl
 
 			guardaDataModificacioFederacio();
 
-			return getSamlProfileEntityDao().toSAMLProfile(entity);
+			return getProfileEntityDao().toSAMLProfile(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToMakeProfiles")); //$NON-NLS-1$
 	}
@@ -381,7 +390,7 @@ public class FederacioServiceImpl
 	protected com.soffid.iam.addons.federation.common.SAMLProfile handleUpdate(com.soffid.iam.addons.federation.common.SAMLProfile samlProfile)
 			throws java.lang.Exception {// throw new Exception ("ups");
 		if (AutoritzacionsUsuari.canUpdateAllIdentityFederation()) {
-			SamlProfileEntity entity = getSamlProfileEntityDao().sAMLProfileToEntity(samlProfile);
+			ProfileEntity entity = getProfileEntityDao().sAMLProfileToEntity(samlProfile);
 			// Atenció amb l'herència.. si ja existeix i es canvia el tipus s'ha
 			// de fer un casting (!!)
 
@@ -398,7 +407,7 @@ public class FederacioServiceImpl
 			} else if (SamlProfileEnumeration.SAML1_AQ.equals(samlProfile.getClasse())) {
 				getSaml1AttributeQueryProfileEntityDao().update((Saml1AttributeQueryProfileEntity) entity);
 			} else {
-				getSamlProfileEntityDao().update(entity);
+				getProfileEntityDao().update(entity);
 			}
 
 			String desc = samlProfile.getClasse().toString();
@@ -412,7 +421,7 @@ public class FederacioServiceImpl
 
 			guardaDataModificacioFederacio();
 
-			return getSamlProfileEntityDao().toSAMLProfile(entity);
+			return getProfileEntityDao().toSAMLProfile(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToUpdateProfiles")); //$NON-NLS-1$
 	}
@@ -422,8 +431,8 @@ public class FederacioServiceImpl
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.SAMLProfile samlProfile) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
-			SamlProfileEntity entity = getSamlProfileEntityDao().sAMLProfileToEntity(samlProfile);
-			getSamlProfileEntityDao().remove(entity);
+			ProfileEntity entity = getProfileEntityDao().sAMLProfileToEntity(samlProfile);
+			getProfileEntityDao().remove(entity);
 
 			String desc = samlProfile.getClasse().toString();
 			if (entity.getVirtualIdentityProvider() != null) {
@@ -613,8 +622,10 @@ public class FederacioServiceImpl
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.Policy policy) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
-			PolicyEntity entity = getPolicyEntityDao().policyToEntity(policy);
-
+			PolicyEntity entity = getPolicyEntityDao().load(policy.getId());
+			if (entity == null)
+				return;
+						
 			// AttributePolicyEntity [0..*]
 			if (entity.getAttributePolicy() != null && entity.getAttributePolicy().size() != 0) {
 				Collection attp = entity.getAttributePolicy();
@@ -648,33 +659,26 @@ public class FederacioServiceImpl
 					// getAttributePolicyEntityDao().update(ape);
 
 					// ara esborrem la AttributePolicy
-					getAttributePolicyEntityDao().remove(ape);
-					// I les seves condicions d'atribut
-					getAttributeConditionEntityDao().remove(allConditionAtt);
+					if (ape.getId() != null)
+					{
+						getAttributePolicyEntityDao().remove(ape);
+						// I les seves condicions d'atribut
+						getAttributeConditionEntityDao().remove(allConditionAtt);
+					}
+					it.remove();
 				}
 
 			}
 
-			ArrayList<PolicyConditionEntity> allCondition = new ArrayList();
-
-			// Es nova, hem de crear les policyCondition i les
-			// attributeCondition
-			if (entity.getCondition() != null) {
-				// Creem la policyCondition (i les seues condicions filles)
-				PolicyConditionEntity cond = entity.getCondition();
-
-				allCondition.add(cond);
-				// Obtenim les seues filles
-				getAllCondicionsFilles(cond.getCondition(), allCondition);
-			}
-
-			// Referencies a politiques i politiques d'atributs
-			// (atribut + attributeCondition)
+			
+			PolicyConditionEntity condition = entity.getCondition();
 			entity.setCondition(null);
-			entity.setAttributePolicy(null); // esborrem referencia
+			getPolicyEntityDao().update(entity);
+			getPolicyConditionEntityDao().remove(condition);
 			// I les seves condicions
-			getPolicyConditionEntityDao().remove(allCondition);
+			getAttributePolicyEntityDao().remove(entity.getAttributePolicy());
 			// I finalment esborrem la politica
+			entity.getAttributePolicy().clear(); // esborrem referencia
 			getPolicyEntityDao().remove(entity);
 
 			guardaDataModificacioPolitiques(); // guardem data
@@ -920,8 +924,8 @@ public class FederacioServiceImpl
 	@Override
 	protected Collection<SAMLProfile> handleFindProfilesByFederationMember(FederationMember federationMember) throws Exception {
 		if (federationMember != null && federationMember.getId() != null) {
-			Collection<SamlProfileEntity> profiles = getSamlProfileEntityDao().findByVIPId(federationMember.getId());
-			return getSamlProfileEntityDao().toSAMLProfileList(profiles);
+			Collection<ProfileEntity> profiles = getProfileEntityDao().findByVIPId(federationMember.getId());
+			return getProfileEntityDao().toSAMLProfileList(profiles);
 		}
 		return null;
 
@@ -1198,7 +1202,7 @@ public class FederacioServiceImpl
         generator.setNotAfter(new Date(l));
         generator.setNotBefore(new Date(now));
         generator.setSerialNumber(BigInteger.valueOf(now));
-        generator.setSignatureAlgorithm("sha1WithRSAEncryption");
+        generator.setSignatureAlgorithm("sha256WithRSAEncryption");
         return generator;
     }
 
@@ -1262,7 +1266,7 @@ public class FederacioServiceImpl
 		}
 		pemParser.close();
 
-		org.bouncycastle.jce.PKCS10CertificationRequest pkcs10 = new org.bouncycastle.jce.PKCS10CertificationRequest("SHA1withRSA", //$NON-NLS-1$
+		org.bouncycastle.jce.PKCS10CertificationRequest pkcs10 = new org.bouncycastle.jce.PKCS10CertificationRequest("SHA256withRSA", //$NON-NLS-1$
 				new javax.security.auth.x500.X500Principal("CN=" + fm.getPublicId() + ",OU=" + fm.getEntityGroup().getName()), //$NON-NLS-1$ //$NON-NLS-2$
 				_publicKey, null, _privateKey, "SunRsaSign"); //$NON-NLS-1$
 		return new String(es.caib.seycon.util.Base64.encodeBytes(pkcs10.getEncoded()));
@@ -1777,6 +1781,15 @@ public class FederacioServiceImpl
 	@Override
 	protected void handleExpireSessionCookie(String sessionCookie) throws Exception {
 		getDelegate().expireSessionCookie(sessionCookie);
+	}
+
+	@Override
+	protected FederationMember handleFindFederationMemberByClientID(String clientId) throws Exception {
+		ServiceProviderEntity fm = getFederationMemberEntityDao().findByClientId(clientId);
+		if ( fm == null)
+			return null;
+		else
+			return getFederationMemberEntityDao().toFederationMember(fm);
 	}
 
 }

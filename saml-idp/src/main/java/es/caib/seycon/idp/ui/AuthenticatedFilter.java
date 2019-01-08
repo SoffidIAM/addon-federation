@@ -36,12 +36,12 @@ public class AuthenticatedFilter implements Filter {
             HttpSession session = req.getSession();
             String userId = (String) session.getAttribute(SessionConstants.SEU_USER);
             if (userId == null) {
-                session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, "anonymous"); //$NON-NLS-1$
-                session.setAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM, AuthnContext.PPT_AUTHN_CTX);
-                session.setAttribute(HtmlGenerator.ORGANIZATION_URL, req.getRequestURL().toString());
-                session.setAttribute(HtmlGenerator.ORGANIZATION_NAME, Messages.getString("AuthenticatedFilter.2")); //$NON-NLS-1$
-                session.setAttribute(SessionConstants.AUTHENTICATION_REDIRECT, path.toString());
-                ((HttpServletResponse) response).sendRedirect(LoginServlet.URI);
+            	session.removeAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM);
+            	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, "anonymous"); //$NON-NLS-1$
+            	session.setAttribute(HtmlGenerator.ORGANIZATION_URL, req.getRequestURL().toString());
+            	session.setAttribute(HtmlGenerator.ORGANIZATION_NAME, Messages.getString("AuthenticatedFilter.2")); //$NON-NLS-1$
+            	session.setAttribute(SessionConstants.AUTHENTICATION_REDIRECT, path.toString());
+            	((HttpServletResponse) response).sendRedirect(LoginServlet.URI);
                 return;
             }
         }
