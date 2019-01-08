@@ -1,0 +1,104 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>root</artifactId>
+		<groupId>com.soffid.iam.addon.federation</groupId>
+		<version>2.1.8-SNAPSHOT</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>federation-meta</artifactId>
+	<name>Federation meta package</name>
+
+
+	 <licenses>
+	    <license>
+	      <name>GNU GPL Version 3.0</name>
+	      <url>http://www.gnu.org/licenses/gpl.html</url>
+	    </license>
+	  </licenses>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>com.soffid.tools</groupId>
+				<artifactId>mda-maven-plugin</artifactId>
+		        <version>2.0.31</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>mda2</goal>
+						</goals>
+						<phase>package</phase>
+				          <configuration>
+				          	<pluginName>federation</pluginName>
+				            <targetServer>tomee</targetServer>
+				            <translate>true</translate>
+				            <translateEntities>true</translateEntities>
+				          </configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.codehaus.mojo
+										</groupId>
+										<artifactId>
+											build-helper-maven-plugin
+										</artifactId>
+										<versionRange>
+											[1.7,)
+										</versionRange>
+										<goals>
+											<goal>add-source</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>com.soffid.tools</groupId>
+			<artifactId>mdagenerator</artifactId>
+			<scope>compile</scope>
+			<version>2.0.31</version>
+		</dependency>
+		<dependency>
+			<groupId>com.soffid.iam.console</groupId>
+			<artifactId>iam-meta</artifactId>
+			<version>${console.version}</version>
+		</dependency>
+	</dependencies>
+</project>
+
