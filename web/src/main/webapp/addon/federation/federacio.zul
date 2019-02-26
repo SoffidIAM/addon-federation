@@ -1389,6 +1389,10 @@
 										</attribute>
 									</textbox>
 								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
+									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="/federationMember/uidExpression" />
+								</row>
 								<row  id="sp_firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
 									<input_dada bind="/federationMember/organization" 
@@ -1456,10 +1460,6 @@
 											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10();generateMetadata()" width="200px"/>
 										</divVisible>
 									</vbox>
-								</row>
-								<row>
-									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
-									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="/federationMember/uidExpression" />
 								</row>
 								<row id="r_sp_openid2">
 									<input_etiqueta value="${c:l('federacio.zul.openidFlow')}"/>
