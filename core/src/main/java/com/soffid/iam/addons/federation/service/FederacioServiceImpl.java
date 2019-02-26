@@ -510,13 +510,12 @@ public class FederacioServiceImpl
 	}
 
 	private void creaAuditoria(String taula, String accio, String federacio) {
-		Principal principal = Security.getPrincipal();
+		String principal = Security.getCurrentAccount();
 		// Corregim accés sense principal (donar d'alta usuaris)
-		String codiUser = principal != null ? principal.getName() : "SEYCON"; //$NON-NLS-1$
 		Audit auditoria = new Audit();
 		auditoria.setAction(accio);
 		auditoria.setObject(taula);
-		auditoria.setAuthor(codiUser);
+		auditoria.setAuthor(principal);
 		if (federacio != null && federacio.length() > 100) {
 			federacio = federacio.substring(0, 100);
 		}
