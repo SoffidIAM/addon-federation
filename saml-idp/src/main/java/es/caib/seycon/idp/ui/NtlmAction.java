@@ -46,7 +46,7 @@ public class NtlmAction extends HttpServlet {
         if (! amf.allowKerberos())
             throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
         
-        final KerberosManager km = new KerberosManager();
+//        final KerberosManager km = new KerberosManager();
         String principal = req.getRemoteUser();
         if (principal == null)
         {

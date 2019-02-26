@@ -1,15 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -19,19 +11,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.soffid.iam.api.Password;
-
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
-import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.LoginServlet;
-import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.SessionConstants;
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.exception.InvalidPasswordException;
-import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationEndpoint extends HttpServlet {
 
