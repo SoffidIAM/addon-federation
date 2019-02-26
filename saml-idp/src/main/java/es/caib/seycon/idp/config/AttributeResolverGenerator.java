@@ -84,7 +84,8 @@ public class AttributeResolverGenerator {
     		
     		if ( ! att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.3") && // mail
     			!att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.1") && 
-    			!att.getOid().equals("urn:oid:1.3.6.1.4.1.22896.3.1.2")) // uid
+    			!att.getOid().equals("urn:oid:1.3.6.1.4.1.22896.3.1.2") &&
+    			!att.getShortName().equalsIgnoreCase("secrets")) 
     		{
 		
 	            Element node = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeDefinition"); //$NON-NLS-1$
