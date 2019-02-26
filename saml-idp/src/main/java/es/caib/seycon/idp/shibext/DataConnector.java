@@ -44,6 +44,7 @@ import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
+import es.caib.seycon.util.Base64;
 
 public class DataConnector extends BaseDataConnector {
 	
@@ -215,6 +216,8 @@ public class DataConnector extends BaseDataConnector {
         	return null;
         else if (r instanceof Collection)
         	return (Collection<String>) r;
+        else if (r instanceof byte[])
+         	return Collections.singleton( Base64.encodeBytes((byte[]) r, Base64.DONT_BREAK_LINES) );
         else  
         	return Collections.singleton( new ValueObjectMapper().toSingleString(r) );
 	}
