@@ -126,6 +126,7 @@
 		}
 	
 		if (SamlProfileEnumeration.OPENID.toString().equals(classe)) {
+			listbox.getFellow("r_discoveryEndpoint").setVisible(true);
 			listbox.getFellow("r_authorizationEndpoint").setVisible(true);
 			listbox.getFellow("r_tokenEndpoint").setVisible(true);
 			listbox.getFellow("r_userinfoEndpoint").setVisible(true);
@@ -133,6 +134,7 @@
 			listbox.getFellow("r_signAssertions").setVisible(false);
 			listbox.getFellow("r_signResponses").setVisible(false);
 		} else {
+			listbox.getFellow("r_discoveryEndpoint").setVisible(false);
 			listbox.getFellow("r_authorizationEndpoint").setVisible(false);
 			listbox.getFellow("r_tokenEndpoint").setVisible(false);
 			listbox.getFellow("r_userinfoEndpoint").setVisible(false);
@@ -502,6 +504,11 @@
 							<attribute name="onChange">
 								profile.setMaximumSPSessionLifetime(self.getValue());
 							</attribute>						
+						</textbox>
+					</row>
+					<row id="r_discoveryEndpoint">
+						<input_etiqueta value="${c:l('federa_profile.zul.discoveryEndpoint')}"/>
+						<textbox maxlength="255" readonly="true" width="98%" id="discoveryEndpoint" value="/.well-known/openid-configuration">
 						</textbox>
 					</row>
 					<row id="r_authorizationEndpoint">

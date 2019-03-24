@@ -2,6 +2,7 @@ package es.caib.seycon.idp.openid.server;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
@@ -9,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.bouncycastle.asn1.pkcs.RSAPublicKey;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +37,6 @@ import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.FederacioService;
 import com.soffid.iam.api.Password;
-import com.trilead.ssh2.signature.RSAPublicKey;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -41,7 +44,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
-public class ConfigurationEndpoint extends HttpServlet {
+public class JWKEndpoint extends HttpServlet {
 
 	/**
 	 * 
@@ -65,23 +68,7 @@ public class ConfigurationEndpoint extends HttpServlet {
 
 
         try {
-            IdpConfig c = IdpConfig.getConfig();
-        	SAMLProfile openIdProfile = useOpenidProfile();
-			Map<String, Object> att = new HashMap<String, Object>();
-			att.put("issuer", "https://"+c.getHostName()+":"+c.getStandardPort());
-			att.put("authorization_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getAuthorizationEndpoint());
-			att.put("token_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());
-			att.put("userinfo_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getUserInfoEndpoint());
-			att.put("jwks_uri", "https://"+c.getHostName()+":"+c.getStandardPort()+"/.well-known/jwks.json");
-			JSONArray scopes = new JSONArray();
-			scopes.put("openid");
-			att.put("scopes_supported", scopes);
-			JSONArray rt = new JSONArray();
-			rt.put("code");
-			rt.put("token");
-			rt.put("id_token");
-			att.put("response_types_supported", rt);
-			JSONObject o = new JSONObject( att );
+        	JSONObject o = generateJWK();
 			buildResponse(resp, o);
 		} catch (InternalErrorException e) {
 			log.warn("Error evaluating claims", e);
@@ -138,4 +125,30 @@ public class ConfigurationEndpoint extends HttpServlet {
         return null;
 	}
 
+	private JSONObject generateJWK() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, JSONException {
+		IdpConfig c = IdpConfig.getConfig();
+		KeyPair kp = c.getKeyPair();
+		BCRSAPublicKey pk = (BCRSAPublicKey) kp.getPublic();
+		BigInteger e = pk.getPublicExponent();
+		BigInteger n = pk.getModulus();
+		JSONObject o = new JSONObject();
+		JSONArray o_keys = new JSONArray();
+		o.put ("keys", o_keys);
+		JSONObject o_keys_0 = new JSONObject();
+		o_keys.put(o_keys_0);
+		
+		o_keys_0.put("kty", "RSA");
+		o_keys_0.put("n", n.toString());
+		o_keys_0.put("e", e.toString());
+		
+		o_keys_0.put("kid", c.getHostName() );
+		JSONArray o_keys_0_x5c = new JSONArray(); 
+		o_keys_0.put("x5c", o_keys_0_x5c);
+		for (Certificate cert: c.getCerts())
+		{
+			String b64 = Base64.encodeBytes(cert.getEncoded(), Base64.DONT_BREAK_LINES);
+			o_keys_0_x5c.put (b64);
+		}
+		return o;
+ 	}
 }

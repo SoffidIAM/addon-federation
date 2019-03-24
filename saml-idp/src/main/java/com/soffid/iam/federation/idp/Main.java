@@ -60,6 +60,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
 import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
+import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.TokenEndpoint;
 import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -411,6 +412,11 @@ public class Main {
 	        servlet.setInitOrder(2);
 	        servlet.setName("ConfigurationEndpoint"); //$NON-NLS-1$
 	        ctx.addServlet(servlet, "/.well-known/openid-configuration"); //$NON-NLS-1$
+
+        	servlet = new ServletHolder(JWKEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("JWKSEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, "/.well-known/jwks.json"); //$NON-NLS-1$
         }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
         ctx.addServlet(CancelAction.class, CancelAction.URI);
