@@ -476,7 +476,7 @@ public class SAMLServiceInternal {
 				}
 			}
 			if (req.getAssertionConsumerServiceURL() == null)
-				throw new InternalErrorException(String.format("Unable to find a HTPP-Post bindinf for SP %s"), serviceProvider);
+				throw new InternalErrorException(String.format("Unable to find a HTTP-Post binding for SP %s"), serviceProvider);
 
 			req.setForceAuthn(false);
 			req.setID(newID);
@@ -485,19 +485,6 @@ public class SAMLServiceInternal {
 			issuer.setValue( serviceProvider );
 			
 			req.setIssuer( issuer );
-
-			if (userName != null && ! userName.trim().isEmpty())
-			{
-				Subject newSubject = ( (SAMLObjectBuilder<Subject>)builderFactory.getBuilder(Subject.DEFAULT_ELEMENT_NAME)).buildObject();
-				NameID newNameID = ( (SAMLObjectBuilder<NameID>)builderFactory.getBuilder(NameID.DEFAULT_ELEMENT_NAME)).buildObject();
-				newNameID.setValue(userName);
-				if (userName.contains("@") && userName.contains("."))
-					newNameID.setFormat(NameID.EMAIL);
-				else
-					newNameID.setFormat(NameID.PERSISTENT);
-				newSubject.setNameID(newNameID);
-				req.setSubject(newSubject );
-			}
 
 			KeyPair pk = getPrivateKey(serviceProvider);
 			if (pk == null)
@@ -523,6 +510,18 @@ public class SAMLServiceInternal {
 			if (r.getUrl() == null)
 				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
 
+			if (userName != null && ! userName.trim().isEmpty() && !isAzure(req))
+			{
+				Subject newSubject = ( (SAMLObjectBuilder<Subject>)builderFactory.getBuilder(Subject.DEFAULT_ELEMENT_NAME)).buildObject();
+				NameID newNameID = ( (SAMLObjectBuilder<NameID>)builderFactory.getBuilder(NameID.DEFAULT_ELEMENT_NAME)).buildObject();
+				newNameID.setValue(userName);
+				if (userName.contains("@") && userName.contains("."))
+					newNameID.setFormat(NameID.EMAIL);
+				else
+					newNameID.setFormat(NameID.PERSISTENT);
+				newSubject.setNameID(newNameID);
+				req.setSubject(newSubject );
+			}
 
 			// Sign again
 			Element xml = sign (serviceProvider, builderFactory, req);
@@ -552,6 +551,12 @@ public class SAMLServiceInternal {
 		}
 	}
 	
+	private boolean isAzure(AuthnRequest req) {
+		boolean azure = req.getDestination().startsWith("https://login.microsoftonline.com/");
+		log.info("Consumer URL ="+req.getDestination()+" azure workaround="+azure);
+		return azure;
+	}
+
 	public SamlRequest generateSamlLogout(String serviceProvider, String identityProvider, String userName, boolean forced, boolean backChannel) throws InternalErrorException {
 		try {
 			// Get the assertion builder based on the assertion element name
