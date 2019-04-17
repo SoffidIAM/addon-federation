@@ -60,6 +60,12 @@ public class UserPasswordFormServlet extends BaseForm {
             throws ServletException, IOException {
         super.doGet(req, resp);
 
+        
+        if (NtlmAction.URI.equals(req.getAttribute("javax.servlet.error.request_uri")))
+        {
+        	req.getSession().setAttribute("disableKerberos", Boolean.TRUE);
+        	req.setAttribute("ERROR", Messages.getString("KerberosLogin.noToken"));
+        }
         String requestedUser = "";
         String userReadonly = "dummy";
         AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
@@ -107,7 +113,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$
             g.addArgument("requestedUser", requestedUser);
-            g.addArgument("kerberosAllowed", ctx.getNextFactor().contains("K") ? "true" : "false"); 
+            g.addArgument("kerberosAllowed", ctx.getNextFactor().contains("K") && session.getAttribute("disableKerberos") == null ? "true" : "false"); 
             g.addArgument("kerberosDomain", ip.getKerberosDomain());
             g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
