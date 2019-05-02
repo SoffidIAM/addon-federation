@@ -26,7 +26,9 @@ import org.json.JSONObject;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator.Builder;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -100,7 +102,8 @@ public class TokenHandler {
 		}
 		t.token = generateRandomString(129);		
 		t.refreshToken = generateRandomString(129);		
-		t.expires = System.currentTimeMillis() + 600000; // 10 minutes
+		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
+		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
 	}
@@ -116,6 +119,7 @@ public class TokenHandler {
 				.withIssuedAt(new Date(t.getCreated()))
 				.withClaim("auth_time", t.getAuthentication())
 				.withClaim("nonce", t.request.getNonce())
+				.withKeyId(c.getHostName())
 				.withIssuer("https://"+c.getHostName()+":"+c.getStandardPort());
 
 		String subject = null;
@@ -181,7 +185,7 @@ public class TokenHandler {
 		
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
 		String signedToken = builder.sign(algorithmRS);
-
+		
 		return signedToken;
 	}
 
