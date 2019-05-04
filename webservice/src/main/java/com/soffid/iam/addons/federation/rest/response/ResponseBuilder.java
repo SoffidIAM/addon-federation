@@ -66,9 +66,13 @@ public class ResponseBuilder {
 		String message = null;
 		Throwable throwable = e.getCause();
 		while (throwable != null) {
-			message = throwable.getMessage();
+			message = throwable.toString();
+			if (throwable == throwable.getCause())
+				break;
 			throwable = throwable.getCause();
 		}
+		if (message == null)
+			return "";
 		message = message.replaceAll("\n", " ");
 		return message;
 	}

@@ -56,10 +56,10 @@ public class LoginServlet extends LangSupportServlet {
         		try {
         			authCtx = new AuthenticationContext();
         			authCtx.setPublicId(entityId);
-        			if (method != null)
-        			{
-        				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
-        			}
+//        			if (method != null)
+//        			{
+//        				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
+//        			}
         			authCtx.initialize();
         			authCtx.store(req);
         		} catch (Exception e1) {

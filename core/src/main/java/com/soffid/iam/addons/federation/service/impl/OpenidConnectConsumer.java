@@ -1,7 +1,11 @@
-package es.caib.seycon.idp.oauth.consumer;
+package com.soffid.iam.addons.federation.service.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -16,8 +20,8 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.mortbay.util.ajax.JSON;
-import org.openid4java.consumer.ConsumerException;
 
+import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.OAuth2AccessToken;
@@ -37,16 +41,16 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	public String authorizationBaseUrl;
 	private String userInfoEndpoint;
 	
-	public OpenidConnectConsumer(FederationMember fm)
-			throws ConsumerException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException,
+	public OpenidConnectConsumer(FederationMember sp, FederationMember idp)
+			throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException,
 			KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException,
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException {
-		super(fm);
+		super(sp, idp);
 
-		cfg = (HashMap<String, Object>) JSON.parse(fm.getMetadades(), true);
+		cfg = (HashMap<String, Object>) JSON.parse(idp.getMetadades(), true);
 
-		ServiceBuilder serviceBuilder = new ServiceBuilder(fm.getOauthKey())
-				.apiSecret(fm.getOauthSecret().getPassword());
+		ServiceBuilder serviceBuilder = new ServiceBuilder(idp.getOauthKey())
+				.apiSecret(idp.getOauthSecret().getPassword());
 		
 		Object scope = cfg.get("scope");
 		if (scope == null)
@@ -72,11 +76,11 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	
 		accessTokenEndpoint = (String) cfg.get("token_endpoint");
 		if (accessTokenEndpoint == null)
-			throw new InternalErrorException("Missing token_endpoint member in "+fm.getName()+" metadata");
+			throw new InternalErrorException("Missing token_endpoint member in "+idp.getName()+" metadata");
 		
 		authorizationBaseUrl = (String) cfg.get("authorization_endpoint");
 		if (authorizationBaseUrl == null)
-			throw new InternalErrorException("Missing authorization_endpoint member in "+fm.getName()+" metadata");
+			throw new InternalErrorException("Missing authorization_endpoint member in "+idp.getName()+" metadata");
 
 		userInfoEndpoint = (String) cfg.get("userinfo_endpoint");
 
@@ -87,7 +91,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 
 	}
 
-	public boolean verifyResponse(HttpServletRequest httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {
+	public boolean verifyResponse(Map<String,String> httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {
 		OAuth2AccessToken accessToken = parseResponse(httpReq);
 
 		Map<String,String> r = (Map<String, String>) JSON.parse(accessToken.getRawResponse());

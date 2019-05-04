@@ -137,10 +137,11 @@ public class JWKEndpoint extends HttpServlet {
 		JSONObject o_keys_0 = new JSONObject();
 		o_keys.put(o_keys_0);
 		
+		o_keys_0.put("use", "sig");
 		o_keys_0.put("kty", "RSA");
-		o_keys_0.put("n", n.toString());
-		o_keys_0.put("e", e.toString());
-		
+		o_keys_0.put("alg", "RS256");
+		o_keys_0.put("n",  java.util.Base64.getUrlEncoder().encodeToString(n.toByteArray()));
+		o_keys_0.put("e", java.util.Base64.getUrlEncoder().encodeToString(e.toByteArray()));
 		o_keys_0.put("kid", c.getHostName() );
 		JSONArray o_keys_0_x5c = new JSONArray(); 
 		o_keys_0.put("x5c", o_keys_0_x5c);

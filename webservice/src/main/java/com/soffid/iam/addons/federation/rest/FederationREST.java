@@ -1,5 +1,7 @@
 package com.soffid.iam.addons.federation.rest;
 
+import java.util.Collection;
+
 import javax.ejb.EJB;
 import javax.servlet.annotation.HttpConstraint;
 import javax.servlet.annotation.ServletSecurity;
@@ -10,6 +12,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.rest.json.ExpireSessionJSONRequest;
 import com.soffid.iam.addons.federation.rest.json.GenerateSAMLLogoutRequestJSON;
@@ -47,6 +51,10 @@ public class FederationREST {
 				ValidateDomainJSONResponse response = new ValidateDomainJSONResponse();
 				response.setExists("yes");
 				response.setIdentityProvider(idp);
+				for (FederationMember fm: federationService.findFederationMemberByEntityGroupAndPublicIdAndTipus(null, idp, "I"))
+				{
+					response.setProtocol( fm.getIdpType() == IdentityProviderType.SAML || fm.getIdpType() == IdentityProviderType.SOFFID ? "SAML" : "OpenID-Connect");
+				}
 				return ResponseBuilder.responseOk(response);
 			}
 		} catch (Exception e) {
@@ -113,6 +121,12 @@ public class FederationREST {
 		}
 	}
 
+	@Path("/generate-oidc-request")
+	@POST
+	public Response generateOIDCRequest(GenerateSAMLRequestJSONRequest request) {
+		return generateSAMLRequest(request);
+	}
+	
 	@Path("/parse-saml-response")
 	@POST
 	public Response parseSAMLResponse(ParseSAMLResponseJSONRequest request) {
@@ -133,6 +147,12 @@ public class FederationREST {
 		} catch (Exception e) {
 			return ResponseBuilder.errorGeneric(e);
 		}
+	}
+
+	@Path("/parse-oidc-response")
+	@POST
+	public Response parseODICResponse(ParseSAMLResponseJSONRequest request) {
+		return parseSAMLResponse(request);
 	}
 
 	@Path("/generate-saml-logout-request")

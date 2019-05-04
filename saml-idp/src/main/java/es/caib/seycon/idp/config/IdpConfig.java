@@ -281,7 +281,7 @@ public class IdpConfig {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance ("RSA", "BC"); //$NON-NLS-1$ //$NON-NLS-2$
             SecureRandom random = new SecureRandom ();
 
-            keyGen.initialize (1024,random);
+            keyGen.initialize (2048,random);
             
             // Generar clave raiz
             KeyPair pair = keyGen.generateKeyPair ();

@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.jfree.util.Log;
 import org.opensaml.saml2.core.AuthnContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,20 +114,24 @@ public class Autenticator {
         String relyingParty = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
         
         if (relyingParty == null){
+        	LOG.info("Cannot find relying party when loading cookie");
 			return false;
 		}
 
     	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
         if (ip == null){
+        	LOG.info("Cannot find federation member "+relyingParty+" when loading cookie");
 			return false;
 		}
     	
+//    	LOG.info("Find cookie");
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
         	for (Cookie c: req.getCookies())
         	{
         		if (c.getName().equals(ip.getSsoCookieName()))
         		{
+//        			LOG.info("Found session cookie "+c.getValue());
     				if (checkExternalCookie(ctx, req, resp, config, c) || 
     						checkOwnCookie(ctx, req, resp, config, c))
     					return true;
@@ -143,6 +148,7 @@ public class Autenticator {
 		SamlValidationResults check = fs.validateSessionCookie(value);
 		if (check.isValid() && check.getUser() != null)
 		{
+//			LOG.info("Session cookie is valid");
 			Collection<UserAccount> accounts = new com.soffid.iam.remote.RemoteServiceLocator()
 					.getServerService()
 					.getUserAccounts(check.getUser().getId(), config.getSystem().getName());
@@ -163,6 +169,7 @@ public class Autenticator {
 				}
 		        if (! requestedUser.isEmpty() && !user.equals(requestedUser))
 		        {
+//					LOG.info("Session cookie is valid, but requested user does not match");
 		            HttpSession session = req.getSession();
 		            session.removeAttribute(SessionConstants.SEU_USER);
 		            return false;
@@ -187,6 +194,7 @@ public class Autenticator {
 			Long id = Long.decode(value.substring(0, separator));
 			for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
 			{
+//				LOG.info("Checking session cookie against session "+sessio.getId());
 				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
 				String digestString = Base64.encodeBytes(digest);
 				if (digestString.equals(hash))
@@ -199,6 +207,7 @@ public class Autenticator {
 						{
 							for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
 							{
+//								LOG.info("Accepted session cookie against session "+sessio.getId());
 								autenticate2(account.getName(), ctx, req, resp,  
 										sessio.getAuthenticationMethod() == null ? "E" : sessio.getAuthenticationMethod(), 
 										true);
@@ -237,14 +246,15 @@ public class Autenticator {
         	String digestString = Base64.encodeBytes(digest);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
-//        	cookie.setMaxAge(-1);
+       		cookie.setMaxAge ( -1 );
+        	cookie.setSecure(true);
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	resp.addCookie(cookie);
         	if (type != null && type.contains("K"))
         	{
         		Cookie cookie2 = new Cookie (ip.getSsoCookieName()+"_krb", "true");
-        		cookie2.setMaxAge(60 * 24 * 3); // 3 monthis to remember kerberos usage
+        		cookie2.setMaxAge(60 * 60 * 24 * 3 ); // 3 monthis to remember kerberos usage
             	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
             		cookie2.setDomain(ip.getSsoCookieDomain());
             	resp.addCookie(cookie2);

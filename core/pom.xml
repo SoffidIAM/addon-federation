@@ -244,6 +244,11 @@
 			<artifactId>jboss-j2ee</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.github.scribejava</groupId>
+			<artifactId>scribejava-apis</artifactId>
+			<version>5.2.0-java7again</version>
+		</dependency>
+		<dependency>
 		    <groupId>org.bouncycastle</groupId>
 		    <artifactId>bcpkix-jdk15on</artifactId>
 		    <version>1.51</version>
