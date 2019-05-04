@@ -4,7 +4,7 @@ public class ValidateDomainJSONResponse {
 
 	String exists = null;
 	String identityProvider = null;
-
+	String protocol = null; 
 	public String getExists() {
 		return exists;
 	}
@@ -19,5 +19,13 @@ public class ValidateDomainJSONResponse {
 
 	public void setIdentityProvider(String identityProvider) {
 		this.identityProvider = identityProvider;
+	}
+
+	public String getProtocol() {
+		return protocol;
+	}
+
+	public void setProtocol(String protocol) {
+		this.protocol = protocol;
 	}
 }
