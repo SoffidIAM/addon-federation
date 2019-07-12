@@ -183,6 +183,7 @@ public class SAMLServiceInternal {
 	private DispatcherService dispatcherService;
 	private AccountService accountService;
 	private PasswordService passwordService;
+	private DispatcherService agenteService;
 	
 	public void setConfigurationService(ConfigurationService configurationService) {
 		this.configurationService = configurationService;
@@ -1316,11 +1317,36 @@ public class SAMLServiceInternal {
 			r.setPrincipalName(user);
 			return r;
 		}
-		boolean v = passwordService.checkPassword(user, identityProvider, new Password(password), 
-				true, false);
+		boolean v = passwordService.checkPassword(user, identityProvider, new Password(password), true, true);
 		SamlValidationResults r = new SamlValidationResults();
 		if (v)
 		{
+			// Check if the password is expired (in o out of the grace period)
+			boolean e = passwordService.checkPassword(user, identityProvider, new Password(password), false, false);
+			r.setValid(true);
+			if (e) {
+				r.setExpired(false);
+			} else {
+				r.setExpired(true);
+				Account ac = accountService.findAccount(user, identityProvider);
+				Calendar passExp = ac.getPasswordExpiration();
+				Calendar today = Calendar.getInstance();
+				long MILISEGUNDOS_POR_DIA = 24*60*60*1000;
+				long daysExpired = (today.getTimeInMillis()-passExp.getTimeInMillis())/MILISEGUNDOS_POR_DIA;
+				com.soffid.iam.api.System agent = agenteService.findDispatcherByName(ac.getSystem());
+				String pdName = agent.getPasswordsDomain();
+				LinkedList<PasswordPolicy> app = (LinkedList<PasswordPolicy>) userDomainService.findAllPasswordPolicyDomain(pdName);
+				for (PasswordPolicy pp : app) {
+					if (pp.getUserType().equals(ac.getPasswordPolicy())) {
+						Long daysGrace = pp.getMaximumPeriodExpired();
+						if (daysGrace!=null && daysExpired>daysGrace.intValue()) {
+							r.setValid(false);
+							break;
+						}
+					}
+				}
+			}
+			
 			StringBuffer sb = new StringBuffer();
 			SecureRandom sr = new SecureRandom();
 			for (int i = 0; i < 180; i++)
@@ -1358,7 +1384,6 @@ public class SAMLServiceInternal {
 			reqEntity.setFinished(true);
 			samlRequestEntityDao.create(reqEntity);
 
-			r.setValid(true);
 			return r;
 		}
 		else
