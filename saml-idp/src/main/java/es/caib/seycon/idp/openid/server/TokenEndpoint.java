@@ -122,21 +122,21 @@ public class TokenEndpoint extends HttpServlet {
 				if (!authentication.toLowerCase().startsWith("basic ") &&
 						! expectedAuth.equals(authentication.substring(6)))
 				{
-					buildError (resp, "access_denied", "Wrong client credentials");
+					buildError (resp, "invalid_client", "Wrong client credentials");
 					return;
 				}
 			} else {
-				buildError (resp, "access_denied", "Not authorized to use password grant type");
+				buildError (resp, "unsupported_grant_type", "Not authorized to use password grant type");
 				return;				
 			}
 			
 			TokenInfo t = h.generateAuthenticationRequest(request , username);
 			String redirectUri = req.getParameter("redirect_uri");
 			if (username == null || username.trim().isEmpty()) {
-				buildError (resp, "access_denied", "Wrong user credentials. Missing username parameter");
+				buildError (resp, "invalid_client", "Wrong user credentials. Missing username parameter");
 				return;
 			} else if ( password == null || password.trim().isEmpty() ) {
-				buildError (resp, "access_denied", "Wrong user credentials. Missing password parameter");
+				buildError (resp, "invalid_client", "Wrong user credentials. Missing password parameter");
 				return;
 			} else {
 				AuthenticationContext authCtx = new AuthenticationContext();
@@ -157,12 +157,12 @@ public class TokenEndpoint extends HttpServlet {
 			            	
 		            	} else {
 		                    logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
-		                    buildError(resp, "access_denied", "Password is expired");
+		                    buildError(resp, "invalid_grant", "Password is expired");
 		                    return;
 		                }
 		            } else {
 		                logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
-		                buildError(resp, "access_denied", "Invalid username or password");
+		                buildError(resp, "invalid_grant", "Invalid username or password");
 		                return;
 		            }
 				}
@@ -194,7 +194,7 @@ public class TokenEndpoint extends HttpServlet {
 		TokenInfo t = h.getAuthorizationCode (authorizationCode);
 		if ( t == null)
 		{
-			buildError (resp, "access_denied", "Invalid authorization code");
+			buildError (resp, "invalid_grant", "Invalid authorization code");
 			return;
 		}
 		

@@ -42,20 +42,19 @@ public class NtlmAction extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         
-        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (! amf.allowKerberos())
-            throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
-        
-//        final KerberosManager km = new KerberosManager();
         String principal = req.getRemoteUser();
         if (principal == null)
         {
+        	req.getSession().setAttribute("disableKerberos", Boolean.TRUE);
+        	req.setAttribute("ERROR", Messages.getString("KerberosLogin.noToken")); //$NON-NLS-1$
         	resp.sendRedirect(UserPasswordFormServlet.URI);
         	return;
         }
         int split = principal.indexOf('@');
         if (split < 0)
         {
+        	req.getSession().setAttribute("disableKerberos", Boolean.TRUE);
+        	req.setAttribute("ERROR", Messages.getString("KerberosLogin.noToken")); //$NON-NLS-1$
         	resp.sendRedirect(UserPasswordFormServlet.URI);
         	return;
         }
@@ -101,6 +100,7 @@ public class NtlmAction extends HttpServlet {
     	}
         req.setAttribute("ERROR", error); //$NON-NLS-1$
         RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+    	req.getSession().setAttribute("disableKerberos", Boolean.TRUE);
         dispatcher.forward(req, resp);
     }
 

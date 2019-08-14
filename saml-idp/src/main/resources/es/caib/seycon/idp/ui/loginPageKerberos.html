@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Soffid SAML Identity Provider</title>
+	
+	<!-- css -->
+	<link href="/estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
+	<!-- /css -->
+	
+	<script>
+
+	function onChangeUser()
+	{
+		var user = document.getElementById('j_username').value;
+		var xmlhttp = new XMLHttpRequest();
+		var url = "/sp-profile/user-idp?user="+encodeURIComponent(user);
+
+		xmlhttp.onreadystatechange = function() {
+		    if (this.readyState == 4 && this.status == 200) {
+		        var myArr = JSON.parse(this.responseText); 
+		        if (myArr.idp)
+		        {
+		        	location.href = "/sp-profile/SAML2/Forward?user=" +
+			        	encodeURIComponent(user) + "&idp="+
+			        	encodeURIComponent(myArr.idp);
+		        }
+		    }
+		};
+		xmlhttp.open("GET", url, true);
+		xmlhttp.send();
+	}
+
+    function doLoad () {
+       var redirect = false;
+   	   {if kerberosAllowed}
+   	      redirect = true;
+   	   {endif} 
+   	   {if ERROR}
+   	      redirect = false;
+   	   {endif} 
+   	   if (redirect)
+   	   {
+   	      location.href = "/ntlmLoginAction";
+   	   }
+    }
+       
+	</script>
+
+	<script src="/js/jquery-1.3.2.min.js"></script>
+
+</head>
+
+<body onLoad="doLoad()">
+
+	<div id="language">
+		<ul class="qtrans_language_chooser" id="qtranslate-chooser">
+			<li class="lang-en ${lang.active.en}"><a href="${refreshUrl}?lang=en" hreflang="en" title="English"><span>English</span></a></li>
+			<li class="lang-es ${lang.active.es}"><a href="${refreshUrl}?lang=es" hreflang="es" title="Español"><span>Español</span></a></li>
+			<li class="lang-ca ${lang.active.ca}"><a href="${refreshUrl}?lang=ca" hreflang="ca" title="Català"><span>Català</span></a></li>
+		</ul>
+	</div>
+   		
+	<div class="login">
+		<p class="loginheader"><img src="/img/logo.png" alt="Soffid logo" /> </p> 
+		<div class="loginbox"> 
+			<p class="header">${title}</p>
+			{if passwordAllowed} 
+			<div class="logintype"  id ="passlogin">
+				<form method="post" action="${passwordLoginUrl}">
+					<div class="upinput">
+						${Username}: 
+						<input name="j_username" id="j_username" ${userReadonly}="readonly"
+								type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
+						${Password}:
+						<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+					</div>
+					<div class="upbutton">
+						<input id="loginpassbutton" name="formUCboton" type="submit" value="${Login}" />
+					</div>
+				</form>
+			</div>
+			<p/>
+			{endif}
+			{if otpAllowed} 
+			<div class="logintype"  id ="otplogin">
+				<form method="post" action="${otpLoginUrl}">
+					<div class="otpinput">
+						${Username}: 
+						<input name="j_username" id="j_username" ${userReadonly}="readonly"
+								type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
+						${OTPPin} ${otpToken}:
+						<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+					</div>
+					<div class="upbutton">
+						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
+					</div>
+				</form>
+			</div>
+			<p/>
+			{endif}
+			{if kerberosAllowed} 
+			<div class="logintype"  id ="otplogin">
+    			<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img>${Kerberos}</a>
+			</div>
+			<p/>
+			{endif}
+			${raw:externalLogin}
+			{if ERROR}
+			<p id="errormsg" style="color:red;">${ERROR}</p>
+			{endif}
+			<p/>
+			{if certAllowed}
+			<div class="logintype"  id ="certlogin">
+				<form method="post" action="https://${config.hostname}:${config.sslport}${certificateLoginUrl}">
+					<input name="j_method"  id="j_method_usu-pas" type="hidden" value="C"/>
+					<div class="upinput">
+						${You can use a valid digital certificate}
+					</div>
+					<div class="upbutton">
+						<input id="logincertbutton" name="formUCboton" type="submit" value="${Login}"/>
+					</div>
+				</form>
+			</div>
+			<p/>
+			{endif}
+			{if registerAllowed}
+			<div class="nologintype"  id ="registerlogin">
+				<form method="post" action="${registerUrl}">
+					<div class="upbuttoncert">
+						<input name="formUCboton" type="submit" value="${Register}"/>
+					</div>
+					<div class="upinputcert">${If you have no account, you can register yourself}</div>
+				</form>
+			</div>
+			<p>
+			{endif}
+			{if recoverAllowed}
+			<div class="nologintype"  id ="recoverlogin">
+				<form method="post" action="${recoverUrl}">
+					<input name="j_method"  id="j_method_usu-pas" type="hidden" value="U"/>
+					<div class="upinput">
+						<p>${recover.msg}</p>
+						${Email}:
+						<input name="email" id="email" type="text" />
+					</div>
+					<div class="upbutton">
+						<input name="formUCboton" type="submit" value="${Recover}"/>
+					</div>
+				</form>
+			</div>
+			<p>
+			{endif}
+			{if cancelAllowed}
+			<div class="cancellogintype" id="canceldiv">
+				<form method="post" action="${cancelUrl}">
+					<div class="upbuttoncert">
+						<input name="formUCboton" type="submit" value="${Cancel}"/>
+					</div>
+				</form>
+			</div>
+			<p>
+			{endif}
+			<p>${header}</p>
+		</div>
+		<p/>
+	</div>
+
+	<div class="centered" style="visibility:hidden" id="progressdiv">
+		<img class="centeredimage" src="/img/progress.gif"/>
+	</div>
+			<script>
+  $("#logincertbutton").click(function () {
+	  $("#progressdiv").css("visibility", "visible");
+	  $("#registerlogin").fadeOut("slow");
+	  $("#recoverlogin").fadeOut("slow");
+	  $("#passlogin").fadeOut("slow");
+	  $("#errormsg").fadeOut("slow");
+	  $("#logincertbutton").fadeOut("slow");
+	  $("#openidlogin").fadeOut("slow");
+	  $("#otplogin").fadeOut("slow");
+	  $("#canceldiv").fadeOut("slow");
+  });
+  $("#loginpassbutton").click(function () {
+	  $("#progressdiv").css("visibility", "visible");
+	  $("#registerlogin").fadeOut("slow");
+	  $("#recoverlogin").fadeOut("slow");
+	  $("#certlogin").fadeOut("slow");
+	  $("#errormsg").fadeOut("slow");
+	  $("#loginpassbutton").fadeOut("slow");
+	  $("#openidlogin").fadeOut("slow");
+	  $("#otplogin").fadeOut("slow");
+	  $("#canceldiv").fadeOut("slow");
+  });
+  $("#loginotpbutton").click(function () {
+	  $("#progressdiv").css("visibility", "visible");
+	  $("#registerlogin").fadeOut("slow");
+	  $("#recoverlogin").fadeOut("slow");
+	  $("#certlogin").fadeOut("slow");
+	  $("#errormsg").fadeOut("slow");
+	  $("#loginpassbutton").fadeOut("slow");
+	  $("#openidlogin").fadeOut("slow");
+	  $("#otplogin").fadeOut("slow");
+	  $("#canceldiv").fadeOut("slow");
+  });
+  $("a,openidlink").click(function () {
+	  $("#progressdiv").css("visibility", "visible");
+	  $("#registerlogin").fadeOut("slow");
+	  $("#recoverlogin").fadeOut("slow");
+	  $("#certlogin").fadeOut("slow");
+	  $("#passlogin").fadeOut("slow");
+	  $("#errormsg").fadeOut("slow");
+	  $("#otplogin").fadeOut("slow");
+	  $("#canceldiv").fadeOut("slow");
+  });
+  
+  </script>
+
+</body>
+	
+</html>

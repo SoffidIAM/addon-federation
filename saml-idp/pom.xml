@@ -3,16 +3,16 @@
 	<parent>
 		<groupId>com.soffid.iam.addon.federation</groupId>
 		<artifactId>root</artifactId>
-		<version>2.3.1-SNAPSHOT</version>
+		<version>2.4.1-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>saml-idp</artifactId>
-	<version>2.3.1-SNAPSHOT</version>
+	<version>2.4.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>SEU idp Base</name>
 	<properties>
-		<maven.compile.source>1.5</maven.compile.source>
-		<maven.compile.target>1.5</maven.compile.target>
+		<maven.compile.source>1.8</maven.compile.source>
+		<maven.compile.target>1.8</maven.compile.target>
 	</properties>
 
 	 <licenses>
@@ -360,7 +360,7 @@
 		<dependency>
 		    <groupId>com.auth0</groupId>
 		    <artifactId>java-jwt</artifactId>
-		    <version>3.3.0</version>
+		    <version>3.8.0</version>
 		</dependency>
 	    <dependency>
 	      <groupId>com.fasterxml.jackson.core</groupId>

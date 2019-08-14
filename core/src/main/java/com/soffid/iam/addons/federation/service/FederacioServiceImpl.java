@@ -81,7 +81,7 @@ import com.soffid.iam.addons.federation.model.ProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
-import com.soffid.iam.addons.federation.service.impl.SAMLServiceInternal;
+import com.soffid.iam.addons.federation.service.impl.FederationServiceInternal;
 import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Configuration;
@@ -1685,13 +1685,13 @@ public class FederacioServiceImpl
 	}
 
 
-	SAMLServiceInternal delegate;
+	FederationServiceInternal delegate;
 	
-	SAMLServiceInternal getDelegate () throws Exception
+	FederationServiceInternal getDelegate () throws Exception
 	{
 		if (delegate == null)
 		{
-			delegate = new SAMLServiceInternal();
+			delegate = new FederationServiceInternal();
 			delegate.setAdditionalData(getAdditionalDataService());
 			delegate.setConfigurationService(getConfigurationService());
 			delegate.setFederationMemberEntityDao(getFederationMemberEntityDao());
@@ -1731,7 +1731,7 @@ public class FederacioServiceImpl
 				}
 			}
 		}
-		return getDelegate().generateSamlRequest (serviceProvider, identityProvider, userName, sessionSeconds);
+		return getDelegate().generateRequest (serviceProvider, identityProvider, userName, sessionSeconds);
 	}
 
 	@Override
@@ -1767,7 +1767,7 @@ public class FederacioServiceImpl
 	@Override
 	protected SamlRequest handleGenerateSamlLogoutRequest(String serviceProvider, String identityProvider,
 			String subject, boolean force, boolean backChannel) throws Exception {
-		return  getDelegate().generateSamlLogout(serviceProvider, identityProvider, subject, force, backChannel);
+		return  getDelegate().generateLogout(serviceProvider, identityProvider, subject, force, backChannel);
 	}
 
 	@Override

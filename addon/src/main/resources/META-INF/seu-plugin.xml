@@ -5,6 +5,11 @@
 	<version>${pom.version}</version>
 	<core name="Federation common classes" resource="federation-common-${pom.version}.jar"/>
 	<core name="Federation core classes" resource="federation-core-${pom.version}.jar"/>
+	<core name="Scribe api classes" resource="scribejava-apis-5.2.0-java7again.jar"/>
+	<core name="Scribe core classes" resource="scribejava-core-5.2.0-java7again.jar"/>
+	<core name="Jetty JSON classes" resource="jetty-util-6.1.22.jar"/>
+	
+	<core name="Federation common classes" resource="federation-common-${pom.version}.jar"/>
 	<webService name="Federation REST Web Service API" resource="federation-webservice-${project.version}.jar"/>
 	<web name="Federation web files" resource="federation-web-${pom.version}.war"/>
 	<agents name="Soffid Identity Provider" resource="saml-idp-${pom.version}.jar">
