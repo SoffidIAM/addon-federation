@@ -183,7 +183,6 @@ public class SAMLServiceInternal {
 	private DispatcherService dispatcherService;
 	private AccountService accountService;
 	private PasswordService passwordService;
-	private DispatcherService agenteService;
 	
 	public void setConfigurationService(ConfigurationService configurationService) {
 		this.configurationService = configurationService;
@@ -1330,10 +1329,14 @@ public class SAMLServiceInternal {
 				r.setExpired(true);
 				Account ac = accountService.findAccount(user, identityProvider);
 				Calendar passExp = ac.getPasswordExpiration();
+				if (passExp==null) {
+					passExp = Calendar.getInstance();
+					passExp.setTime(ac.getCreated());
+				}
 				Calendar today = Calendar.getInstance();
 				long MILISEGUNDOS_POR_DIA = 24*60*60*1000;
 				long daysExpired = (today.getTimeInMillis()-passExp.getTimeInMillis())/MILISEGUNDOS_POR_DIA;
-				com.soffid.iam.api.System agent = agenteService.findDispatcherByName(ac.getSystem());
+				com.soffid.iam.api.System agent = dispatcherService.findDispatcherByName(ac.getSystem());
 				String pdName = agent.getPasswordsDomain();
 				LinkedList<PasswordPolicy> app = (LinkedList<PasswordPolicy>) userDomainService.findAllPasswordPolicyDomain(pdName);
 				for (PasswordPolicy pp : app) {

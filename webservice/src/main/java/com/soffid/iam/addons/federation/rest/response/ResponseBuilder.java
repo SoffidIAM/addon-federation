@@ -63,11 +63,18 @@ public class ResponseBuilder {
 	 */
 	private static String getOriginalMessage(Exception e) {
 		if (e == null) return "";
-		String message = null;
+		String message = e.getMessage();
+		if (message == null)
+			message = e.toString();
 		Throwable throwable = e.getCause();
 		while (throwable != null) {
 			message = throwable.getMessage();
-			throwable = throwable.getCause();
+			if (message == null)
+				message = throwable.toString();
+			if (throwable.getCause() == throwable)
+				throwable = null;
+			else
+				throwable = throwable.getCause();
 		}
 		message = message.replaceAll("\n", " ");
 		return message;
