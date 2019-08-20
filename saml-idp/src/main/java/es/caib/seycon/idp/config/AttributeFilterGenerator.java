@@ -16,6 +16,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -28,6 +30,8 @@ import com.soffid.iam.addons.federation.service.FederacioService;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class AttributeFilterGenerator {
+	Log log = LogFactory.getLog(getClass());
+	
     final static String AFP_NAMESPACE = "urn:mace:shibboleth:2.0:afp"; //$NON-NLS-1$
     final static String XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance"; //$NON-NLS-1$
     final static String BASIC_NAMESPACE = "urn:mace:shibboleth:2.0:afp:mf:basic"; //$NON-NLS-1$
@@ -88,18 +92,25 @@ public class AttributeFilterGenerator {
             
             for (Iterator it2  = p.getAttributePolicy().iterator(); it2.hasNext(); ) {
                 AttributePolicy ap = (AttributePolicy) it2.next();
-                /**
-                 * <afp:AttributeRule attributeID="eduPersonAffiliation">
-                        <afp:PermitValueRule xsi:type="basic:ANY" />
-                    </afp:AttributeRule>
-                 */
-                Element apNode = doc.createElementNS(AFP_NAMESPACE, "AttributeRule"); //$NON-NLS-1$
-                apNode.setAttribute("attributeID", ap.getAttribute().getShortName()); //$NON-NLS-1$
-                AttributePolicyCondition apc = ap.getAttributePolicyCondition();
-                Element apcNode = doc.createElementNS(AFP_NAMESPACE, apc.getAllow() == null || ! apc.getAllow()? "DenyValueRule": "PermitValueRule"); //$NON-NLS-1$ //$NON-NLS-2$
-                generateConditionAttributes(apc, apcNode, false);
-                apNode.appendChild(apcNode);
-                node.appendChild(apNode);
+                if (ap.getAttribute() == null)
+                {
+                	log.warn("Attribute policy "+p.getName()+" references unknnown attribute");
+                }
+                else
+                {
+	                /**
+	                 * <afp:AttributeRule attributeID="eduPersonAffiliation">
+	                        <afp:PermitValueRule xsi:type="basic:ANY" />
+	                    </afp:AttributeRule>
+	                 */
+	                Element apNode = doc.createElementNS(AFP_NAMESPACE, "AttributeRule"); //$NON-NLS-1$
+	                apNode.setAttribute("attributeID", ap.getAttribute().getShortName()); //$NON-NLS-1$
+	                AttributePolicyCondition apc = ap.getAttributePolicyCondition();
+	                Element apcNode = doc.createElementNS(AFP_NAMESPACE, apc.getAllow() == null || ! apc.getAllow()? "DenyValueRule": "PermitValueRule"); //$NON-NLS-1$ //$NON-NLS-2$
+	                generateConditionAttributes(apc, apcNode, false);
+	                apNode.appendChild(apcNode);
+	                node.appendChild(apNode);
+                }
             }
             
             root.appendChild(node);
