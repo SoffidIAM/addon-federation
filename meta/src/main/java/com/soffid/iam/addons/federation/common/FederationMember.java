@@ -6,6 +6,7 @@
 
 package com.soffid.iam.addons.federation.common;
 
+import java.util.List;
 import java.util.Set;
 
 import com.soffid.mda.annotation.Attribute;
@@ -167,5 +168,10 @@ public class FederationMember {
 	@Attribute(defaultValue="new java.util.HashSet()")
 	@Nullable
 	public Set<String> openidMechanism;
+	
+	@Description("Kerberos keytabs")
+	@Attribute(defaultValue="new java.util.LinkedList()")
+	@Nullable
+	public List<KerberosKeytab> keytabs;
 
 }

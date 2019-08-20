@@ -57,6 +57,7 @@ import com.soffid.iam.addons.federation.common.AttributePolicyCondition;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
@@ -69,6 +70,7 @@ import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
 import com.soffid.iam.addons.federation.model.PolicyEntity;
 import com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity;
@@ -178,6 +180,8 @@ public class FederacioServiceImpl
 			getFederationMemberEntityDao().create(entity);
 			String desc = federationMember.getPublicId()
 					+ (federationMember.getName() != null ? " - " + federationMember.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
+			if (entity instanceof VirtualIdentityProviderEntity)
+				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
@@ -240,6 +244,8 @@ public class FederacioServiceImpl
 					// getServiceProviderVirtualIdentityProviderEntityDao().update(spsnou);
 					idp.setServiceProviderVirtualIdentityProvider(spsnou);
 				}
+				// update ketyabs
+				updateKeytabs (idp, federationMember);
 				getIdentityProviderEntityDao().update(idp);
 				String desc = idp.getPublicId() + (idp.getName() != null ? " - " + idp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
@@ -282,6 +288,8 @@ public class FederacioServiceImpl
 					// getServiceProviderVirtualIdentityProviderEntityDao().update(spsnou);
 					vip.setServiceProviderVirtualIdentityProvider(spsnou);
 				}
+				// update ketyabs
+				updateKeytabs (vip, federationMember);
 				getFederationMemberEntityDao().update(vip);
 				String desc = vip.getPublicId() + (vip.getName() != null ? " - " + vip.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
@@ -299,6 +307,18 @@ public class FederacioServiceImpl
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToUpdateFederationMember")); //$NON-NLS-1$
+	}
+
+	private void updateKeytabs(VirtualIdentityProviderEntity vip, FederationMember federationMember) {
+		getKerberosKeytabEntityDao().remove(vip.getKeytabs());
+		vip.getKeytabs().clear();
+		for ( KerberosKeytab kt: federationMember.getKeytabs())
+		{
+			KerberosKeytabEntity entity = getKerberosKeytabEntityDao().kerberosKeytabToEntity(kt);
+			entity.setIdentityProvider(vip);
+			getKerberosKeytabEntityDao().create(entity);
+			vip.getKeytabs().add(entity);
+		}
 	}
 
 	/**
@@ -322,6 +342,7 @@ public class FederacioServiceImpl
 					getVirtualIdentityProviderEntityDao().remove(vip);
 					
 				}
+				getKerberosKeytabEntityDao().remove(idp.getKeytabs());
 				getIdentityProviderEntityDao().remove(idp);
 
 				String desc = idp.getPublicId() + (idp.getName() != null ? " - " + idp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -336,6 +357,7 @@ public class FederacioServiceImpl
 						getServiceProviderVirtualIdentityProviderEntityDao().findByVIP(vip.getId());
 				getServiceProviderVirtualIdentityProviderEntityDao().remove(oldrps);
 				vip.setServiceProviderVirtualIdentityProvider(null);
+				getKerberosKeytabEntityDao().remove(vip.getKeytabs());
 				getVirtualIdentityProviderEntityDao().remove(vip);
 
 				String desc = vip.getPublicId() + (vip.getName() != null ? " - " + vip.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
