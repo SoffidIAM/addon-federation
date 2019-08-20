@@ -715,6 +715,7 @@ public class FederationServiceInternal {
 	}
 
 	private void updateAccountAttributes(Account account, Map<String, ? extends Object> attributes) throws InternalErrorException {
+		long nextOrder = 1L ;
 		for (String att: attributes.keySet())
 		{
 			if (att.length() < 25)
@@ -730,8 +731,16 @@ public class FederationServiceInternal {
 						md.setCode(att);
 						md.setLabel(att);
 						md.setType(TypeEnumeration.STRING_TYPE);
-						md.setOrder(0L);
+						md.setOrder( nextOrder );
+						for ( DataType md2: additionalData.findSystemDataTypes(account.getSystem()))
+						{
+							log.info("Checking data type "+md2.getCode()+" order "+md2.getOrder());
+							if (md2.getOrder().longValue() >= md.getOrder().longValue())
+								md.setOrder(new Long (md2.getOrder().longValue()+1));
+						}
+						log.info("Creating data type "+md.getCode()+" order "+md.getOrder());
 						additionalData.create(md);
+						nextOrder = md.getOrder().longValue() + 1L;
 					}
 	
 					UserData data = new UserData();
@@ -746,7 +755,7 @@ public class FederationServiceInternal {
 					{
 						data.setValue( DateFormat.getDateTimeInstance().format((Date) v ));
 					}
-					else
+					else if (v.toString().length() < 256)
 					{
 						data.setValue(v.toString());
 					}

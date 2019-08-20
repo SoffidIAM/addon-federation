@@ -152,7 +152,8 @@ public class RelyingPartyGenerator {
         Element confNode = doc.createElementNS(METADATA_NAMESPACE,
                 "MetadataResource"); //$NON-NLS-1$
         spmdNode.appendChild(confNode);
-        URL server = ServerLocator.getInstance().getServerUrl("/SAML/metadata.xml?tenant="+URLEncoder.encode(Security.getCurrentTenantName(), "UTF-8")); //$NON-NLS-1$
+        String tenant = IdpConfig.getConfig().getSystem().getTenant();
+        URL server = ServerLocator.getInstance().getServerUrl("/SAML/metadata.xml?tenant="+URLEncoder.encode(tenant, "UTF-8")); //$NON-NLS-1$
         confNode.setAttribute("url", server.toString()); //$NON-NLS-1$
         confNode.setAttribute("file", new File (IdpConfig.getConfig().getConfDir(), "metadata.xml").getPath()); //$NON-NLS-1$ //$NON-NLS-2$
         confNode.setAttribute("xsi:type", "resource:FileBackedHttpResource"); //$NON-NLS-1$ //$NON-NLS-2$

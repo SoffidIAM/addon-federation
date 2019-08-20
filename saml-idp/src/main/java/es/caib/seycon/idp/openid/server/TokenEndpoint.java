@@ -64,6 +64,7 @@ public class TokenEndpoint extends HttpServlet {
 			String username = req.getParameter("username");
 			String password = req.getParameter("password");
 			String clientId = req.getParameter("client_id");
+			String clientSecret = null;
 
 			TokenHandler h = TokenHandler.instance();
 			OpenIdRequest request = new OpenIdRequest();

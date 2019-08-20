@@ -14,7 +14,10 @@ import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.EventListener;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Set;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
@@ -26,6 +29,7 @@ import net.shibboleth.utilities.jetty7.DelegateToApplicationSslContextFactory;
 import org.eclipse.jetty.http.security.Constraint;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.SpnegoLoginService;
 import org.eclipse.jetty.security.authentication.SpnegoAuthenticator;
 import org.eclipse.jetty.server.Connector;
@@ -49,6 +53,7 @@ import org.springframework.web.context.ContextLoaderListener;
 import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.FederacioService;
@@ -56,6 +61,7 @@ import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.utils.Security;
 
+import es.caib.seycon.idp.config.CustomSpnegoLoginService;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
@@ -555,22 +561,34 @@ public class Main {
 	private void configureSpnego(ServletContextHandler ctx, IdpConfig c) throws FileNotFoundException,
 			IOException, NoSuchAlgorithmException, LoginException {
 		File f = new File (c.getConfDir(), "krb5.keytab");
-		if (! f.canRead())
-		{
-			throw new FileNotFoundException(f.getAbsolutePath());
-		}
 		Constraint constraint = new Constraint(Constraint.__SPNEGO_AUTH, "Soffid Identity Provider");
-        constraint.setRoles(new String[] { c.getFederationMember().getKerberosDomain(),
+		if (f.canRead())
+			constraint.setRoles(new String[] { c.getFederationMember().getKerberosDomain(),
         		c.getFederationMember().getKerberosDomain().toLowerCase(),
         		c.getFederationMember().getKerberosDomain().toUpperCase()
         		});
+		else
+		{
+			Set<String> domains = new HashSet<String>();
+			for ( KerberosKeytab domain: c.getFederationMember().getKeytabs())
+			{
+				domains.add (domain.getDomain());
+				domains.add (domain.getDomain().toLowerCase());
+				domains.add (domain.getDomain().toUpperCase());
+			}
+			constraint.setRoles( domains.toArray(new String[0]));
+		}
         constraint.setAuthenticate(true);
         
         ConstraintMapping constraintMapping = new ConstraintMapping();
         constraintMapping.setConstraint(constraint);
         constraintMapping.setPathSpec(NtlmAction.URI);
-        
-        SpnegoLoginService loginService = new SpnegoLoginService("SpnegoLogin", new File(c.getConfDir(), "spnego.properties").toString());
+
+        LoginService loginService;
+        if (f.canRead() && c.getFederationMember().getKeytabs().isEmpty())
+        	loginService = new SpnegoLoginService("SpnegoLogin", new File(c.getConfDir(), "spnego.properties").toString());
+        else
+        	loginService = new CustomSpnegoLoginService("CustomSpnegoLogin");
 //        CustomSpnegoLoginService customLoginService = new CustomSpnegoLoginService(loginService, "CustomSpnegoLoginService");
         
         ConstraintSecurityHandler csh = new ConstraintSecurityHandler();

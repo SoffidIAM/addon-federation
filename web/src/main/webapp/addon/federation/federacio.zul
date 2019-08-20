@@ -447,7 +447,7 @@
 		<tabpanels>
 			<tabpanel id="tp_federationMembers">
 	
-	<esquema ample="${amplaria}" datamodel="/model" focusCriteri="queryName" id="esquema" onHideFormulari="showLista()" senseCriteris="true">
+	<esquema ample="100%" datamodel="/model" focusCriteri="queryName" id="esquema" onHideFormulari="showLista()" senseCriteris="true">
 
 		<criteris height="${queryWindowMin}" id="queryWindow" onOK="search()" width="${amplaria}">
 
@@ -496,9 +496,9 @@
 			<![CDATA[
 				void onChangeDades() {
 					try {
-						ds = form.getDataSource();
-						ctx = ds.getJXPathContext();
-						registre = ctx.getValue("/");
+						es.caib.zkib.datasource.DataSource ds = form.getDataSource();
+						es.caib.zkib.jxpath.JXPathContext ctx = ds.getJXPathContext();
+						es.caib.zkib.datamodel.DataNode registre = ctx.getValue("/");
 						if (registre.isNew()) {
 							// Obtenim el pare mitjançant botó d'inserir
 							b_inserir = esquema.getFellow("lista").getFellow("b_inserir");
@@ -894,7 +894,6 @@
 					</tabs>
 					<tabpanels>
 						<tabpanel id="tp_eg">
-							<hbox width="99%">
 								<grid id="g_eg">
 									<rows>
 										<row>
@@ -907,10 +906,8 @@
 										</row>
 									</rows>
 								</grid>
-							</hbox>
 						</tabpanel>
 						<tabpanel id="tp_idp">
-						<hbox width="99%">
 						<grid id="g_idp">
 							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
 							<rows>
@@ -1206,9 +1203,50 @@
 										</grid>
 									</div>
 								</row>
-								<row>
+<!-- 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
 									<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+								</row>
+								-->
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
+									<div>
+										<grid dataPath="/federationMember/keytabs" id="keytabsgrid">
+											<columns>
+												<column label="${c:l('federacio.zul.kerberosDomain')}"/>
+												<column label="${c:l('federacio.zul.principalName')}"/>
+												<column label="${c:l('federacio.zul.description')}"/>
+												<column label="-" width='48px'/>
+											</columns>
+											<datarow>
+												<label bind="domain"></label>
+												<label bind="principal"></label>
+												<textbox bind="description" onChange="" width="100%"></textbox>
+												<imageclic src="~./img/list-remove.gif">
+													<attribute name="onClick"><![CDATA[
+ 													{
+														es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+														es.caib.zkib.datasource.XPathUtils.removePath(ctx.getDataSource(), ctx.getXPath());
+														es.caib.zkib.datasource.XPathUtils.getValue(form, "/").update();
+ 													}
+													]]></attribute>
+												</imageclic>
+											</datarow>
+										</grid>
+										<button label="${c:l('federacio.zul.uploadKeytab') }">
+											<attribute name="onClick"><![CDATA[
+											{
+												org.zkoss.util.media.Media media = Fileupload.get();
+												FederationMember fm = es.caib.zkib.datasource.XPathUtils.getValue(form, "/federationMember");
+												new com.soffid.iam.addons.federation.web.KeytabParser().parse(media, fm);
+												es.caib.zkib.binder.BindContext bindCtx = es.caib.zkib.datasource.XPathUtils.getComponentContext(form);
+												es.caib.zkib.datasource.XPathUtils.getValue(form, "/").update();
+												bindCtx.getDataSource().sendEvent( new es.caib.zkib.events.XPathRerunEvent(
+														bindCtx.getDataSource(), bindCtx.getXPath()+"federationMember/keytabs"));
+											}
+											]]></attribute>
+										</button>
+									</div>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.allowRecover')}"/>
@@ -1279,10 +1317,8 @@
 								
 							</rows>
 						</grid>
-						</hbox>						
 						</tabpanel>
 						<tabpanel id="tp_sp">
-						<hbox width="99%">
 						<grid id="g_sp">
 							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
 							<rows>
@@ -1486,10 +1522,8 @@
 								</row>
 							</rows>
 						</grid>
-						</hbox>						
 						</tabpanel>
 						<tabpanel id="tp_vip">
-						<hbox width="99%">
 						<grid id="g_vip">
 							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
 							<rows>
@@ -1715,7 +1749,6 @@
 								</row>
 							</rows>
 						</grid>
-						</hbox>						
 						</tabpanel>						
 						<tabpanel id="tp_prof" visible="false">
 							<label sclass="etiqueta" value="${c:l('federacio.zul.Tipusdeprofile')}"/>

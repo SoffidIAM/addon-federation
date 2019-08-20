@@ -1,38 +1,17 @@
 package com.soffid.iam.addons.federation.service.impl;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import org.opensaml.core.config.InitializationException;
-import org.opensaml.core.xml.XMLObject;
-import org.opensaml.saml.common.xml.SAMLConstants;
-import org.opensaml.saml.saml2.core.Assertion;
-import org.opensaml.saml.saml2.core.Attribute;
-import org.opensaml.saml.saml2.core.AttributeStatement;
-import org.opensaml.saml.saml2.core.NameID;
-import org.opensaml.saml.saml2.core.Subject;
-import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 
-import com.github.scribejava.core.model.OAuth2AccessToken;
-import com.soffid.iam.ServiceLocator;
-import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.model.SamlRequestEntity;

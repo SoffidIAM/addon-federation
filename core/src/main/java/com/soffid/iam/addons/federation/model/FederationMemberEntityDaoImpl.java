@@ -195,6 +195,14 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setVirtualIdentityProvider(spv);
 			}
 		}
+		
+		target.getKeytabs().clear();
+		if (source instanceof VirtualIdentityProviderEntity)
+		{
+			target.getKeytabs().addAll(
+					getKerberosKeytabEntityDao().toKerberosKeytabList(
+							((VirtualIdentityProviderEntity) source).getKeytabs()));
+		}
 
 	}
 
