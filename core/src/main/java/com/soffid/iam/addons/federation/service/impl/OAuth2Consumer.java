@@ -103,14 +103,8 @@ public abstract class OAuth2Consumer implements Serializable {
 		// instantiate a ConsumerManager object
 		this.idp = idp;
 		this.sp = sp;
-		returnToUrl =  (Boolean.TRUE.equals(sp.getDisableSSL()) ? "http://": "https://")
-				+ sp.getHostName()
-				+ ":"
-				+ (sp.getStandardPort() == null && Boolean.TRUE.equals(sp.getDisableSSL()) ? "80":
-					sp.getStandardPort() == null ? "443":
-						sp.getStandardPort())
-				+ "/"
-				+ sp.getAssertionPath();
+
+		returnToUrl = sp.getOpenidUrl();
 
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
         Hex encoder = new Hex();
