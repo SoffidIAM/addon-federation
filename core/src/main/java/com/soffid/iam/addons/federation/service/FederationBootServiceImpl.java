@@ -96,7 +96,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("Email address", "mail", "urn:oid:0.9.2342.19200300.100.1.3", "email");
 		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11", "ou");
 		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4", "user_type");
-		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
+		testAttribute("Role & group membership", "memberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
 		
@@ -221,7 +221,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("Email address", "Email", "urn:oid:0.9.2342.19200300.100.1.3", "email");
 		testAttribute("Organizational unit", "OU", "urn:oid:2.5.4.11", "ou");
 		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4", "user_type");
-		testAttribute("Role & group membership", "IsMemberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
+		testAttribute("Role & group membership", "memberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
 	}

@@ -1,6 +1,5 @@
 package com.soffid.iam.addons.federation.common;
 
-import java.util.List;
 import java.util.Map;
 
 import com.soffid.mda.annotation.Attribute;

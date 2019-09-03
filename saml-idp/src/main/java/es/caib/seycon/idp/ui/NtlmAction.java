@@ -59,7 +59,7 @@ public class NtlmAction extends HttpServlet {
         	return;
         }
         String user = principal.substring(0, split);
-        String domain = principal.substring(split + 1).toUpperCase();
+        String system = principal.substring(split + 1);
 
     	String error = "";
     	try {
@@ -68,13 +68,13 @@ public class NtlmAction extends HttpServlet {
         	
 	    	IdpConfig c = IdpConfig.getConfig();
 	        final Challenge challenge = logonService.requestChallenge(Challenge.TYPE_KERBEROS, 
-					principal,
-					null,
+					user,
+					system,
 					c.getHostName(),
 					req.getRemoteAddr(),
 					3);
 	
-	        challenge.setKerberosDomain(domain);
+//	        challenge.setKerberosDomain(domain);
 	
 	        Sessio s = logonService.responseChallenge(challenge);  
 

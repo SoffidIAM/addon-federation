@@ -6,6 +6,7 @@
 
 package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
 import com.soffid.iam.api.SamlRequest;
@@ -77,7 +78,8 @@ import org.springframework.transaction.annotation.Transactional;
 	DispatcherService.class,
 	DominiUsuariService.class,
 	SessioService.class,
-	LogonService.class
+	LogonService.class,
+	KerberosKeytabEntity.class
 })
 public abstract class FederacioService {
 

@@ -1,11 +1,7 @@
 package com.soffid.iam.addons.federation.service.impl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -17,11 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.mortbay.util.ajax.JSON;
 
-import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import com.github.scribejava.core.model.OAuth2AccessToken;
@@ -83,7 +76,9 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			throw new InternalErrorException("Missing authorization_endpoint member in "+idp.getName()+" metadata");
 
 		userInfoEndpoint = (String) cfg.get("userinfo_endpoint");
-
+		
+		returnToUrl = sp.getOpenidUrl();
+		
 		service = serviceBuilder.state(secretState)
 			    .callback(returnToUrl)
 			    .build( new CustomOAuthService());

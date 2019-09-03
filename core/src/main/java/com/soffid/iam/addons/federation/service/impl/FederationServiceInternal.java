@@ -18,6 +18,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
@@ -480,7 +481,6 @@ public class FederationServiceInternal {
 		return null;
 	}
 
-
 	public SamlValidationResults authenticate(String serviceProvider, String identityProvider, 
 			String user, String password, long sessionSeconds ) throws InternalErrorException, RemoteException, NoSuchAlgorithmException {
 		Account acc = accountService.findAccount(user, identityProvider);
@@ -493,11 +493,39 @@ public class FederationServiceInternal {
 			r.setPrincipalName(user);
 			return r;
 		}
-		boolean v = passwordService.checkPassword(user, identityProvider, new Password(password), 
-				true, false);
+		boolean v = passwordService.checkPassword(user, identityProvider, new Password(password), true, true);
 		SamlValidationResults r = new SamlValidationResults();
 		if (v)
 		{
+			// Check if the password is expired (in o out of the grace period)
+			boolean e = passwordService.checkPassword(user, identityProvider, new Password(password), false, false);
+			r.setValid(true);
+			if (e) {
+				r.setExpired(false);
+			} else {
+				r.setExpired(true);
+				Account ac = accountService.findAccount(user, identityProvider);
+				Calendar passExp = ac.getPasswordExpiration();
+				if (passExp==null) {
+					passExp = passwordService.getPasswordExpiredDate(user, identityProvider);
+				}
+				Calendar today = Calendar.getInstance();
+				long MILISEGUNDOS_POR_DIA = 24*60*60*1000;
+				long daysExpired = (today.getTimeInMillis()-passExp.getTimeInMillis())/MILISEGUNDOS_POR_DIA;
+				com.soffid.iam.api.System agent = dispatcherService.findDispatcherByName(ac.getSystem());
+				String pdName = agent.getPasswordsDomain();
+				LinkedList<PasswordPolicy> app = (LinkedList<PasswordPolicy>) userDomainService.findAllPasswordPolicyDomain(pdName);
+				for (PasswordPolicy pp : app) {
+					if (pp.getUserType().equals(ac.getPasswordPolicy())) {
+						Long daysGrace = pp.getMaximumPeriodExpired();
+						if (daysGrace!=null && daysExpired>daysGrace.intValue()) {
+							r.setValid(false);
+							break;
+						}
+					}
+				}
+			}
+
 			StringBuffer sb = new StringBuffer();
 			SecureRandom sr = new SecureRandom();
 			for (int i = 0; i < 180; i++)
@@ -516,26 +544,24 @@ public class FederationServiceInternal {
 			}
 			
 			String newID = generateRandomId();
-
 			SamlRequestEntity reqEntity = samlRequestEntityDao.newSamlRequestEntity();
 			reqEntity.setHostName(serviceProvider);
 			reqEntity.setDate(new Date());
 			reqEntity.setExpirationDate(new Date(System.currentTimeMillis()+sessionSeconds * 1000L));
 			reqEntity.setExternalId(newID);
 			reqEntity.setFinished(false);
-
 			reqEntity.setKey(sb.toString());
 			r.setIdentityProvider(identityProvider);
 			
 			
-			r.setUser( searchUser (identityProvider, user )  );
+			r.setUser(searchUser(identityProvider, user));
 			if (r.getUser() != null)
-				reqEntity.setUser( r.getUser().getUserName() );
-			r.setSessionCookie(reqEntity.getExternalId()+":"+reqEntity.getKey());
+				reqEntity.setUser(r.getUser().getUserName());
+			if (r.isValid())
+				r.setSessionCookie(reqEntity.getExternalId()+":"+reqEntity.getKey());
 			reqEntity.setFinished(true);
 			samlRequestEntityDao.create(reqEntity);
 
-			r.setValid(true);
 			return r;
 		}
 		else
@@ -688,6 +714,7 @@ public class FederationServiceInternal {
 	}
 
 	private void updateAccountAttributes(Account account, Map<String, ? extends Object> attributes) throws InternalErrorException {
+		long nextOrder = 1L ;
 		for (String att: attributes.keySet())
 		{
 			if (att.length() < 25)
@@ -703,8 +730,16 @@ public class FederationServiceInternal {
 						md.setCode(att);
 						md.setLabel(att);
 						md.setType(TypeEnumeration.STRING_TYPE);
-						md.setOrder(0L);
+						md.setOrder( nextOrder );
+						for ( DataType md2: additionalData.findSystemDataTypes(account.getSystem()))
+						{
+							log.info("Checking data type "+md2.getCode()+" order "+md2.getOrder());
+							if (md2.getOrder().longValue() >= md.getOrder().longValue())
+								md.setOrder(new Long (md2.getOrder().longValue()+1));
+						}
+						log.info("Creating data type "+md.getCode()+" order "+md.getOrder());
 						additionalData.create(md);
+						nextOrder = md.getOrder().longValue() + 1L;
 					}
 	
 					UserData data = new UserData();
@@ -719,7 +754,7 @@ public class FederationServiceInternal {
 					{
 						data.setValue( DateFormat.getDateTimeInstance().format((Date) v ));
 					}
-					else
+					else if (v.toString().length() < 256)
 					{
 						data.setValue(v.toString());
 					}
