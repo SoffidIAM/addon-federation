@@ -1,6 +1,13 @@
 package es.caib.seycon.idp.ui.broker;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -12,9 +19,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.BaseForm;
+import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class QueryUserIdPServlet extends BaseForm {
@@ -50,9 +61,27 @@ public class QueryUserIdPServlet extends BaseForm {
 	        StringBuffer sb = new StringBuffer();
 	        sb.append("{");
 	        if (idp != null)
+	        {
 	        	sb.append("\"idp\":\"")
 	        	.append(idp.replaceAll("\"", "\\\\\"") )
 	        	.append("\"");
+	        	FederationMember fm;
+				try {
+					fm = IdpConfig.getConfig().findIdentityProvider(idp);
+					if (fm != null)
+					{
+						String url = fm.getIdpType() == IdentityProviderType.SAML || fm.getIdpType() == IdentityProviderType.SOFFID?
+								SAMLSSORequest.URI:
+								OauthRequestAction.URI;
+						sb.append(",\"url\":\"")
+						.append(url.replaceAll("\"", "\\\\\"") )
+						.append("\"");
+					}
+				} catch (Exception e) {
+					log.warn("Error looking for idp "+idp);
+				}
+	        }
+	        
 	        sb.append("}");
 	        ServletOutputStream out = resp.getOutputStream();
 	        out.write(sb.toString().getBytes("UTF-8"));

@@ -23,9 +23,11 @@
 		        var myArr = JSON.parse(this.responseText); 
 		        if (myArr.idp)
 		        {
-		        	location.href = "/sp-profile/SAML2/Forward?user=" +
-			        	encodeURIComponent(user) + "&idp="+
-			        	encodeURIComponent(myArr.idp);
+		        	var url = "/sp-profile/SAML2/Forward";
+		        	if (myArr.url) url = myArr.url;
+		        	location.href = url+"?user=" +
+			        	encodeURIComponent(user) + 
+			        	"&idp="+ encodeURIComponent(myArr.idp);
 		        }
 		    }
 		};

@@ -106,6 +106,7 @@ public class TokenEndpoint extends HttpServlet {
 
 			if (request.getFederationMember().getOpenidMechanism().contains("PA")) {
 				// Accept request
+				log.info("Accepted mechanism PA for "+request.getFederationMember().getPublicId());
 			} 
 			else if (request.getFederationMember().getOpenidMechanism().contains("PC"))
 			{
@@ -126,6 +127,7 @@ public class TokenEndpoint extends HttpServlet {
 					buildError (resp, "invalid_client", "Wrong client credentials");
 					return;
 				}
+				log.info("Accepted mechanism PC for "+request.getFederationMember().getPublicId()+" / "+authentication);
 			} else {
 				buildError (resp, "unsupported_grant_type", "Not authorized to use password grant type");
 				return;				
