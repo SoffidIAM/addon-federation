@@ -584,14 +584,16 @@ public class Main {
         constraintMapping.setConstraint(constraint);
         constraintMapping.setPathSpec(NtlmAction.URI);
 
+        ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
         LoginService loginService;
         if (f.canRead() && c.getFederationMember().getKeytabs().isEmpty())
+        {
         	loginService = new SpnegoLoginService("SpnegoLogin", new File(c.getConfDir(), "spnego.properties").toString());
+        }
         else
+        {
         	loginService = new CustomSpnegoLoginService("CustomSpnegoLogin");
-//        CustomSpnegoLoginService customLoginService = new CustomSpnegoLoginService(loginService, "CustomSpnegoLoginService");
-        
-        ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
+        }
         csh.setAuthenticator(new SpnegoAuthenticator());
         csh.setRealmName("Soffid");
         csh.setConstraintMappings(new ConstraintMapping[] {constraintMapping});

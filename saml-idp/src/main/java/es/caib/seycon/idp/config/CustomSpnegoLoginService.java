@@ -19,6 +19,7 @@ import java.util.Properties;
 
 import javax.security.auth.Subject;
 
+import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.http.security.B64Code;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
@@ -36,6 +37,7 @@ public class CustomSpnegoLoginService extends AbstractLifeCycle implements Login
 {
     protected IdentityService _identityService;// = new LdapIdentityService();
     protected String _name;
+    org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
 
     public CustomSpnegoLoginService()
     {
@@ -80,6 +82,7 @@ public class CustomSpnegoLoginService extends AbstractLifeCycle implements Login
         
         
         try {
+        	log.info ("Received kerberos token "+credentials);
 			for (KerberosKeytab keytab: IdpConfig.getConfig().getFederationMember().getKeytabs())
 			{
 				try {
