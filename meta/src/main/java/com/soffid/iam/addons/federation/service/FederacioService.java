@@ -211,6 +211,14 @@ public abstract class FederacioService {
 
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
+	public com.soffid.iam.addons.federation.common.FederationMember findFederationMemberByPublicID(
+		java.lang.String publicId)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.Policy> findPolicies()
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;

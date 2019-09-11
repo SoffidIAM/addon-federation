@@ -1,5 +1,6 @@
 package es.caib.seycon.idp.ui.broker;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -22,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.FederacioService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.BaseForm;
@@ -67,10 +69,23 @@ public class QueryUserIdPServlet extends BaseForm {
 	        	.append("\"");
 	        	FederationMember fm;
 				try {
-					fm = IdpConfig.getConfig().findIdentityProvider(idp);
+					fm = searchIdentityProvider(idp);
 					if (fm != null)
 					{
-						String url = fm.getIdpType() == IdentityProviderType.SAML || fm.getIdpType() == IdentityProviderType.SOFFID?
+						sb.append(",\"type\":\"")
+						.append(fm.getIdpType().toString().replaceAll("\"", "\\\\\"") )
+						.append("\"");
+
+						sb.append(",\"publicId\":\"")
+						.append(fm.getPublicId().replaceAll("\"", "\\\\\"") )
+						.append("\"");
+
+						sb.append(",\"group\":\"")
+						.append(fm.getEntityGroup().getName().replaceAll("\"", "\\\\\"") )
+						.append("\"");
+
+						String url = fm.getIdpType().getValue().equals(IdentityProviderType.SAML.toString()) ||
+								     fm.getIdpType().getValue().equals(IdentityProviderType.SOFFID.toString()) ?
 								SAMLSSORequest.URI:
 								OauthRequestAction.URI;
 						sb.append(",\"url\":\"")
@@ -99,5 +114,8 @@ public class QueryUserIdPServlet extends BaseForm {
         doGet (req, resp);
     }
     
-
+    private FederationMember searchIdentityProvider(String idp) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+    	FederacioService federationService = IdpConfig.getConfig().getFederationService();
+    	return federationService.findFederationMemberByPublicID(idp);
+	}
 }

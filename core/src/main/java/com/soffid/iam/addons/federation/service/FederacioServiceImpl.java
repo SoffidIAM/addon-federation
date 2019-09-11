@@ -1812,4 +1812,12 @@ public class FederacioServiceImpl
 			return getFederationMemberEntityDao().toFederationMember(fm);
 	}
 
+	@Override
+	protected FederationMember handleFindFederationMemberByPublicID(String publicId) throws Exception {
+		List<FederationMemberEntity> fm = getFederationMemberEntityDao().findFMByPublicId(publicId);
+		if (fm == null || fm.isEmpty())
+			return null;
+		return getFederationMemberEntityDao().toFederationMember(fm.iterator().next());
+	}
+
 }
