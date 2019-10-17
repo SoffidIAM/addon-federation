@@ -159,7 +159,7 @@ public class RegisterAction extends HttpServlet {
 			} else {
 				try {
 					AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-					ctx.authenticated(accountName, "P");
+					ctx.authenticated(accountName, "P", resp);
 					ctx.store(req);
 					if (ctx.isFinished()) {
 						new Autenticator().autenticate2(accountName, getServletContext(), req, resp,

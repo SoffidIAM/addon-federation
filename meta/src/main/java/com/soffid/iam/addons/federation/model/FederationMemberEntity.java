@@ -18,6 +18,7 @@ import com.soffid.mda.annotation.*;
 	com.soffid.iam.addons.federation.model.PolicyEntity.class,
 	com.soffid.iam.addons.federation.model.SamlProfileEntity.class,
 	com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity.class,
+	AuthenticationMethodEntity.class,
 	KerberosKeytabEntity.class})
 public abstract class FederationMemberEntity {
 

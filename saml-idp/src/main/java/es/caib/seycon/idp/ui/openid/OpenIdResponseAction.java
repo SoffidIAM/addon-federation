@@ -154,7 +154,7 @@ public class OpenIdResponseAction extends HttpServlet {
     		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
     		Autenticator auth = new Autenticator();
     		String account = auth.getUserAccount(id.getIdentifier());
-    		ctx.authenticated(account, "E");
+    		ctx.authenticated(account, "E", resp);
     		ctx.store(req);
     		if ( ctx.isFinished())
     		{

@@ -155,14 +155,27 @@ public class IdpConfig {
     
     private FederacioService federationService;
     private FederationMember federationMember;
+    private Collection<FederationMember> virtualFederationMembers;
+    long lastQuery = 0;
     private EntityGroupMember entityGroupMember;
     
     
     public FederationMember findIdentityProviderForRelyingParty (String relyingPartyId) throws InternalErrorException {
-    	FederationMember ip = findIdentityProviderForyRelyingParty(entityGroupMember, relyingPartyId);
-    	if (ip == null)
-    		ip = federationMember;
-    	return ip;
+    	if (lastQuery + 60000 < System.currentTimeMillis())
+    	{
+    		lastQuery = System.currentTimeMillis();
+    		federationMember = federationService.findFederationMemberByPublicId(publicId);
+    		virtualFederationMembers = federationService.findVirtualIdentityProvidersForIdentitiProvider(publicId);
+    	}
+    	for (FederationMember vfm: virtualFederationMembers)
+    	{
+    		for (FederationMember sp: vfm.getServiceProvider())
+    		{
+    			if (sp.getPublicId().equals(relyingPartyId))
+    				return vfm;
+    		}
+    	}
+    	return federationMember;
     }
 
     public Collection<FederationMember> findVirtualIdentityProviders () throws InternalErrorException {
@@ -179,29 +192,6 @@ public class IdpConfig {
         return result;
     }
 
-    private FederationMember findIdentityProviderForyRelyingParty (EntityGroupMember entityGroupMember, String relyingPartyId) throws InternalErrorException {
-    	if (relyingPartyId != null)
-    	{
-	        Collection<EntityGroupMember> entities = federationService.findChildren(entityGroupMember);
-	        for (Iterator<EntityGroupMember> it2 = entities.iterator(); it2.hasNext(); ) {
-	            EntityGroupMember egm = it2.next();
-	            FederationMember fm = egm.getFederationMember();
-	            if (fm != null && fm.getClasse().equals("V")) {
-	            	for ( FederationMember serviceProvider: fm.getServiceProvider())
-	            	{
-	            		if (serviceProvider.getClasse().equals("S") &&
-	            				relyingPartyId.equals(serviceProvider.getPublicId()))
-	            			return fm;
-	            	}
-	            }
-	            fm = findIdentityProviderForyRelyingParty(egm, relyingPartyId);
-	            if (fm != null)
-	                return fm;
-	        }
-    	}
-        return null;
-    }
-    
     
     public FederationMember findIdentityProvider (String id) throws InternalErrorException {
     	if (federationMember.getPublicId().equals(id))

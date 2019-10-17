@@ -51,9 +51,11 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
+import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
 import com.soffid.iam.addons.federation.common.AttributePolicyCondition;
+import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -67,6 +69,7 @@ import com.soffid.iam.addons.federation.model.AttributeConditionEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntityDao;
 import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
+import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
@@ -108,6 +111,12 @@ import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
 
+import bsh.EnvironmentNamespace;
+import bsh.EvalError;
+import bsh.Interpreter;
+import bsh.NameSpace;
+import bsh.Primitive;
+import bsh.TargetError;
 import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.SeyconException;
@@ -181,12 +190,16 @@ public class FederacioServiceImpl
 			String desc = federationMember.getPublicId()
 					+ (federationMember.getName() != null ? " - " + federationMember.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 			if (entity instanceof VirtualIdentityProviderEntity)
+			{
 				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
+				updateAuthenticationMethods((VirtualIdentityProviderEntity) entity, federationMember);
+			}
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToMakeFederationMember")); //$NON-NLS-1$
 	}
+
 
 	/**
 	 * @see es.caib.seycon.ng.servei.FederacioService#update(com.soffid.iam.addons.federation.common.FederationMember)
@@ -246,6 +259,7 @@ public class FederacioServiceImpl
 				}
 				// update ketyabs
 				updateKeytabs (idp, federationMember);
+				updateAuthenticationMethods((VirtualIdentityProviderEntity) idp, federationMember);
 				getIdentityProviderEntityDao().update(idp);
 				String desc = idp.getPublicId() + (idp.getName() != null ? " - " + idp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
@@ -290,6 +304,7 @@ public class FederacioServiceImpl
 				}
 				// update ketyabs
 				updateKeytabs (vip, federationMember);
+				updateAuthenticationMethods(vip, federationMember);
 				getFederationMemberEntityDao().update(vip);
 				String desc = vip.getPublicId() + (vip.getName() != null ? " - " + vip.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
@@ -318,6 +333,53 @@ public class FederacioServiceImpl
 			entity.setIdentityProvider(vip);
 			getKerberosKeytabEntityDao().create(entity);
 			vip.getKeytabs().add(entity);
+		}
+	}
+
+	private void updateAuthenticationMethods(VirtualIdentityProviderEntity vip, FederationMember federationMember) throws InternalErrorException {
+		getAuthenticationMethodEntityDao().remove(vip.getExtendedAuthenticationMethods());
+		vip.getKeytabs().clear();
+		int order = 1;
+		for ( AuthenticationMethod method: federationMember.getExtendedAuthenticationMethods())
+		{
+			testCondition(method, new AdaptiveEnvironment());
+			
+			AuthenticationMethodEntity entity = getAuthenticationMethodEntityDao().authenticationMethodToEntity(method);
+			entity.setOrder(new Long(order++));
+			entity.setIdentityProvider(vip);
+			// Test it
+			getAuthenticationMethodEntityDao().create(entity);
+			vip.getExtendedAuthenticationMethods().add(entity);
+		}
+		
+	}
+
+	private void testCondition(AuthenticationMethod method, AdaptiveEnvironment env) 
+			throws InternalErrorException 
+	{
+		Interpreter interpret = new Interpreter();
+		NameSpace ns = interpret.getNameSpace();
+
+		EnvironmentNamespace newNs = new EnvironmentNamespace(env);
+		
+		try {
+			Object result = interpret.eval(method.getExpression(), newNs);
+			if (result instanceof Primitive)
+			{
+				result = ((Primitive)result).getValue();
+			}
+		} catch (TargetError e) {
+			throw new InternalErrorException("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression()+"\nMessage:"+
+					e.getTarget().getMessage(),
+					e.getTarget());
+		} catch (EvalError e) {
+			String msg;
+			try {
+				msg = e.getMessage() + "[ "+ e.getErrorText()+"] ";
+			} catch (Exception e2) {
+				msg = e.getMessage();
+			}
+			throw new InternalErrorException("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression()+"\nMessage:"+msg);
 		}
 	}
 
@@ -1811,6 +1873,31 @@ public class FederacioServiceImpl
 			return null;
 		else
 			return getFederationMemberEntityDao().toFederationMember(fm);
+	}
+
+	@Override
+	protected FederationMember handleFindFederationMemberByPublicId(String publicId) throws Exception {
+		for ( FederationMemberEntity fm: getFederationMemberEntityDao().findFMByPublicId(publicId))
+			return getFederationMemberEntityDao().toFederationMember(fm);
+		return null;
+	}
+
+	@Override
+	protected Collection<FederationMember> handleFindVirtualIdentityProvidersForIdentitiProvider(String publicId) throws Exception {
+		Collection<FederationMember> c = new LinkedList<FederationMember>();
+		for ( FederationMemberEntity fm: getFederationMemberEntityDao().findFMByPublicId(publicId))
+		{
+			if (fm instanceof IdentityProviderEntity)
+			{
+				
+				for ( VirtualIdentityProviderEntity vip: ((IdentityProviderEntity) fm).getVirtualIdentityProvider())
+				{
+					c.add( getFederationMemberEntityDao().toFederationMember(vip));
+				}
+				break;
+			}
+		}
+		return c;
 	}
 
 }

@@ -1201,13 +1201,10 @@
 												</row>
 											</rows>
 										</grid>
+										<button label="${c:l('federacio.zul.adaptiveAuthentication') }..."
+											onClick="adaptiveAuthentication.doHighlighted()" />
 									</div>
 								</row>
-<!-- 								<row>
-									<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
-									<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
-								</row>
-								-->
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
 									<div>
@@ -1673,11 +1670,49 @@
 												</row>
 											</rows>
 										</grid>
+										<button label="${c:l('federacio.zul.adaptiveAuthentication') }..."
+											onClick="adaptiveAuthentication.doHighlighted()" />
 									</div>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.kerberosDomain')}"/>
-									<input_dada bind="/federationMember/kerberosDomain" lectura="${!canModifyFI}" maxim="120"/>
+									<div>
+										<grid dataPath="/federationMember/keytabs" id="keytabsgrid2">
+											<columns>
+												<column label="${c:l('federacio.zul.kerberosDomain')}"/>
+												<column label="${c:l('federacio.zul.principalName')}"/>
+												<column label="${c:l('federacio.zul.description')}"/>
+												<column label="-" width='48px'/>
+											</columns>
+											<datarow>
+												<label bind="domain"></label>
+												<label bind="principal"></label>
+												<textbox bind="description" onChange="" width="100%"></textbox>
+												<imageclic src="~./img/list-remove.gif">
+													<attribute name="onClick"><![CDATA[
+ 													{
+														es.caib.zkib.binder.BindContext ctx = es.caib.zkib.datasource.XPathUtils.getComponentContext(self);
+														es.caib.zkib.datasource.XPathUtils.removePath(ctx.getDataSource(), ctx.getXPath());
+														es.caib.zkib.datasource.XPathUtils.getValue(form, "/").update();
+ 													}
+													]]></attribute>
+												</imageclic>
+											</datarow>
+										</grid>
+										<button label="${c:l('federacio.zul.uploadKeytab') }">
+											<attribute name="onClick"><![CDATA[
+											{
+												org.zkoss.util.media.Media media = Fileupload.get();
+												FederationMember fm = es.caib.zkib.datasource.XPathUtils.getValue(form, "/federationMember");
+												new com.soffid.iam.addons.federation.web.KeytabParser().parse(media, fm);
+												es.caib.zkib.binder.BindContext bindCtx = es.caib.zkib.datasource.XPathUtils.getComponentContext(form);
+												es.caib.zkib.datasource.XPathUtils.getValue(form, "/").update();
+												bindCtx.getDataSource().sendEvent( new es.caib.zkib.events.XPathRerunEvent(
+														bindCtx.getDataSource(), bindCtx.getXPath()+"federationMember/keytabs"));
+											}
+											]]></attribute>
+										</button>
+									</div>
 								</row>
 								<row>
 									<space/>
@@ -2450,11 +2485,159 @@
 		</attribute>
 		<fileupload onUpload="parsePkcs12(event.media)" onClose="pkcs12window.setVisible(false);" />
 	</window>
+	
+	<window id="adaptiveAuthentication" visible="false" closable="close" title="${c:l('federacio.zul.adaptiveAuthentication') }"
+		width="700px">
+		<grid dataPath="/esquema/lista/treebox:/federationMember/extendedAuthenticationMethods" id="grid">
+			<datarow>
+				<div>
+					<hbox width="100%" widths="150px,*">
+						<div>
+							<imageclic src="/addon/federation/img/up.png" width="16px">
+								<attribute name="onClick"><![CDATA[
+								{
+									AuthenticationMethod o = es.caib.zkib.datasource.XPathUtils.getValue(self, ".");
+									LinkedList l = es.caib.zkib.datasource.XPathUtils.getValue(grid, ".");
+									index = l.indexOf(o);
+									if (index > 0 )
+									{
+										l.remove(o);
+										l.add(index-1, o);
+										es.caib.zkib.binder.BindContext c = es.caib.zkib.datasource.XPathUtils.getComponentContext(grid);
+										c.getDataSource().sendEvent(new es.caib.zkib.events.XPathRerunEvent(c.getDataSource(), c.getXPath()));
+									}
+								}
+								]]></attribute>
+							</imageclic>
+							<imageclic src="/addon/federation/img/down.png"  width="16px">
+								<attribute name="onClick"><![CDATA[
+								{
+									AuthenticationMethod o = es.caib.zkib.datasource.XPathUtils.getValue(self, ".");
+									LinkedList l = es.caib.zkib.datasource.XPathUtils.getValue(grid, ".");
+									index = l.indexOf(o);
+									if (index +1 < l.size() )
+									{
+										l.remove(o);
+										l.add(index+1, o);
+										es.caib.zkib.binder.BindContext c = es.caib.zkib.datasource.XPathUtils.getComponentContext(grid);
+										c.getDataSource().sendEvent(new es.caib.zkib.events.XPathRerunEvent(c.getDataSource(), c.getXPath()));
+									}
+								}
+								]]></attribute>
+							</imageclic>
+							<imageclic src="~./img/list-remove.gif"  width="16px">
+								<attribute name="onClick"><![CDATA[
+								{
+									AuthenticationMethod o = es.caib.zkib.datasource.XPathUtils.getValue(self, ".");
+									LinkedList l = es.caib.zkib.datasource.XPathUtils.getValue(grid, ".");
+									index = l.remove(o);
+									es.caib.zkib.binder.BindContext c = es.caib.zkib.datasource.XPathUtils.getComponentContext(grid);
+									c.getDataSource().sendEvent(new es.caib.zkib.events.XPathRerunEvent(c.getDataSource(), c.getXPath()));
+								}
+								]]></attribute>
+							</imageclic>
+							<input_etiqueta value="${c:l('federacio.zul.description')}"/>
+						</div>
+						<textbox width="100%" 
+								onChange="" 
+								bind="@description" >
+						</textbox>
+					</hbox>
+					<hbox width="100%" widths="150px,100px,*,24px">
+						<label/>
+						<input_etiqueta value="${c:l('federacio.zul.condition')}"/>
+						<textbox multiline="true" rows="3"  
+								style="display:block; resize: vertical"
+								width="100%" 
+								onChange="" 
+								height="5em" bind="@expression" >
+						</textbox>
+						<imageclic style="display:table-cell" src="/img/pencil.png" width="2em" >
+							<attribute name="onClick"><![CDATA[
+							    Events.sendEvent(new Event ("onEdit", 
+							    		desktop.getPage("editor").getFellow("top"),
+							    		new Object[] {
+											    event.getTarget().getPreviousSibling(),
+											    new com.soffid.iam.addons.federation.web.ScriptEnviroment().getAdaptiveVars(self)
+										}
+							    ));
+							]]></attribute>
+						</imageclic>
+					</hbox>
+					<div>
+						<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/authenticationMethods"
+							style="margin-left: 150px">
+							<columns>
+								<column label="${c:l('federacio.zul.firstAuthentication') }"/>
+								<column label="${c:l('federacio.zul.password') }"/>
+								<column label="${c:l('federacio.zul.kerberos') }"/>
+								<column label="${c:l('federacio.zul.broker')}"/>
+								<column label="${c:l('federacio.zul.OTP') }"/>
+								<column label="${c:l('federacio.zul.Certificate') }"/>
+							</columns>
+							<rows>
+								<row>
+									<label value="${c:l('federacio.zul.password') }"/>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.P') }"> <custom-attributes type="P"/></checkbox>
+									<label/>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+								</row>
+								<row>
+									<label value="${c:l('federacio.zul.kerberos') }"/>
+									<label/>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.K') }"> <custom-attributes type="K"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+								</row>
+								<row>
+									<label value="${c:l('federacio.zul.broker') }"/>
+									<label/>
+									<label/>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="EO"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="EC"/></checkbox>
+								</row>
+								<row>
+									<label value="${c:l('federacio.zul.OTP') }"/>
+									<label />
+									<label />
+									<label />
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+								</row>
+								<row>
+									<label value="${c:l('federacio.zul.Certificate') }"/>
+									<label/>
+									<label/>
+									<label />
+									<label/>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+								</row>
+							</rows>
+						</grid>
+					</div>
+				</div>
+			</datarow>
+		</grid>
+		<div>
+			<button label="${c:l('federacio.zul.addNew') }" >
+				<attribute name="onClick"><![CDATA[
+					es.caib.zkib.binder.BindContext bindContext = es.caib.zkib.datasource.XPathUtils.getComponentContext(grid);
+					es.caib.zkib.datasource.XPathUtils.createPath( bindContext.getDataSource(), bindContext.getXPath(), new AuthenticationMethod()); 
+				]]></attribute>
+			</button>
+			<button label="${c:l('federacio.zul.close') }" onClick="adaptiveAuthentication.setVisible(false)"/>
+		</div>
+	</window>
+
 	<iframe height="1" id="pkcs10window" visible="true" width="1"/>
 	
 	<include src="/addon/federation/policyCondition.zul"/>
 	<include src="/addon/federation/federationMember.zul"/>
 	<include src="/addon/federation/federa_profile.zul"/>
 	<include src="/grupsllista.zul" />
- 	<include src="finestres/editor.zul"/>
+ 	<include src="/finestres/editor.zul"/>
 </frame>

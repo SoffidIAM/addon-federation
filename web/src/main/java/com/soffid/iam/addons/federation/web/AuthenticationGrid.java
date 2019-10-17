@@ -21,11 +21,18 @@ import es.caib.zkib.events.XPathSubscriber;
 
 public class AuthenticationGrid extends Grid implements XPathSubscriber, AfterCompose {
 	SingletonBinder binder = new SingletonBinder(this);
-	private EventListener onCheckListener = new EventListener() {
+	private static EventListener onCheckListener = new EventListener() {
 		public void onEvent(Event event) throws Exception {
+			Component c = event.getTarget();
+			while (c != null && ! (c instanceof AuthenticationGrid))
+				c = c.getParent();
+			if (c == null)
+				return;
+			
+			AuthenticationGrid ag = (AuthenticationGrid) c;
 			HashSet<String> enabled = new HashSet<String>();
 			StringBuffer sb = new StringBuffer();
-			for (Checkbox cb: findCheckboxes())
+			for (Checkbox cb: ag.findCheckboxes())
 			{
 				String type = (String) cb.getAttribute("type");
 				if ( enabled.contains(type.substring(0, 1)))
@@ -43,8 +50,9 @@ public class AuthenticationGrid extends Grid implements XPathSubscriber, AfterCo
 					}
 				}
 			}
-			binder.setValue(sb.toString());
+			ag.binder.setValue(sb.toString());
 		}
+
 	};
 	
 	public void setPage(Page page) {
@@ -114,6 +122,14 @@ public class AuthenticationGrid extends Grid implements XPathSubscriber, AfterCo
 	public void setBind(String s)
 	{
 		binder.setDataPath(s);
+	}
+
+	@Override
+	public Object clone()  {
+		AuthenticationGrid o = (AuthenticationGrid) super.clone();
+		o.binder = new SingletonBinder(o);
+		o.binder.setDataPath(binder.getDataPath());
+		return o;
 	}
 }
 

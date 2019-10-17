@@ -16,6 +16,7 @@ import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class UserPasswordAction extends HttpServlet {
@@ -61,7 +62,7 @@ public class UserPasswordAction extends HttpServlet {
                         return;
                     } else {
 	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-	            		ctx.authenticated(u, "P");
+	            		ctx.authenticated(u, "P", resp);
 	            		ctx.store(req);
 	            		if ( ctx.isFinished())
 	            		{
@@ -76,6 +77,14 @@ public class UserPasswordAction extends HttpServlet {
 	            		}
                     }
                 } else {
+            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+    	    		if (ctx != null)
+    	    		{
+    	    			try {
+    						ctx.authenticationFailure();
+    					} catch (InternalErrorException e) {
+    					}
+    	    		}
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }
             } catch (UnknownUserException e) {

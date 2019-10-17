@@ -25,6 +25,7 @@ import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class SAMLSSOPostServlet extends BaseForm {
 
@@ -62,16 +63,40 @@ public class SAMLSSOPostServlet extends BaseForm {
 
 			if (sl == null )
 			{
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+	    		if (ctx != null)
+	    		{
+	    			try {
+						ctx.authenticationFailure();
+					} catch (InternalErrorException e) {
+					}
+	    		}
 				resp.sendRedirect(LoginServlet.URI);
 			}
 			else if ( !sl.isValid())
 			{
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+	    		if (ctx != null)
+	    		{
+	    			try {
+						ctx.authenticationFailure();
+					} catch (InternalErrorException e) {
+					}
+	    		}
 				req.setAttribute("ERROR", sl.getFailureReason());
 			    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
 			    dispatcher.forward(req, resp);
 			}
 			else if ( sl.getUser() == null)
 			{
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+	    		if (ctx != null)
+	    		{
+	    			try {
+						ctx.authenticationFailure();
+					} catch (InternalErrorException e) {
+					}
+	    		}
 				req.setAttribute("ERROR", String.format("Remote user %s at %s is not registered",
 						sl.getPrincipalName(), sl.getIdentityProvider()));
 			    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
@@ -80,7 +105,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 			else
 			{
         		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-        		ctx.authenticated(sl.getUser().getUserName(), "E");
+        		ctx.authenticated(sl.getUser().getUserName(), "E", resp);
         		ctx.store(req);
         		if ( ctx.isFinished())
         		{

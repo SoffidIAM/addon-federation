@@ -257,6 +257,11 @@ public class Main {
         factory.setKeyStoreType(SeyconKeyStore.getKeyStoreType());
         factory.setCertAlias("idp"); //$NON-NLS-1$
         factory.setWantClientAuth(wantClientAuth);
+        factory.setExcludeCipherSuites(new String[] {
+        		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+        		
+        });
+//        factory.setIncludeCipherSuites(cipherSuites);
         SslSocketConnector connector = new SslSocketConnector(factory);
 
         connector.setPort(port == null ? 443 : port.intValue());
