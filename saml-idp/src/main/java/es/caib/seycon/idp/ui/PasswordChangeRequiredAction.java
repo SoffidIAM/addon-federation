@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.api.Password;
@@ -28,7 +29,7 @@ public class PasswordChangeRequiredAction extends HttpServlet {
      */
     private static final long serialVersionUID = 1L;
     public static final String URI = "/passwordChangeRequiredAction"; //$NON-NLS-1$
-
+    org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -82,15 +83,24 @@ public class PasswordChangeRequiredAction extends HttpServlet {
         } else {
         	try {
         		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-        		ctx.authenticated(user, "P", resp);
-        		ctx.store(req);
-        		if ( ctx.isFinished())
+        		if (ctx == null)
         		{
-        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false);
-        			return;
+        	        RequestDispatcher dispatcher = req.getRequestDispatcher(ActivatedFormServlet.URI);
+        	        dispatcher.forward(req, resp);
+        		}
+        		else
+        		{
+	        		ctx.authenticated(user, "P", resp);
+	        		ctx.store(req);
+	        		if ( ctx.isFinished())
+	        		{
+	        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+	        			return;
+	        		}
         		}
         	} catch (Exception e)
         	{
+        		log.warn("Error reseting password", e);
                 error = Messages.getString("PasswordChangeRequiredAction.internal.error")+e.toString(); //$NON-NLS-1$
                 req.setAttribute("ERROR", error); //$NON-NLS-1$
                 RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
