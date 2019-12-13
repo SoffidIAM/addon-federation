@@ -66,10 +66,10 @@ public class AuthenticationContext {
 	{
 		IdpConfig config = IdpConfig.getConfig();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
-    	if (fm.getSsoCookieName() != null)
+    	if (fm.getSsoCookieName() != null && ! fm.getSsoCookieName().trim().isEmpty())
     		return fm.getSsoCookieName()+"_host_id";
     	else
-    		return null;
+    		return "hostid";
 		
 	}
 	

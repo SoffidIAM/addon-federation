@@ -44,6 +44,7 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 			if ( ! new File(f).canRead())
 			{
 				log.warn("Cannot read GeoIP database "+f+". Upload it from https://dev.maxmind.com/geoip/geoip2/geolite2/");
+				return "?";
 			}
 			reader = new DatabaseReader.Builder(new File(f)).build();
 		}
