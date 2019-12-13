@@ -12,27 +12,18 @@
 		</zul:zscript>
 	</xsl:template>
 	
-	<xsl:template match="zul:tree/zul:treechildren/zul:treeitem[3]" priority="3">
+	<xsl:template match="zul:tree/zul:treechildren/zul:treeitem[3]/zul:treechildren/zul:treeitem[7]"
+		 priority="3">
 		<xsl:copy>
 			<xsl:apply-templates select="node()|@*" />
 		</xsl:copy>
 			
-			<zul:treeitem open="false">
-				<xsl:attribute name="if">${canViewFederation}</xsl:attribute>
-				<zul:treerow >
-					<zul:treecell onClick="self.parent.parent.open=!self.parent.parent.open">
-						<xsl:attribute name="label">${c:l("federation.menu")}</xsl:attribute>
-					</zul:treecell>
-				</zul:treerow>
-				<zul:treechildren>
-					<zul:treeitem>
-						<zul:treerow>
-							<zul:apptreecell langlabel="federation.submenu"
-								pagina="addon/federation/federacio.zul" />
-						</zul:treerow>
-					</zul:treeitem>
-				</zul:treechildren>
-			</zul:treeitem>
+		<zul:treeitem>
+			<zul:treerow>
+				<zul:apptreecell langlabel="federation.submenu"
+					pagina="addon/federation/federacio.zul" />
+			</zul:treerow>
+		</zul:treeitem>
 	</xsl:template>
  
 
