@@ -106,7 +106,6 @@ import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.service.ConfigurationService;
-import com.soffid.iam.tomcat.SoffidPrincipal;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
@@ -1810,7 +1809,7 @@ public class FederacioServiceImpl
 				if (pattern != null && !pattern.trim().isEmpty())
 				{
 					Matcher m = Pattern.compile("^"+pattern+"$").matcher(userName);
-					if ( m.matches() && m.group(1) != null)
+					if ( m.matches() && m.groupCount() >= 1)
 						userName = m.group(1);
 				}
 			}
