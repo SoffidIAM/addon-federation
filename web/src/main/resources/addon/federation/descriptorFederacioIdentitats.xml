@@ -129,6 +129,7 @@
 	<datanode name="federationMember">
 		<finder name="federationMember" type="federationMember">
 			<ejb-finder
+				if="${tipusFM != null}"
 				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
 				method="findFederationMemberByEntityGroupAndPublicIdAndTipus">
 				<parameter value="${entityGroupName}" />
