@@ -36,7 +36,7 @@
 
     <resolver:AttributeDefinition xsi:type="PrincipalName" id="uid" sourceAttributeID="uid" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
         <resolver:Dependency ref="seu" />
-        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             nameFormat="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
         <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent" />

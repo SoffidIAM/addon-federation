@@ -30,7 +30,6 @@ public abstract class PolicyEntity {
 	public com.soffid.iam.addons.federation.model.PolicyConditionEntity condition;
 
 	@Column (name="POL_TEN_ID")
-	@Nullable
 	public TenantEntity tenant;
 	
 	@DaoFinder

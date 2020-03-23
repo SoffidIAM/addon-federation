@@ -82,7 +82,6 @@ public abstract class FederationMemberEntity {
 	public byte[] metadades;
 
 	@Column (name="FED_TEN_ID")
-	@Nullable
 	public TenantEntity tenant;
 
 	@Column (name="FED_ASSPAT")

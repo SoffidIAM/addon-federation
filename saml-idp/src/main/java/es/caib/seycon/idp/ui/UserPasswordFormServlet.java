@@ -29,6 +29,7 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
+import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.idp.ui.openid.OpenIdRequestAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -41,18 +42,11 @@ public class UserPasswordFormServlet extends BaseForm {
 	private static final long serialVersionUID = 1L;
 	public static final String URI = "/passwordLoginForm"; //$NON-NLS-1$
     private ServletContext context;
-    private IdPProfileHandlerManager handlerManager;
-    private SessionManager<Session> sessionManager;
-    private StorageService<String, LoginContextEntry> storageService;
-    private RelyingPartyConfigurationManager relyingPartyConfigurationManager;
 
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
         context = config.getServletContext();
-        handlerManager = HttpServletHelper.getProfileHandlerManager(context);
-        sessionManager = HttpServletHelper.getSessionManager(context);
-        relyingPartyConfigurationManager = HttpServletHelper.getRelyingPartyConfigurationManager(context);
     }
 
     @Override
@@ -149,7 +143,28 @@ public class UserPasswordFormServlet extends BaseForm {
             {
             	g.addArgument("otpAllowed",  otpAllowed ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             }
+            
+            if (ctx.getNextFactor().contains("F"))
+            {
+            	
+            	g.addArgument("fingerprintAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            	String random = (String) session.getAttribute("fingerprintChallenge");
+            	if (random == null)
+            	{
+            		random = IdpConfig.getConfig().getUserCredentialService().generateChallenge();
+            		session.setAttribute("fingerprintChallenge", random);
+            	}
+            	g.addArgument("fingerprintChallenge", random);
+            }
+            else
+            	g.addArgument("fingerprintAllowed", "false"); //$NON-NLS-1$ //$NON-NLS-2$
 
+            String s = (String) session.getAttribute("serialCredentialToRemove");
+            if (s == null)
+            	g.addArgument("fingerprintToRemove", "");
+            else
+            	g.addArgument("fingerprintToRemove", s);
+            g.addArgument("fingerprintLoginUrl", ValidateCredential.URI);
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("externalLogin", generateExternalLogin(ip, ctx));

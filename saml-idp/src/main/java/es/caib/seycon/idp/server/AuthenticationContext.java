@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
@@ -45,6 +46,8 @@ public class AuthenticationContext {
 	private String remoteIp;
 	private String hostId;
 	private User currentUser;
+	private Account currentAccount;
+	private UserCredential newCredential;
 	
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
@@ -271,6 +274,8 @@ public class AuthenticationContext {
             {
            		nextFactor.add( allowedMethod.substring(0,1));
             }
+		} else if ( user != null && ! user.equals(currentAccount.getName())){
+			throw new InternalErrorException( String.format("Cannot mix credentials of %s and %s", user, currentAccount.getName()));
 		}
 		
 		if (! nextFactor.contains(method))
@@ -281,13 +286,15 @@ public class AuthenticationContext {
 			this.user = user;
 			firstFactor = method;
 		}
-		else secondFactor = method;
+		else 
+			secondFactor = method;
 		
 		String m = getUsedMethod();
 		nextFactor.clear();
     	if ( allowedAuthenticationMethods.contains(m))
     	{
     		step = 2;
+    		registerNewCredential();
     		feedRatio(false);
     		if (currentUser != null)
     		{
@@ -321,6 +328,14 @@ public class AuthenticationContext {
         	throw new InternalErrorException ("Internal error. No authentication method is allowed");
 	}
 
+	private void registerNewCredential() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		if (currentUser !=null && newCredential != null)
+		{
+			newCredential.setUserId(currentUser.getId());
+			IdpConfig.getConfig().getUserCredentialService().create(newCredential);
+		}
+	}
+
 	public void authenticationFailure () throws IOException, InternalErrorException
 	{
 		feedRatio(true);
@@ -340,9 +355,10 @@ public class AuthenticationContext {
 			throw new InternalErrorException("Error getting default dispatcher", e);
 		}
 	    String d = cfg.getSystem().getName();
-	    Account account = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
-	    if (account != null && account.getType() == AccountType.USER && account.getOwnerUsers() != null && account.getOwnerUsers().size() == 1)
-	    	currentUser = account.getOwnerUsers().iterator().next();
+	    currentAccount = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
+	    
+	    if (currentAccount != null && currentAccount.getType() == AccountType.USER && currentAccount.getOwnerUsers() != null && currentAccount.getOwnerUsers().size() == 1)
+	    	currentUser = currentAccount.getOwnerUsers().iterator().next();
 	}
 
 	public String getUser() {
@@ -422,5 +438,9 @@ public class AuthenticationContext {
 			failuresByIp.remove(remoteIp);
 			successByMinute[lastAnnotation] ++;
 		}
+	}
+
+	public void setNewCredential(UserCredential credential) {
+		newCredential = credential;
 	}
 }

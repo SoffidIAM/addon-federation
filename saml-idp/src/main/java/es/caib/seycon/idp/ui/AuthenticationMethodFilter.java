@@ -130,4 +130,16 @@ public class AuthenticationMethodFilter {
 		return config.getFederationMember();
 	}
 
+	public boolean allowUserCredential() {
+        if (allowUserPassword() )
+            return true;
+        if (AuthnContext.TLS_CLIENT_AUTHN_CTX.equals (method))
+            return true;
+    
+        if (AuthnContext.MOFU_AUTHN_CTX.equals (method))
+            return true;
+
+        return false;
+	}
+
 }

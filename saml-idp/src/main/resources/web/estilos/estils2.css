@@ -55,6 +55,7 @@ td.dataTreeCelldestacada div {text-decoration: line-through; color:gray;}
 	text-align:justify;
 }
 
+
 /* personalitzem la barra de processant */
 .z-loading {
 	border-color: #0e5462 !important;
@@ -290,33 +291,4 @@ a.openidlink {
 .openidbutton {
   height: 20px;
   width: 58px;	
-}
-
-body {
-	margin: 0px;
-}
-
-span.labeltextbox input {
-	width: 150px;
-}
-@media only screen and (max-width: 500px) {
-	.login {
-		width: auto;
-		margin: 0;
-		padding: 15px;
-	}
-	
-	.logintype , .loginbox, .logintype2 , .nologintype, .cancellogintype, #language {
-		width: auto;
-	}
-
-	span.labeltextbox {
-		display:block;
-	}
-
-	span.label {
-		display:inline-block;
-		min-width: 150px;
-	}
-	
 }

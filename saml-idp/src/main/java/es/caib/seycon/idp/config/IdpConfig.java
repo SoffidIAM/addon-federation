@@ -55,6 +55,7 @@ import org.xml.sax.SAXException;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.remote.RemoteServiceLocator;
@@ -68,6 +69,7 @@ import es.caib.seycon.util.Base64;
 public class IdpConfig {
     String publicId = null;
     com.soffid.iam.api.System system;
+	private UserCredentialService userCredentialService;
     
     public String getFacebookKey ()
     {
@@ -115,6 +117,7 @@ public class IdpConfig {
         
         try {
         	federationService = (FederacioService) rsl.getRemoteService(FederacioService.REMOTE_PATH);
+        	userCredentialService = (UserCredentialService) rsl.getRemoteService(UserCredentialService.REMOTE_PATH);
         } finally {
         	Thread.currentThread().setContextClassLoader(oldClassLoader);
         }
@@ -574,6 +577,10 @@ public class IdpConfig {
 
 	public void setCerts(List<Certificate> certs) {
 		this.certs = certs;
+	}
+
+	public UserCredentialService getUserCredentialService() {
+		return userCredentialService;
 	}
 
 }

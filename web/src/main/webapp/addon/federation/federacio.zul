@@ -1157,6 +1157,7 @@
 												<column label="${c:l('federacio.zul.broker')}"/>
 												<column label="${c:l('federacio.zul.OTP') }"/>
 												<column label="${c:l('federacio.zul.Certificate') }"/>
+												<column label="${c:l('federacio.zul.Fingerprint') }"/>
 											</columns>
 											<rows>
 												<row>
@@ -1166,6 +1167,7 @@
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PF') }"> <custom-attributes type="PF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.kerberos') }"/>
@@ -1174,14 +1176,16 @@
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KF') }"> <custom-attributes type="KF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.broker') }"/>
 													<label/>
 													<label/>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
-													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="EO"/></checkbox>
-													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="EC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.EO') }"> <custom-attributes type="EO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.EC') }"> <custom-attributes type="EC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.EF') }"> <custom-attributes type="EF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.OTP') }"/>
@@ -1190,6 +1194,7 @@
 													<label />
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.OF') }"> <custom-attributes type="OF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.Certificate') }"/>
@@ -1198,6 +1203,16 @@
 													<label />
 													<label/>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.CF') }"> <custom-attributes type="CF"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.Fingerprint') }"/>
+													<label/>
+													<label/>
+													<label />
+													<label/>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.F') }"> <custom-attributes type="F"/></checkbox>
 												</row>
 											</rows>
 										</grid>
@@ -1626,6 +1641,7 @@
 												<column label="${c:l('federacio.zul.broker')}"/>
 												<column label="${c:l('federacio.zul.OTP') }"/>
 												<column label="${c:l('federacio.zul.Certificate') }"/>
+												<column label="${c:l('federacio.zul.Fingerprint') }"/>
 											</columns>
 											<rows>
 												<row>
@@ -1635,6 +1651,7 @@
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.PF') }"> <custom-attributes type="PF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.kerberos') }"/>
@@ -1643,14 +1660,16 @@
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.KF') }"> <custom-attributes type="KF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.broker') }"/>
 													<label/>
 													<label/>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
-													<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="EO"/></checkbox>
-													<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="EC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.EO') }"> <custom-attributes type="EO"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.EC') }"> <custom-attributes type="EC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.EF') }"> <custom-attributes type="EF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.OTP') }"/>
@@ -1659,6 +1678,7 @@
 													<label />
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.OF') }"> <custom-attributes type="OF"/></checkbox>
 												</row>
 												<row>
 													<label value="${c:l('federacio.zul.Certificate') }"/>
@@ -1667,6 +1687,16 @@
 													<label />
 													<label/>
 													<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.CF') }"> <custom-attributes type="CF"/></checkbox>
+												</row>
+												<row>
+													<label value="${c:l('federacio.zul.Fingerprint') }"/>
+													<label/>
+													<label/>
+													<label />
+													<label/>
+													<label/>
+													<checkbox tooltiptext="${c:l('federacio.zul.auth.F') }"> <custom-attributes type="F"/></checkbox>
 												</row>
 											</rows>
 										</grid>
@@ -2574,6 +2604,7 @@
 								<column label="${c:l('federacio.zul.broker')}"/>
 								<column label="${c:l('federacio.zul.OTP') }"/>
 								<column label="${c:l('federacio.zul.Certificate') }"/>
+								<column label="${c:l('federacio.zul.Fingerprint') }"/>
 							</columns>
 							<rows>
 								<row>
@@ -2583,6 +2614,7 @@
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.PF') }"> <custom-attributes type="PF"/></checkbox>
 								</row>
 								<row>
 									<label value="${c:l('federacio.zul.kerberos') }"/>
@@ -2591,14 +2623,16 @@
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.KF') }"> <custom-attributes type="KF"/></checkbox>
 								</row>
 								<row>
 									<label value="${c:l('federacio.zul.broker') }"/>
 									<label/>
 									<label/>
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
-									<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="EO"/></checkbox>
-									<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="EC"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.EO') }"> <custom-attributes type="EO"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.EC') }"> <custom-attributes type="EC"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.EF') }"> <custom-attributes type="EF"/></checkbox>
 								</row>
 								<row>
 									<label value="${c:l('federacio.zul.OTP') }"/>
@@ -2607,6 +2641,7 @@
 									<label />
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.OF') }"> <custom-attributes type="OF"/></checkbox>
 								</row>
 								<row>
 									<label value="${c:l('federacio.zul.Certificate') }"/>
@@ -2615,6 +2650,16 @@
 									<label />
 									<label/>
 									<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.CF') }"> <custom-attributes type="CF"/></checkbox>
+								</row>
+								<row>
+									<label value="${c:l('federacio.zul.Fingerprint') }"/>
+									<label/>
+									<label/>
+									<label />
+									<label/>
+									<label/>
+									<checkbox tooltiptext="${c:l('federacio.zul.auth.F') }"> <custom-attributes type="F"/></checkbox>
 								</row>
 							</rows>
 						</grid>
