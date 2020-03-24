@@ -42,6 +42,8 @@ public class OauthRequestAction extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
     	String id = req.getParameter("id");
+    	if (id == null)
+    		id = req.getParameter("idp");
         process(req, resp, id);
     }
 
@@ -103,6 +105,8 @@ public class OauthRequestAction extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
     	String id = req.getParameter("id");
+    	if (id == null)
+    		id = req.getParameter("idp");
         process(req, resp, id);
     }
 

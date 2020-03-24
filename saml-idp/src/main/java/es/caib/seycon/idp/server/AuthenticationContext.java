@@ -9,18 +9,29 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
+import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.api.Account;
+import com.soffid.iam.api.User;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.SessionConstants;
+import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class AuthenticationContext {
@@ -32,6 +43,11 @@ public class AuthenticationContext {
 	Set<String> nextFactor;
 	private String user;
 	private Set<String> allowedAuthenticationMethods;
+	private String remoteIp;
+	private String hostId;
+	private User currentUser;
+	private Account currentAccount;
+	private UserCredential newCredential;
 	
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
@@ -48,10 +64,34 @@ public class AuthenticationContext {
 	{
 	}
 	
-	public void initialize () 
+	
+	public String getHostIdCookieName () throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException 
+	{
+		IdpConfig config = IdpConfig.getConfig();
+    	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
+    	if (fm.getSsoCookieName() != null && ! fm.getSsoCookieName().trim().isEmpty())
+    		return fm.getSsoCookieName()+"_host_id";
+    	else
+    		return "hostid";
+		
+	}
+	
+	public void initialize (HttpServletRequest request) 
 		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
-        allowedAuthenticationMethods = findAllowedAuthenticationMethods();
+		IdpConfig config = IdpConfig.getConfig();
+    	remoteIp = request.getRemoteAddr();
+    	hostId = null;
+    	String cookieName = getHostIdCookieName();
+    	if (cookieName != null)
+    	{
+			for (Cookie cookie: request.getCookies())
+    			if (cookie.getName().equals(cookieName))
+    				hostId = cookie.getValue();
+    	}
+    	currentUser = null;
+
+    	allowedAuthenticationMethods = findAllowedAuthenticationMethods();
         if (requestedAuthenticationMethod != null)
         {
         	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
@@ -129,9 +169,20 @@ public class AuthenticationContext {
 	private Set<String> findAllowedAuthenticationMethods() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
 		IdpConfig config = IdpConfig.getConfig();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
+    		
+    	ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(currentUser, remoteIp, hostId);
+    	Integer f = failuresByIp.get(remoteIp);
+    	env.setFailuresForSameIp(f == null ? 0: f.intValue());
+    	env.setFailuresRatio(worstAthenticationRatio());
+    	env.setHostId(hostId);
+    	env.setIdentityProvider(fm.getPublicId());
+    	env.setServiceProvider(publicId);
+    	env.setSourceIp(remoteIp);
+    	env.setUser(currentUser);
+		String m = new RemoteServiceLocator().getUserBehaviorService().getAuthenticationMethod(fm, env );
 
 		HashSet<String> methods = new HashSet<String>(); 
-		for ( String s: fm.getAuthenticationMethods().split(" "))
+		for ( String s: m.split(" "))
 		{
 			methods.add(s);
 		}
@@ -202,13 +253,30 @@ public class AuthenticationContext {
 	}
 	
 	
-	public void authenticated (String user, String method) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
+	public void authenticated (String user, String method, HttpServletResponse resp) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
 		if ( step == 1 && method.equals(firstFactor))
 			return;
 		
 		if (step == 2 && method.equals(secondFactor))
 			return;
+
+		if (step == 0 ) // Load user information and reevaluate authentication methods
+		{
+			getUserData(user);
+		
+			allowedAuthenticationMethods = findAllowedAuthenticationMethods();
+	        if (requestedAuthenticationMethod != null)
+	        {
+	        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
+	        }
+            for ( String allowedMethod: allowedAuthenticationMethods)
+            {
+           		nextFactor.add( allowedMethod.substring(0,1));
+            }
+		} else if ( user != null && ! user.equals(currentAccount.getName())){
+			throw new InternalErrorException( String.format("Cannot mix credentials of %s and %s", user, currentAccount.getName()));
+		}
 		
 		if (! nextFactor.contains(method))
 			throw new InternalErrorException("Authentication method not allowed");
@@ -218,16 +286,34 @@ public class AuthenticationContext {
 			this.user = user;
 			firstFactor = method;
 		}
-		else secondFactor = method;
+		else 
+			secondFactor = method;
 		
 		String m = getUsedMethod();
-		Set<String> allowed = findAllowedAuthenticationMethods();
 		nextFactor.clear();
-    	if ( allowed.contains(m))
+    	if ( allowedAuthenticationMethods.contains(m))
+    	{
     		step = 2;
+    		registerNewCredential();
+    		feedRatio(false);
+    		if (currentUser != null)
+    		{
+    			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
+    			long f = ubh.getUserFailures(currentUser.getId());
+    			ubh.setUserFailures(currentUser.getId(), 0);
+    			if (hostId == null)
+    			{
+    				hostId = ubh.registerHost(remoteIp);
+    				Cookie c = new Cookie(getHostIdCookieName(), hostId);
+    				c.setMaxAge(Integer.MAX_VALUE);
+    				resp.addCookie(c);
+    			}
+    			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
+    		}
+    	}
     	else
     	{
-    		for ( String allowedMethod: allowed)
+    		for ( String allowedMethod: allowedAuthenticationMethods)
     		{
     			if ( allowedMethod.startsWith(method))
     			{
@@ -240,6 +326,39 @@ public class AuthenticationContext {
         
         if (step == 0)
         	throw new InternalErrorException ("Internal error. No authentication method is allowed");
+	}
+
+	private void registerNewCredential() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		if (currentUser !=null && newCredential != null)
+		{
+			newCredential.setUserId(currentUser.getId());
+			IdpConfig.getConfig().getUserCredentialService().create(newCredential);
+		}
+	}
+
+	public void authenticationFailure () throws IOException, InternalErrorException
+	{
+		feedRatio(true);
+		if (currentUser != null)
+		{
+			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
+			long f = ubh.getUserFailures(currentUser.getId());
+			ubh.setUserFailures(currentUser.getId(), f+1);
+		}
+	}
+	
+	private void getUserData(String userName) throws InternalErrorException, IOException {
+    	IdpConfig cfg;
+		try {
+			cfg = IdpConfig.getConfig();
+		} catch (Exception e) {
+			throw new InternalErrorException("Error getting default dispatcher", e);
+		}
+	    String d = cfg.getSystem().getName();
+	    currentAccount = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
+	    
+	    if (currentAccount != null && currentAccount.getType() == AccountType.USER && currentAccount.getOwnerUsers() != null && currentAccount.getOwnerUsers().size() == 1)
+	    	currentUser = currentAccount.getOwnerUsers().iterator().next();
 	}
 
 	public String getUser() {
@@ -276,4 +395,52 @@ public class AuthenticationContext {
 		this.allowedAuthenticationMethods = allowedAuthenticationMethods;
 	}
 
+	// failures ratio calculation
+	static int successByMinute[]  = new int [60];
+	static int failureByMinute[] = new int [60];
+	static int lastAnnotation = 0;
+	static HashMap<String,Integer>failuresByIp = new HashMap<String, Integer>();
+	double worstAthenticationRatio () {
+		int minute = (int) ((System.currentTimeMillis() / 60000L) % 60);
+		int start = minute;
+		int failures = 0;
+		int total = 0;
+		double worst = 0.0;
+		do {
+			failures += failureByMinute[minute];
+			total += failureByMinute[minute] + successByMinute[minute];
+			if (total > 10)
+			{
+				double ratio = failures / total;
+				if (ratio > worst) worst = ratio;
+			}
+			minute = (minute + 1) % 60;
+		} while (minute != start);
+		return worst;
+	}
+	void feedRatio (boolean failure)
+	{
+		int minute = (int) ((System.currentTimeMillis() / 60000L) % 60);
+		while (lastAnnotation != minute)
+		{
+			lastAnnotation = (lastAnnotation + 1) % 60;
+			failureByMinute[lastAnnotation] = successByMinute[lastAnnotation] = 0;
+		}
+		if (failure)
+		{
+			failureByMinute[lastAnnotation] ++;
+			Integer i = failuresByIp.get(remoteIp);
+			if (i == null)
+				failuresByIp.put(remoteIp, new Integer(1));
+			else
+				failuresByIp.put(remoteIp, new Integer (i.intValue()+1));
+		} else {
+			failuresByIp.remove(remoteIp);
+			successByMinute[lastAnnotation] ++;
+		}
+	}
+
+	public void setNewCredential(UserCredential credential) {
+		newCredential = credential;
+	}
 }

@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.api.Password;
@@ -18,6 +19,7 @@ import es.caib.seycon.InvalidPasswordException;
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class PasswordChangeRequiredAction extends HttpServlet {
@@ -27,7 +29,7 @@ public class PasswordChangeRequiredAction extends HttpServlet {
      */
     private static final long serialVersionUID = 1L;
     public static final String URI = "/passwordChangeRequiredAction"; //$NON-NLS-1$
-
+    org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -67,21 +69,38 @@ public class PasswordChangeRequiredAction extends HttpServlet {
         }
 
         if (error != null) {
+    		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+    		if (ctx != null)
+    		{
+    			try {
+					ctx.authenticationFailure();
+				} catch (InternalErrorException e) {
+				}
+    		}
             req.setAttribute("ERROR", error); //$NON-NLS-1$
             RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
             dispatcher.forward(req, resp);
         } else {
         	try {
         		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-        		ctx.authenticated(user, "P");
-        		ctx.store(req);
-        		if ( ctx.isFinished())
+        		if (ctx == null)
         		{
-        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false);
-        			return;
+        	        RequestDispatcher dispatcher = req.getRequestDispatcher(ActivatedFormServlet.URI);
+        	        dispatcher.forward(req, resp);
+        		}
+        		else
+        		{
+	        		ctx.authenticated(user, "P", resp);
+	        		ctx.store(req);
+	        		if ( ctx.isFinished())
+	        		{
+	        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+	        			return;
+	        		}
         		}
         	} catch (Exception e)
         	{
+        		log.warn("Error reseting password", e);
                 error = Messages.getString("PasswordChangeRequiredAction.internal.error")+e.toString(); //$NON-NLS-1$
                 req.setAttribute("ERROR", error); //$NON-NLS-1$
                 RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);

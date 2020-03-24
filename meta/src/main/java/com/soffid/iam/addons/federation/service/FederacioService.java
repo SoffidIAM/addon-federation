@@ -6,6 +6,7 @@
 
 package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
@@ -22,6 +23,7 @@ import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.servei.UsuariService;
 import es.caib.seycon.ng.sync.servei.LogonService;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +81,9 @@ import org.springframework.transaction.annotation.Transactional;
 	DominiUsuariService.class,
 	SessioService.class,
 	LogonService.class,
-	KerberosKeytabEntity.class
+	KerberosKeytabEntity.class,
+	AuthenticationMethodEntity.class,
+	UserBehaviorService.class
 })
 public abstract class FederacioService {
 
@@ -205,6 +209,22 @@ public abstract class FederacioService {
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.FederationMember findFederationMemberByClientID(
 		java.lang.String clientId)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public com.soffid.iam.addons.federation.common.FederationMember findFederationMemberByPublicId(
+		java.lang.String publicId)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public Collection<com.soffid.iam.addons.federation.common.FederationMember> findVirtualIdentityProvidersForIdentitiProvider(
+		java.lang.String publicId)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}

@@ -293,7 +293,7 @@ public class Autenticator {
 		{
 			authCtx = new AuthenticationContext();
 			authCtx.setPublicId(entityId);
-			authCtx.initialize();
+			authCtx.initialize( req );
 		}
 		authCtx.setFirstFactor(type.substring(0, 1));
 		authCtx.setSecondFactor(type.substring(1));
@@ -480,4 +480,5 @@ public class Autenticator {
 		else
 			return Arrays.asList(values);
 	}
+	
 }

@@ -2,13 +2,6 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -17,15 +10,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.jfree.util.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.remote.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.textformatter.TextFormatException;
-import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class LogoutServlet extends HttpServlet {
     /**
@@ -73,7 +64,7 @@ public class LogoutServlet extends HttpServlet {
 				    }
 				}
 			} catch (Exception e) {
-				Log.warn("Error expiring session", e);
+				LogFactory.getLog(LogoutServlet.class).warn("Error expiring session", e);
 			}		
         
     		session.invalidate();

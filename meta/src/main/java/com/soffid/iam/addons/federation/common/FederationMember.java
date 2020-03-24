@@ -174,4 +174,8 @@ public class FederationMember {
 	@Nullable
 	public List<KerberosKeytab> keytabs;
 
+	@Nullable
+	@Attribute(defaultValue="new java.util.LinkedList()")
+	public List<AuthenticationMethod> extendedAuthenticationMethods;
+
 }

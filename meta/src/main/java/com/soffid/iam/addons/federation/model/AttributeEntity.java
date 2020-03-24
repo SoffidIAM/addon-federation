@@ -43,7 +43,7 @@ public abstract class AttributeEntity {
 	public java.lang.String value;
 	
 	@Column(name="ATT_TEN_ID")
-	@Nullable
+//	@Nullable
 	public TenantEntity tenant;
 
 	@ForeignKey (foreignColumn="PCO_ATT_ID")

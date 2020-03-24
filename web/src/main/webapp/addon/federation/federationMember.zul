@@ -38,8 +38,8 @@
 			
 		model.getVariables().declareVariable("queryEnabled", queryEnabled);
 		if (queryEnabled) {
-			model.getJXPathContext().getValue("/federationMember").refresh();
 			listbox.dataPath = "/model:/federationMember";
+			model.getJXPathContext().getValue("/federationMember").refresh();
 		}
 	}
 	void showAltres() {
@@ -103,7 +103,7 @@
 			event.stopPropagation();
 		</attribute>
 
-		<criteris height="40px" id="queryWindow" onOK="search()" width="99.7%">
+		<criteris id="queryWindow" onOK="search()" width="99.7%">
 			<hbox>
 				<input_criteri etiqueta="${c:l('federationMember.zul.EntityGroup')}" id="queryEntityGroupName"/>
 				<input_criteri etiqueta="${c:l('federationMember.zul.PublicId')}" id="queryPublicId"/>
@@ -116,7 +116,7 @@
 		</criteris>
 
 		<navegador id="lista" width="100%">
-			<listbox autocommit="false" dataPath="/model:/atribut" fixedLayout="true" id="listbox" rows="${fileres}">
+			<listbox autocommit="false" dataPath="/model:/federationMember" fixedLayout="true" id="listbox" rows="${fileres}">
 				<attribute name="onSelect">
 					esquema.getFellow("finishButton").setDisabled(listbox.selectedIndex @lt 0);
 				</attribute>

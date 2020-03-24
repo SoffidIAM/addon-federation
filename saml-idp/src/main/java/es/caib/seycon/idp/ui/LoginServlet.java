@@ -2,6 +2,13 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Collections;
 
 import javax.servlet.ServletException;
@@ -12,9 +19,13 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
+
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class LoginServlet extends LangSupportServlet {
     
@@ -35,7 +46,7 @@ public class LoginServlet extends LangSupportServlet {
         	method = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM);
         
         String entityId = (String) req.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
-        if (session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM) == null)
+        if (entityId != null)
         	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, entityId);
         else
         	entityId = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM); 
@@ -51,7 +62,7 @@ public class LoginServlet extends LangSupportServlet {
         if (!previousAuth)
         {
         	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
-        	if (authCtx == null)
+        	if (authCtx == null )
         	{
         		try {
         			authCtx = new AuthenticationContext();
@@ -60,7 +71,7 @@ public class LoginServlet extends LangSupportServlet {
 //        			{
 //        				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
 //        			}
-        			authCtx.initialize();
+        			authCtx.initialize(req);
         			authCtx.store(req);
         		} catch (Exception e1) {
         			LogFactory.getLog(getClass()).warn("Error decoding authentication cookie", e1);

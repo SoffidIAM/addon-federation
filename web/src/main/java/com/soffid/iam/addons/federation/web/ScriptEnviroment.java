@@ -108,5 +108,37 @@ public class ScriptEnviroment {
 	}
 
 
+	public String getAdaptiveVars (Component c) throws InternalErrorException, NamingException, CreateException
+	{
+		StringBuffer sb = new StringBuffer();
+		sb.append("{\"serverService\":\"es.caib.seycon.ng.sync.servei.ServerService\","
+				+ "\"remoteServiceLocator\":\"es.caib.seycon.ng.remote.RemoteServiceLocator\","
+				+ "\"serviceLocatorV1\":\"es.caib.seycon.ng.ServiceLocator\","
+				+ "\"serviceProvider\":\"java.lang.String\","
+				+ "\"serviceProviderGroup\":\"java.lang.String\","
+				+ "\"serviceLocator\":\"com.soffid.iam.ServiceLocator\","
+				+ "\"dispatcherService\":\"es.caib.seycon.ng.sync.engine.extobj.BSHAgentbject\"");
+
+		sb.append(", \"dayOfWeek\" : \"java.lang.Integer\"")
+			.append(", \"daysSinceLastLogon\" : \"java.lang.Integer\"")
+			.append(", \"daysSinceLastLogonFromSameHost\" : \"java.lang.Integer\"")
+			.append(", \"failuresForSameIp\" : \"java.lang.Integer\"")
+			.append(", \"failuresForSameUser\" : \"java.lang.Integer\"")
+			.append(", \"failuresRatio\" : \"java.lang.Double\"")
+			.append(", \"hour\" : \"java.lang.Integer\"")
+			.append(", \"identityProvider\" : \"java.lang.String\"")
+			.append(", \"serviceProvider\" : \"java.lang.String\"")
+			.append(", \"ipAddress\" : \"java.lang.String\"")
+			.append(", \"minute\" : \"java.lang.Integer\"")
+			.append(", \"newDevice\" : \"java.lang.Boolean\"")
+			.append(", \"sameCountry\" : \"java.lang.Boolean\"")
+			.append(", \"serviceProvider\" : \"java.lang.String\"")
+			.append(", \"sourceCounty\" : \"java.lang.String\"")
+			.append(", \"user\" : \"com.soffid.iam.api.User\"");
+
+			sb.append("}");
+		return sb.toString();
+	}
+
 }
 

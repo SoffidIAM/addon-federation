@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -28,6 +30,8 @@ public class ActivateUserAction extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	Log log = LogFactory.getLog(getClass());
+	
 	LogRecorder logRecorder = LogRecorder.getInstance();
 
     public static final String URI = "/activateAction"; //$NON-NLS-1$
@@ -62,7 +66,6 @@ public class ActivateUserAction extends HttpServlet {
 	    		throw new InternalErrorException ("Registration is not permited");
 	    	
 	        String key = req.getParameter("key"); //$NON-NLS-1$
-	        
 	        
       		User u = config.getFederationService().verifyActivationEmail(key);
       		

@@ -55,6 +55,7 @@ import org.xml.sax.SAXException;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.remote.RemoteServiceLocator;
@@ -68,6 +69,7 @@ import es.caib.seycon.util.Base64;
 public class IdpConfig {
     String publicId = null;
     com.soffid.iam.api.System system;
+	private UserCredentialService userCredentialService;
     
     public String getFacebookKey ()
     {
@@ -115,6 +117,7 @@ public class IdpConfig {
         
         try {
         	federationService = (FederacioService) rsl.getRemoteService(FederacioService.REMOTE_PATH);
+        	userCredentialService = (UserCredentialService) rsl.getRemoteService(UserCredentialService.REMOTE_PATH);
         } finally {
         	Thread.currentThread().setContextClassLoader(oldClassLoader);
         }
@@ -155,14 +158,27 @@ public class IdpConfig {
     
     private FederacioService federationService;
     private FederationMember federationMember;
+    private Collection<FederationMember> virtualFederationMembers;
+    long lastQuery = 0;
     private EntityGroupMember entityGroupMember;
     
     
     public FederationMember findIdentityProviderForRelyingParty (String relyingPartyId) throws InternalErrorException {
-    	FederationMember ip = findIdentityProviderForyRelyingParty(entityGroupMember, relyingPartyId);
-    	if (ip == null)
-    		ip = federationMember;
-    	return ip;
+    	if (lastQuery + 60000 < System.currentTimeMillis())
+    	{
+    		lastQuery = System.currentTimeMillis();
+    		federationMember = federationService.findFederationMemberByPublicId(publicId);
+    		virtualFederationMembers = federationService.findVirtualIdentityProvidersForIdentitiProvider(publicId);
+    	}
+    	for (FederationMember vfm: virtualFederationMembers)
+    	{
+    		for (FederationMember sp: vfm.getServiceProvider())
+    		{
+    			if (sp.getPublicId().equals(relyingPartyId))
+    				return vfm;
+    		}
+    	}
+    	return federationMember;
     }
 
     public Collection<FederationMember> findVirtualIdentityProviders () throws InternalErrorException {
@@ -179,29 +195,6 @@ public class IdpConfig {
         return result;
     }
 
-    private FederationMember findIdentityProviderForyRelyingParty (EntityGroupMember entityGroupMember, String relyingPartyId) throws InternalErrorException {
-    	if (relyingPartyId != null)
-    	{
-	        Collection<EntityGroupMember> entities = federationService.findChildren(entityGroupMember);
-	        for (Iterator<EntityGroupMember> it2 = entities.iterator(); it2.hasNext(); ) {
-	            EntityGroupMember egm = it2.next();
-	            FederationMember fm = egm.getFederationMember();
-	            if (fm != null && fm.getClasse().equals("V")) {
-	            	for ( FederationMember serviceProvider: fm.getServiceProvider())
-	            	{
-	            		if (serviceProvider.getClasse().equals("S") &&
-	            				relyingPartyId.equals(serviceProvider.getPublicId()))
-	            			return fm;
-	            	}
-	            }
-	            fm = findIdentityProviderForyRelyingParty(egm, relyingPartyId);
-	            if (fm != null)
-	                return fm;
-	        }
-    	}
-        return null;
-    }
-    
     
     public FederationMember findIdentityProvider (String id) throws InternalErrorException {
     	if (federationMember.getPublicId().equals(id))
@@ -584,6 +577,10 @@ public class IdpConfig {
 
 	public void setCerts(List<Certificate> certs) {
 		this.certs = certs;
+	}
+
+	public UserCredentialService getUserCredentialService() {
+		return userCredentialService;
 	}
 
 }

@@ -1,6 +1,10 @@
 package es.caib.seycon.idp.shibext;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.rmi.RemoteException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -27,12 +31,17 @@ import com.soffid.iam.api.Account;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
+import com.soffid.iam.api.sso.Secret;
+import com.soffid.iam.service.SessionService;
+import com.soffid.iam.service.UserService;
+import com.soffid.iam.sync.ServerServiceLocator;
 import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
 import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
 import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
 import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
 import com.soffid.iam.sync.intf.ExtensibleObject;
 import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
+import com.soffid.iam.sync.service.SecretStoreService;
 import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -291,5 +300,33 @@ public class DataConnector extends BaseDataConnector {
 
 	public void validate() throws AttributeResolutionException {
     }
+
+	public String generateSecrets(User user) throws IOException, InternalErrorException 
+	{
+        StringBuffer result = new StringBuffer("OK");
+        SecretStoreService sss = new RemoteServiceLocator().getSecretStoreService();
+        for (Secret secret : sss.getAllSecrets(user)) {
+        	if (secret.getName() != null && secret.getName().length() > 0 &&
+        			secret.getValue() != null &&
+        			secret.getValue().getPassword() != null &&
+        			secret.getValue().getPassword().length() > 0 )
+        	{
+                result.append('|');
+               	result.append( encodeSecret(secret.getName()));
+                result.append('|');
+                result.append( encodeSecret(secret.getValue().getPassword()));
+        	}
+        }
+        result.append ("|sessionKey|");
+       	result.append ("|fullName|").append(encodeSecret(user.getFullName()));
+        return result.toString();
+    }
+
+
+
+	private String encodeSecret(String secret)
+			throws UnsupportedEncodingException {
+		return URLEncoder.encode(secret,"UTF-8").replaceAll("\\|", "%7c"); 
+	}
 
 }

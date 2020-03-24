@@ -36,7 +36,7 @@
 
     <resolver:AttributeDefinition xsi:type="PrincipalName" id="uid" sourceAttributeID="uid" xmlns="urn:mace:shibboleth:2.0:resolver:ad">
         <resolver:Dependency ref="seu" />
-        <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
+        <resolver:AttributeEncoder xsi:type="SAML1StringNameIdentifier" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             nameFormat="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified" />
         <resolver:AttributeEncoder xsi:type="SAML2StringNameID" xmlns="urn:mace:shibboleth:2.0:attribute:encoder"
             nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent" />
@@ -61,10 +61,16 @@
         <resolver:AttributeEncoder xsi:type="enc:SAML2StringNameID" nameFormat="urn:oasis:names:tc:SAML:2.0:nameid-format:transient" />
     </resolver:AttributeDefinition>
 
-    <resolver:AttributeDefinition xsi:type="ad:Simple" id="Secrets" sourceAttributeID="mazingerSecrets">
+    <resolver:AttributeDefinition xsi:type="ad:Simple" id="SessionKey" sourceAttributeID="mazingerSecrets">
         <resolver:Dependency ref="mazinger" />
         <resolver:AttributeEncoder xsi:type="enc:SAML1String" name="urn:mace:dir:attribute-def:mazingerSecrets" />
         <resolver:AttributeEncoder xsi:type="enc:SAML2String" name="urn:oid:1.3.6.1.4.1.22896.3.1.2" friendlyName="mazingerSecrets" />
+    </resolver:AttributeDefinition>
+
+    <resolver:AttributeDefinition xsi:type="ad:Simple" id="Secrets" sourceAttributeID="mazingerSecrets2">
+        <resolver:Dependency ref="mazinger" />
+        <resolver:AttributeEncoder xsi:type="enc:SAML1String" name="urn:mace:dir:attribute-def:secrets" />
+        <resolver:AttributeEncoder xsi:type="enc:SAML2String" name="urn:oid:1.3.6.1.4.1.22896.3.1.6" friendlyName="secrets" />
     </resolver:AttributeDefinition>
 
     <!-- ========================================== -->

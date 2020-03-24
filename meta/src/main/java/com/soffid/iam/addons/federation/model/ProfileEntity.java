@@ -28,7 +28,6 @@ public abstract class ProfileEntity {
 	public com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity virtualIdentityProvider;
 	
 	@Column (name="PRO_TEN_ID")
-	@Nullable
 	public TenantEntity tenant;
 
 	@DaoFinder("select en "

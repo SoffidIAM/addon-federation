@@ -18,6 +18,7 @@ import com.soffid.mda.annotation.*;
 	com.soffid.iam.addons.federation.model.PolicyEntity.class,
 	com.soffid.iam.addons.federation.model.SamlProfileEntity.class,
 	com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity.class,
+	AuthenticationMethodEntity.class,
 	KerberosKeytabEntity.class})
 public abstract class FederationMemberEntity {
 
@@ -81,7 +82,6 @@ public abstract class FederationMemberEntity {
 	public byte[] metadades;
 
 	@Column (name="FED_TEN_ID")
-	@Nullable
 	public TenantEntity tenant;
 
 	@Column (name="FED_ASSPAT")

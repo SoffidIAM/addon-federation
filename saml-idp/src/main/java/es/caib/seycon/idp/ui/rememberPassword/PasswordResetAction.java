@@ -22,6 +22,7 @@ import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
+import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
 
 public class PasswordResetAction extends HttpServlet {
@@ -84,13 +85,21 @@ public class PasswordResetAction extends HttpServlet {
             }
         }
         if (error != null) {
+    		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+    		if (ctx != null)
+    		{
+    			try {
+					ctx.authenticationFailure();
+				} catch (InternalErrorException e) {
+				}
+    		}
             req.setAttribute("ERROR", error); //$NON-NLS-1$
             RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordResetForm.URI);
             dispatcher.forward(req, resp);
         } else {
         	try {
         		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-        		ctx.authenticated(user, "P");
+        		ctx.authenticated(user, "P", resp);
         		ctx.store(req);
         		if ( ctx.isFinished())
         		{

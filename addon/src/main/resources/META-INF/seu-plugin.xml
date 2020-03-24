@@ -8,6 +8,11 @@
 	<core name="Scribe api classes" resource="scribejava-apis-5.2.0-java7again.jar"/>
 	<core name="Scribe core classes" resource="scribejava-core-5.2.0-java7again.jar"/>
 	<core name="Jetty JSON classes" resource="jetty-util-6.1.22.jar"/>
+	<core name="Maxmind GEO IP2 library" resource="geoip2-2.12.0.jar"/>
+	<core name="Maxmind database library" resource="maxmind-db-1.2.2.jar"/>
+	<core name="Jackson databind library" resource="jackson-databind-2.9.5.jar"/>
+	<core name="Jackson core library" resource="jackson-core-2.9.5.jar"/>
+	<core name="Jackson annotations library" resource="jackson-annotations-2.9.5.jar"/>
 	
 	<core name="Federation common classes" resource="federation-common-${pom.version}.jar"/>
 	<webService name="Federation REST Web Service API" resource="federation-webservice-${project.version}.jar"/>

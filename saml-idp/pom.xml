@@ -183,6 +183,7 @@
 									<include>com.fasterxml.jackson.core:jackson-core</include>
 									<include>com.fasterxml.jackson.core:jackson-databind</include>
 									<include>com.fasterxml.jackson.core:jackson-annotations</include>
+									<include>com.fasterxml.jackson.dataformat:jackson-dataformat-cbor</include>
 								</includes>								
 							</artifactSet>
 							<filters>
@@ -372,6 +373,18 @@
 	      <artifactId>jackson-core</artifactId>
 	      <version>2.9.2</version>
 	    </dependency>
+	    <dependency>
+	    	<groupId>com.fasterxml.jackson.dataformat</groupId>
+	    	<artifactId>jackson-dataformat-cbor</artifactId>
+	    	<version>2.9.2</version>
+	    </dependency>
+	    <!-- 
+		<dependency>
+		  <groupId>com.augustcellars.cose</groupId>
+		  <artifactId>cose-java</artifactId>
+		  <version>0.9.7</version>
+		</dependency>
+	     -->
 	</dependencies>
 	<reporting>
 		<plugins>

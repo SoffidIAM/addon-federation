@@ -106,6 +106,7 @@ public class TokenEndpoint extends HttpServlet {
 
 			if (request.getFederationMember().getOpenidMechanism().contains("PA")) {
 				// Accept request
+				log.info("Accepted mechanism PA for "+request.getFederationMember().getPublicId());
 			} 
 			else if (request.getFederationMember().getOpenidMechanism().contains("PC"))
 			{
@@ -120,12 +121,13 @@ public class TokenEndpoint extends HttpServlet {
 						pass.getPassword();
 				
 				expectedAuth = Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
-				if (!authentication.toLowerCase().startsWith("basic ") &&
+				if (!authentication.toLowerCase().startsWith("basic ") ||
 						! expectedAuth.equals(authentication.substring(6)))
 				{
 					buildError (resp, "invalid_client", "Wrong client credentials");
 					return;
 				}
+				log.info("Accepted mechanism PC for "+request.getFederationMember().getPublicId()+" / "+authentication);
 			} else {
 				buildError (resp, "unsupported_grant_type", "Not authorized to use password grant type");
 				return;				
@@ -134,15 +136,31 @@ public class TokenEndpoint extends HttpServlet {
 			TokenInfo t = h.generateAuthenticationRequest(request , username);
 			String redirectUri = req.getParameter("redirect_uri");
 			if (username == null || username.trim().isEmpty()) {
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+	    		if (ctx != null)
+	    		{
+	    			try {
+						ctx.authenticationFailure();
+					} catch (InternalErrorException e) {
+					}
+	    		}
 				buildError (resp, "invalid_client", "Wrong user credentials. Missing username parameter");
 				return;
 			} else if ( password == null || password.trim().isEmpty() ) {
+        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+	    		if (ctx != null)
+	    		{
+	    			try {
+						ctx.authenticationFailure();
+					} catch (InternalErrorException e) {
+					}
+	    		}
 				buildError (resp, "invalid_client", "Wrong user credentials. Missing password parameter");
 				return;
 			} else {
 				AuthenticationContext authCtx = new AuthenticationContext();
 				authCtx.setPublicId(request.getFederationMember().getPublicId());
-				authCtx.initialize();
+				authCtx.initialize(req);
 				if (authCtx.getAllowedAuthenticationMethods().contains("P"))
 				{
 		            PasswordManager v = new PasswordManager();
@@ -151,12 +169,12 @@ public class TokenEndpoint extends HttpServlet {
 		            if (v.validate(username, new Password(password))) {
 		            	if (!v.mustChangePassword()) {
 		                    logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.7"), req.getRemoteAddr()); //$NON-NLS-1$
-			            	authCtx.authenticated(username, "P");
-			            	
+			            	authCtx.authenticated(username, "P", resp);
 			            	t.setUser(username);
 			            	t.setAuthenticationMethod("P");
 			            	
 		            	} else {
+		            		authCtx.authenticationFailure();
 		                    logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
 		                    buildError(resp, "invalid_grant", "Password is expired");
 		                    return;

@@ -4,6 +4,8 @@
 <head>
 	
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=9" >
 	<title>Soffid SAML Identity Provider</title>
 	
 	<!-- css -->
@@ -18,28 +20,35 @@
 		var xmlhttp = new XMLHttpRequest();
 		var url = "/sp-profile/user-idp?user="+encodeURIComponent(user);
 
-		xmlhttp.onreadystatechange = function() {
-		    if (this.readyState == 4 && this.status == 200) {
-		        var myArr = JSON.parse(this.responseText); 
-		        if (myArr.idp)
-		        {
-		        	location.href = "/sp-profile/SAML2/Forward?user=" +
-			        	encodeURIComponent(user) + "&idp="+
-			        	encodeURIComponent(myArr.idp);
-		        }
-		    }
-		};
-		xmlhttp.open("GET", url, true);
-		xmlhttp.send();
+		if (JSON) {
+			xmlhttp.onreadystatechange = function() {
+			    if (this.readyState == 4 && this.status == 200) {
+			        var myArr = JSON.parse(this.responseText); 
+			        if (myArr.idp)
+			        {
+			        	var url = "/sp-profile/SAML2/Forward";
+			        	if (myArr.url) url = myArr.url;
+			        	location.href = url+"?user=" +
+				        	encodeURIComponent(user) + 
+				        	"&idp="+ encodeURIComponent(myArr.idp);
+			        }
+			    }
+			};
+			xmlhttp.open("GET", url, true);
+			xmlhttp.send();
+		}
 	}
-
+  
+	var fingerprintChallenge = "${fingerprintChallenge}";
+	var fingerprintToRemove = '${fingerprintToRemove}';
 	</script>
 
 	<script src="/js/jquery-1.3.2.min.js"></script>
+	<script src="/js/fingerprint.js"></script>
 
 </head>
 
-<body>
+<body onLoad="activateFingerprint()">
 
 	<div id="language">
 		<ul class="qtrans_language_chooser" id="qtranslate-chooser">
@@ -48,7 +57,6 @@
 			<li class="lang-ca ${lang.active.ca}"><a href="${refreshUrl}?lang=ca" hreflang="ca" title="Català"><span>Català</span></a></li>
 		</ul>
 	</div>
-   		
 	<div class="login">
 		<p class="loginheader"><img src="/img/logo.png" alt="Soffid logo" /> </p> 
 		<div class="loginbox"> 
@@ -57,11 +65,19 @@
 			<div class="logintype"  id ="passlogin">
 				<form method="post" action="${passwordLoginUrl}">
 					<div class="upinput">
-						${Username}: 
-						<input name="j_username" id="j_username" ${userReadonly}="readonly"
-								type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
-						${Password}:
-						<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+						<span class="labeltextbox">
+							<span class="label">
+								${Username}: 
+							</span>
+							<input name="j_username" id="j_username" ${userReadonly}="readonly"
+									type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
+						</span>
+						<span class="labeltextbox">
+							<span class="label">
+								${Password}:
+							</span>
+							<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+						</span>
 					</div>
 					<div class="upbutton">
 						<input id="loginpassbutton" name="formUCboton" type="submit" value="${Login}" />
@@ -74,11 +90,19 @@
 			<div class="logintype"  id ="otplogin">
 				<form method="post" action="${otpLoginUrl}">
 					<div class="otpinput">
-						${Username}: 
-						<input name="j_username" id="j_username" ${userReadonly}="readonly"
-								type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
-						${OTPPin} ${otpToken}:
-						<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+						<span class="labeltextbox">
+							<span class="label">
+								${Username}:
+							</span> 
+							<input name="j_username" id="j_usernameotp" ${userReadonly}="readonly"
+									type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
+						</span>
+						<span class="labeltextbox">
+							<span class="label">
+								${OTPPin} ${otpToken}:
+							</span>
+							<input name="j_password" id="j_passwordotp" type="password" autocomplete="off" style="width: 8em")/>
+						</span>
 					</div>
 					<div class="upbutton">
 						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
@@ -88,8 +112,37 @@
 			<p/>
 			{endif}
 			{if kerberosAllowed} 
-			<div class="logintype"  id ="otplogin">
+			<div class="logintype"  id ="kerberoslogin">
     			<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img>${Kerberos}</a>
+			</div>
+			<p/>
+			{endif}
+			{if fingerprintAllowed} 
+			<div class="logintype"  id ="fingerprintlogin" style="display: none">
+				<form method="post" action="${fingerprintLoginUrl}" id="form-fingerprint">
+					<input name="clientJSON"  id="fp-clientJSON" type="hidden" />
+					<input name="authenticatorData"  id="fp-authenticatorData" type="hidden" />
+					<input name="signature"  id="fp-signature" type="hidden" />
+					<input name="rawId"  id="fp-rawId" type="hidden" />
+					<input name="serial"  id="fp-serial" type="hidden" />
+					<div class="otpinput">
+					</div>
+					<div class="upbutton">
+						<input id="loginfingerprintbutton" name="formUCboton" type="button" value="${FingerprintLogin}" 
+              onClick="fingerprintSign()"/>
+					</div>
+				</form>
+			</div>
+			<div class="logintype"  id ="fingerprintregister" style="display: none">
+				<div class="upbutton">
+					<input type="button" value="${FingerprintRegister}" 
+             					onClick="fingerprintCreate()"/>
+				</div>
+			</div>
+			<div class="logintype"  id ="fingerprintinprogress" style="display: none">
+				<div class="upbutton">
+					${fingerprintinprogress.message}
+				</div>
 			</div>
 			<p/>
 			{endif}
@@ -167,6 +220,8 @@
 	  $("#logincertbutton").fadeOut("slow");
 	  $("#openidlogin").fadeOut("slow");
 	  $("#otplogin").fadeOut("slow");
+	  $("#kerberoslogin").fadeOut("slow");
+	  $("#fingerprintlogin").fadeOut("slow");
 	  $("#canceldiv").fadeOut("slow");
   });
   $("#loginpassbutton").click(function () {
@@ -178,6 +233,7 @@
 	  $("#loginpassbutton").fadeOut("slow");
 	  $("#openidlogin").fadeOut("slow");
 	  $("#otplogin").fadeOut("slow");
+	  $("#fingerprintlogin").fadeOut("slow");
 	  $("#canceldiv").fadeOut("slow");
   });
   $("#loginotpbutton").click(function () {
@@ -186,9 +242,24 @@
 	  $("#recoverlogin").fadeOut("slow");
 	  $("#certlogin").fadeOut("slow");
 	  $("#errormsg").fadeOut("slow");
-	  $("#loginpassbutton").fadeOut("slow");
+	  $("#loginotpbutton").fadeOut("slow");
+	  $("#openidlogin").fadeOut("slow");
+	  $("#kerberoslogin").fadeOut("slow");
+	  $("#passlogin").fadeOut("slow");
+	  $("#fingerprintlogin").fadeOut("slow");
+	  $("#canceldiv").fadeOut("slow");
+  });
+  $("#loginfingerprintbutton").click(function () {
+	  $("#progressdiv").css("visibility", "visible");
+	  $("#registerlogin").fadeOut("slow");
+	  $("#recoverlogin").fadeOut("slow");
+	  $("#certlogin").fadeOut("slow");
+	  $("#errormsg").fadeOut("slow");
+	  $("#kerberoslogin").fadeOut("slow");
+	  $("#loginfingerprintbutton").fadeOut("slow");
 	  $("#openidlogin").fadeOut("slow");
 	  $("#otplogin").fadeOut("slow");
+	  $("#passlogin").fadeOut("slow");
 	  $("#canceldiv").fadeOut("slow");
   });
   $("a,openidlink").click(function () {
@@ -199,6 +270,7 @@
 	  $("#passlogin").fadeOut("slow");
 	  $("#errormsg").fadeOut("slow");
 	  $("#otplogin").fadeOut("slow");
+	  $("#fingerprintlogin").fadeOut("slow");
 	  $("#canceldiv").fadeOut("slow");
   });
   

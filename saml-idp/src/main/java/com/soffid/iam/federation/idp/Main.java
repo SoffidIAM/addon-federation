@@ -78,6 +78,7 @@ import es.caib.seycon.idp.ui.CancelAction;
 import es.caib.seycon.idp.ui.CertificateAction;
 import es.caib.seycon.idp.ui.DefaultServlet;
 import es.caib.seycon.idp.ui.ErrorServlet;
+import es.caib.seycon.idp.ui.LogFilter;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.NtlmAction;
@@ -94,6 +95,8 @@ import es.caib.seycon.idp.ui.PasswordRecoveryForm;
 import es.caib.seycon.idp.ui.broker.QueryUserIdPServlet;
 import es.caib.seycon.idp.ui.broker.SAMLSSOPostServlet;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
+import es.caib.seycon.idp.ui.cred.RegisterCredential;
+import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
@@ -172,7 +175,7 @@ public class Main {
     
             server = new Server();
             server.setThreadPool(pool);
-    
+            
             String host = c.getHostName();
             Integer port = c.getStandardPort();
             Integer port2 = c.getClientCertPort();
@@ -257,6 +260,11 @@ public class Main {
         factory.setKeyStoreType(SeyconKeyStore.getKeyStoreType());
         factory.setCertAlias("idp"); //$NON-NLS-1$
         factory.setWantClientAuth(wantClientAuth);
+        factory.setExcludeCipherSuites(new String[] {
+        		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",
+        		
+        });
+//        factory.setIncludeCipherSuites(cipherSuites);
         SslSocketConnector connector = new SslSocketConnector(factory);
 
         connector.setPort(port == null ? 443 : port.intValue());
@@ -264,7 +272,7 @@ public class Main {
         connector.setAcceptors(2);
         connector.setAcceptQueueSize(10);
         connector.setMaxIdleTime(60000);
-
+        
         connector.setHostHeader(host);
 
         server.addConnector(connector);
@@ -320,10 +328,13 @@ public class Main {
 
         EventListener el = new ContextLoaderListener();
         ctx.addEventListener(el);
+        
         // Filters
+        FilterHolder log = new FilterHolder(LogFilter.class);
+        log.setName("logFilter");
+        ctx.addFilter(log, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
-        FilterHolder f = new FilterHolder(
-                P3PFilter.class);
+        FilterHolder f = new FilterHolder(P3PFilter.class);
         f.setName("P3PFilter"); //$NON-NLS-1$
 //        ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
@@ -425,6 +436,8 @@ public class Main {
 	        ctx.addServlet(servlet, "/.well-known/jwks.json"); //$NON-NLS-1$
         }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
+        ctx.addServlet(RegisterCredential.class, RegisterCredential.URI);
+        ctx.addServlet(ValidateCredential.class, ValidateCredential.URI);
         ctx.addServlet(CancelAction.class, CancelAction.URI);
         ctx.addServlet(UserPasswordFormServlet.class,
                 UserPasswordFormServlet.URI);
@@ -584,14 +597,16 @@ public class Main {
         constraintMapping.setConstraint(constraint);
         constraintMapping.setPathSpec(NtlmAction.URI);
 
+        ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
         LoginService loginService;
         if (f.canRead() && c.getFederationMember().getKeytabs().isEmpty())
+        {
         	loginService = new SpnegoLoginService("SpnegoLogin", new File(c.getConfDir(), "spnego.properties").toString());
+        }
         else
+        {
         	loginService = new CustomSpnegoLoginService("CustomSpnegoLogin");
-//        CustomSpnegoLoginService customLoginService = new CustomSpnegoLoginService(loginService, "CustomSpnegoLoginService");
-        
-        ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
+        }
         csh.setAuthenticator(new SpnegoAuthenticator());
         csh.setRealmName("Soffid");
         csh.setConstraintMappings(new ConstraintMapping[] {constraintMapping});

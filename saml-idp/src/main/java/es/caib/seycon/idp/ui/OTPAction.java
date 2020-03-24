@@ -65,7 +65,7 @@ public class OTPAction extends HttpServlet {
             	}
             	else if (v.validatePin(ch, p)) {
             		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-            		ctx.authenticated(u, "O"); //$NON-NLS-1$
+            		ctx.authenticated(u, "O", resp); //$NON-NLS-1$
             		ctx.store(req);
             		if ( ctx.isFinished())
             		{
@@ -73,6 +73,9 @@ public class OTPAction extends HttpServlet {
             			return;
             		}
                 } else {
+            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+            		if (ctx != null)
+            			ctx.authenticationFailure();
                 	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }

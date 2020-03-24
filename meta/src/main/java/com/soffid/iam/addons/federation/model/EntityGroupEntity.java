@@ -25,7 +25,6 @@ public abstract class EntityGroupEntity {
 	public java.lang.String metadataUrl;
 
 	@Column (name="ENG_TEN_ID")
-	@Nullable
 	public TenantEntity tenant;
 
 	@ForeignKey (foreignColumn="FED_ENT_ID")

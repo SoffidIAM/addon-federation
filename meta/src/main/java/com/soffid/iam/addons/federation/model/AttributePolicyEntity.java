@@ -15,7 +15,6 @@ import com.soffid.mda.annotation.*;
 public abstract class AttributePolicyEntity {
 
 	@Column (name="ATP_POL_ID")
-	@Nullable
 	public com.soffid.iam.addons.federation.model.PolicyEntity policy;
 
 	@Column (name="ATP_ID")
@@ -23,7 +22,6 @@ public abstract class AttributePolicyEntity {
 	public java.lang.Long id;
 
 	@Column (name="ATP_ATT_ID")
-	@Nullable
 	public com.soffid.iam.addons.federation.model.AttributeEntity attribute;
 
 	@Column (name="ATP_CON_ID")

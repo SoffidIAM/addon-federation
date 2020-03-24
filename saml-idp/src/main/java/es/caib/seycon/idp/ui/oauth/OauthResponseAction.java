@@ -89,7 +89,7 @@ public class OauthResponseAction extends HttpServlet {
     		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
     		Autenticator auth = new Autenticator();
     		String account = auth.getUserAccount(u.getUserName());
-    		ctx.authenticated(account, "E");
+    		ctx.authenticated(account, "E", resp);
     		ctx.store(req);
     		if ( ctx.isFinished())
     		{

@@ -3,6 +3,9 @@ package es.caib.seycon.idp.client;
 import java.io.IOException;
 import java.net.URL;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
@@ -14,6 +17,7 @@ public class ServerLocator {
     long lastLoookup = 0;
     private String[] serverHosts;
     
+    Log log = LogFactory.getLog(getClass());
     private ServerLocator () {
         
     }
@@ -30,17 +34,30 @@ public class ServerLocator {
         if (now < lastLoookup + 300000) // Cache 5 minutos
             return;
 
-        serverHosts = Config.getConfig().getSeyconServerHostList();
+//        log.info ("Updating server list");
+        String list = Config.getConfig().getRawSeyconServerList();
+        if (list != null) {
+        	String[] split = list.split("[, ]+"); //$NON-NLS-1$
+        	serverHosts = new String[split.length];
+        	for (int i = 0; i < split.length; i++) {
+        		serverHosts[i] = split[i];
+        	}
+        }
+
 
         if (serverHosts == null || serverHosts.length == 0) {
             throw new es.caib.seycon.ng.exception.InternalErrorException("Missing seycon.server.list property at seycon.properties file"); //$NON-NLS-1$
         }
         lastLoookup = now;
-
     }
 
     public synchronized String getServer() throws InternalErrorException, IOException {
+    	IOException lastException = null;
         updateServerList();
+        
+        for (int i = 0; i < serverHosts.length; i++)
+        	log.info(" "+i+"="+serverHosts[i]);
+
         if (roundRobin >= serverHosts.length)
             roundRobin = 0;
         int first = roundRobin;
@@ -54,10 +71,15 @@ public class ServerLocator {
             	rsl.getServerService();
             	return server;
             } catch (IOException e) {
+            	lastException = e;
+            	log.info("Received error ",e);
             }
         } while (roundRobin != first && first < serverHosts.length);
         lastLoookup = 0;
-        throw new IOException("No server available"); //$NON-NLS-1$
+        if (lastException == null)
+            throw new IOException("No server available"); //$NON-NLS-1$
+        else
+        	throw new IOException("No server available", lastException); //$NON-NLS-1$
     }
     
     public com.soffid.iam.remote.RemoteServiceLocator getRemoteServiceLocator() throws InternalErrorException, IOException {

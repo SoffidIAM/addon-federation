@@ -42,6 +42,10 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 
 		SoffidApplication.getJetty(). 
 			publish(getFederacioService(), FederacioService.REMOTE_PATH, "agent");
+		SoffidApplication.getJetty(). 
+			publish(getUserBehaviorService(), UserBehaviorService.REMOTE_PATH, "agent");
+		SoffidApplication.getJetty(). 
+			publish(getUserCredentialService(), UserCredentialService.REMOTE_PATH, "agent");
 	}
 
  	private void testAttribute (String name, String shortName, String oid, String openId) throws InternalErrorException
@@ -98,7 +102,8 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4", "user_type");
 		testAttribute("Role & group membership", "memberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
-		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
+		testAttribute("Session key", "SessionKey", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
+		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.6", null);
 		
     	for (DataType md: ServiceLocator.instance().getAdditionalDataService().findDataTypes(MetadataScope.USER))
     	{
@@ -223,7 +228,8 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("User type", "UserType", "urn:oid:1.3.6.1.4.1.22896.3.1.4", "user_type");
 		testAttribute("Role & group membership", "memberOf", "urn:oid:1.3.6.1.4.1.5923.1.5.1.1", "meber_of");
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
-		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
+		testAttribute("Session key", "SessionKey", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
+		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.6", null);
 	}
 
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
