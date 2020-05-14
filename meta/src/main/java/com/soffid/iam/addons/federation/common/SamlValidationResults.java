@@ -1,8 +1,6 @@
 package com.soffid.iam.addons.federation.common;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.soffid.mda.annotation.Attribute;
 import com.soffid.mda.annotation.Nullable;
@@ -13,7 +11,9 @@ import es.caib.seycon.ng.comu.Usuari;
 @ValueObject
 public class SamlValidationResults {
 	boolean valid;
-	
+
+	boolean expired;
+
 	String identityProvider;
 	
 	String principalName;
