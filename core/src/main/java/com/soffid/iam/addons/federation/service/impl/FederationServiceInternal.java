@@ -507,8 +507,7 @@ public class FederationServiceInternal {
 				Account ac = accountService.findAccount(user, identityProvider);
 				Calendar passExp = ac.getPasswordExpiration();
 				if (passExp==null) {
-					passExp = Calendar.getInstance();
-					passExp.setTime(ac.getCreated());
+					passExp = passwordService.getPasswordExpiredDate(user, identityProvider);
 				}
 				Calendar today = Calendar.getInstance();
 				long MILISEGUNDOS_POR_DIA = 24*60*60*1000;

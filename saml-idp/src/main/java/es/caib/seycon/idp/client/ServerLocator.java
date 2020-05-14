@@ -55,9 +55,6 @@ public class ServerLocator {
     	IOException lastException = null;
         updateServerList();
         
-        for (int i = 0; i < serverHosts.length; i++)
-        	log.info(" "+i+"="+serverHosts[i]);
-
         if (roundRobin >= serverHosts.length)
             roundRobin = 0;
         int first = roundRobin;
