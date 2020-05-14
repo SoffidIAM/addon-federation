@@ -116,6 +116,6 @@ public class QueryUserIdPServlet extends BaseForm {
     
     private FederationMember searchIdentityProvider(String idp) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
     	FederacioService federationService = IdpConfig.getConfig().getFederationService();
-    	return federationService.findFederationMemberByPublicID(idp);
+    	return federationService.findFederationMemberByPublicId(idp);
 	}
 }
