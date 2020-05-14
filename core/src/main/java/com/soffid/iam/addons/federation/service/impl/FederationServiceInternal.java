@@ -505,16 +505,28 @@ public class FederationServiceInternal {
 			} else {
 				r.setExpired(true);
 				Account ac = accountService.findAccount(user, identityProvider);
+				com.soffid.iam.api.System agent = dispatcherService.findDispatcherByName(ac.getSystem());
+				String pdName = agent.getPasswordsDomain();
+				LinkedList<PasswordPolicy> app = (LinkedList<PasswordPolicy>) userDomainService.findAllPasswordPolicyDomain(pdName);
+
 				Calendar passExp = ac.getPasswordExpiration();
 				if (passExp==null) {
-					passExp = passwordService.getPasswordExpiredDate(user, identityProvider);
+					passExp = Calendar.getInstance();
+					if (ac.getType() == AccountType.USER) {
+						for (User identity: ac.getOwnerUsers()) {
+							for (Account ac2: accountService.findUserAccountsByDomain(identity.getUserName(), agent.getPasswordsDomain())) { 
+								if (ac2.getPasswordExpiration() != null) {
+									passExp = ac2.getPasswordExpiration();
+									break;
+								}
+							}
+							
+						}
+					}
 				}
 				Calendar today = Calendar.getInstance();
 				long MILISEGUNDOS_POR_DIA = 24*60*60*1000;
 				long daysExpired = (today.getTimeInMillis()-passExp.getTimeInMillis())/MILISEGUNDOS_POR_DIA;
-				com.soffid.iam.api.System agent = dispatcherService.findDispatcherByName(ac.getSystem());
-				String pdName = agent.getPasswordsDomain();
-				LinkedList<PasswordPolicy> app = (LinkedList<PasswordPolicy>) userDomainService.findAllPasswordPolicyDomain(pdName);
 				for (PasswordPolicy pp : app) {
 					if (pp.getUserType().equals(ac.getPasswordPolicy())) {
 						Long daysGrace = pp.getMaximumPeriodExpired();
