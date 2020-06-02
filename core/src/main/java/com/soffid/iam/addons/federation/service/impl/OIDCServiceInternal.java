@@ -106,14 +106,22 @@ public class OIDCServiceInternal extends AbstractFederationService {
 	public SamlRequest generateOidcRequest(String serviceProvider, String identityProvider, String userName,
 			long sessionSeconds) throws InternalErrorException {
 		try {
-			ServiceProviderEntity spe = findServiceProvider(serviceProvider);
-			if (spe == null)
-				throw new InternalErrorException("Unknown service provider "+serviceProvider);
+			FederationMember sp;
+			
+			IdentityProviderEntity spe = findIdentityProvider(serviceProvider);
+			if (spe != null)
+				sp = federationMemberEntityDao.toFederationMember(spe);
+			else {
+				ServiceProviderEntity spe2 = findServiceProvider(identityProvider);
+				if (spe2 != null)
+					sp = federationMemberEntityDao.toFederationMember(spe2);
+				else
+					throw new InternalErrorException("Unknown service provider "+serviceProvider);
+			}
 			IdentityProviderEntity idpe = findIdentityProvider(identityProvider);
 			if (idpe == null)
 				throw new InternalErrorException("Unknown identity provider "+identityProvider);
 	
-			FederationMember sp = federationMemberEntityDao.toFederationMember(spe);
 			FederationMember idp = federationMemberEntityDao.toFederationMember(idpe);
 			
 			OAuth2Consumer c ;
