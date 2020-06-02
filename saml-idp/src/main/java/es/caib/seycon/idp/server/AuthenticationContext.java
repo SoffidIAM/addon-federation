@@ -83,7 +83,7 @@ public class AuthenticationContext {
     	remoteIp = request.getRemoteAddr();
     	hostId = null;
     	String cookieName = getHostIdCookieName();
-    	if (cookieName != null)
+    	if (cookieName != null && request != null && request.getCookies() != null)
     	{
 			for (Cookie cookie: request.getCookies())
     			if (cookie.getName().equals(cookieName))
