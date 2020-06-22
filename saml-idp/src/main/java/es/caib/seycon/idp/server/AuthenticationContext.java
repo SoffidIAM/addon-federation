@@ -336,10 +336,10 @@ public class AuthenticationContext {
 		}
 	}
 
-	public void authenticationFailure () throws IOException, InternalErrorException
+	public void authenticationFailure (String u) throws IOException, InternalErrorException
 	{
 		feedRatio(true);
-		if (currentUser != null)
+		if (u != null)
 		{
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			long f = ubh.getUserFailures(currentUser.getId());

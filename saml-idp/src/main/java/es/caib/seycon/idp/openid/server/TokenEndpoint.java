@@ -140,7 +140,7 @@ public class TokenEndpoint extends HttpServlet {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure();
+						ctx.authenticationFailure(username);
 					} catch (InternalErrorException e) {
 					}
 	    		}
@@ -151,7 +151,7 @@ public class TokenEndpoint extends HttpServlet {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure();
+						ctx.authenticationFailure(username);
 					} catch (InternalErrorException e) {
 					}
 	    		}
@@ -174,7 +174,7 @@ public class TokenEndpoint extends HttpServlet {
 			            	t.setAuthenticationMethod("P");
 			            	
 		            	} else {
-		            		authCtx.authenticationFailure();
+		            		authCtx.authenticationFailure(username);
 		                    logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
 		                    buildError(resp, "invalid_grant", "Password is expired");
 		                    return;

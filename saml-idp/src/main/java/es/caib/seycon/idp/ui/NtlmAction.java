@@ -95,7 +95,7 @@ public class NtlmAction extends HttpServlet {
 	        }
     		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
     		if (ctx != null)
-    			ctx.authenticationFailure();
+    			ctx.authenticationFailure(ctx.getUser());
             error = String.format(Messages.getString("PasswordChangeRequiredAction.unknown.user"), principal); //$NON-NLS-1$
     	} catch (Exception e) {
             error = Messages.getString("UserPasswordAction.internal.error")+e.toString(); //$NON-NLS-1$

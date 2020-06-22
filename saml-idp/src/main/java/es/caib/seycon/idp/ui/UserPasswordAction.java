@@ -80,7 +80,7 @@ public class UserPasswordAction extends HttpServlet {
     	    		if (ctx != null)
     	    		{
     	    			try {
-    						ctx.authenticationFailure();
+    						ctx.authenticationFailure(u);
     					} catch (InternalErrorException e) {
     					}
     	    		}

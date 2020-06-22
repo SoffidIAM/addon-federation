@@ -67,7 +67,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure();
+						ctx.authenticationFailure(ctx.getUser());
 					} catch (InternalErrorException e) {
 					}
 	    		}
@@ -79,7 +79,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure();
+						ctx.authenticationFailure(ctx.getUser());
 					} catch (InternalErrorException e) {
 					}
 	    		}
@@ -93,7 +93,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure();
+						ctx.authenticationFailure(ctx.getUser());
 					} catch (InternalErrorException e) {
 					}
 	    		}

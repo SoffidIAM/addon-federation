@@ -46,7 +46,7 @@ public class CertificateAction extends HttpServlet {
 	        		req.setAttribute("ERROR", Messages.getString("CertificateAction.1")); //$NON-NLS-1$ //$NON-NLS-2$
             		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
             		if (ctx != null)
-            			ctx.authenticationFailure();
+            			ctx.authenticationFailure( ctx.getUser() );
 	            } else {
 	            	try {
 	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);

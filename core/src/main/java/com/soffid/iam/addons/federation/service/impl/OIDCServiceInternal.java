@@ -107,17 +107,17 @@ public class OIDCServiceInternal extends AbstractFederationService {
 			long sessionSeconds) throws InternalErrorException {
 		try {
 			FederationMember sp;
-			
-			IdentityProviderEntity spe = findIdentityProvider(serviceProvider);
-			if (spe != null)
-				sp = federationMemberEntityDao.toFederationMember(spe);
+			ServiceProviderEntity spe2 = findServiceProvider(serviceProvider);
+			if (spe2 != null)
+				sp = federationMemberEntityDao.toFederationMember(spe2);
 			else {
-				ServiceProviderEntity spe2 = findServiceProvider(identityProvider);
-				if (spe2 != null)
-					sp = federationMemberEntityDao.toFederationMember(spe2);
+				IdentityProviderEntity spe = findIdentityProvider(serviceProvider);
+				if (spe != null)
+					sp = federationMemberEntityDao.toFederationMember(spe);
 				else
 					throw new InternalErrorException("Unknown service provider "+serviceProvider);
 			}
+
 			IdentityProviderEntity idpe = findIdentityProvider(identityProvider);
 			if (idpe == null)
 				throw new InternalErrorException("Unknown identity provider "+identityProvider);

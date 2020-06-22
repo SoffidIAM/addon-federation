@@ -89,7 +89,7 @@ public class PasswordResetAction extends HttpServlet {
     		if (ctx != null)
     		{
     			try {
-					ctx.authenticationFailure();
+					ctx.authenticationFailure(ctx.getUser());
 				} catch (InternalErrorException e) {
 				}
     		}

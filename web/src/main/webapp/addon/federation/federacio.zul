@@ -446,7 +446,6 @@
 		</tabs>
 		<tabpanels>
 			<tabpanel id="tp_federationMembers">
-	
 	<esquema ample="100%" datamodel="/model" focusCriteri="queryName" id="esquema" onHideFormulari="showLista()" senseCriteris="true">
 
 		<criteris height="${queryWindowMin}" id="queryWindow" onOK="search()" width="${amplaria}">
