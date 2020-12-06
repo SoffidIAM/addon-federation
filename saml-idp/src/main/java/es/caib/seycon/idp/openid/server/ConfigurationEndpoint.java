@@ -3,7 +3,6 @@ package es.caib.seycon.idp.openid.server;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.InvalidKeyException;
-import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -13,7 +12,6 @@ import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -32,14 +30,9 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.FederacioService;
-import com.soffid.iam.api.Password;
-import com.trilead.ssh2.signature.RSAPublicKey;
 
-import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
-import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.util.Base64;
 
 public class ConfigurationEndpoint extends HttpServlet {
 
@@ -72,6 +65,8 @@ public class ConfigurationEndpoint extends HttpServlet {
 			att.put("authorization_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getAuthorizationEndpoint());
 			att.put("token_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());
 			att.put("userinfo_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getUserInfoEndpoint());
+			if (openIdProfile.getRevokeEndpoint() != null)
+				att.put("revoke_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getRevokeEndpoint());
 			att.put("jwks_uri", "https://"+c.getHostName()+":"+c.getStandardPort()+"/.well-known/jwks.json");
 			JSONArray scopes = new JSONArray();
 			scopes.put("openid");
@@ -81,6 +76,20 @@ public class ConfigurationEndpoint extends HttpServlet {
 			rt.put("token");
 			rt.put("id_token");
 			att.put("response_types_supported", rt);
+
+			JSONArray at = new JSONArray();
+			at.put("client_secret_basic");
+			at.put("client_secret_post");
+			att.put("token_endpoint_auth_methods_supported", at);
+			
+			JSONArray st = new JSONArray();
+			st.put("public");
+			st.put("pairwise");
+			att.put("subject_types_supported", st);
+			
+			JSONArray sa = new JSONArray();
+			sa.put("RS256");
+			att.put("id_token_signing_alg_values_supported", sa);
 			JSONObject o = new JSONObject( att );
 			buildResponse(resp, o);
 		} catch (InternalErrorException e) {

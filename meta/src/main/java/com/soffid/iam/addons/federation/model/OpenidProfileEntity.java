@@ -24,4 +24,8 @@ public abstract class OpenidProfileEntity extends ProfileEntity {
 	@Nullable
 	String userInfoEndpoint;
 
+	@Column (name="PRO_REVEPO")
+	@Nullable
+	String revokeEndpoint;
+
 }

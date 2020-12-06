@@ -39,6 +39,7 @@
 		buit.setSignRequests(SAMLRequirementEnumeration.CONDITIONAL);
 		buit.setUserInfoEndpoint("/userinfo");
 		buit.setTokenEndpoint("/token");
+		buit.setRevokeEndpoint("/revoke");
 		buit.setAuthorizationEndpoint("/authorization");
 		return buit;
 	}
@@ -129,6 +130,7 @@
 			listbox.getFellow("r_discoveryEndpoint").setVisible(true);
 			listbox.getFellow("r_authorizationEndpoint").setVisible(true);
 			listbox.getFellow("r_tokenEndpoint").setVisible(true);
+			listbox.getFellow("r_revokeEndpoint").setVisible(true);
 			listbox.getFellow("r_userinfoEndpoint").setVisible(true);
 			listbox.getFellow("r_signRequests").setVisible(false);
 			listbox.getFellow("r_signAssertions").setVisible(false);
@@ -137,6 +139,7 @@
 			listbox.getFellow("r_discoveryEndpoint").setVisible(false);
 			listbox.getFellow("r_authorizationEndpoint").setVisible(false);
 			listbox.getFellow("r_tokenEndpoint").setVisible(false);
+			listbox.getFellow("r_revokeEndpoint").setVisible(false);
 			listbox.getFellow("r_userinfoEndpoint").setVisible(false);
 			listbox.getFellow("r_signRequests").setVisible(true);
 			listbox.getFellow("r_signAssertions").setVisible(true);
@@ -273,6 +276,7 @@
 		
 		listbox.getFellow ("authorizationEndpoint").setValue ( prof.getAuthorizationEndpoint() );
 		listbox.getFellow ("tokenEndpoint").setValue ( prof.getTokenEndpoint() );
+		listbox.getFellow ("revokeEndpoint").setValue ( prof.getRevokeEndpoint() );
 		listbox.getFellow ("userinfoEndpoint").setValue ( prof.getUserInfoEndpoint() );
 	}
 	]]>
@@ -524,6 +528,14 @@
 						<textbox maxlength="255" readonly="${!canModifyFI}" width="98%" id="tokenEndpoint">
 							<attribute name="onChange">
 								profile.setTokenEndpoint(self.getValue());
+							</attribute>						
+						</textbox>
+					</row>
+					<row id="r_revokeEndpoint">
+						<input_etiqueta value="${c:l('federa_profile.zul.revokeEndpoint')}"/>
+						<textbox maxlength="255" readonly="${!canModifyFI}" width="98%" id="revokeEndpoint">
+							<attribute name="onChange">
+								profile.setRevokeEndpoint(self.getValue());
 							</attribute>						
 						</textbox>
 					</row>

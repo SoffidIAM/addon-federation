@@ -1,10 +1,10 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,14 +14,12 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.soffid.iam.api.Password;
+import com.soffid.iam.api.Session;
 
-import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
-import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.util.Base64;
+import es.caib.seycon.idp.server.Autenticator;
 
-public class UserInfoEndpoint extends HttpServlet {
+public class SessionCookieEndpoint extends HttpServlet {
+
 
 	/**
 	 * 
@@ -52,8 +50,10 @@ public class UserInfoEndpoint extends HttpServlet {
 		}
 		String token = authentication.substring(7);
 		TokenHandler h = TokenHandler.instance();
+
+		Autenticator autenticator = new Autenticator();
+		Session session;
 		TokenInfo t = null;
-			
 		try {
 			t = h.getToken(token);
 			if ( t == null)
@@ -62,43 +62,20 @@ public class UserInfoEndpoint extends HttpServlet {
 				resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
 				return;
 			}
-			Map<String, Object> att = new UserAttributesGenerator().generateAttributes ( getServletContext(), t );
-			JSONObject o = new JSONObject( att );
+			session = autenticator.generateOpenidSession(req.getSession(), t.getUser(),
+					t.getAuthenticationMethod() == null ? "P": t.getAuthenticationMethod(),
+					false);
+			Cookie cookie = autenticator.getSessionCookie(t, session);
+			h.setSession(t, session);
+			JSONObject o = new JSONObject();
+			o.put ("user", t.getUser());
+			o.put("cookie_name", cookie.getName());
+			o.put("cookie_value", cookie.getValue());
+			o.put("cookie_domain", cookie.getDomain());
 			buildResponse(resp, o);
-		} catch (AttributeResolutionException e) {
-			log.warn("Error resolving attributes", e);
-			buildError(resp, "Error resolving attributes");
-			return;
-		} catch (AttributeFilteringException e) {
-			log.warn("Error filtering attributes", e);
-			buildError(resp, "Error resolving attributes");
-			return;
-		} catch (InternalErrorException e) {
-			log.warn("Error evaluating claims", e);
-			buildError(resp, "Error resolving attributes");
-			return;
-		} catch (Throwable e) {
-			log.warn("Error generating open id token", e);
-			buildError(resp, "Error generating open id token");
-			return;
+		} catch (Exception e) {
+			buildError(resp, e.getClass().getSimpleName(), e.getMessage(), t);
 		}
-	}
-
-	private void buildError(HttpServletResponse resp, String string) throws IOException, ServletException {
-		JSONObject o = new JSONObject();
-		try {
-			o.put("error", string);
-		} catch (JSONException e) {
-			throw new ServletException("Error generating error message "+string, e);
-		}
-		resp.setContentType("application/json");
-		resp.addHeader("Cache-control", "no-store");
-		resp.addHeader("Pragma", "no-cache");
-		resp.addHeader("WWW-Authenticate", "error=\"unexpected_error\",error_description=\""+string+"\"");
-		resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-		ServletOutputStream out = resp.getOutputStream();
-		out.print( o.toString() );
-		out.close();
 	}
 
 	private void buildResponse (HttpServletResponse resp, JSONObject o) throws IOException {
@@ -106,6 +83,25 @@ public class UserInfoEndpoint extends HttpServlet {
 		resp.addHeader("Cache-control", "no-store");
 		resp.addHeader("Pragma", "no-cache");
 		resp.setStatus(200);
+		ServletOutputStream out = resp.getOutputStream();
+		out.print( o.toString() );
+		out.close();
+	}
+
+	private void buildError(HttpServletResponse resp, String error, String description, TokenInfo ti) throws IOException, ServletException {
+		JSONObject o = new JSONObject();
+		try {
+			o.put("error", error);
+			o.put("error_description", description);
+			if (ti != null && ti.request != null && ti.request.state != null)
+				o.put("state", ti.request.state);
+		} catch (JSONException e) {
+			throw new ServletException("Error generating error message "+description, e);
+		}
+		resp.setContentType("application/json");
+		resp.addHeader("Cache-control", "no-store");
+		resp.addHeader("Pragma", "no-cache");
+		resp.setStatus(400);
 		ServletOutputStream out = resp.getOutputStream();
 		out.print( o.toString() );
 		out.close();

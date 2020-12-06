@@ -28,11 +28,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.http.HttpRequest;
 import org.jfree.util.Log;
 import org.opensaml.saml2.core.AuthnContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -54,6 +56,7 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.AuthorizationResponse;
+import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.shibext.LogRecorder;
@@ -113,15 +116,13 @@ public class Autenticator {
         
         String relyingParty = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
         
-        if (relyingParty == null){
-        	LOG.info("Cannot find relying party when loading cookie");
-			return false;
-		}
-
-    	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
-        if (ip == null){
-        	LOG.info("Cannot find federation member "+relyingParty+" when loading cookie");
-			return false;
+        FederationMember ip = config.getFederationMember();
+        if (relyingParty != null) {
+	    	ip = config.findIdentityProviderForRelyingParty(relyingParty);
+	        if (ip == null){
+	        	LOG.info("Cannot find federation member "+relyingParty+" when loading cookie");
+				return false;
+	        }
 		}
     	
 //    	LOG.info("Find cookie");
@@ -345,7 +346,7 @@ public class Autenticator {
         } 
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
-        	AuthorizationResponse.generateResponse(ctx, req, resp);
+        	AuthorizationResponse.generateResponse(ctx, req, resp, type);
         }
         else
         {
@@ -479,6 +480,52 @@ public class Autenticator {
 			return null;
 		else
 			return Arrays.asList(values);
+	}
+
+	public Session generateOpenidSession(HttpSession httpSession, String userName, String authenticationType, boolean externalAuth) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+        ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+        
+        IdpConfig config = IdpConfig.getConfig();
+        
+        User user = server.getUserInfo(userName, null);
+        
+        server.updateExpiredPasswords(user, externalAuth);
+        
+        String url = "https://" + config.getHostName()+":"+config.getStandardPort()+ SessionCallbackServlet.URI;
+        
+        com.soffid.iam.api.Session sessio = new RemoteServiceLocator().getSessionService().registerWebSession(
+        		user.getUserName(), config.getHostName(),
+        		LanguageFilter.getRemoteIp(),
+        		url, authenticationType);
+
+        SessionListener.registerSession(httpSession, sessio.getId().toString());
+        
+        return sessio;
+	}
+
+	public Cookie getSessionCookie(TokenInfo token, Session session) throws InternalErrorException, UnknownUserException, NoSuchAlgorithmException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig config = IdpConfig.getConfig();
+
+        FederationMember federationMember = token.getRequest().getFederationMember();
+    	FederationMember ip = config.findIdentityProviderForRelyingParty(federationMember.getPublicId());
+        if (ip == null)
+        	throw new es.caib.seycon.ng.exception.InternalErrorException(String.format("Internal error. Cannot guess virtual identity provider for %s", federationMember.getPublicId()));
+
+        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
+        {
+        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(session.getKey().getBytes("UTF-8"));
+        	String digestString = Base64.encodeBytes(digest);
+        	User user = ServiceLocator.instance().getServerService().getUserInfo(session.getUserName(), null);
+        	String value = user.getId().toString()+"_"+digestString;
+        	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
+       		cookie.setMaxAge ( -1 );
+        	cookie.setSecure(true);
+        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
+        		cookie.setDomain(ip.getSsoCookieDomain());
+        	return cookie;
+        } else {
+        	return null;
+        }
 	}
 	
 }

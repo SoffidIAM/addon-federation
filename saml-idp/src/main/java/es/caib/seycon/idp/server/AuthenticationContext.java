@@ -52,12 +52,15 @@ public class AuthenticationContext {
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
+		if (r == null)
+			return null;
 		return (AuthenticationContext) r.getSession().getAttribute("Soffid-Authentication-Context");
 	}
 	
 	public void store (HttpServletRequest r)
 	{
-		r.getSession().setAttribute("Soffid-Authentication-Context", this);
+		if (r != null)
+			r.getSession().setAttribute("Soffid-Authentication-Context", this);
 	}
 	
 	public AuthenticationContext ()

@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.Password;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
@@ -51,6 +52,8 @@ public class TokenEndpoint extends HttpServlet {
 			grantCode(req, resp, authorizationCode, authentication);
 		} else if ("password".equals(grantType)) {
 			passwordGrant(req, resp, authentication);
+		} else if ("refresh_token".equals(grantType)) {
+			refreshToken(req, resp, authentication);
 		}
 		else
 		{
@@ -133,8 +136,8 @@ public class TokenEndpoint extends HttpServlet {
 				return;				
 			}
 			
-			TokenInfo t = h.generateAuthenticationRequest(request , username);
-			String redirectUri = req.getParameter("redirect_uri");
+			TokenInfo t = h.generateAuthenticationRequest(request , username, authentication);
+
 			if (username == null || username.trim().isEmpty()) {
         		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 	    		if (ctx != null)
@@ -210,27 +213,67 @@ public class TokenEndpoint extends HttpServlet {
 	private void grantCode(HttpServletRequest req, HttpServletResponse resp, String authorizationCode,
 			String authentication) throws IOException, ServletException, UnsupportedEncodingException {
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo t = h.getAuthorizationCode (authorizationCode);
-		if ( t == null)
-		{
-			buildError (resp, "invalid_grant", "Invalid authorization code");
-			return;
-		}
-		
-		Password pass = Password.decode(t.getRequest().getFederationMember().getOpenidSecret());
-		
-		String expectedAuth = t.getRequest().getFederationMember().getOpenidClientId()+":"+
-				pass.getPassword();
-		
-		expectedAuth = "Basic "+Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
-		if (! expectedAuth.equals(authentication))
-		{
-			buildError (resp, "unauthorized_client", "Wrong client credentials", t);
-			return;
-		}
-		
+		TokenInfo t = null;
 		try {
+			t = h.getAuthorizationCode (authorizationCode);
+			if ( t == null)
+			{
+				buildError (resp, "invalid_grant", "Invalid authorization code");
+				return;
+			}
+			
+			Password pass = Password.decode(t.getRequest().getFederationMember().getOpenidSecret());
+			
+			String expectedAuth = t.getRequest().getFederationMember().getOpenidClientId()+":"+
+					pass.getPassword();
+			
+			expectedAuth = "Basic "+Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
+			if (! expectedAuth.equals(authentication))
+			{
+				buildError (resp, "unauthorized_client", "Wrong client credentials", t);
+				return;
+			}
+			
 			h.generateToken (t);
+		} catch (Exception e) {
+			log.info("Error generating token", e);
+			buildError (resp, "Internal error "+e.toString(), t);
+			return;
+		}
+		
+		generatTokenResponse(resp, h, t);
+	}
+
+	private void refreshToken(HttpServletRequest req, HttpServletResponse resp, String authentication) 
+			throws IOException, ServletException, UnsupportedEncodingException {
+		String refreshToken = req.getParameter("refresh_token");
+
+//		String clientId = req.getParameter("client_id");
+//		String clientSecret = req.getParameter("client_secret");
+
+		TokenHandler h = TokenHandler.instance();
+		TokenInfo t = null;
+		try {
+			t = h.getRefreshToken(refreshToken);
+			if ( t == null)
+			{
+				buildError (resp, "invalid_grant", "Invalid refresh token");
+				return;
+			}
+			
+			FederationMember federationMember = t.getRequest().getFederationMember();
+			Password pass = Password.decode(federationMember.getOpenidSecret());
+			
+			String expectedAuth = federationMember.getOpenidClientId()+":"+pass.getPassword();
+			
+			expectedAuth = "Basic "+Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
+			if (! expectedAuth.equals(authentication))
+			{
+				buildError (resp, "unauthorized_client", "Wrong client credentials", t);
+				return;
+			}
+			
+			h.renewToken(t);
 		} catch (Exception e) {
 			log.info("Error generating token", e);
 			buildError (resp, "Internal error "+e.toString(), t);

@@ -60,6 +60,7 @@ import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
+import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
@@ -74,6 +75,7 @@ import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
+import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
 import com.soffid.iam.addons.federation.model.PolicyEntity;
 import com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity;
@@ -1897,6 +1899,102 @@ public class FederacioServiceImpl
 			}
 		}
 		return c;
+	}
+
+	@Override
+	protected OauthToken handleCreateOauthToken(OauthToken token) throws Exception {
+		OauthTokenEntity e;
+		if (token.getAuthorizationCode() != null) {
+			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			if (e != null) {
+				if (e.getExpires().after(new Date())) {
+					getOauthTokenEntityDao().remove(e);
+				} else {
+					throw new InternalErrorException("Authorization code already in use");
+				}
+			}			
+		}
+		if (token.getToken() != null) {
+			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+			if (e != null) {
+				if (e.getExpires().after(new Date())) {
+					getOauthTokenEntityDao().remove(e);
+				} else {
+					throw new InternalErrorException("Token already in use");
+				}
+			}			
+		}
+		if (token.getRefreshToken() != null) {
+			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getRefreshToken());
+			if (e != null) {
+				if (e.getExpires().after(new Date())) {
+					getOauthTokenEntityDao().remove(e);
+				} else {
+					throw new InternalErrorException("Refresh code already in use");
+				}
+			}
+		}
+		e = getOauthTokenEntityDao().oauthTokenToEntity(token);
+		getOauthTokenEntityDao().create(e);
+		return getOauthTokenEntityDao().toOauthToken(e);
+	}
+
+	@Override
+	protected OauthToken handleFindOauthTokenByRefreshToken(String idp, String token) throws Exception {
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(idp, token);
+		if (entity == null)
+			return null;
+		else
+			return getOauthTokenEntityDao().toOauthToken(entity);
+	}
+
+	@Override
+	protected OauthToken handleFindOauthTokenByToken(String idp, String token) throws Exception {
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndToken(idp, token);
+		if (entity == null)
+			return null;
+		else
+			return getOauthTokenEntityDao().toOauthToken(entity);
+	}
+
+	@Override
+	protected void handleDeleteOauthToken(OauthToken token) throws Exception {
+		OauthTokenEntity e = null;
+		if (token.getToken() != null)
+			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+		else if (token.getRefreshToken() != null)
+			e = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(token.getIdentityProvider(), token.getRefreshToken());
+		else if (token.getAuthorizationCode() != null)
+			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			
+		if (e != null)
+			getOauthTokenEntityDao().remove(e);;
+	}
+
+	@Override
+	protected void handleUpdateOauthToken(OauthToken token) throws Exception {
+		OauthTokenEntity e = null;
+		if (token.getToken() != null)
+			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+		else if (token.getRefreshToken() != null)
+			e = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(token.getIdentityProvider(), token.getRefreshToken());
+		else if (token.getAuthorizationCode() != null)
+			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			
+		if (e != null) {
+			getOauthTokenEntityDao().oauthTokenToEntity(token, e, true);
+			getOauthTokenEntityDao().update(e);
+		}
+	}
+
+	@Override
+	protected OauthToken handleFindOauthTokenByAuthorizationCode(String idp, String authorizationCode)
+			throws Exception {
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(idp, authorizationCode);
+		if (entity == null)
+			return null;
+		else
+			return getOauthTokenEntityDao().toOauthToken(entity);
 	}
 
 }
