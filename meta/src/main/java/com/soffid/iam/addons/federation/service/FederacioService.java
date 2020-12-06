@@ -5,9 +5,11 @@
 //
 
 package com.soffid.iam.addons.federation.service;
+import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
+import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
 import com.soffid.iam.api.SamlRequest;
@@ -83,7 +85,8 @@ import org.springframework.transaction.annotation.Transactional;
 	LogonService.class,
 	KerberosKeytabEntity.class,
 	AuthenticationMethodEntity.class,
-	UserBehaviorService.class
+	UserBehaviorService.class,
+	OauthTokenEntity.class
 })
 public abstract class FederacioService {
 
@@ -497,4 +500,12 @@ public abstract class FederacioService {
 	Usuari findAccountOwner(String principalName, String identityProvider, 
 			Map<String, Object> properties, boolean autoProvision) {return null;}
 
+	
+	/* Token services */
+	OauthToken createOauthToken(OauthToken token) {return null;}
+	void deleteOauthToken(OauthToken token) {}
+	void updateOauthToken(OauthToken token) {}
+	OauthToken findOauthTokenByAuthorizationCode(String idp, String authorizationCode) {return null;}
+	OauthToken findOauthTokenByToken(String idp, String token) {return null;}
+	OauthToken findOauthTokenByRefreshToken(String idp, String token) {return null;}
 }

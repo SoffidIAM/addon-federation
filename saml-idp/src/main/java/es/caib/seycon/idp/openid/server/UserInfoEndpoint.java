@@ -52,15 +52,16 @@ public class UserInfoEndpoint extends HttpServlet {
 		}
 		String token = authentication.substring(7);
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo t = h.getToken(token);
-		if ( t == null)
-		{
-			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
-			return;
-		}
+		TokenInfo t = null;
 			
 		try {
+			t = h.getToken(token);
+			if ( t == null)
+			{
+				resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+				resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
+				return;
+			}
 			Map<String, Object> att = new UserAttributesGenerator().generateAttributes ( getServletContext(), t );
 			JSONObject o = new JSONObject( att );
 			buildResponse(resp, o);

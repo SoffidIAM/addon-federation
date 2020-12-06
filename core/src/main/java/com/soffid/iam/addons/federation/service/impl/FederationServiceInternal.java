@@ -567,8 +567,11 @@ public class FederationServiceInternal {
 			
 			
 			r.setUser(searchUser(identityProvider, user));
-			if (r.getUser() != null)
+			if (r.getUser() != null) {
 				reqEntity.setUser(r.getUser().getUserName());
+				r.getUser().setConsoleProperties(null);
+				r.setAttributes( ServiceLocator.instance().getUserService().findUserAttributes(r.getUser().getUserName()) );
+			}
 			if (r.isValid())
 				r.setSessionCookie(reqEntity.getExternalId()+":"+reqEntity.getKey());
 			reqEntity.setFinished(true);

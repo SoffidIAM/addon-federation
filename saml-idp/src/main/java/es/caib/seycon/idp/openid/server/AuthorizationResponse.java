@@ -33,25 +33,25 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 public class AuthorizationResponse  {
 	static Log log = LogFactory.getLog(AuthorizationResponse.class);
 	
-	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException
+	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException
 	{
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		if ( r.getResponseTypeSet().contains("code"))
-			authorizationFlow (request, response);
+			authorizationFlow (request, response, authType);
 		else
-			implicitFLow (ctx, request, response);
+			implicitFLow (ctx, request, response, authType);
 	}
 
-	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
+	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user);
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
 		h.generateToken (token);
@@ -129,13 +129,13 @@ public class AuthorizationResponse  {
 				(r.getState() != null ? "&state="+r.getState(): ""));
 	}
 
-	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, InternalErrorException {
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user);
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
 		
@@ -151,6 +151,9 @@ public class AuthorizationResponse  {
 			if ( r.getState() != null)
 				sb.append("&state=")
 				.append( URLEncoder.encode(r.getState() , "UTF-8"));
+			if ( r.getNonce() != null)
+				sb.append("&nonce=")
+				.append( URLEncoder.encode(r.getNonce() , "UTF-8"));
 			response.sendRedirect(sb.toString());
 		} else {
 			ServletOutputStream out = response.getOutputStream();

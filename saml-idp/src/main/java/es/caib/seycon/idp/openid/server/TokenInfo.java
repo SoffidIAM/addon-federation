@@ -8,11 +8,12 @@ public class TokenInfo {
 	String authorizationCode;
 	String user;
 	OpenIdRequest request;
-	Map<String,String> attributes;
 	long created;
 	long expires;
 	long authentication;
 	private String authenticationMethod;
+	Long sessionId;
+	String sessionKey;
 	
 	public String getUser() {
 		return user;
@@ -25,12 +26,6 @@ public class TokenInfo {
 	}
 	public void setRequest(OpenIdRequest request) {
 		this.request = request;
-	}
-	public Map<String, String> getAttributes() {
-		return attributes;
-	}
-	public void setAttributes(Map<String, String> attributes) {
-		this.attributes = attributes;
 	}
 	public long getCreated() {
 		return created;
@@ -73,5 +68,17 @@ public class TokenInfo {
 	}
 	public void setAuthenticationMethod(String authenticationMethod) {
 		this.authenticationMethod = authenticationMethod;
+	}
+	public Long getSessionId() {
+		return sessionId;
+	}
+	public void setSessionId(Long sessionId) {
+		this.sessionId = sessionId;
+	}
+	public String getSessionKey() {
+		return sessionKey;
+	}
+	public void setSessionKey(String sessionKey) {
+		this.sessionKey = sessionKey;
 	}
 }

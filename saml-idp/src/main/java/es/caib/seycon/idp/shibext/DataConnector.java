@@ -1,8 +1,6 @@
 package es.caib.seycon.idp.shibext;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.rmi.RemoteException;
@@ -32,9 +30,6 @@ import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.sso.Secret;
-import com.soffid.iam.service.SessionService;
-import com.soffid.iam.service.UserService;
-import com.soffid.iam.sync.ServerServiceLocator;
 import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
 import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
 import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
