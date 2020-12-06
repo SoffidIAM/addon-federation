@@ -65,4 +65,7 @@ public class SAMLProfile {
 
 	@Nullable
 	String userInfoEndpoint;
+
+	@Nullable
+	String revokeEndpoint;
 }

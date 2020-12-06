@@ -110,6 +110,7 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setAuthorizationEndpoint(entity.getAuthorizationEndpoint());
 			target.setEnabled(entity.isEnabled());
 			target.setTokenEndpoint(entity.getTokenEndpoint());
+			target.setRevokeEndpoint(entity.getRevokeEndpoint());
 			target.setUserInfoEndpoint(entity.getUserInfoEndpoint());
 		} else if (source instanceof SamlProfileEntity) {
 			// En teoria aquesta és abstracta
@@ -290,6 +291,7 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			entity.setEnabled(source.getEnabled());
 			entity.setTokenEndpoint(source.getTokenEndpoint());
 			entity.setUserInfoEndpoint(source.getUserInfoEndpoint());
+			entity.setRevokeEndpoint(source.getRevokeEndpoint());
 			target = entity;
 		} else {
 			// Res més... per als SAMLProfile

@@ -67,6 +67,8 @@ import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
 import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
 import es.caib.seycon.idp.openid.server.JWKEndpoint;
+import es.caib.seycon.idp.openid.server.RevokeEndpoint;
+import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
 import es.caib.seycon.idp.openid.server.TokenEndpoint;
 import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -175,7 +177,7 @@ public class Main {
     
             server = new Server();
             server.setThreadPool(pool);
-            
+//            server.setSessionIdManager(new PersistentSessionIdManager());
             String host = c.getHostName();
             Integer port = c.getStandardPort();
             Integer port2 = c.getClientCertPort();
@@ -416,6 +418,15 @@ public class Main {
 	        				openIdProfile.getTokenEndpoint()); //$NON-NLS-1$
 
         	servlet = new ServletHolder(
+	                RevokeEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("RevokeEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getRevokeEndpoint() == null ? 
+	        				"/revoke": 
+	        				openIdProfile.getRevokeEndpoint()); //$NON-NLS-1$
+
+        	servlet = new ServletHolder(
 	                UserInfoEndpoint.class);
 	        servlet.setInitOrder(2);
 	        servlet.setName("UserinfoEndpoint"); //$NON-NLS-1$
@@ -425,6 +436,13 @@ public class Main {
 	        				openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
 
         	servlet = new ServletHolder(
+	                SessionCookieEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("SessionCookieEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+        				"/session_cookie"); //$NON-NLS-1$
+
+	        servlet = new ServletHolder(
 	                ConfigurationEndpoint.class);
 	        servlet.setInitOrder(2);
 	        servlet.setName("ConfigurationEndpoint"); //$NON-NLS-1$
