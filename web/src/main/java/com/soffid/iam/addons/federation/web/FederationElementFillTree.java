@@ -180,7 +180,7 @@ public class FederationElementFillTree extends Treeitem implements java.io.Seria
 		// Creem botó genèric per seleccionar atribut
 		botoSelecionaAtribut = new org.zkoss.zul.Button();
 		botoSelecionaAtribut.setTooltiptext(Messages.getString("FederationElementFillTree.SelectAttributeMessage")); //$NON-NLS-1$
-		botoSelecionaAtribut.setSrc("img/atribut.png"); //$NON-NLS-1$
+		botoSelecionaAtribut.setSrc("/addon/federation/img/atribut.png"); //$NON-NLS-1$
 
 		// Camps de valor
 		totes = new Div();
@@ -322,7 +322,7 @@ public class FederationElementFillTree extends Treeitem implements java.io.Seria
 
 		// Afegim els components
 		tc_valors = new Treecell();
-		tc_valors.setImage("img/document-c.png"); //$NON-NLS-1$
+		tc_valors.setImage("/addon/federation/img/document-c.png"); //$NON-NLS-1$
 		tc_valors.appendChild(totes);
 
 		// filera.appendChild(tc_condicio);

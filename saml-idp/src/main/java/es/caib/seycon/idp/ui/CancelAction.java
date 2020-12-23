@@ -43,6 +43,12 @@ public class CancelAction extends HttpServlet {
     public static final String URI = "/cancelAction"; //$NON-NLS-1$
 
     @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+    	doPost(req, resp);
+    }
+    
+    @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
     	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);

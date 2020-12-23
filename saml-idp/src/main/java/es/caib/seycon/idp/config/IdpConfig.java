@@ -122,19 +122,8 @@ public class IdpConfig {
         	Thread.currentThread().setContextClassLoader(oldClassLoader);
         }
         
-        federationMember = null;
         
-        Collection<EntityGroupMember> entityGroups = federationService.findEntityGroupByNom("%"); //$NON-NLS-1$
-        for (java.util.Iterator it = entityGroups.iterator(); 
-                federationMember == null && it.hasNext(); )
-        {
-            EntityGroupMember eg = (EntityGroupMember) it.next();
-            federationMember = findFederationMember(eg);
-        }
-        
-        if (federationMember == null)
-            throw new InternalErrorException("Identity provider "+seyconConfig.getHostName()+" not configured"); //$NON-NLS-1$ //$NON-NLS-2$
-        
+        updateFederationMember();
 
         extractKeyFile();
     }
@@ -581,6 +570,23 @@ public class IdpConfig {
 
 	public UserCredentialService getUserCredentialService() {
 		return userCredentialService;
+	}
+
+	public void updateFederationMember() throws InternalErrorException {
+        FederationMember federationMember = null;
+        
+        Collection<EntityGroupMember> entityGroups = federationService.findEntityGroupByNom("%"); //$NON-NLS-1$
+        for (java.util.Iterator it = entityGroups.iterator(); 
+                federationMember == null && it.hasNext(); )
+        {
+            EntityGroupMember eg = (EntityGroupMember) it.next();
+            federationMember = findFederationMember(eg);
+        }
+        
+        if (federationMember == null)
+            throw new InternalErrorException("Identity provider "+seyconConfig.getHostName()+" not configured"); //$NON-NLS-1$ //$NON-NLS-2$
+
+       this.federationMember = federationMember;
 	}
 
 }

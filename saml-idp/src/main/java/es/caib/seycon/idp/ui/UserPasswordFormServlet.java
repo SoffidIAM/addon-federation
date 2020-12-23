@@ -31,7 +31,6 @@ import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
-import es.caib.seycon.idp.ui.openid.OpenIdRequestAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserPasswordFormServlet extends BaseForm {
@@ -102,7 +101,6 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("otpLoginUrl", OTPAction.URI); //$NON-NLS-1$
             g.addArgument("registerUrl", RegisterFormServlet.URI);
             g.addArgument("recoverUrl", PasswordRecoveryAction.URI);
-            g.addArgument("openIdRequestUrl", OpenIdRequestAction.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$

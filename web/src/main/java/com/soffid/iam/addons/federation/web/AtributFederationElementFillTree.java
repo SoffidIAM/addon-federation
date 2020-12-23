@@ -201,7 +201,7 @@ public class AtributFederationElementFillTree extends FederationElementFillTree 
 		// Afegim botó per seleccionar atribut
 		botoSelecionaAtribut = new org.zkoss.zul.Button();
 		botoSelecionaAtribut.setTooltiptext(Messages.getString("AtributFederationElementFillTree.SelectAttributeMessage")); //$NON-NLS-1$
-		botoSelecionaAtribut.setSrc("img/atribut.png"); //$NON-NLS-1$
+		botoSelecionaAtribut.setSrc("/addon/federation/img/atribut.png"); //$NON-NLS-1$
 
 		// Les afegim
 

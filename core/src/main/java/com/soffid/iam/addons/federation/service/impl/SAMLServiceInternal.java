@@ -222,7 +222,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 	}
 
 	private SamlValidationResults createAuthenticationRecord(String identityProvider, String serviceProviderName, SamlRequestEntity requestEntity, Assertion assertion,
-			boolean provision) throws InternalErrorException {
+			boolean provision) throws Exception {
 		
 		log.info("createAuthenticationRecord()");
 		
@@ -331,7 +331,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		return assertion;
 	}
 
-	protected User searchUser(Assertion assertion, SamlValidationResults result, boolean provision) throws InternalErrorException {
+	protected User searchUser(Assertion assertion, SamlValidationResults result, boolean provision) throws Exception {
 		
 		log.info("searchUser()");
 		

@@ -63,7 +63,6 @@ public class PasswordRecoveryAction extends HttpServlet {
     		catch (ClassNotFoundException e )
     		{
 	      		config.getFederationService().sendRecoverEmail(email, 
-	      				ip.getMailHost(), ip.getMailSenderAddress(), 
 	      				url, ip.getOrganization());
 	      		
 	            RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordRecoveryForm.URI);

@@ -112,7 +112,7 @@ public abstract class AbstractFederationService {
 	}
 
 	public User findAccountOwner(String principalName, String identityProvider, Map<String, ? extends Object> map,
-			boolean autoProvision) throws InternalErrorException {
+			boolean autoProvision) throws Exception {
 		return serviceBase.findAccountOwner(principalName, identityProvider, map, autoProvision);
 	}
 

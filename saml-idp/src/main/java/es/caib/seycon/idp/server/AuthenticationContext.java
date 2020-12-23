@@ -19,6 +19,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
@@ -342,7 +344,7 @@ public class AuthenticationContext {
 	public void authenticationFailure (String u) throws IOException, InternalErrorException
 	{
 		feedRatio(true);
-		if (u != null)
+		if (currentUser != null)
 		{
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			long f = ubh.getUserFailures(currentUser.getId());
@@ -361,7 +363,7 @@ public class AuthenticationContext {
 	    currentAccount = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
 	    
 	    if (currentAccount != null && currentAccount.getType() == AccountType.USER && currentAccount.getOwnerUsers() != null && currentAccount.getOwnerUsers().size() == 1)
-	    	currentUser = currentAccount.getOwnerUsers().iterator().next();
+	    	currentUser = new RemoteServiceLocator().getUserService().findUserByUserName(currentAccount.getOwnerUsers().iterator().next());
 	}
 
 	public String getUser() {
@@ -446,4 +448,19 @@ public class AuthenticationContext {
 	public void setNewCredential(UserCredential credential) {
 		newCredential = credential;
 	}
+
+	public void addConsent() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		String userName = currentUser.getUserName();
+		IdpConfig.getConfig().getFederationService().addConsent(userName, publicId);
+	}
+	
+	public boolean hasConsent() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		String userName = currentUser.getUserName();
+		return IdpConfig.getConfig().getFederationService().hasConsent(userName, publicId);
+	}
+
+	public User getCurrentUser() {
+		return currentUser;
+	}
+
 }

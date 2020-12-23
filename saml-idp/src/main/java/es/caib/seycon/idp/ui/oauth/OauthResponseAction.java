@@ -15,6 +15,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.User;
 
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
@@ -80,6 +81,7 @@ public class OauthResponseAction extends HttpServlet {
 	        
    			User u = new RemoteServiceLocator().getFederacioService().findAccountOwner(consumer.getPrincipal (), 
    					consumer.getRelyingParty(), 
+   					IdpConfig.getConfig().getPublicId(),
    					consumer.getAttributes(), 
    					ip.getRegisterExternalIdentities() != null && ip.getRegisterExternalIdentities().booleanValue());
 

@@ -45,6 +45,7 @@ import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.UserType;
+import com.soffid.iam.bpm.service.BpmEngine;
 import com.soffid.iam.model.SamlRequestEntity;
 import com.soffid.iam.model.SamlRequestEntityDao;
 import com.soffid.iam.service.AccountService;
@@ -84,6 +85,7 @@ public class FederationServiceInternal {
 	protected AccountService accountService;
 	protected UserService userService;
 	protected DispatcherService dispatcherService;
+	protected BpmEngine bpmEngine;
 	private PasswordService passwordService;
 
 	public FederationServiceInternal () throws InitializationException {
@@ -513,8 +515,8 @@ public class FederationServiceInternal {
 				if (passExp==null) {
 					passExp = Calendar.getInstance();
 					if (ac.getType() == AccountType.USER) {
-						for (User identity: ac.getOwnerUsers()) {
-							for (Account ac2: accountService.findUserAccountsByDomain(identity.getUserName(), agent.getPasswordsDomain())) { 
+						for (String identity: ac.getOwnerUsers()) {
+							for (Account ac2: accountService.findUserAccountsByDomain(identity, agent.getPasswordsDomain())) { 
 								if (ac2.getPasswordExpiration() != null) {
 									passExp = ac2.getPasswordExpiration();
 									break;
@@ -569,7 +571,6 @@ public class FederationServiceInternal {
 			r.setUser(searchUser(identityProvider, user));
 			if (r.getUser() != null) {
 				reqEntity.setUser(r.getUser().getUserName());
-				r.getUser().setConsoleProperties(null);
 				r.setAttributes( ServiceLocator.instance().getUserService().findUserAttributes(r.getUser().getUserName()) );
 			}
 			if (r.isValid())
@@ -592,14 +593,14 @@ public class FederationServiceInternal {
 		{
 			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
 			{
-				return account.getOwnerUsers().iterator().next();
+				return getUserService().findUserByUserName(account.getOwnerUsers().iterator().next());
 			}
 		}
 		return null;
 	}
 
 	public User findAccountOwner(String principalName, String identityProvider, Map<String, ? extends Object> map,
-			boolean autoProvision) throws InternalErrorException
+			boolean autoProvision) throws Exception
 	{
 		log.info("searchUser()");
 		
@@ -612,7 +613,7 @@ public class FederationServiceInternal {
 			{
 				log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
 				updateAccountAttributes ( account, map);
-				return account.getOwnerUsers().iterator().next();
+				return getUserService().findUserByUserName(account.getOwnerUsers().iterator().next());
 			}
 			if ( ! account.getType().equals(AccountType.IGNORED))
 				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
@@ -673,12 +674,21 @@ public class FederationServiceInternal {
 				}
 			}
 			
-			
-			
 			log.info("searchUser() - trying to create the user...");
 			User u2 = userService.findUserByUserName(u.getUserName());
 			if (u2 != null) u = u2;
-			else u = userService.create(u);
+			else {
+				WorkflowInitiator wi = new WorkflowInitiator();
+				wi.federationMemberEntityDao = getFederationMemberEntityDao();
+				wi.bpmEngine = getBpmEngine();
+				if (wi.startWF(identityProvider, u, map)) {
+					u = userService.findUserByUserName(u.getUserName());
+					if (u == null)
+						return null;
+				}
+				else
+					u = userService.create(u);
+			}
 			log.info("searchUser() - user created!");
 			log.info("searchUser() - u.getShortName(): "+u.getShortName());
 			for (String att: attributes.keySet())
@@ -820,4 +830,13 @@ public class FederationServiceInternal {
 		}
 	}
 
+	public BpmEngine getBpmEngine() {
+		return bpmEngine;
+	}
+
+	public void setBpmEngine(BpmEngine bpmEngine) {
+		this.bpmEngine = bpmEngine;
+	}
+
 }
+

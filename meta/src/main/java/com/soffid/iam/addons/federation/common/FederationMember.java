@@ -95,6 +95,10 @@ public class FederationMember {
 
 	public boolean allowRegister;
 
+	@Description ("Workflow for new user aproval")
+	@Nullable
+	String registerWorkflow;
+
 	public boolean allowRecover;
 
 	@Nullable 
@@ -109,6 +113,9 @@ public class FederationMember {
 	@Nullable
 	public String ssoCookieName;
 	
+	@Nullable
+	public Boolean consent;
+
 	@Nullable
 	public Boolean disableSSL;
 

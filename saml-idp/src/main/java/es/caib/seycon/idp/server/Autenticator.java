@@ -61,6 +61,7 @@ import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
+import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -302,6 +303,14 @@ public class Autenticator {
 		authCtx.setUser(user);
 		authCtx.store(req);
 
+		// Search for consent
+		if (authCtx.getPublicId() != null && !authCtx.getPublicId().trim().isEmpty()) {
+			if ( ! authCtx.hasConsent()) {
+				resp.sendRedirect(ConsentFormServlet.URI);
+				return;
+			}
+		}
+		
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
@@ -335,6 +344,7 @@ public class Autenticator {
 			
 			LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
 	        			
+			
 	        if (returnPath == null) 
 	        {
 	            AuthenticationEngine.returnToAuthenticationEngine(req, resp);

@@ -51,4 +51,5 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Nullable
 	@Column (name="FED_REGEXT", defaultValue="Boolean.FALSE")
 	Boolean registerExternalIdentities;
+
 }
