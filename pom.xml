@@ -260,6 +260,6 @@
 		</dependencies>
 	</dependencyManagement>
 	<properties>
-		<console.version>2.8.0</console.version>
+		<console.version>3.0.0-SNAPSHOT</console.version>
 	</properties>
 </project>

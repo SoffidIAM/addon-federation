@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
@@ -48,6 +49,32 @@ public class UserAttributesGenerator {
 					result.put(openIdName, samlAttribute.getValues().iterator().next());
 				else
 					result.put(openIdName, new LinkedList( samlAttribute.getValues()));
+		}
+	
+		return result;
+		
+	}
+
+	public List<String> generateAttributeNames(ServletContext ctx, String user, String authMethod, String serviceProvider) throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
+		AttributeResolver<SAMLProfileRequestContext> resolver = (AttributeResolver<SAMLProfileRequestContext>)
+				HttpServletHelper.getAttributeResolver(ctx);
+		
+		AttributeFilteringEngine<SAMLProfileRequestContext> filter =
+				(AttributeFilteringEngine<SAMLProfileRequestContext>)
+				HttpServletHelper.getAttributeFilterEnginer(ctx);
+
+		DummySamlRequestContext2 context = new DummySamlRequestContext2(ctx, user, authMethod, serviceProvider);
+		Map<String, BaseAttribute> att;
+		att = resolver.resolveAttributes(context);
+		att = filter.filterAttributes(att, context);
+
+		List<String> result = new LinkedList<String>();
+		
+		for ( Attribute attribute: new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null) )
+		{
+			BaseAttribute samlAttribute = att.get(attribute.getShortName());
+			if (samlAttribute != null)
+				result.add(attribute.getName());
 		}
 	
 		return result;

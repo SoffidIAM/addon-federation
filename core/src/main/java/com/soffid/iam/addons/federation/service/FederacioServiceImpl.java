@@ -8,6 +8,7 @@ package com.soffid.iam.addons.federation.service;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -37,6 +38,7 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -50,6 +52,10 @@ import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.jbpm.JbpmContext;
+import org.jbpm.graph.def.ProcessDefinition;
+import org.jbpm.graph.exe.ExecutionContext;
+import org.jbpm.graph.exe.ProcessInstance;
 
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.Attribute;
@@ -66,6 +72,7 @@ import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AttributeConditionEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntityDao;
@@ -87,8 +94,10 @@ import com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity;
 import com.soffid.iam.addons.federation.model.ProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.service.impl.FederationServiceInternal;
+import com.soffid.iam.addons.federation.service.impl.WorkflowInitiator;
 import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Configuration;
@@ -1397,8 +1406,7 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected void handleSendActivationEmail(java.lang.String user, java.lang.String mailHost, 
-			java.lang.String from, 
+	protected void handleSendActivationEmail(java.lang.String user, 
 			java.lang.String activationUrl, 
 			java.lang.String organizationName) throws Exception {
 		User usuari = getUserService().findUserByUserName(user);
@@ -1431,23 +1439,11 @@ public class FederacioServiceImpl
 		key.append(usuari.getId());
 		
 		Collection<DataType> list = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, ACTIVATION_KEY);
-		DataType tda;
-		if (list == null || list.isEmpty())
-		{
-			tda = new DataType ();
-			tda.setCode(ACTIVATION_KEY);
-			tda.setOrder(-100L);
-			tda.setType(TypeEnumeration.STRING_TYPE);
-			tda.setOperatorVisibility(AttributeVisibilityEnum.HIDDEN);
-			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
-			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
-			getAdditionalDataService().create (tda);
-		} else {
-			tda = list.iterator().next();
-		}
+		// Check datatype exists
+		createDataType(ACTIVATION_KEY);
 		
 		UserData dadaUser = new UserData ();
-		dadaUser.setAttribute(tda.getCode());
+		dadaUser.setAttribute(ACTIVATION_KEY);
 		dadaUser.setUser(usuari.getUserName());
 		dadaUser.setValue(key.toString());
 		getAdditionalDataService().create(dadaUser);
@@ -1468,8 +1464,8 @@ public class FederacioServiceImpl
 		message.append ( String.format("</p><p><a href='%s'>", url.toString())); //$NON-NLS-1$
 		message.append ( com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.ActivateButtonMsg") ); //$NON-NLS-1$
 		message.append ( "</p></html></body>"); //$NON-NLS-1$
-		
-		MailUtils.sendHtmlMail(mailHost, to, from, subject, message.toString());
+	
+		getMailService().sendHtmlMail(to, subject, message.toString());
 	}
 
 	@Override
@@ -1492,8 +1488,6 @@ public class FederacioServiceImpl
 
 	@Override
 	protected void handleSendRecoverEmail(String email, 
-			java.lang.String mailHost, 
-			java.lang.String from, 
 			java.lang.String activationUrl, 
 			java.lang.String organizationName) throws Exception 
 	{
@@ -1561,6 +1555,7 @@ public class FederacioServiceImpl
 		DataType tda;
 		if (list == null || list.isEmpty())
 		{
+			createDataType(RECOVER_KEY);
 			tda = new DataType ();
 			tda.setCode(RECOVER_KEY);
 			tda.setOrder(-101L);
@@ -1603,8 +1598,8 @@ public class FederacioServiceImpl
 		message.append ( String.format("</p><p><a href='%s'>", url.toString())); //$NON-NLS-1$
 		message.append ( com.soffid.iam.addons.federation.service.Messages.getString("FederacioServiceImpl.RecoverButtonMsg") ); //$NON-NLS-1$
 		message.append ( "</p></html></body>"); //$NON-NLS-1$
-		
-		MailUtils.sendHtmlMail(mailHost, email, from, subject, message.toString());
+
+		getMailService().sendHtmlMail(email, subject, message.toString());
 	}
 
 	@Override
@@ -1625,15 +1620,28 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected User handleRegisterUser(String dispatcher, User usuari, Map additionalData,
+	protected User handleRegisterUser(String identityProvider, String url, String dispatcher, User usuari, Map additionalData,
 			Password password) throws Exception {
-		
-		usuari = registerUser(usuari, additionalData, false);
-		
-		UserEntity usuariEntity = getUserEntityDao().load(usuari.getId());
-		PasswordDomainEntity dce = getPasswordDomainEntityDao().findBySystem(dispatcher);
-		
-		getInternalPasswordService().storeAndForwardPassword(usuariEntity, dce, password, false);
+
+		WorkflowInitiator wi = new WorkflowInitiator();
+		wi.setBpmEngine(getBpmEngine());
+		wi.setFederationMemberEntityDao(getFederationMemberEntityDao());
+		wi.setPassword(password);
+		if (! wi.startWF(identityProvider, usuari, additionalData)) {
+			usuari = registerUser(usuari, additionalData, false);
+			UserEntity usuariEntity = getUserEntityDao().load(usuari.getId());
+			PasswordDomainEntity dce = getPasswordDomainEntityDao().findBySystem(dispatcher);
+			
+			getInternalPasswordService().storeAndForwardPassword(usuariEntity, dce, password, false);
+			for (FederationMemberEntity fm: getFederationMemberEntityDao().findFMByPublicId(identityProvider)) {
+				if (fm instanceof IdentityProviderEntity) {
+					IdentityProviderEntity idp = (IdentityProviderEntity) fm;
+					handleSendActivationEmail(usuari.getUserName(), url, idp.getOrganization());
+					usuari.setActive(false);
+				}
+			}
+		}
+
 		return usuari;
 	}
 
@@ -1672,20 +1680,7 @@ public class FederacioServiceImpl
 		usuari = getUserService().create(usuari);
 		for ( String key: additionalData2.keySet())
 		{
-    		Collection<DataType> l = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, key);
-    		if (l == null || l.isEmpty())
-    		{
-    			DataType tda = new DataType();
-    			tda.setCode(key);
-    			tda.setOrder(0L);
-    			tda.setType(TypeEnumeration.STRING_TYPE);
-    			tda.setScope(MetadataScope.USER);
-    			tda.setOperatorVisibility(AttributeVisibilityEnum.EDITABLE);
-    			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
-    			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
-
-    			tda = getAdditionalDataService().create(tda);
-    		}
+    		createDataType(key);
 
     		UserData dada = new UserData();
     		dada.setAttribute(key);
@@ -1696,35 +1691,23 @@ public class FederacioServiceImpl
 		return usuari;
 	}
 
-	@Override
-	protected User handleRegisterOpenidUser(String account,
-			String dispatcher, User usuari, Map additionalData) throws Exception {
-		long n = System.currentTimeMillis() % 1000000L;
-		String codi = (String) additionalData.get(EMAIL);
-		do
+	public void createDataType(String key) throws InternalErrorException {
+		Collection<DataType> l = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, key);
+		if (l == null || l.isEmpty())
 		{
-			User u2 = getUserService().findUserByUserName(codi);
-			if (u2 == null)
-			{
-				// Creates the user
-				usuari.setUserName(codi);
-				usuari = registerUser(usuari, additionalData, true);
-				// Creates the openid account
-				
-				SystemEntity de = getSystemEntityDao().findByName(dispatcher);
-				com.soffid.iam.api.System dvo = getSystemEntityDao().toSystem(de);
-				getAccountService().createAccount(usuari, dvo, account);
-				
-				break;
-			}
-			n++;
-			codi = usuari.getUserType();
-			codi = codi + n;
-		} while (true);
-		return usuari;
+			DataType tda = new DataType();
+			tda.setCode(key);
+			tda.setOrder(0L);
+			tda.setType(TypeEnumeration.STRING_TYPE);
+			tda.setScope(MetadataScope.USER);
+			tda.setOperatorVisibility(AttributeVisibilityEnum.EDITABLE);
+			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
+			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
+
+			tda = getAdditionalDataService().create(tda);
+		}
 	}
 
-	
 	@Override
 	protected String [] handleParsePkcs12(byte[] pkcs12, String password) throws Exception {
 		KeyStore store  = KeyStore.getInstance("PKCS12");
@@ -1787,6 +1770,7 @@ public class FederacioServiceImpl
 			delegate.setUserService(getUserService());
 			delegate.setSessionService ( getSessionService() );
 			delegate.setPasswordService(getPasswordService());
+			delegate.setBpmEngine(getBpmEngine());
 		}
 		return delegate;
 	}
@@ -1856,7 +1840,7 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected User handleFindAccountOwner(String principalName, String identityProvider, Map<String, Object> properties,
+	protected User handleFindAccountOwner(String principalName, String identityProvider, final String soffidIdentityProvider, Map<String, Object> properties,
 			boolean autoProvision)
 			throws Exception {
 		return getDelegate().findAccountOwner(principalName, identityProvider, properties, autoProvision);
@@ -1995,6 +1979,51 @@ public class FederacioServiceImpl
 			return null;
 		else
 			return getOauthTokenEntityDao().toOauthToken(entity);
+	}
+
+	@Override
+	protected boolean handleHasConsent(String userName, String serviceProvider) throws Exception {
+		UserEntity user = getUserEntityDao().findByUserName(userName);
+		if (user == null)
+			return true;
+		else
+		{
+			UserConsentEntity consent = getUserConsentEntityDao().findByUserIdAndServiceProvider(user.getId(), serviceProvider);
+			return consent != null;
+		}
+	}
+
+	@Override
+	protected Collection<UserConsent> handleFindUserConsents() throws Exception {
+		UserEntity user = getUserEntityDao().findByUserName(Security.getCurrentUser());
+		if (user == null)
+			new LinkedList<UserConsent>();
+		Collection<UserConsentEntity> c = getUserConsentEntityDao().findByUserId(user.getId());
+		return getUserConsentEntityDao().toUserConsentList(c);
+	}
+
+	@Override
+	protected void handleAddConsent(String userName, String serviceProvider) throws Exception {
+		UserEntity user = getUserEntityDao().findByUserName(userName);
+		if ( user != null) {
+			if (!handleHasConsent(userName, serviceProvider)) {
+				UserConsentEntity uc = getUserConsentEntityDao().newUserConsentEntity();
+				uc.setUserId(user.getId());
+				uc.setServiceProvider(serviceProvider);
+				uc.setDate(new Date());
+				getUserConsentEntityDao().create(uc);
+			}
+		}
+	}
+
+	@Override
+	protected void handleDeleteUserConsent(UserConsent userConsent) throws Exception {
+		UserEntity user = getUserEntityDao().findByUserName(Security.getCurrentUser());
+		if ( user != null && user.getId().equals(userConsent.getUserId())) {
+			UserConsentEntity uc = getUserConsentEntityDao().findByUserIdAndServiceProvider(user.getId(), userConsent.getServiceProvider());
+			if (uc != null)
+				getUserConsentEntityDao().remove(uc);
+		}
 	}
 
 }

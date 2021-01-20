@@ -73,7 +73,7 @@ public class TextFormatter {
                     try {
                         value = rb.getString(tag);
                     } catch (MissingResourceException e) {
-                        value = "[[" + tag + "]]"; //$NON-NLS-1$ //$NON-NLS-2$
+                        value = ""; //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
                 else 
@@ -81,7 +81,8 @@ public class TextFormatter {
                 	if (!raw)
                 		value = value.replace("&", "&amp;").replace("'", "&apos;") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                             .replace("\"", "&quot;").replace("<", "&lt;") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                            .replace(">", "&gt;"); //$NON-NLS-1$ //$NON-NLS-2$
+                            .replace(">", "&gt;")
+                            .replace("\n", "<BR>"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
                 b.append(value);
 

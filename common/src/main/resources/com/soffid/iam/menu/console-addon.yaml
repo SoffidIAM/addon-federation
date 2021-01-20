@@ -1,0 +1,10 @@
+- name: soffid.admin
+  img: /img/menu/laboratory.svg
+  options:
+  - name: seu.configuration
+    options:
+    - name: federation.submenu
+      url: addon/federation/federacio-3.zul
+      img: /addon/federation/img/federation.svg
+      permissions: ["seu:federacioIdentitats:show"]
+            

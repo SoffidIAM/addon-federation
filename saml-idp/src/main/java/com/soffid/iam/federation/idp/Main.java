@@ -78,6 +78,8 @@ import es.caib.seycon.idp.ui.ActivatedFormServlet;
 import es.caib.seycon.idp.ui.AuthenticatedFilter;
 import es.caib.seycon.idp.ui.CancelAction;
 import es.caib.seycon.idp.ui.CertificateAction;
+import es.caib.seycon.idp.ui.ConsentAction;
+import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.DefaultServlet;
 import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.idp.ui.LogFilter;
@@ -108,8 +110,6 @@ import es.caib.seycon.idp.ui.UserPasswordAction;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
-import es.caib.seycon.idp.ui.openid.OpenIdRequestAction;
-import es.caib.seycon.idp.ui.openid.OpenIdResponseAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
@@ -454,6 +454,8 @@ public class Main {
 	        ctx.addServlet(servlet, "/.well-known/jwks.json"); //$NON-NLS-1$
         }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
+        ctx.addServlet(ConsentAction.class, ConsentAction.URI);
+        ctx.addServlet(ConsentFormServlet.class, ConsentFormServlet.URI);
         ctx.addServlet(RegisterCredential.class, RegisterCredential.URI);
         ctx.addServlet(ValidateCredential.class, ValidateCredential.URI);
         ctx.addServlet(CancelAction.class, CancelAction.URI);
@@ -479,8 +481,6 @@ public class Main {
         ctx.addServlet(PasswordRecoveryForm.class, PasswordRecoveryForm.URI);
         ctx.addServlet(PasswordRecoveryAction2.class, PasswordRecoveryAction2.URI);
         ctx.addServlet(SessionCallbackServlet.class, SessionCallbackServlet.URI);
-        ctx.addServlet(OpenIdRequestAction.class, OpenIdRequestAction.URI);
-        ctx.addServlet(OpenIdResponseAction.class, OpenIdResponseAction.URI);
         ctx.addServlet(OauthRequestAction.class, OauthRequestAction.URI);
         ctx.addServlet(OauthResponseAction.class, OauthResponseAction.URI);
         

@@ -114,7 +114,7 @@ public class MetadataGenerator extends HttpServlet {
         Collection entityGroups = federacioService.findEntityGroupByNom("%");
         Element element = doc.createElementNS(METADATA_NAMESPACE, "EntitiesDescriptor");
         element.setAttribute("Name", "All Entities");
-        element.setAttribute("cacheDuration", "PT10M");
+        element.setAttribute("cacheDuration", "PT01M");
         doc.appendChild(element);
         
         for (java.util.Iterator it = entityGroups.iterator(); it.hasNext(); )

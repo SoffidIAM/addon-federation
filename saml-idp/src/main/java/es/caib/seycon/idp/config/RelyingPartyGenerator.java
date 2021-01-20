@@ -145,6 +145,8 @@ public class RelyingPartyGenerator {
         Element spmdNode = doc.createElementNS(METADATA_NAMESPACE,
                 "MetadataProvider"); //$NON-NLS-1$
         mdNode.appendChild(spmdNode);
+        spmdNode.setAttribute("minRefreshDelay",  "PT15S"); //$NON-NLS-1$ //$NON-NLS-2$
+        spmdNode.setAttribute("maxRefreshDelay", "PT1M"); //$NON-NLS-1$ //$NON-NLS-2$
         spmdNode.setAttribute("id", "Global-Metadata"); //$NON-NLS-1$ //$NON-NLS-2$
         spmdNode.setAttribute("xsi:type", //$NON-NLS-1$
                 "metadata:ResourceBackedMetadataProvider"); //$NON-NLS-1$

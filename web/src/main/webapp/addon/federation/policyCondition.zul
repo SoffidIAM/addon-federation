@@ -298,8 +298,8 @@
 	event.stopPropagation();
 </attribute>
 
-		<detalls id="dades" width="99%">
-			<form id="form" width="100%">
+		<detalls id="dades">
+			<form id="form">
 				<grid>
 					<columns visible="false">
 						<column width="100px"/>

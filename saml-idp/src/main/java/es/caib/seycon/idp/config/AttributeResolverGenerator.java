@@ -82,7 +82,23 @@ public class AttributeResolverGenerator {
     	for ( Attribute att: new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null))
     	{
     		
-    		if ( ! att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.3") && // mail
+    		if ( att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.3") ) {
+    			Element node = doc.getElementById("mail");
+	            node.setAttribute("sourceAttributeID", att.getShortName().toLowerCase()); //$NON-NLS-1$
+    		}
+    		else if ( att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.2") ) {
+    			Element node = doc.getElementById("SessionKey");
+	            node.setAttribute("sourceAttributeID", att.getShortName().toLowerCase()); //$NON-NLS-1$
+    		}
+    		else if ( att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.6") ) {
+    			Element node = doc.getElementById("Secrets");
+	            node.setAttribute("sourceAttributeID", att.getShortName().toLowerCase()); //$NON-NLS-1$
+    		}
+    		else if ( att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.1") ) {
+    			Element node = doc.getElementById("uid");
+	            node.setAttribute("sourceAttributeID", att.getShortName().toLowerCase()); //$NON-NLS-1$
+    		}
+    		else if ( ! att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.3") && // mail
     			!att.getOid().equals("urn:oid:0.9.2342.19200300.100.1.1") && 
     			!att.getOid().equals("urn:oid:1.3.6.1.4.1.22896.3.1.2") &&
     			!att.getShortName().equalsIgnoreCase("secrets")) 

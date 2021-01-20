@@ -71,6 +71,7 @@ public class UpdateConfigurationThread extends Thread {
                     generateAttributeFilter();
                     generateAttributeResolver();
                 }
+                cfg.updateFederationMember();
             } catch (Exception e) {
                 log.warn("Error testing for policy/federation changes", e);  //$NON-NLS-1$
             } 

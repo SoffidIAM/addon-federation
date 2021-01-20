@@ -7,15 +7,19 @@
 package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
+import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.model.SamlRequestEntity;
+import com.soffid.iam.service.MailService;
 import com.soffid.mda.annotation.*;
 
+import es.caib.bpm.servei.BpmEngine;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.DispatcherService;
@@ -24,6 +28,7 @@ import es.caib.seycon.ng.servei.DominiUsuariService;
 import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.servei.UsuariService;
 import es.caib.seycon.ng.sync.servei.LogonService;
+import roles.Tothom;
 
 import java.util.Collection;
 import java.util.List;
@@ -86,7 +91,10 @@ import org.springframework.transaction.annotation.Transactional;
 	KerberosKeytabEntity.class,
 	AuthenticationMethodEntity.class,
 	UserBehaviorService.class,
-	OauthTokenEntity.class
+	OauthTokenEntity.class,
+	MailService.class,
+	BpmEngine.class,
+	UserConsentEntity.class
 })
 public abstract class FederacioService {
 
@@ -407,8 +415,6 @@ public abstract class FederacioService {
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void sendActivationEmail(
 		java.lang.String user, 
-		java.lang.String mailHost, 
-		java.lang.String from, 
 		java.lang.String activationUrl, 
 		java.lang.String organizationName)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
@@ -422,8 +428,6 @@ public abstract class FederacioService {
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void sendRecoverEmail(
 		java.lang.String email, 
-		java.lang.String mailHost, 
-		java.lang.String from, 
 		java.lang.String activationUrl, 
 		java.lang.String organizationName)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
@@ -434,8 +438,11 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
+
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public es.caib.seycon.ng.comu.Usuari registerUser(
+		String identityProvider,
+		String url,
 		java.lang.String dispatcher, 
 		es.caib.seycon.ng.comu.Usuari usuari, 
 		java.util.Map additionalData, 
@@ -443,17 +450,6 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-
-	@Transactional(rollbackFor={java.lang.Exception.class})
-	public es.caib.seycon.ng.comu.Usuari registerOpenidUser(
-		java.lang.String account, 
-		java.lang.String dispatcher, 
-		es.caib.seycon.ng.comu.Usuari usuari, 
-		java.util.Map additionalData)
-		throws es.caib.seycon.ng.exception.InternalErrorException {
-	 return null;
-	}
-	
 
 	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Generates a SAML request to formard to the IdP")
@@ -497,7 +493,8 @@ public abstract class FederacioService {
 
 	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Creates a virtual IdP session")
-	Usuari findAccountOwner(String principalName, String identityProvider, 
+	Usuari findAccountOwner(String principalName, String identityProvider,
+			String soffidIdentityProvider,
 			Map<String, Object> properties, boolean autoProvision) {return null;}
 
 	
@@ -508,4 +505,11 @@ public abstract class FederacioService {
 	OauthToken findOauthTokenByAuthorizationCode(String idp, String authorizationCode) {return null;}
 	OauthToken findOauthTokenByToken(String idp, String token) {return null;}
 	OauthToken findOauthTokenByRefreshToken(String idp, String token) {return null;}
+	
+	/* Consent */
+	boolean hasConsent(String userName, String serviceProvider) {return false;}
+	void addConsent(String userName, String serviceProvider) {}
+	@Operation(grantees= {Tothom.class}) Collection<UserConsent> findUserConsents(){ return null;}
+	@Operation(grantees= {Tothom.class}) void deleteUserConsent(UserConsent userConsent){}
+	
 }

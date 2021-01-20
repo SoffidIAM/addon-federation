@@ -33,6 +33,11 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public boolean allowRegister;
 
+	@Description ("Workflow for new user aproval")
+	@Nullable
+	@Column (name="FED_REGBPM")
+	String registerWorkflow;
+
 	@Column (name="ALLOW_RECOVER")
 	@Nullable
 	public boolean allowRecover;
@@ -77,5 +82,8 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public String ssoCookieName;
 
+	@Column (name="FED_CONSEN")
+	@Nullable
+	public Boolean consent;
 }
 

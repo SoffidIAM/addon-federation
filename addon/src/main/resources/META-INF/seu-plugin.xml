@@ -24,6 +24,7 @@
 			<userInterface>IDPAgent.zul</userInterface>
 			<enableAccessControl>N</enableAccessControl>
 			<enableAttributeMapping>true</enableAttributeMapping>
+			<service>true</service>
 		</agent>
 	</agents>	
 </SoffidIAMPlugin>

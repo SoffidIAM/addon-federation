@@ -151,9 +151,6 @@ public class AuthorizationResponse  {
 			if ( r.getState() != null)
 				sb.append("&state=")
 				.append( URLEncoder.encode(r.getState() , "UTF-8"));
-			if ( r.getNonce() != null)
-				sb.append("&nonce=")
-				.append( URLEncoder.encode(r.getNonce() , "UTF-8"));
 			response.sendRedirect(sb.toString());
 		} else {
 			ServletOutputStream out = response.getOutputStream();

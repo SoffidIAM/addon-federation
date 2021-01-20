@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Soffid SAML Identity Provider</title>
+	
+	<!-- css -->
+	<link href="estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
+	<!-- /css -->
+	
+	<script src="js/jquery-1.3.2.min.js"></script>
+</head>
+
+<body>
+	<div id="language">
+		<ul class="qtrans_language_chooser" id="qtranslate-chooser">
+			<li class="lang-en ${lang.active.en}"><a href="${refreshUrl}?lang=en" hreflang="en" title="English"><span>English</span></a></li>
+			<li class="lang-es ${lang.active.es}"><a href="${refreshUrl}?lang=es" hreflang="es" title="Español"><span>Español</span></a></li>
+			<li class="lang-ca ${lang.active.ca}"><a href="${refreshUrl}?lang=ca" hreflang="ca" title="Català"><span>Català</span></a></li>
+		</ul>
+	</div>
+	
+	<div class="login">
+		<div class="loginbox"> 
+			<p class="header">${consent.title}</p>
+			<div id="registerlogin" class="nologintype">
+				<div class="upinput">
+					<p>${consent1}</p>
+					<p style="text-align:center"><b>${serviceProvider}</b></p>
+					<p>${consent2}</p>
+					<p><b>${raw:attributes}</b></p>
+				</div>
+				<div class="upbutton" style="margin-top: 25px">
+					<form method="post" action="${consentUrl}" style="display:inline-block; float: left;">
+						<input name="accept" type="hidden" value="true" />
+						<input type="submit" value="${register.accept}" onClick="window.location='${loginPage}'"/>
+					</form>
+					<form method="post" action="${consentUrl}" style="display:inline-block">
+						<input name="accept" type="hidden" value="false" />
+						<input type="submit" value="${register.Cancel}"/>
+					</form>
+				</div>
+			</div>
+			<p>
+		</div>
+		<p/>
+	</div>
+
+</body>
+</html>
