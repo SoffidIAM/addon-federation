@@ -17,11 +17,8 @@ import es.caib.seycon.idp.oauth.consumer.FacebookConsumer;
 import es.caib.seycon.idp.oauth.consumer.GoogleConsumer;
 import es.caib.seycon.idp.oauth.consumer.LinkedinConsumer;
 import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
-import es.caib.seycon.idp.oauth.consumer.OAuthConsumer;
 import es.caib.seycon.idp.oauth.consumer.OpenidConnectConsumer;
-import es.caib.seycon.idp.openid.consumer.OpenidConsumer;
 import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 
 public class OauthRequestAction extends HttpServlet {
