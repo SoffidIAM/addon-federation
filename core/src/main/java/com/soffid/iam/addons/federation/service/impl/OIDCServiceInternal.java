@@ -136,6 +136,8 @@ public class OIDCServiceInternal extends AbstractFederationService {
 			else
 				throw new InternalErrorException("Unsupported identity provider "+ idp.getIdpType().toString());
 	
+			c.setRequestedUser(userName);
+			
 			String newID = c.secretState;
 			SamlRequest r = new SamlRequest();
 			c.authRequest(r);

@@ -47,6 +47,7 @@ public class OauthRequestAction extends HttpServlet {
 	private void process(HttpServletRequest req, HttpServletResponse resp,
 			String id) throws ServletException, IOException {
 		HttpSession session = req.getSession();
+		String user = req.getParameter("user");
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 
 		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
@@ -82,6 +83,8 @@ public class OauthRequestAction extends HttpServlet {
 	        	else if (fm.getIdpType().equals(IdentityProviderType.OPENID_CONNECT))
 	        		consumer = new OpenidConnectConsumer(fm);
 	        }
+	        if (user != null)
+	        	consumer.setRequestedUser(user);
 	        
 	        if (consumer == null)
 	        {
