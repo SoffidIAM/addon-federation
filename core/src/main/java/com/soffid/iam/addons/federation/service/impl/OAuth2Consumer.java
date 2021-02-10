@@ -93,6 +93,7 @@ public abstract class OAuth2Consumer implements Serializable {
 	protected Map<String, Object> attributes = new HashMap<String, Object>();
 	protected String principal;
 	private FederationMember sp;
+	protected Map<String, String> params = new HashMap<String, String>();
 	
 	public OAuth2Consumer(FederationMember sp, FederationMember idp) throws 
 			UnrecoverableKeyException, InvalidKeyException,
@@ -118,7 +119,7 @@ public abstract class OAuth2Consumer implements Serializable {
 	 {
 	    requestToken = null;
 	    try {
-    		String s = ((OAuth20Service) service).getAuthorizationUrl();
+    		String s = ((OAuth20Service) service).getAuthorizationUrl(params);
     		req.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
     		req.setUrl(s);
     		consumers.put(secretState, this);
