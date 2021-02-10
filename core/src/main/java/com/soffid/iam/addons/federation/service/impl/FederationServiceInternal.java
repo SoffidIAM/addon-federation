@@ -388,7 +388,7 @@ public class FederationServiceInternal {
 			log.info("checkIdpCookie() - id: "+id);
 			for (Session sessio: sessionService.getActiveSessions(id))
 			{
-				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
 				log.info("checkIdpCookie() - digest: "+digest);
 				String digestString = Base64.encodeBytes(digest);
 				log.info("checkIdpCookie() - digestString: "+digestString);
@@ -809,7 +809,7 @@ public class FederationServiceInternal {
 			Long id = Long.decode(value.substring(0, separator));
 			for (Session sessio: sessionService.getActiveSessions(id))
 			{
-				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
 				String digestString = Base64.encodeBytes(digest);
 				if (digestString.equals(hash))
 				{

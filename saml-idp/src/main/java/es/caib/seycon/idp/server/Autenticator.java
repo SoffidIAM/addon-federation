@@ -196,7 +196,7 @@ public class Autenticator {
 			for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
 			{
 //				LOG.info("Checking session cookie against session "+sessio.getId());
-				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
 				String digestString = Base64.encodeBytes(digest);
 				if (digestString.equals(hash))
 				{
@@ -243,7 +243,7 @@ public class Autenticator {
 
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
-        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+        	byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
         	String digestString = Base64.encodeBytes(digest);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
@@ -513,7 +513,7 @@ public class Autenticator {
 
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
-        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(session.getKey().getBytes("UTF-8"));
+        	byte digest[] = MessageDigest.getInstance("SHA-256").digest(session.getKey().getBytes("UTF-8"));
         	String digestString = Base64.encodeBytes(digest);
         	User user = ServiceLocator.instance().getServerService().getUserInfo(session.getUserName(), null);
         	String value = user.getId().toString()+"_"+digestString;
