@@ -13,6 +13,7 @@ import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederacioService;
 
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.oauth.consumer.FacebookConsumer;
 import es.caib.seycon.idp.oauth.consumer.GoogleConsumer;
 import es.caib.seycon.idp.oauth.consumer.LinkedinConsumer;
@@ -83,8 +84,10 @@ public class OauthRequestAction extends HttpServlet {
 	        	else if (fm.getIdpType().equals(IdentityProviderType.OPENID_CONNECT))
 	        		consumer = new OpenidConnectConsumer(fm);
 	        }
-	        if (user != null)
+	        if (user != null) {
+	        	user = IdpConfig.getConfig().getFederationService().getLoginHint(id, user);
 	        	consumer.setRequestedUser(user);
+	        }
 	        
 	        if (consumer == null)
 	        {
