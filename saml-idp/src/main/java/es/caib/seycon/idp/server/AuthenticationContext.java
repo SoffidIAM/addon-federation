@@ -342,7 +342,7 @@ public class AuthenticationContext {
 	public void authenticationFailure (String u) throws IOException, InternalErrorException
 	{
 		feedRatio(true);
-		if (u != null)
+		if (u!=null && currentUser!=null)
 		{
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			long f = ubh.getUserFailures(currentUser.getId());
