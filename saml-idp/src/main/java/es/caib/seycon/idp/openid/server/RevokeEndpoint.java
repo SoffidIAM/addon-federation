@@ -44,7 +44,7 @@ public class RevokeEndpoint extends HttpServlet {
 		String token = req.getParameter("token");
 		String authentication = req.getHeader("Authorization");
 		
-		TokenHandler th = new TokenHandler();
+		TokenHandler th = TokenHandler.instance();
 		try {
 			TokenInfo t = null;
 			if ("refresh_token".equals(token_type_hint)) {
@@ -55,8 +55,9 @@ public class RevokeEndpoint extends HttpServlet {
 			
 			if ( t != null) {
 				FederationMember sp = t.getRequest().getFederationMember();
-				String expectedAuth = sp.getOpenidClientId()+":"+sp.getOpenidSecret();
-				
+				Password pass = Password.decode(sp.getOpenidSecret());
+				String expectedAuth = sp.getOpenidClientId()+":"+pass.getPassword();
+
 				expectedAuth = "Basic "+Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
 				if (! expectedAuth.equals(authentication))
 				{
