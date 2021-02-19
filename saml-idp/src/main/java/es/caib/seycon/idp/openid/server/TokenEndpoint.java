@@ -36,173 +36,161 @@ public class TokenEndpoint extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	Log log = LogFactory.getLog(getClass());
-	
+
 	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
-	{
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String authorizationCode = req.getParameter("code");
 		String authentication = req.getHeader("Authorization");
 		String grantType = req.getParameter("grant_type");
-		if (grantType == null)
-		{
-			buildError (resp, "invalid_request", "Missing grant type parameter");
-		}
-		else if (grantType.equals("authorization_code"))
-		{
+		if (grantType == null) {
+			buildError(resp, "invalid_request", "Missing grant type parameter");
+		} else if (grantType.equals("authorization_code")) {
 			grantCode(req, resp, authorizationCode, authentication);
 		} else if ("password".equals(grantType)) {
 			passwordGrant(req, resp, authentication);
 		} else if ("refresh_token".equals(grantType)) {
 			refreshToken(req, resp, authentication);
-		}
-		else
-		{
-			buildError (resp, "invalid_request", "Invalid grant type "+grantType);
+		} else {
+			buildError(resp, "invalid_request", "Invalid grant type " + grantType);
 		}
 	}
 
-	private void passwordGrant(HttpServletRequest req, HttpServletResponse resp, String authentication) throws IOException, ServletException {
+	private void passwordGrant(HttpServletRequest req, HttpServletResponse resp, String authentication)
+			throws IOException, ServletException {
 		try {
 			IdpConfig config = IdpConfig.getConfig();
 			String username = req.getParameter("username");
 			String password = req.getParameter("password");
 			String clientId = req.getParameter("client_id");
-			String clientSecret = null;
+			String clientSecret = req.getParameter("client_secret");
 
 			TokenHandler h = TokenHandler.instance();
 			OpenIdRequest request = new OpenIdRequest();
-			
-			if (authentication != null &&
-					authentication.toLowerCase().startsWith("basic "))
-			{
-				String decoded = new String (Base64.decode(authentication.substring(6)), "UTF-8");
+
+			if (authentication != null && authentication.toLowerCase().startsWith("basic ")) {
+				String decoded = new String(Base64.decode(authentication.substring(6)), "UTF-8");
 				String clientId2 = decoded.substring(0, decoded.indexOf(":"));
-				if (clientId != null && ! clientId.equals(clientId2))
-				{
-					buildError (resp, "invalid_request", "Client id and credentials mismatch");
+				if (clientId != null && !clientId.equals(clientId2)) {
+					buildError(resp, "invalid_request", "Client id and credentials mismatch");
 					return;
-				}
-				else
+				} else
 					clientId = clientId2;
 			}
 			request.setClientId(clientId);
-			if (clientId == null || clientId.isEmpty())
-			{
-				if (authentication == null)
-				{
+			if (clientId == null || clientId.isEmpty()) {
+				if (authentication == null) {
 					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 					resp.setHeader("WWW-Authenticate", "Basic realm=\"Client credentials\"");
-				}
-				else
-				{
-					buildError (resp, "invalid_request", "Missing client id parameter");
+				} else {
+					buildError(resp, "invalid_request", "Missing client id parameter");
 				}
 				return;
 			}
 
-			request.setFederationMember( config.getFederationService().findFederationMemberByClientID(request.getClientId()) );
-			if (request.getFederationMember() == null)
-			{
-				buildError (resp, "unauthorized_client", "Wrong client id");
+			request.setFederationMember(
+					config.getFederationService().findFederationMemberByClientID(request.getClientId()));
+			if (request.getFederationMember() == null) {
+				buildError(resp, "unauthorized_client", "Wrong client id");
 				return;
 			}
 
 			if (request.getFederationMember().getOpenidMechanism().contains("PA")) {
 				// Accept request
-				log.info("Accepted mechanism PA for "+request.getFederationMember().getPublicId());
-			} 
-			else if (request.getFederationMember().getOpenidMechanism().contains("PC"))
-			{
-				if (authentication == null)
-				{
-					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					resp.setHeader("WWW-Authenticate", "Basic realm=\"Client credentials\"");
-					return;
-				}
+				log.info("Accepted mechanism PA for " + request.getFederationMember().getPublicId());
+			} else if (request.getFederationMember().getOpenidMechanism().contains("PC")) {
 				Password pass = Password.decode(request.getFederationMember().getOpenidSecret());
-				String expectedAuth = request.getFederationMember().getOpenidClientId()+":"+
-						pass.getPassword();
-				
-				expectedAuth = Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
-				if (!authentication.toLowerCase().startsWith("basic ") ||
-						! expectedAuth.equals(authentication.substring(6)))
-				{
-					buildError (resp, "invalid_client", "Wrong client credentials");
-					return;
+				if (clientId != null && clientSecret != null) {
+					if (!pass.getPassword().equals(clientSecret)) {
+						buildError(resp, "invalid_client", "Wrong client credentials");
+						return;
+					}
+				} else {
+					if (authentication == null) {
+						resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+						resp.setHeader("WWW-Authenticate", "Basic realm=\"Client credentials\"");
+						return;
+					}
+					String expectedAuth = request.getFederationMember().getOpenidClientId() + ":" + pass.getPassword();
+
+					expectedAuth = Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+					if (!authentication.toLowerCase().startsWith("basic ")
+							|| !expectedAuth.equals(authentication.substring(6))) {
+						buildError(resp, "invalid_client", "Wrong client credentials");
+						return;
+					}
 				}
-				log.info("Accepted mechanism PC for "+request.getFederationMember().getPublicId()+" / "+authentication);
+				log.info("Accepted mechanism PC for " + request.getFederationMember().getPublicId() + " / "
+						+ authentication);
 			} else {
-				buildError (resp, "unsupported_grant_type", "Not authorized to use password grant type");
-				return;				
+				buildError(resp, "unsupported_grant_type", "Not authorized to use password grant type");
+				return;
 			}
-			
-			TokenInfo t = h.generateAuthenticationRequest(request , username, authentication);
+
+			TokenInfo t = h.generateAuthenticationRequest(request, username, authentication);
 
 			if (username == null || username.trim().isEmpty()) {
-        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-	    		if (ctx != null)
-	    		{
-	    			try {
+				AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+				if (ctx != null) {
+					try {
 						ctx.authenticationFailure(username);
 					} catch (InternalErrorException e) {
 					}
-	    		}
-				buildError (resp, "invalid_client", "Wrong user credentials. Missing username parameter");
+				}
+				buildError(resp, "invalid_client", "Wrong user credentials. Missing username parameter");
 				return;
-			} else if ( password == null || password.trim().isEmpty() ) {
-        		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-	    		if (ctx != null)
-	    		{
-	    			try {
+			} else if (password == null || password.trim().isEmpty()) {
+				AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+				if (ctx != null) {
+					try {
 						ctx.authenticationFailure(username);
 					} catch (InternalErrorException e) {
 					}
-	    		}
-				buildError (resp, "invalid_client", "Wrong user credentials. Missing password parameter");
+				}
+				buildError(resp, "invalid_client", "Wrong user credentials. Missing password parameter");
 				return;
 			} else {
 				AuthenticationContext authCtx = new AuthenticationContext();
 				authCtx.setPublicId(request.getFederationMember().getPublicId());
 				authCtx.initialize(req);
-				if (authCtx.getAllowedAuthenticationMethods().contains("P"))
-				{
-		            PasswordManager v = new PasswordManager();
+				if (authCtx.getAllowedAuthenticationMethods().contains("P")) {
+					PasswordManager v = new PasswordManager();
 
-		            LogRecorder logRecorder = LogRecorder.getInstance();
-		            if (v.validate(username, new Password(password))) {
-		            	if (!v.mustChangePassword()) {
-		                    logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.7"), req.getRemoteAddr()); //$NON-NLS-1$
-			            	authCtx.authenticated(username, "P", resp);
-			            	t.setUser(username);
-			            	t.setAuthenticationMethod("P");
-			            	
-		            	} else {
-		            		authCtx.authenticationFailure(username);
-		                    logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
-		                    buildError(resp, "invalid_grant", "Password is expired");
-		                    return;
-		                }
-		            } else {
-		                logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
-		                buildError(resp, "invalid_grant", "Invalid username or password");
-		                return;
-		            }
-				}
-				else
-				{
-					buildError (resp, "invalid_request", "Password authentication is not allowed");
+					LogRecorder logRecorder = LogRecorder.getInstance();
+					if (v.validate(username, new Password(password))) {
+						if (!v.mustChangePassword()) {
+							logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.7"), //$NON-NLS-1$
+									req.getRemoteAddr());
+							authCtx.authenticated(username, "P", resp);
+							t.setUser(username);
+							t.setAuthenticationMethod("P");
+
+						} else {
+							authCtx.authenticationFailure(username);
+							logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
+									req.getRemoteAddr());
+							buildError(resp, "invalid_grant", "Password is expired");
+							return;
+						}
+					} else {
+						logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
+								req.getRemoteAddr());
+						buildError(resp, "invalid_grant", "Invalid username or password");
+						return;
+					}
+				} else {
+					buildError(resp, "invalid_request", "Password authentication is not allowed");
 					return;
 				}
 			}
-	
+
 			try {
-				h.generateToken (t);
+				h.generateToken(t);
 			} catch (Exception e) {
 				log.info("Error generating token", e);
-				buildError (resp, "server_error", "Internal error "+e.toString());
+				buildError(resp, "server_error", "Internal error " + e.toString());
 				return;
 			}
-			
+
 			generatTokenResponse(resp, h, t);
 		} catch (Exception e) {
 			log.warn("Error generating token response", e);
@@ -212,39 +200,47 @@ public class TokenEndpoint extends HttpServlet {
 
 	private void grantCode(HttpServletRequest req, HttpServletResponse resp, String authorizationCode,
 			String authentication) throws IOException, ServletException, UnsupportedEncodingException {
+		String clientId = req.getParameter("client_id");
+		String clientSecret = req.getParameter("client_secret");
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo t = null;
 		try {
-			t = h.getAuthorizationCode (authorizationCode);
-			if ( t == null)
-			{
-				buildError (resp, "invalid_grant", "Invalid authorization code");
+			t = h.getAuthorizationCode(authorizationCode);
+			if (t == null) {
+				buildError(resp, "invalid_grant", "Invalid authorization code");
 				return;
 			}
-			
+
 			Password pass = Password.decode(t.getRequest().getFederationMember().getOpenidSecret());
-			
-			String expectedAuth = t.getRequest().getFederationMember().getOpenidClientId()+":"+
-					pass.getPassword();
-			
-			expectedAuth = "Basic "+Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
-			if (! expectedAuth.equals(authentication))
-			{
-				buildError (resp, "unauthorized_client", "Wrong client credentials", t);
-				return;
+
+			if (clientId != null && clientSecret != null) {
+				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())
+						|| !clientSecret.equals(pass.getPassword())) {
+					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+					return;
+				}
+			} else {
+				String expectedAuth = t.getRequest().getFederationMember().getOpenidClientId() + ":"
+						+ pass.getPassword();
+
+				expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+				if (!expectedAuth.equals(authentication)) {
+					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+					return;
+				}
+
 			}
-			
-			h.generateToken (t);
+			h.generateToken(t);
+			generatTokenResponse(resp, h, t);
 		} catch (Exception e) {
 			log.info("Error generating token", e);
-			buildError (resp, "Internal error "+e.toString(), t);
+			buildError(resp, "Internal error " + e.toString(), t);
 			return;
 		}
-		
-		generatTokenResponse(resp, h, t);
+
 	}
 
-	private void refreshToken(HttpServletRequest req, HttpServletResponse resp, String authentication) 
+	private void refreshToken(HttpServletRequest req, HttpServletResponse resp, String authentication)
 			throws IOException, ServletException, UnsupportedEncodingException {
 		String refreshToken = req.getParameter("refresh_token");
 
@@ -255,40 +251,38 @@ public class TokenEndpoint extends HttpServlet {
 		TokenInfo t = null;
 		try {
 			t = h.getRefreshToken(refreshToken);
-			if ( t == null)
-			{
-				buildError (resp, "invalid_grant", "Invalid refresh token");
+			if (t == null) {
+				buildError(resp, "invalid_grant", "Invalid refresh token");
 				return;
 			}
-			
+
 			FederationMember federationMember = t.getRequest().getFederationMember();
 			Password pass = Password.decode(federationMember.getOpenidSecret());
-			
-			String expectedAuth = federationMember.getOpenidClientId()+":"+pass.getPassword();
-			
-			expectedAuth = "Basic "+Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
-			if (! expectedAuth.equals(authentication))
-			{
-				buildError (resp, "unauthorized_client", "Wrong client credentials", t);
+
+			String expectedAuth = federationMember.getOpenidClientId() + ":" + pass.getPassword();
+
+			expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			if (!expectedAuth.equals(authentication)) {
+				buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 				return;
 			}
-			
+
 			h.renewToken(t);
 		} catch (Exception e) {
 			log.info("Error generating token", e);
-			buildError (resp, "Internal error "+e.toString(), t);
+			buildError(resp, "Internal error " + e.toString(), t);
 			return;
 		}
-		
+
 		generatTokenResponse(resp, h, t);
 	}
 
 	private void generatTokenResponse(HttpServletResponse resp, TokenHandler h, TokenInfo t)
 			throws IOException, ServletException {
-		Map<String, Object>att  ;
+		Map<String, Object> att;
 		try {
-			att = new UserAttributesGenerator().generateAttributes ( getServletContext(), t );
-			String token = h.generateIdToken (t, att);
+			att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
+			String token = h.generateIdToken(t, att);
 			JSONObject o = new JSONObject();
 			o.put("access_token", t.token);
 			o.put("token_type", "Bearer");
@@ -323,15 +317,18 @@ public class TokenEndpoint extends HttpServlet {
 		buildError(resp, "server_error", string, null);
 	}
 
-	private void buildError(HttpServletResponse resp, String string, TokenInfo ti) throws IOException, ServletException {
+	private void buildError(HttpServletResponse resp, String string, TokenInfo ti)
+			throws IOException, ServletException {
 		buildError(resp, "server_error", string, ti);
 	}
 
-	private void buildError(HttpServletResponse resp, String error, String description) throws IOException, ServletException {
+	private void buildError(HttpServletResponse resp, String error, String description)
+			throws IOException, ServletException {
 		buildError(resp, error, description, null);
 	}
 
-	private void buildError(HttpServletResponse resp, String error, String description, TokenInfo ti) throws IOException, ServletException {
+	private void buildError(HttpServletResponse resp, String error, String description, TokenInfo ti)
+			throws IOException, ServletException {
 		JSONObject o = new JSONObject();
 		try {
 			o.put("error", error);
@@ -339,24 +336,24 @@ public class TokenEndpoint extends HttpServlet {
 			if (ti != null && ti.request != null && ti.request.state != null)
 				o.put("state", ti.request.state);
 		} catch (JSONException e) {
-			throw new ServletException("Error generating error message "+description, e);
+			throw new ServletException("Error generating error message " + description, e);
 		}
 		resp.setContentType("application/json");
 		resp.addHeader("Cache-control", "no-store");
 		resp.addHeader("Pragma", "no-cache");
 		resp.setStatus(400);
 		ServletOutputStream out = resp.getOutputStream();
-		out.print( o.toString() );
+		out.print(o.toString());
 		out.close();
 	}
 
-	private void buildResponse (HttpServletResponse resp, JSONObject o) throws IOException {
+	private void buildResponse(HttpServletResponse resp, JSONObject o) throws IOException {
 		resp.setContentType("application/json");
 		resp.addHeader("Cache-control", "no-store");
 		resp.addHeader("Pragma", "no-cache");
 		resp.setStatus(200);
 		ServletOutputStream out = resp.getOutputStream();
-		out.print( o.toString() );
+		out.print(o.toString());
 		out.close();
 	}
 
