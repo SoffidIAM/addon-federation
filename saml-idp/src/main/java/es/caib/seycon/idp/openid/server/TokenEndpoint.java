@@ -210,7 +210,6 @@ public class TokenEndpoint extends HttpServlet {
 				buildError(resp, "invalid_grant", "Invalid authorization code");
 				return;
 			}
-
 			Password pass = Password.decode(t.getRequest().getFederationMember().getOpenidSecret());
 
 			if (clientId != null && clientSecret != null) {

@@ -21,6 +21,13 @@ public class OpenIdRequest {
 	FederationMember federationMember;
 	private HashSet<String> responseTypeSet;
 	
+	public String toString() {
+		return "[Scope: "+scope+", ClientId: "+clientId+", ResponseType: "+responseType+", RedirectURL: "+redirectUrl+
+				", State: "+state+", Nonce: "+nonce+", Display: "+display+", Prompt: "+prompt+", MaxAge: "+maxAge
+				+", uiLocales: "+uiLocales+", IdTokenHint: "+idTokenHint+", LoginHint: "+loginHint+", acrValues:"+acrValues+"]" ;
+	}
+	
+
 	public String getScope() {
 		return scope;
 	}

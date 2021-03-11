@@ -22,6 +22,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.BaseForm;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 
 public class SAMLSSORequest extends BaseForm {
@@ -92,7 +93,7 @@ public class SAMLSSORequest extends BaseForm {
 			}
 		} catch (Exception e) {
 			LogFactory.getLog(getClass()).warn("Error forwarding to external IdP", e);
-			req.setAttribute("ERROR", e.toString());
+			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
 		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
 		    dispatcher.forward(req, resp);
 		}

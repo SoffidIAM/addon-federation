@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
 import com.soffid.iam.addons.rememberPassword.common.UserAnswer;
 import com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService;
@@ -19,6 +21,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.ErrorServlet;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
 
@@ -92,7 +95,8 @@ public class PasswordRememberAction extends HttpServlet {
         } catch (InternalErrorException e) {
             error = "Unable to activate account: "+e.getMessage(); //$NON-NLS-1$
         } catch (Exception e) {
-             error = "Unable to activate account: "+e.toString(); //$NON-NLS-1$
+			error = Messages.getString("UserPasswordAction.internal.error");
+            LogFactory.getLog(getClass()).info("Error activating account ", e);
         }
 
        

@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
@@ -80,8 +81,8 @@ public class PasswordResetAction extends HttpServlet {
             } catch (BadPasswordException e) {
                 error = String.format(Messages.getString("PasswordChangeRequiredAction.password.not.suitable")); //$NON-NLS-1$
             } catch (Exception e) {
-                error = Messages.getString("PasswordChangeRequiredAction.internal.error")+e.toString(); //$NON-NLS-1$
-                e.printStackTrace();
+                LogFactory.getLog(getClass()).info("Error reseting password ", e);
+                error = Messages.getString("PasswordChangeRequiredAction.internal.error"); //$NON-NLS-1$
             }
         }
         if (error != null) {
