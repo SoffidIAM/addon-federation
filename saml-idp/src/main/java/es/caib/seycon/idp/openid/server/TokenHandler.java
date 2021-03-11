@@ -283,7 +283,7 @@ public class TokenHandler {
 		o.setExpires(new Date(t.getExpires()));
 		o.setIdentityProvider(getIdentityProvider());
 		o.setRefreshToken(t.getRefreshToken());
-		o.setServiceProvider(t.getRequest().getFederationMember().getName());
+		o.setServiceProvider(t.getRequest().getFederationMember().getPublicId());
 		o.setToken(t.getToken());
 		o.setUser(t.getUser());
 		o.setSessionId(t.getSessionId());
