@@ -1961,15 +1961,21 @@ public class FederacioServiceImpl
 	@Override
 	protected void handleDeleteOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
-		if (token.getToken() != null)
+		if (token.getToken() != null) {
 			e = getOauthTokenEntityDao().findByToken(token.getToken());
-		else if (token.getRefreshToken() != null)
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
+		if (token.getRefreshToken() != null) {
 			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
-		else if (token.getAuthorizationCode() != null)
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
+		if (token.getAuthorizationCode() != null) {
 			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
-			
-		if (e != null)
-			getOauthTokenEntityDao().remove(e);;
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
 	}
 
 	@Override
