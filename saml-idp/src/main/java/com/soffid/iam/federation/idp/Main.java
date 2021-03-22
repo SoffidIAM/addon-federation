@@ -56,9 +56,12 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.config.Config;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
+import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.idp.config.CustomSpnegoLoginService;
@@ -277,6 +280,16 @@ public class Main {
         
         connector.setHostHeader(host);
 
+        connector.setRequestBufferSize( 64 * 1024);
+        connector.setHeaderBufferSize( 64 * 1024);
+        try {
+        	String s = new RemoteServiceLocator().getServerService().getConfig("soffid.syncserver.bufferSize");
+        	if (s != null) {
+        		connector.setRequestBufferSize( Integer.parseInt(s));
+        		connector.setHeaderBufferSize( Integer.parseInt(s));
+        	}
+        } catch (Throwable e) {}
+
         server.addConnector(connector);
     }
 
@@ -286,6 +299,16 @@ public class Main {
 
         SocketConnector connector = new SocketConnector();
 
+        connector.setRequestBufferSize( 64 * 1024);
+        connector.setHeaderBufferSize( 64 * 1024);
+        try {
+        	String s = new RemoteServiceLocator().getServerService().getConfig("soffid.syncserver.bufferSize");
+        	if (s != null) {
+        		connector.setRequestBufferSize( Integer.parseInt(s));
+        		connector.setHeaderBufferSize( Integer.parseInt(s));
+        	}
+        } catch (Throwable e) {}
+        
         connector.setPort(port == null ? 80 : port.intValue());
         // connector.setHost(host);
         connector.setAcceptors(2);
