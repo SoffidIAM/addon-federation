@@ -85,6 +85,7 @@ public abstract class OAuth2Consumer implements Serializable {
 	final String secretState = "secret" + new Random().nextInt(999999999);
 	protected Map<String, Object> attributes = new HashMap<String, Object>();
 	protected String principal;
+	protected Map<String, String> params = new HashMap<String, String>();
 	
 	public OAuth2Consumer(FederationMember fm) throws ConsumerException,
 			UnrecoverableKeyException, InvalidKeyException,
@@ -108,7 +109,7 @@ public abstract class OAuth2Consumer implements Serializable {
 
 	    requestToken = null;
 	    try {
-    		String s = ((OAuth20Service) service).getAuthorizationUrl();
+    		String s = ((OAuth20Service) service).getAuthorizationUrl(params);
 		    httpResp.sendRedirect(s);
 	    } catch (Exception e) {
 	    	System.out.println ("Error:" +e);
