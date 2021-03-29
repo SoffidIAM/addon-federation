@@ -88,7 +88,7 @@ public class UserPasswordAction extends HttpServlet {
                 }
             } catch (UnknownUserException e) {
             } catch (Exception e) {
-                error = Messages.getString("UserPasswordAction.internal.error")+e.toString(); //$NON-NLS-1$
+                error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
                 e.printStackTrace();
             }
         }
