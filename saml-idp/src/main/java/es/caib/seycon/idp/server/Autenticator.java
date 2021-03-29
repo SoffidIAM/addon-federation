@@ -249,6 +249,7 @@ public class Autenticator {
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
        		cookie.setMaxAge ( -1 );
         	cookie.setSecure(true);
+        	cookie.setHttpOnly(true);
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	resp.addCookie(cookie);
@@ -519,6 +520,7 @@ public class Autenticator {
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
        		cookie.setMaxAge ( -1 );
+        	cookie.setHttpOnly(true);
         	cookie.setSecure(true);
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
