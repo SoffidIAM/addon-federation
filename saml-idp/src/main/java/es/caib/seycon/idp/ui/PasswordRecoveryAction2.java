@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.User;
 
@@ -67,10 +69,9 @@ public class PasswordRecoveryAction2 extends HttpServlet {
 		        dispatcher.forward(req, resp);
       		}
 			return;
-        } catch (InternalErrorException e) {
-            error = "Unable to recover account: "+e.getMessage(); //$NON-NLS-1$
         } catch (Exception e) {
-            error = "Unable to recover account: "+e.toString(); //$NON-NLS-1$
+			error = Messages.getString("UserPasswordAction.internal.error");
+            LogFactory.getLog(getClass()).info("Error recovering password ", e);
         }
 
        

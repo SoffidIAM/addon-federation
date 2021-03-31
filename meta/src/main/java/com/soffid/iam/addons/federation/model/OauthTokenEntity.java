@@ -72,11 +72,11 @@ public class OauthTokenEntity {
 	OauthTokenEntity findByRefreshToken(String refreshToken) { return null;}
 }
 
-@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_TOK_UK", columns = {"TOK_TEN_ID", "TOK_TOKEN"}, unique = true)
+@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_TOK_UK", columns = {"TOK_TEN_ID", "TOK_TOKEN"})
 class UniqueTokenIndex {}
 
-@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_REF_UK", columns = {"TOK_TEN_ID", "TOK_REFTOK"}, unique = true)
+@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_REF_UK", columns = {"TOK_TEN_ID", "TOK_REFTOK"})
 class UniqueRefreshTokenIndex {}
 
-@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_AUT_UK", columns = {"TOK_TEN_ID", "TOK_AUTCOD"}, unique = true)
+@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_AUT_UK", columns = {"TOK_TEN_ID", "TOK_AUTCOD"})
 class UniqueAuthorizationCodeIndex {}

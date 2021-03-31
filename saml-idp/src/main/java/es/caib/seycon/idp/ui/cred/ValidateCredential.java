@@ -26,6 +26,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.exception.SoffidStackTrace;
 
@@ -119,7 +120,7 @@ public class ValidateCredential extends HttpServlet {
 				}
 			} catch (Exception e ) {
 				log.warn("Error validating web authn ", e);
-				error = e.toString();
+				error = Messages.getString("UserPasswordAction.internal.error");
 			}
 		}
 		

@@ -15,6 +15,12 @@ public class TokenInfo {
 	Long sessionId;
 	String sessionKey;
 	
+	public String toString() {
+		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
+				+", User: "+user+", AuthenticationMethod: "+authentication+", SessionId: "+sessionId
+				+", SessionKey: "+sessionKey+", Request: "+request.toString()+"]";
+	}
+	
 	public String getUser() {
 		return user;
 	}

@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -58,14 +59,17 @@ public class CertificateAction extends HttpServlet {
 	            			return;
 	            		}
 	            	} catch (Exception e) {
-	            		req.setAttribute("ERROR", e.toString()); //$NON-NLS-1$
+	        			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
+	                    LogFactory.getLog(getClass()).info("Error validating certificate ", e);
 	            	}
 	            }
 	        }
         } catch (InternalErrorException e) {
-    		req.setAttribute("ERROR", e.getMessage()); //$NON-NLS-1$
+			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
+            LogFactory.getLog(getClass()).info("Error validating certificate ", e);
         } catch (UnknownUserException e) {
-    		req.setAttribute("ERROR", e.toString()); //$NON-NLS-1$
+			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
+            LogFactory.getLog(getClass()).info("Error validating certificate ", e);
         }
        	RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         dispatcher.forward(req, resp);

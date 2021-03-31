@@ -101,6 +101,6 @@ public class MazingerConnector extends BaseDataConnector {
 
 	private String encodeSecret(String secret)
 			throws UnsupportedEncodingException {
-		return URLEncoder.encode(secret,"UTF-8").replaceAll("\\|", "%7c"); 
+		return secret.replace("\\", "\\\\").replace("|", "\\|"); 
 	}
 }

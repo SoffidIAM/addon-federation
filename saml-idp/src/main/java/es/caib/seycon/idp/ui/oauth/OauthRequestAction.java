@@ -13,6 +13,7 @@ import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederacioService;
 
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.oauth.consumer.FacebookConsumer;
 import es.caib.seycon.idp.oauth.consumer.GoogleConsumer;
 import es.caib.seycon.idp.oauth.consumer.LinkedinConsumer;
@@ -47,6 +48,7 @@ public class OauthRequestAction extends HttpServlet {
 	private void process(HttpServletRequest req, HttpServletResponse resp,
 			String id) throws ServletException, IOException {
 		HttpSession session = req.getSession();
+		String user = req.getParameter("user");
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 
 		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
@@ -81,6 +83,10 @@ public class OauthRequestAction extends HttpServlet {
 	        		consumer = new LinkedinConsumer(fm);
 	        	else if (fm.getIdpType().equals(IdentityProviderType.OPENID_CONNECT))
 	        		consumer = new OpenidConnectConsumer(fm);
+	        }
+	        if (user != null) {
+	        	user = IdpConfig.getConfig().getFederationService().getLoginHint(id, user);
+	        	consumer.setRequestedUser(user);
 	        }
 	        
 	        if (consumer == null)

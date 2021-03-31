@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.api.Password;
@@ -89,7 +90,7 @@ public class UserPasswordAction extends HttpServlet {
             } catch (UnknownUserException e) {
             } catch (Exception e) {
                 error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
-                e.printStackTrace();
+                LogFactory.getLog(getClass()).info("Error authenticating user "+u, e);
             }
         }
         req.setAttribute("ERROR", error); //$NON-NLS-1$

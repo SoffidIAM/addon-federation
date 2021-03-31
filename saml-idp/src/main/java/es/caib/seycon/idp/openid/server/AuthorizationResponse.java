@@ -124,9 +124,16 @@ public class AuthorizationResponse  {
 	}
 
 	private static void buildError(HttpServletResponse resp, OpenIdRequest r, String description) throws IOException, ServletException {
-		resp.sendRedirect(r.getRedirectUrl()+"?error=server_error&error_description="+
-				URLEncoder.encode(description, "UTF-8")+
-				(r.getState() != null ? "&state="+r.getState(): ""));
+		StringBuffer sb = new StringBuffer(r.getRedirectUrl());
+		if (r.getRedirectUrl().contains("?"))
+			sb.append("&");
+		else
+			sb.append("?");
+		sb.append("error=server_error&error_description=")
+			.append(URLEncoder.encode(description, "UTF-8"));
+		if (r.getState() != null)
+			sb.append("&state="+r.getState());
+		resp.sendRedirect(sb.toString());
 	}
 
 	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, InternalErrorException {
@@ -145,9 +152,12 @@ public class AuthorizationResponse  {
 			url = r.getRedirectUrl();
 		if (url != null && ! url.isEmpty())
 		{
-			sb.append(url)
-			.append("?code=")
-			.append( URLEncoder.encode(  token.authorizationCode) );
+			sb.append(url);
+			if (url.contains("?"))
+				sb.append("&code=");
+			else
+				sb.append("?code=");
+			sb.append( URLEncoder.encode(  token.authorizationCode) );
 			if ( r.getState() != null)
 				sb.append("&state=")
 				.append( URLEncoder.encode(r.getState() , "UTF-8"));

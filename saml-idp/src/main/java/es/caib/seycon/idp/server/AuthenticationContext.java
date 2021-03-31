@@ -283,7 +283,7 @@ public class AuthenticationContext {
 		}
 		
 		if (! nextFactor.contains(method))
-			throw new InternalErrorException("Authentication method not allowed");
+			throw new InternalErrorException("Authentication method '"+method+"' not allowed. Expected one of '"+method+"'. Allowed methods: "+allowedAuthenticationMethods);
 
 		if (step == 0) 
 		{
@@ -345,7 +345,7 @@ public class AuthenticationContext {
 	public void authenticationFailure (String u) throws IOException, InternalErrorException
 	{
 		feedRatio(true);
-		if (u!=null && currentUser!=null)
+		if (u != null && currentUser != null)
 		{
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			long f = ubh.getUserFailures(currentUser.getId());

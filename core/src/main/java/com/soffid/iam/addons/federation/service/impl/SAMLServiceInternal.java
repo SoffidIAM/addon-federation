@@ -119,6 +119,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.api.SamlRequest;
@@ -410,7 +411,10 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			if (r.getUrl() == null)
 				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
 
-			if (userName != null && ! userName.trim().isEmpty() && !isAzure(req))
+			if (userName != null) {
+	        	userName = FederationServiceLocator.instance().getFederacioService().getLoginHint(identityProvider, userName);
+			}
+			if (userName != null && ! userName.trim().isEmpty())
 			{
 				Subject newSubject = ( (SAMLObjectBuilder<Subject>)builderFactory.getBuilder(Subject.DEFAULT_ELEMENT_NAME)).buildObject();
 				NameID newNameID = ( (SAMLObjectBuilder<NameID>)builderFactory.getBuilder(NameID.DEFAULT_ELEMENT_NAME)).buildObject();

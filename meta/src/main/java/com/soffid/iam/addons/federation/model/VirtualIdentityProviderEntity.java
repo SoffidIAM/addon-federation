@@ -77,5 +77,9 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public String ssoCookieName;
 
+	@Column (name="FED_LOGHIN", length = 4096)
+	@Nullable
+	public String loginHintScript;
+
 }
 

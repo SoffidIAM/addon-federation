@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.api.Password;
 
 import es.caib.seycon.BadPasswordException;
@@ -56,8 +58,8 @@ public class PasswordChangeAction extends HttpServlet {
             } catch (BadPasswordException e) {
                 error = String.format(Messages.getString("PasswordChangeAction.12")); //$NON-NLS-1$
             } catch (Exception e) {
-                error = Messages.getString("PasswordChangeAction.13")+e.toString(); //$NON-NLS-1$
-                e.printStackTrace();
+                error = Messages.getString("PasswordChangeAction.13"); //$NON-NLS-1$
+                LogFactory.getLog(getClass()).info("Error changing password", e);
             }
         }
 

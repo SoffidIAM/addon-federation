@@ -501,6 +501,10 @@ public abstract class FederacioService {
 			Map<String, Object> properties, boolean autoProvision) {return null;}
 
 	
+	@Operation
+	@Description("Computes the loginHint to present to a third party IdP")
+	String getLoginHint(String idp, String loginHint) {return null;}
+	
 	/* Token services */
 	OauthToken createOauthToken(OauthToken token) {return null;}
 	void deleteOauthToken(OauthToken token) {}

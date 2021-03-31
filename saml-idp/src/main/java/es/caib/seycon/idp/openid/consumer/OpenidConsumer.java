@@ -9,11 +9,13 @@ import org.openid4java.message.ax.FetchRequest;
 import org.openid4java.message.ax.FetchResponse;
 import org.openid4java.message.ax.AxMessage;
 import org.openid4java.message.*;
+import org.apache.commons.logging.LogFactory;
 import org.openid4java.OpenIDException;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.openid.OpenIdResponseAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
@@ -166,8 +168,8 @@ public class OpenidConsumer implements Serializable {
 				generateForm(httpReq, httpResp, authReq);
 			}
 		} catch (OpenIDException e) {
-			httpReq.setAttribute("ERROR", e.toString());
-			// present error to the user
+            LogFactory.getLog(getClass()).info("Error validating openid request ", e);
+			httpReq.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
 		}
 
 		return null;
