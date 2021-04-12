@@ -362,6 +362,9 @@ public class AuthenticationContext {
 		}
 	    String d = cfg.getSystem().getName();
 	    currentAccount = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
+
+	    if (currentAccount == null || currentAccount.isDisabled())
+	    	throw new InternalErrorException("The account "+userName+" is disabled");
 	    
 	    if (currentAccount != null && currentAccount.getType() == AccountType.USER && currentAccount.getOwnerUsers() != null && currentAccount.getOwnerUsers().size() == 1)
 	    	currentUser = currentAccount.getOwnerUsers().iterator().next();
