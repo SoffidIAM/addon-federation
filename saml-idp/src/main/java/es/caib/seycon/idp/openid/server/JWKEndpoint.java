@@ -140,7 +140,7 @@ public class JWKEndpoint extends HttpServlet {
 		o_keys_0.put("x5c", o_keys_0_x5c);
 		for (Certificate cert: c.getCerts())
 		{
-			String b64 = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(cert.getEncoded());
+			String b64 = java.util.Base64.getEncoder().encodeToString(cert.getEncoded());
 			o_keys_0_x5c.put (b64);
 		}
 		return o;
