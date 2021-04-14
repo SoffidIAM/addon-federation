@@ -1889,7 +1889,7 @@ public class FederacioServiceImpl
 	protected OauthToken handleCreateOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e;
 		if (token.getAuthorizationCode() != null) {
-			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
 			if (e != null) {
 				if (e.getExpires().after(new Date())) {
 					getOauthTokenEntityDao().remove(e);
@@ -1899,7 +1899,7 @@ public class FederacioServiceImpl
 			}			
 		}
 		if (token.getToken() != null) {
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+			e = getOauthTokenEntityDao().findByToken(token.getToken());
 			if (e != null) {
 				if (e.getExpires().after(new Date())) {
 					getOauthTokenEntityDao().remove(e);
@@ -1909,7 +1909,7 @@ public class FederacioServiceImpl
 			}			
 		}
 		if (token.getRefreshToken() != null) {
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getRefreshToken());
+			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
 			if (e != null) {
 				if (e.getExpires().after(new Date())) {
 					getOauthTokenEntityDao().remove(e);
@@ -1925,7 +1925,7 @@ public class FederacioServiceImpl
 
 	@Override
 	protected OauthToken handleFindOauthTokenByRefreshToken(String idp, String token) throws Exception {
-		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(idp, token);
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByRefreshToken(token);
 		if (entity == null)
 			return null;
 		else
@@ -1934,7 +1934,7 @@ public class FederacioServiceImpl
 
 	@Override
 	protected OauthToken handleFindOauthTokenByToken(String idp, String token) throws Exception {
-		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndToken(idp, token);
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByToken(token);
 		if (entity == null)
 			return null;
 		else
@@ -1945,11 +1945,11 @@ public class FederacioServiceImpl
 	protected void handleDeleteOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
 		if (token.getToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+			e = getOauthTokenEntityDao().findByToken(token.getToken());
 		else if (token.getRefreshToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(token.getIdentityProvider(), token.getRefreshToken());
+			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
 		else if (token.getAuthorizationCode() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
 			
 		if (e != null)
 			getOauthTokenEntityDao().remove(e);;
@@ -1959,11 +1959,11 @@ public class FederacioServiceImpl
 	protected void handleUpdateOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
 		if (token.getToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+			e = getOauthTokenEntityDao().findByToken(token.getToken());
 		else if (token.getRefreshToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(token.getIdentityProvider(), token.getRefreshToken());
+			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
 		else if (token.getAuthorizationCode() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
 			
 		if (e != null) {
 			getOauthTokenEntityDao().oauthTokenToEntity(token, e, true);
@@ -1974,7 +1974,7 @@ public class FederacioServiceImpl
 	@Override
 	protected OauthToken handleFindOauthTokenByAuthorizationCode(String idp, String authorizationCode)
 			throws Exception {
-		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(idp, authorizationCode);
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByAuthorizationCode(authorizationCode);
 		if (entity == null)
 			return null;
 		else
