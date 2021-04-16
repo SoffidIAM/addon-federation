@@ -171,6 +171,11 @@ public class FederationMember {
 	@Nullable
 	public String openidUrl;
 
+	@Description("Login hint script")
+	@Attribute(defaultValue = "\"loginHint\"")
+	@Nullable
+	public String loginHintScript;
+
 	@Description("Open ID mechanisms: Implicit, AuthorizationCode, Password, PasswordClientCredentals")
 	@Attribute(defaultValue="new java.util.HashSet()")
 	@Nullable

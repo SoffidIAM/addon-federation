@@ -80,6 +80,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setIdpType(idp.getIdpType());
 				target.setInternal(idp.getIdpType().equals(IdentityProviderType.SOFFID));
 			}
+			target.setLoginHintScript(idp.getLoginHintScript());
 			target.setOauthKey(idp.getOauthKey());
 			target.setOauthSecret(idp.getOauthSecret() == null ? null: Password.decode(idp.getOauthSecret()));
 			// Propis
@@ -130,6 +131,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setPrivateKey(vip.getPrivateKey());
 			target.setPublicKey(vip.getPublicKey());
 			target.setCertificateChain(vip.getCertificateChain());
+			target.setLoginHintScript(vip.getLoginHintScript());
 			
 			target.setAuthenticationMethods(vip.getAuthenticationMethods());
 			if (target.getAuthenticationMethods() == null)
@@ -350,7 +352,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			}
 			idp.setOauthKey(source.getOauthKey());
 			idp.setOauthSecret(source.getOauthSecret() == null ? null: source.getOauthSecret().toString());
-
+			idp.setLoginHintScript(source.getLoginHintScript());
+			
 			idp.setPublicId(source.getPublicId());
 			idp.setPublicKey(source.getPublicKey());
 			idp.setPrivateKey(source.getPrivateKey());
@@ -427,6 +430,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			vip.setAuthenticationMethods(source.getAuthenticationMethods());
 			vip.setSsoCookieDomain(source.getSsoCookieDomain());
 			vip.setSsoCookieName(source.getSsoCookieName());
+			vip.setLoginHintScript(source.getLoginHintScript());
 
 			// Default IDP
 			if (source.getDefaultIdentityProvider() != null) {

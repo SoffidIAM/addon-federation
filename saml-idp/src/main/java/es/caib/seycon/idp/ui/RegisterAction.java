@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -173,8 +174,8 @@ public class RegisterAction extends HttpServlet {
 						return;
 					}
 				} catch (Exception e) {
-					error = "An internal error has been detected: " + e.toString();
-					e.printStackTrace();
+					error = Messages.getString("UserPasswordAction.internal.error");
+		            LogFactory.getLog(getClass()).info("Error registering user ", e);
 					req.setAttribute("ERROR", error); //$NON-NLS-1$
 					req.setAttribute("register", params); //$NON-NLS-1$
 

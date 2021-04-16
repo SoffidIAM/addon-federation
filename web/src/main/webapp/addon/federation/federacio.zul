@@ -748,6 +748,7 @@
 					}
 					
 					autoprovisionScriptRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
+					loginHintScriptRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
 					autoprovisionPatternRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
 					metadadesRow.setVisible(IdentityProviderType.SOFFID.equals( idpType ) ||
 							IdentityProviderType.SAML.equals( idpType ) ||
@@ -1083,6 +1084,39 @@
 											<div style="dislay: table-row;">
 												<label style="display:table-cell;  width:10em;" value="return value:"/>
 												<label style="display:table-cell;" value="${c:l('federacio.zul.returnValue')}"/>
+											</div>
+										</div>
+									</div>
+								</row>
+								<row id="loginHintScriptRow">
+									<hbox widths="*,24px">
+										<input_etiqueta value="${c:l('federacio.zul.LoginHintScript')}"/>
+										<imageclic 
+											src="/img/info.png"
+											title="The variable loginHint contains current user name. The actual login_hint must be returned. Leave blank to prevent login_hint method"
+										/>
+									</hbox>
+									<div>
+										<codemirror bind="/federationMember/loginHintScript" id="loginHint"
+												linenumbers="true" visible="true" 
+												readonly="${!canModifyFI}"
+												height="10em" language="java" style="width:98%">
+											<attribute name='onCreate'><![CDATA[
+												self.setGlobalVars("{\"loginHint\":\"java.lang.String\"}");
+											]]></attribute>
+										</codemirror>
+										<div style="display: table;">
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="serviceLocator:"/>
+												<label style="display:table-cell;" value="${c:l('federacio.zul.serviceLocator')}"/>
+											</div>
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="loginHint"/>
+												<label style="display:table-cell;" value="Current user name"/>
+											</div>
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="return value:"/>
+												<label style="display:table-cell;" value="Actual login hint"/>
 											</div>
 										</div>
 									</div>
@@ -2468,7 +2502,7 @@
 							<textbox bind="value" onChange="" multiline="true" rows="1"
 								style="width:95%; margin-left: 8px; margn-right:8px">
 							</textbox>
-							<imageclic src="/img/pencil.png" width="24px">
+							<imageclic src="/img/pencil.svg" width="24px">
 								<attribute name="onClick"><![CDATA[
 									    Events.sendEvent(new Event ("onEdit", 
 								    		desktop.getPage("editor").getFellow("top"),
@@ -2581,7 +2615,7 @@
 								onChange="" 
 								height="5em" bind="@expression" >
 						</textbox>
-						<imageclic style="display:table-cell" src="/img/pencil.png" width="2em" >
+						<imageclic style="display:table-cell" src="/img/pencil.svg" width="2em" >
 							<attribute name="onClick"><![CDATA[
 							    Events.sendEvent(new Event ("onEdit", 
 							    		desktop.getPage("editor").getFellow("top"),

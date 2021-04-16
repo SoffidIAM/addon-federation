@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.sync.engine.kerberos.KerberosManager;
@@ -98,8 +99,8 @@ public class NtlmAction extends HttpServlet {
     			ctx.authenticationFailure(ctx.getUser());
             error = String.format(Messages.getString("PasswordChangeRequiredAction.unknown.user"), principal); //$NON-NLS-1$
     	} catch (Exception e) {
-            error = Messages.getString("UserPasswordAction.internal.error")+e.toString(); //$NON-NLS-1$
-            e.printStackTrace();
+            error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
+            LogFactory.getLog(getClass()).info("Error validating kerberos token ", e);
     	}
         req.setAttribute("ERROR", error); //$NON-NLS-1$
         RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
@@ -58,16 +59,21 @@ public class LogFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest req = (HttpServletRequest) request;
 		HttpServletResponseWrapper resp = new HttpServletResponseWrapper((HttpServletResponse) response);
-		String path = req.getContextPath()+req.getServletPath()+req.getPathInfo();
-		if (req.getQueryString() != null) path += "?"+req.getQueryString();
-		try {
-			chain.doFilter(request, response);
-			openLog();
-			out.println (dateFormat2.format(new Date())+" "+request.getRemoteAddr()+" "+resp.error+" "+ path );
-		} catch (Exception e) {
-			out.println (dateFormat2.format(new Date())+" "+request.getRemoteAddr()+" "+e.toString()+" "+ path );
+		if (! "GET".equals(req.getMethod()) && ! "POST".equals(req.getMethod()))
+		{
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+		} else {
+			String path = req.getContextPath()+req.getServletPath()+req.getPathInfo();
+			if (req.getQueryString() != null) path += "?"+req.getQueryString();
+			try {
+				chain.doFilter(request, response);
+				openLog();
+				out.println (dateFormat2.format(new Date())+" "+request.getRemoteAddr()+" "+resp.error+" "+ path );
+			} catch (Exception e) {
+				out.println (dateFormat2.format(new Date())+" "+request.getRemoteAddr()+" "+e.toString()+" "+ path );
+			}
+			out.flush();
 		}
-		out.flush();
 	}
 
 	public void destroy() {
@@ -222,6 +228,26 @@ class HttpServletResponseWrapper implements HttpServletResponse {
 
 	public void setError(int error) {
 		this.error = error;
+	}
+
+	public void setContentLengthLong(long length) {
+		target.setContentLengthLong(length);
+	}
+
+	public int getStatus() {
+		return target.getStatus();
+	}
+
+	public String getHeader(String name) {
+		return target.getHeader(name);
+	}
+
+	public Collection<String> getHeaders(String name) {
+		return target.getHeaders(name);
+	}
+
+	public Collection<String> getHeaderNames() {
+		return target.getHeaderNames();
 	}
 	
 }

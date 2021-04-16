@@ -2,6 +2,7 @@ package es.caib.seycon.idp.server;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.HttpCookie;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -284,7 +285,7 @@ public class AuthenticationContext {
 		}
 		
 		if (! nextFactor.contains(method))
-			throw new InternalErrorException("Authentication method not allowed");
+			throw new InternalErrorException("Authentication method '"+method+"' not allowed. Expected one of '"+method+"'. Allowed methods: "+allowedAuthenticationMethods);
 
 		if (step == 0) 
 		{
@@ -309,9 +310,11 @@ public class AuthenticationContext {
     			if (hostId == null)
     			{
     				hostId = ubh.registerHost(remoteIp);
-    				Cookie c = new Cookie(getHostIdCookieName(), hostId);
-    				c.setMaxAge(Integer.MAX_VALUE);
-    				resp.addCookie(c);
+    				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
+    				c2.setSecure(true);
+    				c2.setMaxAge(Integer.MAX_VALUE);
+    				c2.setHttpOnly(true);
+    				resp.addCookie(c2);
     			}
     			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
     		}
@@ -344,7 +347,7 @@ public class AuthenticationContext {
 	public void authenticationFailure (String u) throws IOException, InternalErrorException
 	{
 		feedRatio(true);
-		if (u!=null && currentUser!=null)
+		if (u != null && currentUser != null)
 		{
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			long f = ubh.getUserFailures(currentUser.getId());

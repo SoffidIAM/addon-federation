@@ -89,10 +89,9 @@ public class ActivateUserAction extends HttpServlet {
 				return;
 
       		}
-        } catch (InternalErrorException e) {
-            error = "Unable to activate account: "+e.getMessage(); //$NON-NLS-1$
         } catch (Exception e) {
-             error = "Unable to activate account: "+e.toString(); //$NON-NLS-1$
+			error = Messages.getString("UserPasswordAction.internal.error");
+            LogFactory.getLog(getClass()).info("Error activating account ", e);
         }
 
        

@@ -27,6 +27,7 @@ public class DefaultServlet extends HttpServlet {
         if (in == null)
         	in = DefaultServlet.class.getClassLoader().getResourceAsStream(s);
         if (in == null) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             throw new ServletException("Page not found "+req.getPathInfo()); //$NON-NLS-1$
         } else {
             resp.setStatus(HttpServletResponse.SC_OK);

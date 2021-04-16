@@ -190,3 +190,6 @@ public abstract class FederationMemberEntity {
 	}
 
 }
+
+@Index( name="SC_FEDERA_UK", columns = {"FED_TEN_ID", "FED_NAME", "FED_CLASSE"}, unique = true, entity=FederationMemberEntity.class)
+class FederationMembrEntityUK {}

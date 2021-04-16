@@ -133,16 +133,22 @@ public class JWKEndpoint extends HttpServlet {
 		o_keys_0.put("use", "sig");
 		o_keys_0.put("kty", "RSA");
 		o_keys_0.put("alg", "RS256");
-		o_keys_0.put("n",  java.util.Base64.getUrlEncoder().encodeToString(n.toByteArray()));
-		o_keys_0.put("e", java.util.Base64.getUrlEncoder().encodeToString(e.toByteArray()));
+		o_keys_0.put("n", unpad( java.util.Base64.getUrlEncoder().encodeToString(n.toByteArray())));
+		o_keys_0.put("e", unpad( java.util.Base64.getUrlEncoder().encodeToString(e.toByteArray())));
 		o_keys_0.put("kid", c.getHostName() );
 		JSONArray o_keys_0_x5c = new JSONArray(); 
 		o_keys_0.put("x5c", o_keys_0_x5c);
 		for (Certificate cert: c.getCerts())
 		{
-			String b64 = Base64.encodeBytes(cert.getEncoded(), Base64.DONT_BREAK_LINES);
+			String b64 = unpad(Base64.encodeBytes(cert.getEncoded(), Base64.DONT_BREAK_LINES));
 			o_keys_0_x5c.put (b64);
 		}
 		return o;
  	}
+
+	private String unpad(String string) {
+		while (string.endsWith("="))
+			string = string.substring(0, string.length()-1);
+		return string;
+	}
 }

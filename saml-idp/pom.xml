@@ -3,11 +3,11 @@
 	<parent>
 		<groupId>com.soffid.iam.addon.federation</groupId>
 		<artifactId>root</artifactId>
-		<version>2.6.1-SNAPSHOT</version>
+		<version>2.6.4-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>saml-idp</artifactId>
-	<version>2.6.1-SNAPSHOT</version>
+	<version>2.6.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>SEU idp Base</name>
 	<properties>
@@ -254,8 +254,7 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	<dependencies> <!-- <dependency> <groupId>commons-fileupload</groupId> <artifactId>commons-fileupload</artifactId> 
-			<version>1.2.1</version> <scope>provided</scope> </dependency> -->
+	<dependencies> 
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
@@ -266,12 +265,6 @@
 			<groupId>es.caib.signatura.api</groupId>
 			<artifactId>signaturaapi</artifactId>
 			<version>2.3</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
-			<version>2.4</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -378,13 +371,12 @@
 	    	<artifactId>jackson-dataformat-cbor</artifactId>
 	    	<version>2.9.2</version>
 	    </dependency>
-	    <!-- 
-		<dependency>
-		  <groupId>com.augustcellars.cose</groupId>
-		  <artifactId>cose-java</artifactId>
-		  <version>0.9.7</version>
-		</dependency>
-	     -->
+	    <dependency>
+	    	<groupId>org.apache.openejb</groupId>
+	    	<artifactId>javaee-api</artifactId>
+	    	<version>6.0-6</version>
+	    	<scope>provided</scope>
+	    </dependency>
 	</dependencies>
 	<reporting>
 		<plugins>

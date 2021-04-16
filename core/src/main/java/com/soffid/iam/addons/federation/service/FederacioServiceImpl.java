@@ -57,6 +57,7 @@ import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.ProcessInstance;
 
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
@@ -1944,15 +1945,21 @@ public class FederacioServiceImpl
 	@Override
 	protected void handleDeleteOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
-		if (token.getToken() != null)
+		if (token.getToken() != null) {
 			e = getOauthTokenEntityDao().findByToken(token.getToken());
-		else if (token.getRefreshToken() != null)
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
+		if (token.getRefreshToken() != null) {
 			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
-		else if (token.getAuthorizationCode() != null)
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
+		if (token.getAuthorizationCode() != null) {
 			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
-			
-		if (e != null)
-			getOauthTokenEntityDao().remove(e);;
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
 	}
 
 	@Override
@@ -2024,6 +2031,47 @@ public class FederacioServiceImpl
 			if (uc != null)
 				getUserConsentEntityDao().remove(uc);
 		}
+  }
+
+	protected String handleGetLoginHint(String idpName, String loginHint) throws Exception {
+		
+		List<FederationMemberEntity> idpEntities = getVirtualIdentityProviderEntityDao().findFMByPublicId(idpName);
+		if (idpEntities == null || idpEntities.isEmpty())
+			return loginHint;
+		for (FederationMemberEntity fm: idpEntities) {
+			if (fm instanceof VirtualIdentityProviderEntity) {
+				VirtualIdentityProviderEntity idp = (VirtualIdentityProviderEntity) fm;
+				if (idp.getLoginHintScript() == null || idp.getLoginHintScript().trim().isEmpty())
+					return null;
+				Interpreter interpret = new Interpreter();
+				NameSpace ns = interpret.getNameSpace();
+				
+				try {
+					ns.setVariable("loginHint", loginHint, false);
+					ns.setVariable("serviceLocator", ServiceLocator.instance(), false);
+					Object result = interpret.eval(idp.getLoginHintScript());
+					if (result instanceof Primitive)
+					{
+						result = ((Primitive)result).getValue();
+					}
+					if (result != null)
+						loginHint = result.toString();
+				} catch (TargetError e) {
+					throw new InternalErrorException("Error evaluating loginHint\n"+idp.getLoginHintScript()+"\nMessage:"+
+							e.getTarget().getMessage(),
+							e.getTarget());
+				} catch (EvalError e) {
+					String msg;
+					try {
+						msg = e.getMessage() + "[ "+ e.getErrorText()+"] ";
+					} catch (Exception e2) {
+						msg = e.getMessage();
+					}
+					throw new InternalErrorException("Error evaluating loginHint \n"+idp.getLoginHintScript()+"\nMessage:"+msg);
+				}
+			}
+		}
+		return loginHint;
 	}
 
 }
