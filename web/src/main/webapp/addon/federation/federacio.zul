@@ -6,6 +6,11 @@
 <?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
 <?component name="input_password" macro-uri="/comu/input_password.zul"?>
 <frame xmlns:h="http://www.w3.org/1999/xhtml"> 
+	<style>
+	div.inputField.impersonation input.textbox2m {
+		width: 400px;
+	}
+	</style>
 
 	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml">
 		<attribute name="onCommit">
@@ -1365,7 +1370,7 @@
 						</tabpanel>
 						<tabpanel id="tp_sp">
 						<grid id="g_sp">
-							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
+							<columns visible="false"><column width="130px" valign="top"/> <column width="*" valign="top"/></columns>
 							<rows>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Tipus')}"/>
@@ -1469,6 +1474,10 @@
 										]]>
 										</attribute>
 									</textbox>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.impersonationUrl')} :"/>
+									<inputfield noLabel="true" sclass="impersonation inputField" bind="/federationMember/impersonations" dataType="STRING" multiValue="true"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>

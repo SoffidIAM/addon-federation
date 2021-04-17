@@ -66,6 +66,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
 import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
+import es.caib.seycon.idp.openid.server.ImpersonationEndpoint;
 import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
@@ -465,6 +466,15 @@ public class Main {
 	        				openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
 
         	servlet = new ServletHolder(
+	                ImpersonationEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("ImpersonationEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getUserInfoEndpoint() == null ? 
+	        				"/userinfo/impersonate": 
+	        				openIdProfile.getUserInfoEndpoint()+"/impersonate"); //$NON-NLS-1$
+
+	        servlet = new ServletHolder(
 	                SessionCookieEndpoint.class);
 	        servlet.setInitOrder(2);
 	        servlet.setName("SessionCookieEndpoint"); //$NON-NLS-1$

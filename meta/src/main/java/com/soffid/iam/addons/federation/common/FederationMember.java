@@ -183,4 +183,7 @@ public class FederationMember {
 	@Attribute(defaultValue="new java.util.LinkedList()")
 	public List<AuthenticationMethod> extendedAuthenticationMethods;
 
+	@Nullable
+	@Attribute(defaultValue="new java.util.LinkedList()")
+	public List<String> impersonations;
 }

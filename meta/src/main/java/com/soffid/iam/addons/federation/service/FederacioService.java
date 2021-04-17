@@ -8,6 +8,7 @@ package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
+import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
@@ -86,7 +87,8 @@ import org.springframework.transaction.annotation.Transactional;
 	KerberosKeytabEntity.class,
 	AuthenticationMethodEntity.class,
 	UserBehaviorService.class,
-	OauthTokenEntity.class
+	OauthTokenEntity.class,
+	ImpersonationEntity.class
 })
 public abstract class FederacioService {
 

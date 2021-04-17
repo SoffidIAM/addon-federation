@@ -75,6 +75,7 @@ import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
@@ -196,12 +197,36 @@ public class FederacioServiceImpl
 				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) entity, federationMember);
 			}
+			if (entity instanceof ServiceProviderEntity)
+				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToMakeFederationMember")); //$NON-NLS-1$
 	}
 
+
+	private void updateImpersonations(ServiceProviderEntity entity, FederationMember federationMember) {
+		LinkedList<String> l = new LinkedList<String>(federationMember.getImpersonations());
+		for (Iterator<ImpersonationEntity> iterator = entity.getImpersonations().iterator(); iterator.hasNext();) {
+			ImpersonationEntity imp = iterator.next();
+			if (l.contains(imp.getUrl()))
+				l.remove(imp.getUrl());
+			else {
+				getImpersonationEntityDao().remove(imp);
+				iterator.remove();
+			}
+		}
+		for (String url: l) {
+			if (url != null && !url.trim().isEmpty()) {
+				ImpersonationEntity imp = getImpersonationEntityDao().newImpersonationEntity();
+				imp.setServiceProvider(entity);
+				imp.setUrl(url);
+				getImpersonationEntityDao().create(imp);
+				entity.getImpersonations().add(imp);
+			}
+		}
+	}
 
 	/**
 	 * @see es.caib.seycon.ng.servei.FederacioService#update(com.soffid.iam.addons.federation.common.FederationMember)
@@ -314,6 +339,7 @@ public class FederacioServiceImpl
 			} else if (entity instanceof ServiceProviderEntity) {
 				ServiceProviderEntity sp = (ServiceProviderEntity) entity;
 				getVirtualIdentityProviderEntityDao().update(sp);
+				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 				String desc = sp.getPublicId() + (sp.getName() != null ? " - " + sp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
 				return getFederationMemberEntityDao().toFederationMember(sp);
@@ -434,6 +460,7 @@ public class FederacioServiceImpl
 				ArrayList<ServiceProviderVirtualIdentityProviderEntity> oldrps = new ArrayList<ServiceProviderVirtualIdentityProviderEntity>(
 						getServiceProviderVirtualIdentityProviderEntityDao().findBySP(sp.getId()));
 				getServiceProviderVirtualIdentityProviderEntityDao().remove(oldrps);
+				getImpersonationEntityDao().remove(sp.getImpersonations());
 				sp.setServiceProviderVirtualIdentityProvider(null);
 				getServiceProviderEntityDao().remove(sp);
 
