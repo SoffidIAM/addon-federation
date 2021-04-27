@@ -26,6 +26,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -38,6 +40,7 @@ import es.caib.seycon.idp.ui.P3PFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
 
 public class ImpersonationHandler {
+	Log log = LogFactory.getLog(getClass());
 	private final class DummyFilterConfig implements FilterConfig {
 		@Override
 		public ServletContext getServletContext() { return ctx;	}
@@ -100,7 +103,7 @@ public class ImpersonationHandler {
 		c.connect();
 		byte data[] = readConnection(c);
 		try {
-			if (c.getResponseCode() == 302) // Redirect 
+			if (c.getResponseCode() == 302 || c.getResponseCode() == 301) // Redirect 
 			{
 				URL target = getTargetLocation(url, c.getHeaderField("Location"));
 				if (isInternalRequest(target)) {
@@ -108,8 +111,8 @@ public class ImpersonationHandler {
 				} else {
 					processServerUrl(target, null, processForm);
 				}
-			} else if (processForm) {
-				processForm(url, data, null);
+			} else {
+				processForm(url, data, null, processForm);
 			}
 		} finally {
 			c.disconnect();
@@ -180,6 +183,16 @@ public class ImpersonationHandler {
 				}
 			}
 		}
+
+		log.info("Got response from "+c.getURL());
+		for (int i = 0; c.getHeaderField(i) != null; i++) {
+			String key = c.getHeaderFieldKey(i);
+			if (key == null)
+				log.info(">> "+c.getHeaderField(i));
+			else
+				log.info(">> "+c.getHeaderFieldKey(i)+": "+c.getHeaderField(i));
+		}
+		log.info("\n"+buffer.toString("UTF-8"));
 		return buffer.toByteArray();
 	}
 
@@ -257,11 +270,11 @@ public class ImpersonationHandler {
 			internalCookies.add(cookie);
 		}
 
-		if (response.getStatus() == 302) // Redirect 
+		if (response.getStatus() == 302 || response.getStatus() == 301) // Redirect 
 		{
 			processLoginRedirect(url, response);
 		} else {
-			processForm(url, response.getOut().toByteArray(), response.getCharacterEncoding());
+			processForm(url, response.getOut().toByteArray(), response.getCharacterEncoding(), true);
 		}
 	}
 
@@ -283,43 +296,62 @@ public class ImpersonationHandler {
 		}
 	}
 
-	private void processForm(URL url, byte[] response, String encoding) throws IOException, ServletException {
+	private void processForm(URL url, byte[] response, String encoding, boolean processForm) throws IOException, ServletException {
 		if (encoding == null)
 			encoding = "UTF-8";
 		ByteArrayInputStream in = new ByteArrayInputStream(response);
 		Document doc = Jsoup.parse( in, encoding, url.toString());
-		Elements forms = doc.getElementsByTag("form");
-		if (forms.size() != 1) {
-			throw new IOException("Expecting a form, but no form found on "+new String(response, encoding));
+		
+		if (processForm || hasOnLoad(doc)) {
+			Elements forms = doc.getElementsByTag("form");
+			if (forms.size() != 1) {
+				throw new IOException("Expecting a form, but no form found on "+new String(response, encoding));
+			}
+			log.info("Processing form fields");
+			Element form = forms.get(0);
+			Elements inputs = form.getElementsByTag("input");
+			StringBuffer sb = new StringBuffer();
+			Map<String, String[]> params = new HashMap<>();
+			for (int i = 0; i < inputs.size(); i++) {
+				Element input = inputs.get(i);
+				String name = input.attr("name");
+				String value = input.attr("value");
+				if (name != null && value != null) {
+					params.put(name, new String[] { value });
+					if (sb.length() > 0) sb.append("&");
+					sb.append(URLEncoder.encode(name))
+						.append("=")
+						.append(URLEncoder.encode(value));
+				}
+			}
+			String action = form.absUrl("action");
+			URL actionUrl = new URL(action);
+			if (isInternalRequest(actionUrl))
+				processInternalRequest(actionUrl, params, "POST");
+			else
+				processServerUrl(actionUrl, sb.toString(), false);
 		}
-		Element form = forms.get(0);
-		Elements inputs = form.getElementsByTag("input");
-		StringBuffer sb = new StringBuffer();
-		Map<String, String[]> params = new HashMap<>();
-		for (int i = 0; i < inputs.size(); i++) {
-			Element input = inputs.get(i);
-			String name = input.attr("name");
-			String value = input.attr("value");
-			if (name != null && value != null) {
-				params.put(name, new String[] { value });
-				if (sb.length() > 0) sb.append("&");
-				sb.append(URLEncoder.encode(name))
-					.append("=")
-					.append(URLEncoder.encode(value));
+	}
+
+	private boolean hasOnLoad(Document doc) {
+		Elements elements = doc.getElementsByTag("body");
+		if (! elements.isEmpty()) {
+			Element body = elements.first();
+			String onLoad = body.attr("onload");
+			if (onLoad != null && onLoad.toLowerCase().contains("form") && onLoad.toLowerCase().contains("submit")) {
+				return true;
 			}
 		}
-		String action = form.absUrl("action");
-		URL actionUrl = new URL(action);
-		if (isInternalRequest(actionUrl))
-			processInternalRequest(actionUrl, params, "POST");
-		else
-			processServerUrl(actionUrl, sb.toString(), false);
+		return false;
 	}
 
 	public void checkRedirectLoop(URL target) throws IOException {
 		retries ++;
-		if (retries > 20)
+		if (retries > 20) {
+			log.warn("Too many redirections for "+target.toString());
 			throw new IOException("Too much redirections "+target.toString());
+		}
+		log.info("Connecting to "+target);
 	}
 
 	public List<HttpCookie> getServerCookies() {

@@ -52,6 +52,7 @@ public class ImpersonationEndpoint extends HttpServlet {
 		{
 			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
+			log.warn("Trying to get access without bearer token");
 			return;
 		}
 		String token = authentication.substring(7);
@@ -64,6 +65,7 @@ public class ImpersonationEndpoint extends HttpServlet {
 			{
 				resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 				resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
+				log.warn("Trying to get access with invalid bearer token");
 				return;
 			}
 			String url = req.getParameter("url");
@@ -71,6 +73,7 @@ public class ImpersonationEndpoint extends HttpServlet {
 			if (!fm.getImpersonations().contains(url)) {
 				resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 				resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
+				log.warn("Trying to get access with wrong url. Requested: ["+url+"] \nAccepted: "+fm.getImpersonations());
 				return;
 			}
 			impersonate (fm, url, t, resp);
