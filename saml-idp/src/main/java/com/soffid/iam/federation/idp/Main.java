@@ -20,6 +20,7 @@ import java.util.Set;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
+import javax.servlet.ServletException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
@@ -65,6 +66,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
 import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
+import es.caib.seycon.idp.openid.server.ImpersonationEndpoint;
 import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
@@ -464,6 +466,15 @@ public class Main {
 	        				openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
 
         	servlet = new ServletHolder(
+	                ImpersonationEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("ImpersonationEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getUserInfoEndpoint() == null ? 
+	        				"/userinfo/impersonate": 
+	        				openIdProfile.getUserInfoEndpoint()+"/impersonate"); //$NON-NLS-1$
+
+	        servlet = new ServletHolder(
 	                SessionCookieEndpoint.class);
 	        servlet.setInitOrder(2);
 	        servlet.setName("SessionCookieEndpoint"); //$NON-NLS-1$
@@ -535,29 +546,17 @@ public class Main {
         ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
         ctx.setErrorHandler(errorHandler);
         
+        errorHandler.addErrorPage(400, ErrorServlet.URI);
         errorHandler.addErrorPage(401, UserPasswordFormServlet.URI);
         errorHandler.addErrorPage(Throwable.class, ErrorServlet.URI);
-        errorHandler.addErrorPage(400, ErrorServlet.URI);
-        errorHandler.addErrorPage(402, 599, ErrorServlet.URI);
+        for (int i = 402; i <= 416; i++)
+        	errorHandler.addErrorPage(i, ErrorServlet.URI);
+        for (int i = 500; i <= 505; i++)
+        	errorHandler.addErrorPage(i, ErrorServlet.URI);
         
         if (needsKerberos(c))
         	configureSpnego(ctx, c);
         	
-        /**
-         * <!-- Send request to the EntityID to the SAML metadata handler. -->
-         * <servlet> <servlet-name>shibboleth_jsp</servlet-name>
-         * <jsp-file>/shibboleth.jsp</jsp-file> </servlet>
-         * 
-         * <servlet-mapping> <servlet-name>shibboleth_jsp</servlet-name>
-         * <url-pattern>/shibboleth</url-pattern> </servlet-mapping>
-         * 
-         * <error-page> <error-code>500</error-code>
-         * <location>/error.jsp</location> </error-page>
-         * 
-         * <error-page> <error-code>404</error-code>
-         * <location>/error-404.jsp</location> </error-page>
-         */
-
         ctx.setSessionHandler(new SessionHandler());
         int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
         				:c.getFederationMember().getSessionTimeout().intValue();

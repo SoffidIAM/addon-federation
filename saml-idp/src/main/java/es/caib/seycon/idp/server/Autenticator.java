@@ -56,6 +56,7 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.AuthorizationResponse;
+import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
@@ -126,6 +127,10 @@ public class Autenticator {
 	        }
 		}
     	
+        TokenInfo ti = (TokenInfo) req.getAttribute("$$internaltoken$$");
+        if (ti != null && checkToken(ctx, req, resp, config, ti)) {
+        	return true;
+        }
 //    	LOG.info("Find cookie");
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
@@ -142,6 +147,17 @@ public class Autenticator {
         }
         return false;
     }
+
+	private boolean checkToken(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config,
+			TokenInfo ti) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException, ServletException {
+		if (ti == null)
+			return false;
+		String user = ti.getUser();
+		if (user == null)
+			return false;
+		autenticate2(user, ctx, req, resp, ti.getAuthenticationMethod(), true);
+		return true;
+	}
 
 	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException, ServletException {

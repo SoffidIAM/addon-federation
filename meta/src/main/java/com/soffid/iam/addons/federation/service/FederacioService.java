@@ -9,6 +9,7 @@ import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
+import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
@@ -94,7 +95,8 @@ import org.springframework.transaction.annotation.Transactional;
 	OauthTokenEntity.class,
 	MailService.class,
 	BpmEngine.class,
-	UserConsentEntity.class
+	UserConsentEntity.class,
+	ImpersonationEntity.class
 })
 public abstract class FederacioService {
 

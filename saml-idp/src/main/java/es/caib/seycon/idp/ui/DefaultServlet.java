@@ -6,6 +6,7 @@ import java.io.OutputStream;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,7 +29,9 @@ public class DefaultServlet extends HttpServlet {
         	in = DefaultServlet.class.getClassLoader().getResourceAsStream(s);
         if (in == null) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            throw new ServletException("Page not found "+req.getPathInfo()); //$NON-NLS-1$
+            resp.setContentType("text/plain");
+            ServletOutputStream out = resp.getOutputStream();
+            out.write("HTTP/404 Not found".getBytes());
         } else {
             resp.setStatus(HttpServletResponse.SC_OK);
             String mimeType =  MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(s);

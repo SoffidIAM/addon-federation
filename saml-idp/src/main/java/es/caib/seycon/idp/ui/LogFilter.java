@@ -71,6 +71,10 @@ public class LogFilter implements Filter {
 				out.println (dateFormat2.format(new Date())+" "+request.getRemoteAddr()+" "+resp.error+" "+ path );
 			} catch (Exception e) {
 				out.println (dateFormat2.format(new Date())+" "+request.getRemoteAddr()+" "+e.toString()+" "+ path );
+				if (e instanceof IOException)
+					throw e;
+				else
+					throw new ServletException(e);
 			}
 			out.flush();
 		}

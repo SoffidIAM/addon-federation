@@ -201,6 +201,9 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				}
 				target.setVirtualIdentityProvider(spv);
 			}
+			for (ImpersonationEntity fip: sp.getImpersonations()) {
+				target.getImpersonations().add(fip.getUrl());
+			}
 		}
 		
 		target.getKeytabs().clear();
