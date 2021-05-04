@@ -75,7 +75,7 @@ public class TokenHandler {
 		for ( Iterator<TokenInfo> it = pendingTokens.iterator(); it.hasNext();) 
 		{
 			TokenInfo t = it.next();
-			if (t.expires < now) {
+			if (t.isExpired()) {
 				getFederationService().deleteOauthToken(generateOauthToken(t));
 				it.remove();
 			}
@@ -83,7 +83,7 @@ public class TokenHandler {
 		for ( Iterator<TokenInfo> it = activeTokens.iterator(); it.hasNext();) 
 		{
 			TokenInfo t = it.next();
-			if (t.expires < now) {
+			if (t.isExpired() && t.isRefreshExpired()) {
 				if (t.getRefreshToken() != null)
 					refreshTokens.remove(t.getRefreshToken());
 				getFederationService().deleteOauthToken(generateOauthToken(t));
@@ -110,7 +110,10 @@ public class TokenHandler {
 			if (o != null)
 				ti = parseOauthToken(o);
 		}
-		return ti;
+		if (ti == null || ti.isExpired())
+			return null;
+		else
+			return ti;
 	}
 	
 	public TokenInfo getRefreshToken(String refreshToken) throws InternalErrorException 
@@ -122,7 +125,10 @@ public class TokenHandler {
 			if (o != null)
 				ti = parseOauthToken(o);
 		}
-		return ti;
+		if (ti == null || ! ti.isRefreshExpired())
+			return null;
+		else
+			return ti;
 	}
 
 	public synchronized void generateToken(TokenInfo t) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
@@ -138,6 +144,13 @@ public class TokenHandler {
 		refreshTokens.put(t.refreshToken, t);
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
+		Long refreshTimeout = t.request.getFederationMember().getOauthSessionTimeout();
+		if (refreshTimeout == null)
+			refreshTimeout = IdpConfig.getConfig().getFederationMember().getOauthSessionTimeout();
+		if (refreshTimeout == null)
+			t.expiresRefresh = System.currentTimeMillis() + 24L * 60 * 60 * 1000L; // 1 day
+		else
+			t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
 		getFederationService().createOauthToken(generateOauthToken(t));
@@ -255,7 +268,10 @@ public class TokenHandler {
 			if (o != null)
 				ti = parseOauthToken(o);
 		}
-		return ti;
+		if (ti == null || ti.isExpired())
+			return null;
+		else
+			return ti;
 	}
 
 	private String getIdentityProvider()  {
@@ -281,6 +297,7 @@ public class TokenHandler {
 		o.setAuthorizationCode(t.getAuthorizationCode());
 		o.setCreated(new Date(t.getCreated()));
 		o.setExpires(new Date(t.getExpires()));
+		o.setRefreshExpires(new Date(t.getExpiresRefresh()));
 		o.setIdentityProvider(getIdentityProvider());
 		o.setRefreshToken(t.getRefreshToken());
 		o.setServiceProvider(t.getRequest().getFederationMember().getPublicId());
@@ -298,6 +315,7 @@ public class TokenHandler {
 		t.setAuthorizationCode(o.getAuthorizationCode());
 		t.setCreated(o.getCreated().getTime());
 		t.setExpires(o.getExpires().getTime());
+		t.setExpiresRefresh(o.getRefreshExpires().getTime());
 		t.setRefreshToken(o.getRefreshToken());
 		t.setRequest(new OpenIdRequest());
 		t.getRequest().setFederationMember(getFederationService().findFederationMemberByPublicId(o.getServiceProvider()));

@@ -825,6 +825,7 @@
 					r_sp_openid3.setVisible(openid);
 					r_sp_openid4.setVisible(openid);
 					r_sp_openid5.setVisible(openid);
+					r_sp_openid6.setVisible(openid);
 				}	
 				
 				void updateOpenidMechanism() {
@@ -1175,6 +1176,10 @@
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.timeout')}"/>
 									<input_dada bind="/federationMember/sessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.refreshTimeout')}"/>
+									<input_dada bind="/federationMember/oauthSessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ssoCookieName')}"/>
@@ -1573,6 +1578,10 @@
 								<row id="r_sp_openid5">
 									<input_etiqueta value="${c:l('federacio.zul.openidUrl')}"/>
 									<textbox  width="100%" bind="/federationMember/openidUrl"  onChange="" />
+								</row>
+								<row id="r_sp_openid6">
+									<input_etiqueta value="${c:l('federacio.zul.refreshTimeout')}"/>
+									<input_dada bind="/federationMember/oauthSessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 							</rows>
 						</grid>
