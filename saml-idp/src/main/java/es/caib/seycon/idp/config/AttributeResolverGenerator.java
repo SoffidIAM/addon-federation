@@ -93,22 +93,23 @@ public class AttributeResolverGenerator {
     			attributes.add(att.getOid());
     			attributes.add(att.getShortName());
 			
-          Element node = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeDefinition"); //$NON-NLS-1$
-          node.setAttribute("xsi:type", "ad:Simple"); //$NON-NLS-1$
-          node.setAttribute("id", att.getShortName()); //$NON-NLS-1$
-          node.setAttribute("sourceAttributeID", att.getShortName().toLowerCase()); //$NON-NLS-1$
-          
-          Element dependency = doc.createElementNS(RESOLVER_NAMESPACE, "Dependency"); //$NON-NLS-1$
-          dependency.setAttribute("ref", "seu"); //$NON-NLS-1$
-          node.appendChild(dependency);
-          
-          Element encoder = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeEncoder"); //$NON-NLS-1$
-          encoder.setAttribute("xsi:type", "enc:SAML2String"); //$NON-NLS-1$
-          encoder.setAttribute("name", att.getOid()); //$NON-NLS-1$
-          encoder.setAttribute("friendlyName", att.getShortName()); //$NON-NLS-1$
-          node.appendChild(encoder);
-          
-          root.appendChild(node);
+	          Element node = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeDefinition"); //$NON-NLS-1$
+	          node.setAttribute("xsi:type", "ad:Simple"); //$NON-NLS-1$
+	          node.setAttribute("id", att.getShortName()); //$NON-NLS-1$
+	          node.setAttribute("sourceAttributeID", att.getShortName().toLowerCase()); //$NON-NLS-1$
+	          
+	          Element dependency = doc.createElementNS(RESOLVER_NAMESPACE, "Dependency"); //$NON-NLS-1$
+	          dependency.setAttribute("ref", "seu"); //$NON-NLS-1$
+	          node.appendChild(dependency);
+	          
+	          Element encoder = doc.createElementNS(RESOLVER_NAMESPACE, "AttributeEncoder"); //$NON-NLS-1$
+	          encoder.setAttribute("xsi:type", "enc:SAML2String"); //$NON-NLS-1$
+	          encoder.setAttribute("name", att.getOid()); //$NON-NLS-1$
+	          encoder.setAttribute("friendlyName", att.getShortName()); //$NON-NLS-1$
+	          node.appendChild(encoder);
+	          
+	          root.appendChild(node);
+    		}
         }
     }
 
