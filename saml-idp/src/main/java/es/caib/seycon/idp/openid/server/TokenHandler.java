@@ -125,7 +125,7 @@ public class TokenHandler {
 			if (o != null)
 				ti = parseOauthToken(o);
 		}
-		if (ti == null || ! ti.isRefreshExpired())
+		if (ti == null || ti.isRefreshExpired())
 			return null;
 		else
 			return ti;
