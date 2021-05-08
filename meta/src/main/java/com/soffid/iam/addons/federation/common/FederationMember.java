@@ -135,6 +135,10 @@ public class FederationMember {
 	@Nullable
 	Long sessionTimeout;
 
+	@Description ("Identity Provider session timeout for oAuth sessions (in seconds)")
+	@Nullable
+	Long oauthSessionTimeout;
+
 	@Description("Bean shell expression to generate user id")
 	@Nullable
 	public String uidExpression;

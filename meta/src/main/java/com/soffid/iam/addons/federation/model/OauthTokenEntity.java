@@ -48,6 +48,10 @@ public class OauthTokenEntity {
 	@Nullable
 	Date expires;
 	
+	@Column (name="TOK_REFEXP")
+	@Nullable
+	Date refreshExpires;
+	
 	@Column (name="TOK_AUTHEN")
 	Date authenticated;
 	

@@ -73,7 +73,11 @@ public abstract class FederationMemberEntity {
 	@Nullable
 	public java.lang.String standardPort;
 
+	@Description ("Identity Provider session timeout for oAuth sessions (in seconds)")
+	@Nullable
+	Long oauthSessionTimeout;
 
+	
 	@Column (name="FED_ENT_ID")
 	public com.soffid.iam.addons.federation.model.EntityGroupEntity entityGroup;
 
