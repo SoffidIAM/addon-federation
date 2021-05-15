@@ -31,6 +31,8 @@ import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.sso.Secret;
 import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
+import com.soffid.iam.sync.engine.extobj.AttributeReference;
+import com.soffid.iam.sync.engine.extobj.AttributeReferenceParser;
 import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
 import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
 import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
@@ -173,10 +175,9 @@ public class DataConnector extends BaseDataConnector {
     			ExtensibleObject eo = ui == null ? 
     				new AccountExtensibleObject(account, server):
     				new UserExtensibleObject(account, ui, server);
-    			String result = (String) new ObjectTranslator(config.getSystem(), server,
+   				uid = (String) new ObjectTranslator(config.getSystem(), server,
     					new java.util.LinkedList<ExtensibleObjectMapping>())
-    				.eval(member.getUidExpression(), eo);
-    			uid = result;
+    						.eval(member.getUidExpression(), eo);
     		}
     	}
     	return uid;
@@ -272,7 +273,12 @@ public class DataConnector extends BaseDataConnector {
         try {
         	User user = server.getUserInfo(accountName, c.getSystem().getName());
         	eo = new UserExtensibleObject(account, user, server);
-        	r = translator.eval(attribute.getValue(), eo);
+			try { 
+				AttributeReference ar = AttributeReferenceParser.parse(eo, attribute.getValue());
+				r = ar.getValue();
+			} catch (Exception ear) {
+				r = translator.eval(attribute.getValue(), eo);
+			}
         } catch (UnknownUserException e) {
         	eo = new AccountExtensibleObject(account, server);
         	try {
