@@ -427,7 +427,7 @@ public class Autenticator {
 						SessionService ss = new RemoteServiceLocator().getSessionService();
 						Session soffidSession = ss
 								.getSession(Long.decode(sessionid), sessionKey);
-						if (ss != null)
+						if (ss != null && soffidSession != null)
 							ss.destroySession(soffidSession);
 					}
 		        }

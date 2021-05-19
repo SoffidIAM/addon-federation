@@ -74,6 +74,7 @@ public class SessionCookieEndpoint extends HttpServlet {
 			o.put("cookie_domain", cookie.getDomain());
 			buildResponse(resp, o);
 		} catch (Exception e) {
+			log.info("Error generating session cookie", e);
 			buildError(resp, e.getClass().getSimpleName(), e.getMessage(), t);
 		}
 	}
