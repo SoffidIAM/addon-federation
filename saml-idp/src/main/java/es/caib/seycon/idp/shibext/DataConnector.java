@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.Attribute;
@@ -55,8 +56,8 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
 
 public class DataConnector extends BaseDataConnector {
-	
-	
+	Log log = LogFactory.getLog(getClass());
+	private ServerService server;
 	
     public Map<String, BaseAttribute> resolve(
             ShibbolethResolutionContext resolutionContext)
@@ -67,15 +68,23 @@ public class DataConnector extends BaseDataConnector {
         
         String rpid = ctx.getInboundMessageIssuer();
         
+        Long t = System.currentTimeMillis();
         try {
-        	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+        	server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         	IdpConfig config = IdpConfig.getConfig();
+        	
+            log.info("Data rules: "+(System.currentTimeMillis()-t));
+
         	attributes = new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null);
 
+            log.info("Data rules got attributes: "+(System.currentTimeMillis()-t));
         	String uid;
         	HashMap<String,BaseAttribute> m = new HashMap<String, BaseAttribute>();
+        	User ui = null;
+        	Account account = server.getAccountInfo(principal, config.getSystem().getName());
+
         	try {
-        		User ui = server.getUserInfo(principal, config.getSystem().getName ());
+        		ui = server.getUserInfo(principal, config.getSystem().getName ());
         		uid = evaluateUid (server, rpid, principal, ui);        		
         		int i = ui.getFullName().indexOf(" "+ui.getLastName());
         		if (i > 0)
@@ -132,7 +141,6 @@ public class DataConnector extends BaseDataConnector {
         	} catch (UnknownUserException ex) {
         		uid = evaluateUid (server, rpid, principal, null);        		
 
-        		Account account = server.getAccountInfo(principal, config.getSystem().getName());
         		addStringValue (ctx, m, "fullname", account.getDescription()); //$NON-NLS-1$
         		
         		addStringValue (ctx, m, "userType", account.getPasswordPolicy()); //$NON-NLS-1$
@@ -141,11 +149,15 @@ public class DataConnector extends BaseDataConnector {
         			collectRoles (m, server, account);
         	}
 
+            log.info("Data rules: "+(System.currentTimeMillis()-t));
         	ctx.setPrincipalName(uid);
+            log.info("Data rules: "+(System.currentTimeMillis()-t));
             addStringValue (ctx, m, "uid", uid); //$NON-NLS-1$
             
-            addComputedAttributes(ctx, principal, m);
+            log.info("Data rules precomputed: "+(System.currentTimeMillis()-t));
+            addComputedAttributes(ctx, principal, m, ui, account);
             
+            log.info("Data rules computed: "+(System.currentTimeMillis()-t));
             Session session = ctx.getUserSession();
             if (session != null)
                 addStringValue (ctx, m, "sessionId", session.getSessionID()); //$NON-NLS-1$
@@ -153,13 +165,14 @@ public class DataConnector extends BaseDataConnector {
             SimpleDateFormat simpleDf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
             simpleDf.setTimeZone(TimeZone.getTimeZone("GMT"));
             
+            log.info("Data rules: "+(System.currentTimeMillis()-t));
+
             return m;
         } catch (Exception e) {
             throw new AttributeResolutionException(e);
 		}
     }
 
-    org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
 	private Collection<Attribute> attributes;
     
     private String evaluateUid(ServerService server, String rpid, String principal, User ui) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
@@ -244,60 +257,26 @@ public class DataConnector extends BaseDataConnector {
     	}
     }
     
-    private void addComputedAttributes (SAMLProfileRequestContext ctx, String accountName, HashMap<String, BaseAttribute> m) throws Exception
+    private void addComputedAttributes (SAMLProfileRequestContext ctx, String accountName, HashMap<String, BaseAttribute> m, User ui, Account account) throws Exception
     {
+        ExtensibleObject eo = ui == null ?
+        		new AccountExtensibleObject(account, server):
+        		new UserExtensibleObject(account, ui, server);
         Collection<String> values;
+
+        IdpConfig c = IdpConfig.getConfig();
+        ObjectTranslator translator = new ObjectTranslator(c.getSystem(), server, new LinkedList<ExtensibleObjectMapping>());
+        
+
 		for ( Attribute attribute: attributes)
         {
   			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
    			{
-   				BasicAttribute<String> b = new BasicAttribute<String>(attribute.getShortName().toLowerCase());
-      			values = evaluate (ctx, accountName, attribute);
-      			if (values != null)
-      				addStringValues(ctx, m, attribute.getShortName().toLowerCase(), values);
+  				DelayedAttribute b = new DelayedAttribute(attribute.getShortName().toLowerCase(), translator, eo, attribute);
+  				m.put(attribute.getShortName().toLowerCase(), b);
         	}
         }
     }
-
-    private Collection<String> evaluate(SAMLProfileRequestContext ctx, String accountName, Attribute attribute) throws Exception{
-    	if (attribute.getValue() == null || attribute.getValue().trim().isEmpty())
-    		return null;
-    	
-        IdpConfig c = IdpConfig.getConfig();
-    	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
-        ObjectTranslator translator = new ObjectTranslator(c.getSystem(), server, new LinkedList<ExtensibleObjectMapping>());
-
-        Account account = server.getAccountInfo(accountName, c.getSystem().getName());
-        ExtensibleObject eo;
-        Object r = null;
-        try {
-        	User user = server.getUserInfo(accountName, c.getSystem().getName());
-        	eo = new UserExtensibleObject(account, user, server);
-			try { 
-				AttributeReference ar = AttributeReferenceParser.parse(eo, attribute.getValue());
-				r = ar.getValue();
-			} catch (Exception ear) {
-				r = translator.eval(attribute.getValue(), eo);
-			}
-        } catch (UnknownUserException e) {
-        	eo = new AccountExtensibleObject(account, server);
-        	try {
-            	r = translator.eval(attribute.getValue(), eo);
-        	} 
-        	catch (Exception ex)
-        	{
-        		log.warn("Error evaluating attribute "+attribute.getName(), ex);
-        	}
-        }
-        if (r == null)
-        	return null;
-        else if (r instanceof Collection)
-        	return (Collection<String>) r;
-        else if (r instanceof byte[])
-         	return Collections.singleton( Base64.encodeBytes((byte[]) r, Base64.DONT_BREAK_LINES) );
-        else  
-        	return Collections.singleton( new ValueObjectMapper().toSingleString(r) );
-	}
 
 	public void validate() throws AttributeResolutionException {
     }

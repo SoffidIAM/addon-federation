@@ -17,7 +17,7 @@
                               urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd">
 
     <srv:Service id="shibboleth.AttributeResolver"
-             xsi:type="attribute-resolver:ShibbolethAttributeResolver">
+             xsi:type="attribute-resolver:SoffidAttributeResolver">
         <srv:ConfigurationResource file="${conf}/attribute-resolver.xml" xsi:type="resource:FilesystemResource" />
     </srv:Service>
 
