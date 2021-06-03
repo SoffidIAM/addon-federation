@@ -347,6 +347,13 @@
 			<groupId>com.soffid.iam.addon.remember-password</groupId>
 			<artifactId>remember-password-core</artifactId>
 			<version>2.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>federation-core</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>bouncycastle</groupId>
