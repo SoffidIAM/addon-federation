@@ -33,14 +33,15 @@ ${publicCertX509}
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
 
-        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
-                             Location="${protocol}://${hostName}:${port}/profile/SAML2/POST/SSO" />
-
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" 
                              Location="${protocol}://${hostName}:${port}/profile/SAML2/POST-SimpleSign/SSO" />
         
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" 
                              Location="${protocol}://${hostName}:${port}/profile/SAML2/Redirect/SSO" />
+
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
+                             Location="${protocol}://${hostName}:${port}/profile/SAML2/POST/SSO" />
+
     </IDPSSODescriptor>
 
 	<SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">

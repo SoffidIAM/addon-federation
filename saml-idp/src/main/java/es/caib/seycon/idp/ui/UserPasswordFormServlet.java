@@ -10,6 +10,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -29,7 +32,7 @@ import es.caib.seycon.idp.ui.openid.OpenIdRequestAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserPasswordFormServlet extends BaseForm {
-
+	static Log log = LogFactory.getLog(UserPasswordFormServlet.class);
     /**
 	 * 
 	 */
@@ -86,6 +89,7 @@ public class UserPasswordFormServlet extends BaseForm {
 
             Collection<FederationMember> vip = ip.getVirtualIdentityProvider();
             
+            
             HtmlGenerator g = new HtmlGenerator(context, req);
             g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
@@ -107,6 +111,14 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
+
+        	log.info("Displaying login page");
+        	log.info("Current user "+ctx.getUser());
+        	log.info("Allowed authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Requested authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Authentication step "+ctx.getStep());
+        	log.info("Next authentication factor "+ctx.getNextFactor());
         	
             boolean otpAllowed = ctx.getNextFactor().contains("O");
             if (otpAllowed && !requestedUser.trim().isEmpty())

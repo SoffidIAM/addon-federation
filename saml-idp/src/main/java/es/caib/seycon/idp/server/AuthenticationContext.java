@@ -3,6 +3,8 @@ package es.caib.seycon.idp.server;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpCookie;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -14,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -29,6 +32,8 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.User;
+import com.soffid.iam.config.Config;
+import com.soffid.iam.utils.ConfigurationCache;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.SessionConstants;
@@ -84,7 +89,7 @@ public class AuthenticationContext {
 		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
 		IdpConfig config = IdpConfig.getConfig();
-    	remoteIp = request.getRemoteAddr();
+    	remoteIp = getClientRequest(request);
     	hostId = null;
     	String cookieName = getHostIdCookieName();
     	if (cookieName != null && request != null && request.getCookies() != null)
@@ -117,6 +122,59 @@ public class AuthenticationContext {
             }
         }
 	}
+	
+	public static String getClientRequest (HttpServletRequest req)
+	{
+		String ip = req.getRemoteAddr();
+		String trustedProxies;
+		try {
+			if ( Config.getConfig().isAgent()) 
+				trustedProxies = System.getProperty("soffid.proxy.trustedIps");
+			else 
+				trustedProxies = ConfigurationCache.getMasterProperty("soffid.proxy.trustedIps");
+		} catch (IOException e1) {
+			trustedProxies = null;
+		}
+		String forwardedFor = req.getHeader("x-forwarded-for");
+		if (trustedProxies != null)
+		{
+			String[] tp = trustedProxies.split("[, ]+");
+			if ( isTrusted (ip, tp) )
+			{
+				if (forwardedFor == null || forwardedFor.trim().isEmpty())
+				{
+					try {
+						ip = InetAddress.getLocalHost().getHostAddress();
+					} catch (UnknownHostException e) {
+						ip = "127.0.0.1" ;
+					}
+				} else {
+					String[] ff = forwardedFor.split("[ ,]+");
+					for (int i = ff.length - 1; i >= 0; i--)
+					{
+						ip = ff[i];
+						if ( ! isTrusted(ip, tp))
+							break;
+					}
+				}
+			}
+		}
+		return (ip);
+	}
+
+	private static boolean isTrusted(String ip, String[] tp) {
+		for (String t: tp)
+			if (ip.equalsIgnoreCase(t))
+				return true;
+			else if (t.contains("*"))
+			{
+				String t2 = t.replaceAll("\\*", "[0-9]*");
+				if ( Pattern.matches("^"+t2+"$", ip))
+					return true;
+			}
+		return false;
+	}
+
 	
 	public boolean isPreviousAuthenticationMethodAllowed (HttpServletRequest request) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
