@@ -8,6 +8,9 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 

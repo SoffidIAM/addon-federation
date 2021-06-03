@@ -350,9 +350,6 @@
 						ctx = ds.getJXPathContext();
 						//registre = ctx.getValue("/");
 						// 0 = publica, 1 = privada
-						fm.setPublicKey(res[1]);
-						fm.setPrivateKey(res[0]);
-						fm.setCertificateChain(res[2]);
 						if (ssl) {
 							ctx.setValue("/federationMember/sslPrivateKey",fm.getPrivateKey());
 							ctx.setValue("/federationMember/sslPublicKey",fm.getPublicKey());

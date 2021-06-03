@@ -73,99 +73,39 @@ public class DataConnector extends BaseDataConnector {
         	server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         	IdpConfig config = IdpConfig.getConfig();
         	
-            log.info("Data rules: "+(System.currentTimeMillis()-t));
-
         	attributes = new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null);
 
-            log.info("Data rules got attributes: "+(System.currentTimeMillis()-t));
         	String uid;
         	HashMap<String,BaseAttribute> m = new HashMap<String, BaseAttribute>();
         	User ui = null;
         	Account account = server.getAccountInfo(principal, config.getSystem().getName());
 
+            log.info("Got account: "+(System.currentTimeMillis()-t));
         	try {
         		ui = server.getUserInfo(principal, config.getSystem().getName ());
         		uid = evaluateUid (server, rpid, principal, ui);        		
-        		int i = ui.getFullName().indexOf(" "+ui.getLastName());
-        		if (i > 0)
-        		{
-        			addStringValue (ctx, m, "givenname", ui.getFullName().substring(0,i).trim()); //$NON-NLS-1$
-        			addStringValue (ctx, m, "surname", ui.getFullName().substring(i+1).trim()); //$NON-NLS-1$
-        		}
-        		else
-        		{
-        			addStringValue (ctx, m, "givenname", ui.getFirstName()); //$NON-NLS-1$
-        			addStringValue (ctx, m, "surname", ui.getLastName()); //$NON-NLS-1$
-        		}
-        		addStringValue (ctx, m, "fullname", ui.getFullName()); //$NON-NLS-1$
-        		
-        		BasicAttribute<String> b = new BasicAttribute<String>("surnames"); //$NON-NLS-1$
-        		LinkedList<String> l = new LinkedList<String>();
-        		l.add(ui.getLastName());
-        		if (ui.getMiddleName() != null)
-        			l.add (ui.getMiddleName());
-        		l.add(ui.getFirstName());
-        		addStringValues (ctx, m, "surnames", l); //$NON-NLS-1$
-        		
-        		
-        		addStringValue (ctx, m, "surname1", ui.getLastName()); //$NON-NLS-1$
-        		addStringValue (ctx, m, "surname2", ui.getMiddleName()); //$NON-NLS-1$
         		if (ui.getShortName() != null && ! ui.getShortName().trim().isEmpty()) {
         			if (ui.getMailDomain() == null) 
         			{
-        				addStringValue (ctx, m, "email", ui.getShortName()); //$NON-NLS-1$
         				addStringValue (ctx, m, "mail", ui.getShortName()); //$NON-NLS-1$
         			}
         			else
         			{
-        				addStringValue (ctx, m, "email", ui.getShortName()+"@"+ui.getMailDomain()); //$NON-NLS-1$ //$NON-NLS-2$
         				addStringValue (ctx, m, "mail", ui.getShortName()+"@"+ui.getMailDomain()); //$NON-NLS-1$ //$NON-NLS-2$
         			}
         		} else {
         			UserData dada = server.getUserData(ui.getId(), "EMAIL"); //$NON-NLS-1$
         			if (dada != null)
         			{
-        				addStringValue (ctx, m, "email", dada.getValue()); //$NON-NLS-1$
         				addStringValue (ctx, m, "mail", dada.getValue()); //$NON-NLS-1$
         			}
         		}
-        		addStringValue (ctx, m, "group", ui.getPrimaryGroup()); //$NON-NLS-1$
-        		addStringValue (ctx, m, "userType", ui.getUserType()); //$NON-NLS-1$
-        		
-        		UserData data = server.getUserData(ui.getId(), "PHONE"); //$NON-NLS-1$
-        		if (data != null)
-        			addStringValue (ctx, m, "telephoneNumber", data.getValue()); //$NON-NLS-1$
-        		
-        		if (!m.containsKey("memberof"))
-        			collectRoles (m, server, ui);
         	} catch (UnknownUserException ex) {
         		uid = evaluateUid (server, rpid, principal, null);        		
-
-        		addStringValue (ctx, m, "fullname", account.getDescription()); //$NON-NLS-1$
-        		
-        		addStringValue (ctx, m, "userType", account.getPasswordPolicy()); //$NON-NLS-1$
-        		
-        		if (!m.containsKey("memberof"))
-        			collectRoles (m, server, account);
         	}
 
-            log.info("Data rules: "+(System.currentTimeMillis()-t));
         	ctx.setPrincipalName(uid);
-            log.info("Data rules: "+(System.currentTimeMillis()-t));
             addStringValue (ctx, m, "uid", uid); //$NON-NLS-1$
-            
-            log.info("Data rules precomputed: "+(System.currentTimeMillis()-t));
-            addComputedAttributes(ctx, principal, m, ui, account);
-            
-            log.info("Data rules computed: "+(System.currentTimeMillis()-t));
-            Session session = ctx.getUserSession();
-            if (session != null)
-                addStringValue (ctx, m, "sessionId", session.getSessionID()); //$NON-NLS-1$
-            
-            SimpleDateFormat simpleDf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-            simpleDf.setTimeZone(TimeZone.getTimeZone("GMT"));
-            
-            log.info("Data rules: "+(System.currentTimeMillis()-t));
 
             return m;
         } catch (Exception e) {
@@ -197,48 +137,9 @@ public class DataConnector extends BaseDataConnector {
     	
 	}
 
-	private void collectRoles(HashMap<String, BaseAttribute> m, ServerService server,
-            User ui) throws RemoteException, InternalErrorException, UnknownUserException {
-		log.info("Generating grants");
-		try {
-	        Collection<RoleGrant> roles = server.getUserRoles(ui.getId(), null);
-	        LinkedList<String> l = new LinkedList<String>();
-	        for (RoleGrant role : roles) {
-	            String v =role.getRoleName();
-	            if (role.getDomainValue() != null && role.getDomainValue().length() > 0)
-	                v += "/" + role.getDomainValue(); //$NON-NLS-1$
-	            v += "@"+role.getSystem(); //$NON-NLS-1$
-	            l.add(v);
-//	            log.info("Adding role "+v);
-	        }
-	        addStringValues(null, m, "memberof", l);        
-		} catch (Exception e) {
-			log.warn("Error fetching memberof", e);
-		}
-        
-        
-    }
-
-	private void collectRoles(HashMap<String, BaseAttribute> m, ServerService server,
-            Account acc) throws Exception {
-		try {
-	        Collection<RoleGrant> roles = server.getAccountRoles(acc.getName(), acc.getSystem());
-	        LinkedList<String> l = new LinkedList<String>();
-	        for (RoleGrant role : roles) {
-	            String v =role.getRoleName();
-	            if (role.getDomainValue() != null && role.getDomainValue().length() > 0)
-	                v += "/" + role.getDomainValue(); //$NON-NLS-1$
-	            v += "@"+role.getSystem(); //$NON-NLS-1$
-	            l.add(v);
-	            log.info("Adding role "+v);
-	        }
-	        
-	        addStringValues(null, m, "memberof", l);        
-		} catch (Exception e) {
-			log.warn("Error fetching memberOf", e);
-		}
-        
-    }
+	@Override
+	public void validate() throws AttributeResolutionException {
+	}
 
 	private void addStringValue(SAMLProfileRequestContext ctx, HashMap<String, BaseAttribute> m,
             String name, String value) throws Exception {
@@ -252,61 +153,7 @@ public class DataConnector extends BaseDataConnector {
             BasicAttribute<String> b = new BasicAttribute<String>(name);
             b.setValues(values);
             m.put(name, b);
-            for (String value: values)
-            	log.info("Setting value "+value+" for "+name);
     	}
     }
-    
-    private void addComputedAttributes (SAMLProfileRequestContext ctx, String accountName, HashMap<String, BaseAttribute> m, User ui, Account account) throws Exception
-    {
-        ExtensibleObject eo = ui == null ?
-        		new AccountExtensibleObject(account, server):
-        		new UserExtensibleObject(account, ui, server);
-        Collection<String> values;
-
-        IdpConfig c = IdpConfig.getConfig();
-        ObjectTranslator translator = new ObjectTranslator(c.getSystem(), server, new LinkedList<ExtensibleObjectMapping>());
-        
-
-		for ( Attribute attribute: attributes)
-        {
-  			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
-   			{
-  				DelayedAttribute b = new DelayedAttribute(attribute.getShortName().toLowerCase(), translator, eo, attribute);
-  				m.put(attribute.getShortName().toLowerCase(), b);
-        	}
-        }
-    }
-
-	public void validate() throws AttributeResolutionException {
-    }
-
-	public String generateSecrets(User user) throws IOException, InternalErrorException 
-	{
-        StringBuffer result = new StringBuffer("OK");
-        SecretStoreService sss = new RemoteServiceLocator().getSecretStoreService();
-        for (Secret secret : sss.getAllSecrets(user)) {
-        	if (secret.getName() != null && secret.getName().length() > 0 &&
-        			secret.getValue() != null &&
-        			secret.getValue().getPassword() != null &&
-        			secret.getValue().getPassword().length() > 0 )
-        	{
-                result.append('|');
-               	result.append( encodeSecret(secret.getName()));
-                result.append('|');
-                result.append( encodeSecret(secret.getValue().getPassword()));
-        	}
-        }
-        result.append ("|sessionKey|");
-       	result.append ("|fullName|").append(encodeSecret(user.getFullName()));
-        return result.toString();
-    }
-
-
-
-	private String encodeSecret(String secret)
-			throws UnsupportedEncodingException {
-		return URLEncoder.encode(secret,"UTF-8").replaceAll("\\|", "%7c"); 
-	}
 
 }

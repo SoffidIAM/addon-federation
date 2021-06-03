@@ -1,7 +1,6 @@
 package es.caib.seycon.idp.shibext;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 
 import com.soffid.iam.addons.federation.common.Attribute;
@@ -35,20 +34,27 @@ public class DelayedAttribute extends BasicAttribute<String> {
 	private Attribute attribute;
 	boolean resolved = false;
 
-	public DelayedAttribute(String name, ObjectTranslator translator, ExtensibleObject eo, Attribute attribute) {
+	public DelayedAttribute(String name, ObjectTranslator translator, ExtensibleObject eo, Attribute att) {
 		super(name);
 		this.translator = translator;
 		this.eo = eo;
-		this.attribute = attribute;
-		getValues().add("");
+		this.attribute = att;
+		super.getValues().add("");
+		
+		SAML1StringAttributeEncoder encoder1 = new SAML1StringAttributeEncoder();
+		encoder1.setAttributeName("urn:mace:dir:attribute-def:"+att.getShortName());
+		getEncoders().add(encoder1);
+		SAML2StringAttributeEncoder encoder2 = new SAML2StringAttributeEncoder();
+		encoder2.setFriendlyName(att.getShortName());
+		encoder2.setAttributeName(att.getOid() == null || att.getOid().trim().isEmpty() ? att.getShortName(): att.getOid());
+		getEncoders().add(encoder2);
 	}
 	
 	
 	public void resolve() {
 		if ( !resolved) {
-			doResolve();
-			setValues(doResolve());
 			resolved = true;
+			setValues(doResolve());
 		}
 	}
 
@@ -69,10 +75,16 @@ public class DelayedAttribute extends BasicAttribute<String> {
         	return new LinkedList<String>();
         else if (r instanceof Collection)
         	return (Collection<String>) r;
-        else if (r instanceof byte[])
-         	return Collections.singleton( Base64.encodeBytes((byte[]) r, Base64.DONT_BREAK_LINES) );
-        else  
-        	return Collections.singleton( new ValueObjectMapper().toSingleString(r) );
+        else if (r instanceof byte[]) {
+         	LinkedList<String> l = new LinkedList<String>();
+         	l.add(Base64.encodeBytes((byte[]) r, Base64.DONT_BREAK_LINES) );
+         	return l;
+        }
+        else  {
+         	LinkedList<String> l = new LinkedList<String>();
+         	l.add(new ValueObjectMapper().toSingleString(r) );
+         	return l;
+        }
 	}
 
 
@@ -81,7 +93,7 @@ public class DelayedAttribute extends BasicAttribute<String> {
 		StackTraceElement[] st = Thread.currentThread().getStackTrace();
 		int i = 0;
 		while (i < st.length) {
-			if (st[i].getClassName().equals(getClass().getName())) {
+			if (st[i].getClassName().equals(DelayedAttribute.class.getName())) {
 				if ( st[i+1].getClassName().equals( AttributeValueRegexMatchFunctor.class.getName()) ||
 						st[i+1].getClassName().equals( AttributeValueStringMatchFunctor.class.getName()) ||
 						st[i+1].getClassName().equals( AttributeValueRegexMatchFunctor.class.getName()) ||
@@ -95,11 +107,13 @@ public class DelayedAttribute extends BasicAttribute<String> {
 						st[i+1].getClassName().equals( SAML2Base64AttributeEncoder.class.getName()) ||
 						st[i+1].getClassName().equals( SAML2XMLObjectAttributeEncoder.class.getName()) ||
 						st[i+1].getClassName().equals( AbstractScopedAttributeEncoder.class.getName()) ||
-						st[i+1].getClassName().equals( ShibbolethAttributeFilteringEngine.class.getName()) ||
 						st[i+1].getClassName().equals( UserAttributesGenerator.class.getName()) ||
 						st[i+1].getClassName().equals( AbstractScopedAttributeEncoder.class.getName()) ||
 						st[i+1].getClassName().equals( AbstractScopedAttributeEncoder.class.getName()) ||
-						st[i+1].getClassName().equals( AbstractScopedAttributeEncoder.class.getName())) 
+						st[i+1].getClassName().equals( AbstractScopedAttributeEncoder.class.getName()) ||
+						st[i+1].getClassName().equals( ShibbolethAttributeFilteringEngine.class.getName()) &&
+							st[i+1].getMethodName().equals("filterAttributes") &&
+							st[i+2].getClassName().equals( ShibbolethAttributeFilteringEngine.class.getName())) 
 				{
 					resolve();
 				}
