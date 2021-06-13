@@ -89,6 +89,13 @@ public class UserPasswordFormServlet extends BaseForm {
 
             Collection<FederationMember> vip = ip.getVirtualIdentityProvider();
             
+        	log.info("Displaying login page");
+        	log.info("Current user "+ctx.getUser());
+        	log.info("Allowed authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Requested authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Authentication step "+ctx.getStep());
+        	log.info("Next authentication factor "+ctx.getNextFactor());
             
             HtmlGenerator g = new HtmlGenerator(context, req);
             g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -112,14 +119,6 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
 
-        	log.info("Displaying login page");
-        	log.info("Current user "+ctx.getUser());
-        	log.info("Allowed authentication method "+ctx.getAllowedAuthenticationMethods());
-        	log.info("Requested authentication method "+ctx.getAllowedAuthenticationMethods());
-        	log.info("Authentication method "+ctx.getAllowedAuthenticationMethods());
-        	log.info("Authentication step "+ctx.getStep());
-        	log.info("Next authentication factor "+ctx.getNextFactor());
-        	
             boolean otpAllowed = ctx.getNextFactor().contains("O");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {
