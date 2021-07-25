@@ -50,10 +50,10 @@ public class LoginServlet extends LangSupportServlet {
 		
         if (!previousAuth)
         {
+        	try {
         	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
         	if (authCtx == null )
-        	{
-        		try {
+	        	{
         			authCtx = new AuthenticationContext();
         			authCtx.setPublicId(entityId);
 //        			if (method != null)
@@ -62,14 +62,9 @@ public class LoginServlet extends LangSupportServlet {
 //        			}
         			authCtx.initialize(req);
         			authCtx.store(req);
-        		} catch (Exception e1) {
-        			LogFactory.getLog(getClass()).warn("Error decoding authentication cookie", e1);
-        			throw new ServletException("Error decoding authentication cookie", e1);
-        		}
-        	}
-        	else
-        	{
-        		try {
+	        	}
+	        	else
+	        	{
         			authCtx.setPublicId(entityId);
         			if (method != null)
         				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
@@ -81,12 +76,12 @@ public class LoginServlet extends LangSupportServlet {
 						auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false);
 						return;
 					}
-				} catch (Exception e) {
-					log.warn ("Error authenticating user", e);
-					throw new ServletException("Error authenticating user", e);
-				}
+	        	}
+	   			resp.sendRedirect(UserPasswordFormServlet.URI);
+        	} catch (Exception e) {
+        		log.warn ("Error authenticating user", e);
+        		throw new ServletException("Error authenticating user", e);
         	}
-   			resp.sendRedirect(UserPasswordFormServlet.URI);
         }
     }
 
