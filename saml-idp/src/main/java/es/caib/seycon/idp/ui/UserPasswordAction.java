@@ -62,18 +62,23 @@ public class UserPasswordAction extends HttpServlet {
                         return;
                     } else {
 	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-	            		ctx.authenticated(u, "P", resp);
-	            		ctx.store(req);
-	            		if ( ctx.isFinished())
-	            		{
-	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
-	            			return;
-	            		}
-	            		else
-	            		{
-	            	        RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
-	            	        dispatcher.forward(req, resp);
-	            	        return;
+	            		if (ctx == null) {
+	                        error = "Session timeout"; //$NON-NLS-1$
+	                        LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Session timeout");
+	            		} else {
+	            			ctx.authenticated(u, "P", resp);
+	            			ctx.store(req);
+	            			if ( ctx.isFinished())
+	            			{
+	            				new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+	            				return;
+	            			}
+	            			else
+	            			{
+	            				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+	            				dispatcher.forward(req, resp);
+	            				return;
+	            			}
 	            		}
                     }
                 } else {

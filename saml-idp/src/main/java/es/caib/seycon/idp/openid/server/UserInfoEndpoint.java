@@ -107,7 +107,7 @@ public class UserInfoEndpoint extends HttpServlet {
 		resp.addHeader("Pragma", "no-cache");
 		resp.setStatus(200);
 		ServletOutputStream out = resp.getOutputStream();
-		out.print( o.toString() );
+		out.write( o.toString().getBytes("UTF-8") );
 		out.close();
 	}
 }
