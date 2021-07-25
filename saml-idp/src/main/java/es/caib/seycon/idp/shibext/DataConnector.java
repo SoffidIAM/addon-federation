@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.Attribute;
@@ -31,6 +32,8 @@ import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.sso.Secret;
 import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
+import com.soffid.iam.sync.engine.extobj.AttributeReference;
+import com.soffid.iam.sync.engine.extobj.AttributeReferenceParser;
 import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
 import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
 import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
@@ -53,8 +56,8 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
 
 public class DataConnector extends BaseDataConnector {
-	
-	
+	Log log = LogFactory.getLog(getClass());
+	private ServerService server;
 	
     public Map<String, BaseAttribute> resolve(
             ShibbolethResolutionContext resolutionContext)
@@ -65,99 +68,51 @@ public class DataConnector extends BaseDataConnector {
         
         String rpid = ctx.getInboundMessageIssuer();
         
+        Long t = System.currentTimeMillis();
         try {
-        	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+        	server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         	IdpConfig config = IdpConfig.getConfig();
+        	
         	attributes = new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null);
 
         	String uid;
         	HashMap<String,BaseAttribute> m = new HashMap<String, BaseAttribute>();
+        	User ui = null;
+        	Account account = server.getAccountInfo(principal, config.getSystem().getName());
+
+            log.info("Got account: "+(System.currentTimeMillis()-t));
         	try {
-        		User ui = server.getUserInfo(principal, config.getSystem().getName ());
+        		ui = server.getUserInfo(principal, config.getSystem().getName ());
         		uid = evaluateUid (server, rpid, principal, ui);        		
-        		int i = ui.getFullName().indexOf(" "+ui.getLastName());
-        		if (i > 0)
-        		{
-        			addStringValue (ctx, m, "givenname", ui.getFullName().substring(0,i).trim()); //$NON-NLS-1$
-        			addStringValue (ctx, m, "surname", ui.getFullName().substring(i+1).trim()); //$NON-NLS-1$
-        		}
-        		else
-        		{
-        			addStringValue (ctx, m, "givenname", ui.getFirstName()); //$NON-NLS-1$
-        			addStringValue (ctx, m, "surname", ui.getLastName()); //$NON-NLS-1$
-        		}
-        		addStringValue (ctx, m, "fullname", ui.getFullName()); //$NON-NLS-1$
-        		
-        		BasicAttribute<String> b = new BasicAttribute<String>("surnames"); //$NON-NLS-1$
-        		LinkedList<String> l = new LinkedList<String>();
-        		l.add(ui.getLastName());
-        		if (ui.getMiddleName() != null)
-        			l.add (ui.getMiddleName());
-        		l.add(ui.getFirstName());
-        		addStringValues (ctx, m, "surnames", l); //$NON-NLS-1$
-        		
-        		
-        		addStringValue (ctx, m, "surname1", ui.getLastName()); //$NON-NLS-1$
-        		addStringValue (ctx, m, "surname2", ui.getMiddleName()); //$NON-NLS-1$
         		if (ui.getShortName() != null && ! ui.getShortName().trim().isEmpty()) {
         			if (ui.getMailDomain() == null) 
         			{
-        				addStringValue (ctx, m, "email", ui.getShortName()); //$NON-NLS-1$
         				addStringValue (ctx, m, "mail", ui.getShortName()); //$NON-NLS-1$
         			}
         			else
         			{
-        				addStringValue (ctx, m, "email", ui.getShortName()+"@"+ui.getMailDomain()); //$NON-NLS-1$ //$NON-NLS-2$
         				addStringValue (ctx, m, "mail", ui.getShortName()+"@"+ui.getMailDomain()); //$NON-NLS-1$ //$NON-NLS-2$
         			}
         		} else {
         			UserData dada = server.getUserData(ui.getId(), "EMAIL"); //$NON-NLS-1$
         			if (dada != null)
         			{
-        				addStringValue (ctx, m, "email", dada.getValue()); //$NON-NLS-1$
         				addStringValue (ctx, m, "mail", dada.getValue()); //$NON-NLS-1$
         			}
         		}
-        		addStringValue (ctx, m, "group", ui.getPrimaryGroup()); //$NON-NLS-1$
-        		addStringValue (ctx, m, "userType", ui.getUserType()); //$NON-NLS-1$
-        		
-        		UserData data = server.getUserData(ui.getId(), "PHONE"); //$NON-NLS-1$
-        		if (data != null)
-        			addStringValue (ctx, m, "telephoneNumber", data.getValue()); //$NON-NLS-1$
-        		
-        		if (!m.containsKey("memberof"))
-        			collectRoles (m, server, ui);
         	} catch (UnknownUserException ex) {
         		uid = evaluateUid (server, rpid, principal, null);        		
-
-        		Account account = server.getAccountInfo(principal, config.getSystem().getName());
-        		addStringValue (ctx, m, "fullname", account.getDescription()); //$NON-NLS-1$
-        		
-        		addStringValue (ctx, m, "userType", account.getPasswordPolicy()); //$NON-NLS-1$
-        		
-        		if (!m.containsKey("memberof"))
-        			collectRoles (m, server, account);
         	}
 
         	ctx.setPrincipalName(uid);
             addStringValue (ctx, m, "uid", uid); //$NON-NLS-1$
-            
-            addComputedAttributes(ctx, principal, m);
-            
-            Session session = ctx.getUserSession();
-            if (session != null)
-                addStringValue (ctx, m, "sessionId", session.getSessionID()); //$NON-NLS-1$
-            
-            SimpleDateFormat simpleDf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-            simpleDf.setTimeZone(TimeZone.getTimeZone("GMT"));
-            
+
             return m;
         } catch (Exception e) {
             throw new AttributeResolutionException(e);
 		}
     }
 
-    org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
 	private Collection<Attribute> attributes;
     
     private String evaluateUid(ServerService server, String rpid, String principal, User ui) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
@@ -173,58 +128,18 @@ public class DataConnector extends BaseDataConnector {
     			ExtensibleObject eo = ui == null ? 
     				new AccountExtensibleObject(account, server):
     				new UserExtensibleObject(account, ui, server);
-    			String result = (String) new ObjectTranslator(config.getSystem(), server,
+   				uid = (String) new ObjectTranslator(config.getSystem(), server,
     					new java.util.LinkedList<ExtensibleObjectMapping>())
-    				.eval(member.getUidExpression(), eo);
-    			uid = result;
+    						.eval(member.getUidExpression(), eo);
     		}
     	}
     	return uid;
     	
 	}
 
-	private void collectRoles(HashMap<String, BaseAttribute> m, ServerService server,
-            User ui) throws RemoteException, InternalErrorException, UnknownUserException {
-		log.info("Generating grants");
-		try {
-	        Collection<RoleGrant> roles = server.getUserRoles(ui.getId(), null);
-	        LinkedList<String> l = new LinkedList<String>();
-	        for (RoleGrant role : roles) {
-	            String v =role.getRoleName();
-	            if (role.getDomainValue() != null && role.getDomainValue().length() > 0)
-	                v += "/" + role.getDomainValue(); //$NON-NLS-1$
-	            v += "@"+role.getSystem(); //$NON-NLS-1$
-	            l.add(v);
-//	            log.info("Adding role "+v);
-	        }
-	        addStringValues(null, m, "memberof", l);        
-		} catch (Exception e) {
-			log.warn("Error fetching memberof", e);
-		}
-        
-        
-    }
-
-	private void collectRoles(HashMap<String, BaseAttribute> m, ServerService server,
-            Account acc) throws Exception {
-		try {
-	        Collection<RoleGrant> roles = server.getAccountRoles(acc.getName(), acc.getSystem());
-	        LinkedList<String> l = new LinkedList<String>();
-	        for (RoleGrant role : roles) {
-	            String v =role.getRoleName();
-	            if (role.getDomainValue() != null && role.getDomainValue().length() > 0)
-	                v += "/" + role.getDomainValue(); //$NON-NLS-1$
-	            v += "@"+role.getSystem(); //$NON-NLS-1$
-	            l.add(v);
-	            log.info("Adding role "+v);
-	        }
-	        
-	        addStringValues(null, m, "memberof", l);        
-		} catch (Exception e) {
-			log.warn("Error fetching memberOf", e);
-		}
-        
-    }
+	@Override
+	public void validate() throws AttributeResolutionException {
+	}
 
 	private void addStringValue(SAMLProfileRequestContext ctx, HashMap<String, BaseAttribute> m,
             String name, String value) throws Exception {
@@ -238,90 +153,7 @@ public class DataConnector extends BaseDataConnector {
             BasicAttribute<String> b = new BasicAttribute<String>(name);
             b.setValues(values);
             m.put(name, b);
-            for (String value: values)
-            	log.info("Setting value "+value+" for "+name);
     	}
     }
-    
-    private void addComputedAttributes (SAMLProfileRequestContext ctx, String accountName, HashMap<String, BaseAttribute> m) throws Exception
-    {
-        Collection<String> values;
-		for ( Attribute attribute: attributes)
-        {
-  			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
-   			{
-   				BasicAttribute<String> b = new BasicAttribute<String>(attribute.getShortName().toLowerCase());
-      			values = evaluate (ctx, accountName, attribute);
-      			if (values != null)
-      				addStringValues(ctx, m, attribute.getShortName().toLowerCase(), values);
-        	}
-        }
-    }
-
-    private Collection<String> evaluate(SAMLProfileRequestContext ctx, String accountName, Attribute attribute) throws Exception{
-    	if (attribute.getValue() == null || attribute.getValue().trim().isEmpty())
-    		return null;
-    	
-        IdpConfig c = IdpConfig.getConfig();
-    	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
-        ObjectTranslator translator = new ObjectTranslator(c.getSystem(), server, new LinkedList<ExtensibleObjectMapping>());
-
-        Account account = server.getAccountInfo(accountName, c.getSystem().getName());
-        ExtensibleObject eo;
-        Object r = null;
-        try {
-        	User user = server.getUserInfo(accountName, c.getSystem().getName());
-        	eo = new UserExtensibleObject(account, user, server);
-        	r = translator.eval(attribute.getValue(), eo);
-        } catch (UnknownUserException e) {
-        	eo = new AccountExtensibleObject(account, server);
-        	try {
-            	r = translator.eval(attribute.getValue(), eo);
-        	} 
-        	catch (Exception ex)
-        	{
-        		log.warn("Error evaluating attribute "+attribute.getName(), ex);
-        	}
-        }
-        if (r == null)
-        	return null;
-        else if (r instanceof Collection)
-        	return (Collection<String>) r;
-        else if (r instanceof byte[])
-         	return Collections.singleton( Base64.encodeBytes((byte[]) r, Base64.DONT_BREAK_LINES) );
-        else  
-        	return Collections.singleton( new ValueObjectMapper().toSingleString(r) );
-	}
-
-	public void validate() throws AttributeResolutionException {
-    }
-
-	public String generateSecrets(User user) throws IOException, InternalErrorException 
-	{
-        StringBuffer result = new StringBuffer("OK");
-        SecretStoreService sss = new RemoteServiceLocator().getSecretStoreService();
-        for (Secret secret : sss.getAllSecrets(user)) {
-        	if (secret.getName() != null && secret.getName().length() > 0 &&
-        			secret.getValue() != null &&
-        			secret.getValue().getPassword() != null &&
-        			secret.getValue().getPassword().length() > 0 )
-        	{
-                result.append('|');
-               	result.append( encodeSecret(secret.getName()));
-                result.append('|');
-                result.append( encodeSecret(secret.getValue().getPassword()));
-        	}
-        }
-        result.append ("|sessionKey|");
-       	result.append ("|fullName|").append(encodeSecret(user.getFullName()));
-        return result.toString();
-    }
-
-
-
-	private String encodeSecret(String secret)
-			throws UnsupportedEncodingException {
-		return URLEncoder.encode(secret,"UTF-8").replaceAll("\\|", "%7c"); 
-	}
 
 }

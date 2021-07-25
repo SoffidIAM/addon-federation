@@ -58,7 +58,7 @@ public class AttributeResolverGenerator {
         if (nList.getLength() != 1) {
             throw new IOException("Unable to get AttributeFilterPolicyGroup on attribute-filter.xml"); //$NON-NLS-1$
         }
-        addCustomAttributes (nList.item(0));
+//        addCustomAttributes (nList.item(0));
         
         // write the content into xml file
         TransformerFactory transformerFactory = TransformerFactory.newInstance();

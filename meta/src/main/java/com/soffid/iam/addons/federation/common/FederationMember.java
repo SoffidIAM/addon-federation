@@ -47,6 +47,18 @@ public class FederationMember {
 	public java.lang.String privateKey;
 
 	@Nullable
+	@Description("SSL private key in PEM format")
+	public java.lang.String sslPrivateKey;
+
+	@Nullable
+	@Description("SSL public key in PEM format")
+	public java.lang.String sslPublicKey;
+
+	@Nullable
+	@Description("SSL certificates in PEM format")
+	public java.lang.String sslCertificate;
+
+	@Nullable
 	public java.lang.String certificateChain;
 
 	@Nullable

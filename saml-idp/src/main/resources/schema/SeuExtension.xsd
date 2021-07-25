@@ -52,4 +52,15 @@
             </extension>
         </complexContent>
     </complexType>
+    
+    <complexType name="SoffidAttributeResolver">
+        <annotation>
+            <documentation>
+            	Custome attribute resolver
+			</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="resolver:ShibbolethAttributeResolver"/>
+        </complexContent>
+    </complexType>
 </schema>

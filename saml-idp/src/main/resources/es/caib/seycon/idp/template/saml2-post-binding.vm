@@ -11,8 +11,20 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
     <head>
     #parse ( "/templates/add-html-head-content.vm" )
+		<script>
+			function doSubmit () {
+				if (document.location.hash) {
+					var forms = document.forms;
+					for (var i = 0; i < forms.length; i++) {
+						var form = forms.item(i);
+						form.setAttribute("action", form.getAttribute("action")+document.location.hash);	
+					}			
+				}
+				document.forms[0].submit();
+			}
+		</script>
     </head>
-    <body onload="document.forms[0].submit()">
+    <body onload="doSubmit();">
         <noscript>
             <p>
                 <strong>Note:</strong> Since your browser does not support JavaScript,

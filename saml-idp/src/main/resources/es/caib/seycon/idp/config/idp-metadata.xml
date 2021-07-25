@@ -1,10 +1,9 @@
 <EntityDescriptor entityID="${publicId}"
                   xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
                   xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
-                  xmlns:shibmd="urn:mace:shibboleth:metadata:1.0"
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <IDPSSODescriptor protocolSupportEnumeration="urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
+    <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol">
 
         <KeyDescriptor>
             <ds:KeyInfo>
@@ -30,22 +29,19 @@ ${publicCertX509}
 
         <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="${protocol}://${hostName}:${port}/profile/SAML2/SOAP/SLO" />
  
-        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
 		<NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
 
-        <SingleSignOnService Binding="urn:mace:shibboleth:1.0:profiles:AuthnRequest" 
-                             Location="${protocol}://${hostName}:${port}/profile/Shibboleth/SSO" />
-        
+        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" 
+                             Location="${protocol}://${hostName}:${port}/profile/SAML2/Redirect/SSO" />
+
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
                              Location="${protocol}://${hostName}:${port}/profile/SAML2/POST/SSO" />
 
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" 
                              Location="${protocol}://${hostName}:${port}/profile/SAML2/POST-SimpleSign/SSO" />
         
-        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" 
-                             Location="${protocol}://${hostName}:${port}/profile/SAML2/Redirect/SSO" />
     </IDPSSODescriptor>
 
 	<SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
@@ -82,7 +78,6 @@ ${publicCertX509}
         <AttributeService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP"
                           Location="${protocol}://${hostName}:${port}/profile/SAML2/SOAP/AttributeQuery" />
         
-        <NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
         <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
         

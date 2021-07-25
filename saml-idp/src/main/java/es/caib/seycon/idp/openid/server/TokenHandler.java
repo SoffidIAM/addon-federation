@@ -350,7 +350,7 @@ public class TokenHandler {
 		if (t.getSessionId() != null) {
 			SessionService sessionService = new RemoteServiceLocator().getSessionService();
 			Session oldSession = sessionService.getSession(t.getSessionId(), t.getSessionKey());
-			if (session != null)
+			if (oldSession != null)
 				sessionService.destroySession(oldSession);
 		}
 		t.setSessionId(session.getId());

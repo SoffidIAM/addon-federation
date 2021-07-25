@@ -351,7 +351,6 @@ public class Main {
         File f2 = c.extractConfigFile("service.xml"); //$NON-NLS-1$
         String conf = f1.toURI().toString() + "; " + f2.toURI().toString() //$NON-NLS-1$
                 + ";"; //$NON-NLS-1$
-        System.out.println("Confg = " + conf); //$NON-NLS-1$
         ctx.setInitParameter("contextConfigLocation", conf); //$NON-NLS-1$
 
         EventListener el = new ContextLoaderListener();

@@ -52,4 +52,18 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Column (name="FED_REGEXT", defaultValue="Boolean.FALSE")
 	Boolean registerExternalIdentities;
 
+	@Column (name="FED_SSLPUB", length=4000)
+	@Nullable
+	@Description("SSL public key in PEM format")
+	public java.lang.String sslPublicKey;
+
+	@Column (name="FED_SSLKEY", length=4000)
+	@Nullable
+	@Description("SSL private key in PEM format")
+	public java.lang.String sslPrivateKey;
+
+	@Column (name="FED_SSLCER", length=4000)
+	@Nullable
+	@Description("SSL certificates in PEM format")
+	public java.lang.String sslCertificate;
 }
