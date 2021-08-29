@@ -9,6 +9,7 @@ import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
+import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
@@ -46,9 +47,9 @@ import java.util.Map;
  */
 import org.springframework.transaction.annotation.Transactional;
 
-@Service ( serverPath="/seycon/FederacioService",
+@Service ( serverPath="/seycon/FederationService",
 	 serverRole="agent",
-	 translatedName="FederacioService",
+	 translatedName="FederationService",
 	 translatedPackage="com.soffid.iam.addons.federation.service")
 @Depends ({com.soffid.iam.addons.federation.model.EntityGroupEntity.class,
 	es.caib.seycon.ng.servei.InternalPasswordService.class,
@@ -94,9 +95,10 @@ import org.springframework.transaction.annotation.Transactional;
 	OauthTokenEntity.class,
 	MailService.class,
 	BpmEngine.class,
-	UserConsentEntity.class
+	UserConsentEntity.class,
+	ImpersonationEntity.class
 })
-public abstract class FederacioService {
+public abstract class FederationService {
 
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_create.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
@@ -178,21 +180,21 @@ public abstract class FederacioService {
 		com.soffid.iam.addons.federation.common.Policy policy)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_create.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_attribute_create.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.Attribute create(
 		com.soffid.iam.addons.federation.common.Attribute attribute)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_attribute_update.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.Attribute update(
 		com.soffid.iam.addons.federation.common.Attribute attribute)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_delete.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_attribute_delete.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void delete(
 		com.soffid.iam.addons.federation.common.Attribute attribute)
@@ -280,13 +282,23 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
-	public java.lang.String[] generateKeys()
+	@Description("Returns all profiles, including those undefined")
+	public java.util.Collection<com.soffid.iam.addons.federation.common.SAMLProfile> findAllProfilesByFederationMember(
+		com.soffid.iam.addons.federation.common.FederationMember federationMember)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public java.lang.String[] generateKeys(String name)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_attribute_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.Attribute> findAtributs(
 		@Nullable java.lang.String name, 
@@ -295,81 +307,81 @@ public abstract class FederacioService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_create.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_create.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.PolicyCondition create(
 		com.soffid.iam.addons.federation.common.PolicyCondition policyCondition)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_update.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.PolicyCondition update(
 		com.soffid.iam.addons.federation.common.PolicyCondition policyCondition)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_delete.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_delete.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void delete(
 		com.soffid.iam.addons.federation.common.PolicyCondition policyCondition)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_create.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_create.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.AttributePolicyCondition create(
 		com.soffid.iam.addons.federation.common.AttributePolicyCondition attributeCondition)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_update.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.AttributePolicyCondition update(
 		com.soffid.iam.addons.federation.common.AttributePolicyCondition attributeCondition)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_delete.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_delete.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void delete(
 		com.soffid.iam.addons.federation.common.AttributePolicyCondition attributeCondition)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_delete.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_delete.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.AttributePolicy create(
 		com.soffid.iam.addons.federation.common.AttributePolicy attributePolicy)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_update.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.AttributePolicy update(
 		com.soffid.iam.addons.federation.common.AttributePolicy attributePolicy)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_delete.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_delete.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void delete(
 		com.soffid.iam.addons.federation.common.AttributePolicy attributePolicy)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.AttributePolicyCondition> findAttributePolicy(
 		com.soffid.iam.addons.federation.common.Policy policy)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.PolicyCondition> findPolicyCondition(
 		com.soffid.iam.addons.federation.common.Policy policy)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
-	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_policy_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.util.Collection<com.soffid.iam.addons.federation.common.AttributePolicyCondition> findAttributeCondition(
 		com.soffid.iam.addons.federation.common.AttributePolicy attributePolicy)
@@ -379,7 +391,8 @@ public abstract class FederacioService {
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public java.lang.String generatePKCS10(
-		com.soffid.iam.addons.federation.common.FederationMember federationMember)
+		com.soffid.iam.addons.federation.common.FederationMember federationMember,
+		String privateKey, String publicKey)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
@@ -497,6 +510,10 @@ public abstract class FederacioService {
 			String soffidIdentityProvider,
 			Map<String, Object> properties, boolean autoProvision) {return null;}
 
+	
+	@Operation
+	@Description("Computes the loginHint to present to a third party IdP")
+	String getLoginHint(String idp, String loginHint) {return null;}
 	
 	/* Token services */
 	OauthToken createOauthToken(OauthToken token) {return null;}

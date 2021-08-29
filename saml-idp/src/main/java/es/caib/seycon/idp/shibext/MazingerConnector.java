@@ -9,6 +9,9 @@ import java.util.Map;
 
 import javax.security.auth.Subject;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.sso.Secret;
@@ -28,17 +31,20 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class MazingerConnector extends BaseDataConnector {
-
+	Log log = LogFactory.getLog(getClass());
+	
     public Map<String, BaseAttribute> resolve(
             ShibbolethResolutionContext resolutionContext)
             throws AttributeResolutionException {
-        SAMLProfileRequestContext ctx = resolutionContext.getAttributeRequestContext();
+    	Long t = System.currentTimeMillis();
+
+    	SAMLProfileRequestContext ctx = resolutionContext.getAttributeRequestContext();
         
+
         try {
         	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         	IdpConfig config = IdpConfig.getConfig();
             HashMap<String,BaseAttribute> m = new HashMap<String, BaseAttribute>();
-            
             
             Session session = ctx.getUserSession();
             if (session != null)
@@ -58,7 +64,8 @@ public class MazingerConnector extends BaseDataConnector {
 	            addStringValue(m, "mazingerSecrets2", generateSecrets(user));
             } catch (UnknownUserException e) {
             }
-            
+
+            log.info("Mazinger rules: "+(System.currentTimeMillis()-t));
             return m;
         } catch (Exception e) {
             throw new AttributeResolutionException(e);
@@ -101,6 +108,6 @@ public class MazingerConnector extends BaseDataConnector {
 
 	private String encodeSecret(String secret)
 			throws UnsupportedEncodingException {
-		return URLEncoder.encode(secret,"UTF-8").replaceAll("\\|", "%7c"); 
+		return secret.replace("\\", "\\\\").replace("|", "\\|"); 
 	}
 }

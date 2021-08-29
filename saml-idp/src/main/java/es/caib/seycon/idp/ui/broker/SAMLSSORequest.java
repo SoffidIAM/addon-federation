@@ -15,13 +15,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.BaseForm;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 
 public class SAMLSSORequest extends BaseForm {
@@ -52,7 +53,7 @@ public class SAMLSSORequest extends BaseForm {
         try {
 
 	    	IdpConfig cfg = IdpConfig.getConfig();
-			FederacioService federacioService = new RemoteServiceLocator().getFederacioService();
+			FederationService federacioService = new RemoteServiceLocator().getFederacioService();
 			
 			Long timeOut = cfg.getFederationMember().getSessionTimeout();
 			SamlRequest samlRequest = federacioService.generateSamlRequest( cfg.getPublicId(),
@@ -92,7 +93,7 @@ public class SAMLSSORequest extends BaseForm {
 			}
 		} catch (Exception e) {
 			LogFactory.getLog(getClass()).warn("Error forwarding to external IdP", e);
-			req.setAttribute("ERROR", e.toString());
+			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
 		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
 		    dispatcher.forward(req, resp);
 		}

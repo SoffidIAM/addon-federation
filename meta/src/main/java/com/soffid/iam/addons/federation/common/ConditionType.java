@@ -26,7 +26,7 @@ public class ConditionType {
 
 	public java.lang.String AttributeValueString="basic:AttributeValueString";
 
-	public java.lang.String AttributeScopeString="basic:AttributeScopeString";
+//	public java.lang.String AttributeScopeString="basic:AttributeScopeString";
 
 	public java.lang.String AttributeRequesterRegex="basic:AttributeRequesterRegex";
 
@@ -38,9 +38,9 @@ public class ConditionType {
 
 	public java.lang.String AttributeValueRegex="basic:AttributeValueRegex";
 
-	public java.lang.String AttributeScopeRegex="basic:AttributeScopeRegex";
+//	public java.lang.String AttributeScopeRegex="basic:AttributeScopeRegex";
 
-	public java.lang.String Script="basic:Script";
+//	public java.lang.String Script="basic:Script";
 
 	public java.lang.String AttributeRequesterInEntityGroup="saml:AttributeRequesterInEntityGroup";
 

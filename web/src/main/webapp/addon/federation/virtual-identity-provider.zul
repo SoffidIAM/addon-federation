@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+
+
+<form2 use="com.soffid.iam.addons.federation.web.ProviderRoot">
+	<datatable dataPath="/entityGroup" >
+	<attribute name="columns">
+- name: "${c:l('federacio.zul.EntityGroup') }"
+  value: description
+	</attribute>
+	</datatable>
+</form2>

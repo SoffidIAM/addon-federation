@@ -3,8 +3,18 @@
   options:
   - name: seu.configuration
     options:
-    - name: federation.submenu
-      url: addon/federation/federacio-3.zul
+    - name: federacio.zul.websso
       img: /addon/federation/img/federation.svg
-      permissions: ["seu:federacioIdentitats:show"]
-            
+      options:
+      - name: federation.attributes 
+        url: addon/federation/attributes.zul
+        img: /addon/federation/img/attributes.svg
+        permissions: ["seu:federation-attributes:show"]
+      - name: federation.policies 
+        url: addon/federation/policies.zul
+        img: /addon/federation/img/policies.svg
+        permissions: ["seu:federation-policies:show"]
+      - name: federacio.zul.isproviders 
+        url: addon/federation/providers.zul
+        img: /addon/federation/img/providers.svg
+        permissions: ["seu:federacioIdentitats:show"]

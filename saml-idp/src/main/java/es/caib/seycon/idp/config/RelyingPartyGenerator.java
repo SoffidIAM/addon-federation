@@ -55,7 +55,7 @@ import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.utils.Security;
@@ -70,14 +70,14 @@ public class RelyingPartyGenerator {
     final static String RP_NAMESPACE = "urn:mace:shibboleth:2.0:relying-party"; //$NON-NLS-1$
     final static String SECURITY_NAMESPACE = "urn:mace:shibboleth:2.0:security"; //$NON-NLS-1$
     final static String METADATA_NAMESPACE = "urn:mace:shibboleth:2.0:metadata"; //$NON-NLS-1$
-    FederacioService federacioService;
+    FederationService federacioService;
     FederationMember federationMember;
     EntityGroupMember entityGroupMember;
     Document doc;
     private Node rootNode;
     private Node trustEngineNode;
 
-    public RelyingPartyGenerator(FederacioService fs, EntityGroupMember egm) {
+    public RelyingPartyGenerator(FederationService fs, EntityGroupMember egm) {
         super();
         this.federacioService = fs;
         this.entityGroupMember = egm;
@@ -470,154 +470,4 @@ public class RelyingPartyGenerator {
                     profile.getMaximumSPSessionLifetime());
     }
 
-    private void generateConditionAttributes(PolicyCondition cond,
-            Element node, boolean ignoreCondition) {
-        node.setPrefix("afp"); //$NON-NLS-1$
-        if (!ignoreCondition && cond.getNegativeCondition() != null
-                && cond.getNegativeCondition()) {
-            node.setAttributeNS(XSI_NAMESPACE, "xsi:type", "NOT"); //$NON-NLS-1$ //$NON-NLS-2$
-            Element childNode = doc.createElementNS(BASIC_NAMESPACE, "Rule"); //$NON-NLS-1$
-            node.appendChild(childNode);
-            generateConditionAttributes(cond, childNode, true);
-        } else {
-            ConditionType type = cond.getType();
-            node.setAttributeNS(XSI_NAMESPACE, "xsi:type", type.getValue()); //$NON-NLS-1$
-            if (type.equals(ConditionType.ANY)) {
-
-            } else if (type.equals(ConditionType.AND)) {
-                generateChildConditions(cond, node);
-            } else if (type.equals(ConditionType.OR)) {
-                generateChildConditions(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_REQUESTER_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_ISSUER_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-            } else if (type.equals(ConditionType.PRINCIPAL_NAME_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-            } else if (type.equals(ConditionType.AUTHENTICATION_METHOD_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_VALUE_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_SCOPE_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_REQUESTER_REGEX)) {
-                generateRegexAttribute(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_ISSUER_REGEX)) {
-                generateRegexAttribute(cond, node);
-            } else if (type.equals(ConditionType.PRINCIPAL_NAME_REGEX)) {
-                generateRegexAttribute(cond, node);
-            } else if (type.equals(ConditionType.AUTHENTICATION_METHOD_REGEX)) {
-                generateRegexAttribute(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_VALUE_REGEX)) {
-                generateRegexAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
-            } else if (type.equals(ConditionType.ATTRIBUTE_SCOPE_REGEX)) {
-                generateRegexAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
-            } else if (type.equals(ConditionType.SCRIPT)) {
-                Element child = doc.createElementNS(BASIC_NAMESPACE, "Script"); //$NON-NLS-1$
-                child.setTextContent(cond.getValue());
-                node.appendChild(child);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_REQUESTER_IN_ENTITY_GROUP)) {
-                generateGroupIdAttribute(cond, node);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_ISSUER_IN_ENTITY_GROUP)) {
-                generateGroupIdAttribute(cond, node);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_ISSUER_NAME_IDFORMAT_EXACT_MATCH)) {
-                generateNameIdAttribute(cond, node);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_REQUESTER_NAME_IDFORMAT_EXACT_MATCH)) {
-                generateNameIdAttribute(cond, node);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_ISSUER_ENTITY_ATTRIBUTE_EXACT_MATCH)) {
-                generateAttributeNameAttribute(cond, node);
-                generateAttributeValueAttribute(cond, node);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_REQUESTER_ENTITY_ATTRIBUTE_EXACT_MATCH)) {
-                generateAttributeNameAttribute(cond, node);
-                generateAttributeValueAttribute(cond, node);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_ISSUER_ENTITY_ATTRIBUTE_REGEX_MATCH)) {
-                generateAttributeNameAttribute(cond, node);
-                generateAttributeValueRegExAttribute(cond, node);
-            } else if (type
-                    .equals(ConditionType.ATTRIBUTE_REQUESTER_ENTITY_ATTRIBUTE_REGEX_MATCH)) {
-                generateAttributeNameAttribute(cond, node);
-                generateAttributeValueRegExAttribute(cond, node);
-            }
-        }
-    }
-
-    private void generateAttributeValueRegExAttribute(PolicyCondition cond,
-            Element node) {
-        if (cond.getRegex() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "attributeValueRegex", //$NON-NLS-1$
-                    cond.getRegex());
-    }
-
-    private void generateAttributeValueAttribute(PolicyCondition cond,
-            Element node) {
-        if (cond.getValue() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "attributeValue", //$NON-NLS-1$
-                    cond.getValue());
-    }
-
-    private void generateAttributeNameAttribute(PolicyCondition cond,
-            Element node) {
-        if (cond.getNameId() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "attributeName", //$NON-NLS-1$
-                    cond.getNameId());
-    }
-
-    private void generateNameIdAttribute(PolicyCondition cond, Element node) {
-        if (cond.getNameId() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "nameIdFormat", cond.getNameId()); //$NON-NLS-1$
-    }
-
-    private void generateGroupIdAttribute(PolicyCondition cond, Element node) {
-        if (cond.getGroupId() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "groupID", cond.getGroupId()); //$NON-NLS-1$
-    }
-
-    private void generateRegexAttribute(PolicyCondition cond, Element node) {
-        if (cond.getRegex() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "regex", cond.getRegex()); //$NON-NLS-1$
-    }
-
-    private void generateAttributeIdAttribute(PolicyCondition cond, Element node) {
-        if (cond.getAttribute() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "attributeID", cond //$NON-NLS-1$
-                    .getAttribute().getShortName());
-    }
-
-    private void generateValueAttribute(PolicyCondition cond, Element node) {
-        if (cond.getValue() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "value", cond.getValue()); //$NON-NLS-1$
-    }
-
-    private void generateCaseAttribute(PolicyCondition cond, Element node) {
-        if (cond.getIgnoreCase() != null)
-            node.setAttributeNS(AFP_NAMESPACE, "ignoreCase", cond //$NON-NLS-1$
-                    .getIgnoreCase().toString());
-    }
-
-    @SuppressWarnings("rawtypes")
-    private void generateChildConditions(PolicyCondition cond, Element node) {
-        for (Iterator it = cond.getChildrenCondition().iterator(); it.hasNext();) {
-            PolicyCondition child = (PolicyCondition) it.next();
-            Element childNode = doc.createElementNS(BASIC_NAMESPACE, "Rule"); //$NON-NLS-1$
-            generateConditionAttributes(child, childNode, false);
-            node.appendChild(childNode);
-        }
-    }
 }

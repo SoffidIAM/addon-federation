@@ -19,6 +19,7 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.model.GroupEntity;
 import com.soffid.iam.model.UserTypeEntity;
@@ -80,6 +81,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setIdpType(idp.getIdpType());
 				target.setInternal(idp.getIdpType().equals(IdentityProviderType.SOFFID));
 			}
+			target.setLoginHintScript(idp.getLoginHintScript());
 			target.setOauthKey(idp.getOauthKey());
 			target.setOauthSecret(idp.getOauthSecret() == null ? null: Password.decode(idp.getOauthSecret()));
 			// Propis
@@ -99,6 +101,11 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setAuthenticationMethods(s.toString().trim());
 				
 			}
+			// SSL Certs
+			target.setSslPrivateKey(idp.getSslPrivateKey());
+			target.setSslPublicKey(idp.getSslPublicKey());
+			target.setSslCertificate(idp.getSslCertificate());
+			// Other options
 			target.setKerberosDomain(idp.getKerberosDomain());
 			target.setSsoCookieDomain(idp.getSsoCookieDomain());
 			target.setSsoCookieName(idp.getSsoCookieName());
@@ -130,6 +137,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setPrivateKey(vip.getPrivateKey());
 			target.setPublicKey(vip.getPublicKey());
 			target.setCertificateChain(vip.getCertificateChain());
+			target.setLoginHintScript(vip.getLoginHintScript());
 			
 			target.setAuthenticationMethods(vip.getAuthenticationMethods());
 			if (target.getAuthenticationMethods() == null)
@@ -172,7 +180,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Obtenim l'instància
 			ServiceProviderEntity sp = (ServiceProviderEntity) source;
 			// Heretats de VIP
-			target.setServiceProviderType(sp.getServiceProviderType());
+			if (source.isInternal() && sp.getServiceProviderType() == ServiceProviderType.SAML)
+				target.setServiceProviderType(ServiceProviderType.SOFFID_SAML);
+			else
+				target.setServiceProviderType(sp.getServiceProviderType());
 			target.setPublicId(sp.getPublicId());
 			target.setNameIdFormat(sp.getNameIdFormat());
 			target.setCertificateChain(sp.getCertificateChain());
@@ -198,6 +209,9 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 					spv.add(nomesDesc);// Afegim només el publicID (referència)
 				}
 				target.setVirtualIdentityProvider(spv);
+			}
+			for (ImpersonationEntity fip: sp.getImpersonations()) {
+				target.getImpersonations().add(fip.getUrl());
 			}
 		}
 		
@@ -350,12 +364,19 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			}
 			idp.setOauthKey(source.getOauthKey());
 			idp.setOauthSecret(source.getOauthSecret() == null ? null: source.getOauthSecret().toString());
-
+			idp.setLoginHintScript(source.getLoginHintScript());
+			
 			idp.setPublicId(source.getPublicId());
 			idp.setPublicKey(source.getPublicKey());
 			idp.setPrivateKey(source.getPrivateKey());
 			if (source.getCertificateChain() != null)
 				idp.setCertificateChain(source.getCertificateChain());
+			
+			// SSL Certs
+			idp.setSslPrivateKey(source.getSslPrivateKey());
+			idp.setSslPublicKey(source.getSslPublicKey());
+			idp.setSslCertificate(source.getSslCertificate());
+
 			// Propis
 			if (source.getInternal() != null)
 				idp.setInternal(source.getInternal());
@@ -427,6 +448,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			vip.setAuthenticationMethods(source.getAuthenticationMethods());
 			vip.setSsoCookieDomain(source.getSsoCookieDomain());
 			vip.setSsoCookieName(source.getSsoCookieName());
+			vip.setLoginHintScript(source.getLoginHintScript());
 
 			// Default IDP
 			if (source.getDefaultIdentityProvider() != null) {
@@ -482,6 +504,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			ServiceProviderEntity sp = (ServiceProviderEntity) target;
 			// Heretats de VIP
 			sp.setServiceProviderType( source.getServiceProviderType() );
+			sp.setInternal(source.getServiceProviderType() == ServiceProviderType.SOFFID_SAML);
 			sp.setPublicId(source.getPublicId());
 			sp.setNameIdFormat(source.getNameIdFormat());
 			sp.setUidExpression(source.getUidExpression());

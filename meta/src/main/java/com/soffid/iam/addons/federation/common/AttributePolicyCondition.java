@@ -9,7 +9,7 @@ import com.soffid.mda.annotation.*;
 
 @ValueObject 
 public class AttributePolicyCondition extends com.soffid.iam.addons.federation.common.PolicyCondition {
-
+	@com.soffid.mda.annotation.Attribute(defaultValue = "Boolean.TRUE")
 	public java.lang.Boolean allow;
 
 }

@@ -2519,7 +2519,7 @@
 										onChange="" 
 										height="5em" bind="@expression" >
 								</textbox>
-								<imageclic style="display:table-cell" src="/img/pencil.png" width="2em" >
+								<imageclic style="display:table-cell" src="/img/pencil.svg" width="2em" >
 									<attribute name="onClick"><![CDATA[
 									    Events.sendEvent(new Event ("onEdit", 
 									    		desktop.getPage("editor").getFellow("top"),

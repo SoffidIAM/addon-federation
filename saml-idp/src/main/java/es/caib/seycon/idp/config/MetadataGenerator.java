@@ -43,12 +43,12 @@ public class MetadataGenerator {
     final static String RP_NAMESPACE = "urn:mace:shibboleth:2.0:relying-party"; //$NON-NLS-1$
     final static String SECURITY_NAMESPACE = "urn:mace:shibboleth:2.0:security"; //$NON-NLS-1$
     final static String METADATA_NAMESPACE = "urn:oasis:names:tc:SAML:2.0:metadata"; //$NON-NLS-1$
-    FederacioService federacioService;
+    FederationService federacioService;
     FederationMember fm;
     Document doc;
     private DocumentBuilder dBuilder;
 
-    public MetadataGenerator(FederacioService fs) {
+    public MetadataGenerator(FederationService fs) {
         super();
         this.federacioService = fs;
     }
@@ -86,9 +86,9 @@ public class MetadataGenerator {
      }
 
     private boolean generateFederationMember(Element element, EntityGroupMember eg) throws SAXException, IOException, InternalErrorException {
-        if (eg.getTipus().equals( "EG") ) { //$NON-NLS-1$
+        if (eg.getType().equals( "EG") ) { //$NON-NLS-1$
             Element node = doc.createElementNS(METADATA_NAMESPACE, "EntitiesDescriptor"); //$NON-NLS-1$
-            node.setAttribute("Name", eg.getDescripcio()); //$NON-NLS-1$
+            node.setAttribute("Name", eg.getDescription()); //$NON-NLS-1$
             
             if (generateChildEntities(eg, node)) {
                 element.appendChild(node);

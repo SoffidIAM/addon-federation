@@ -48,6 +48,10 @@ public class OauthTokenEntity {
 	@Nullable
 	Date expires;
 	
+	@Column (name="TOK_REFEXP")
+	@Nullable
+	Date refreshExpires;
+	
 	@Column (name="TOK_AUTHEN")
 	Date authenticated;
 	
@@ -65,18 +69,18 @@ public class OauthTokenEntity {
 	@Column (name="TOK_TEN_ID")
 	TenantEntity tenant;
 	
-	OauthTokenEntity findByIdentityProviderAndAuthorzaitionCode(String identityProvider, String authorizationCode) { return null;}
+	OauthTokenEntity findByAuthorizationCode(String authorizationCode) { return null;}
 
-	OauthTokenEntity findByIdentityProviderAndToken(String identityProvider, String token) { return null;}
+	OauthTokenEntity findByToken(String token) { return null;}
 
-	OauthTokenEntity findByIdentityProviderAndRefreshToken(String identityProvider, String refreshToken) { return null;}
+	OauthTokenEntity findByRefreshToken(String refreshToken) { return null;}
 }
 
-@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_TOK_UK", columns = {"TOK_TEN_ID", "TOK_IDP", "TOK_TOKEN"}, unique = true)
+@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_TOK_UK", columns = {"TOK_TEN_ID", "TOK_TOKEN"})
 class UniqueTokenIndex {}
 
-@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_REF_UK", columns = {"TOK_TEN_ID", "TOK_IDP", "TOK_REFTOK"}, unique = true)
+@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_REF_UK", columns = {"TOK_TEN_ID", "TOK_REFTOK"})
 class UniqueRefreshTokenIndex {}
 
-@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_AUT_UK", columns = {"TOK_TEN_ID", "TOK_IDP", "TOK_AUTCOD"}, unique = true)
+@Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_AUT_UK", columns = {"TOK_TEN_ID", "TOK_AUTCOD"})
 class UniqueAuthorizationCodeIndex {}

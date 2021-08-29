@@ -1,0 +1,627 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+<?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
+
+<div  xmlns:h="http://www.w3.org/1999/xhtml"
+	use="com.soffid.iam.addons.federation.web.IdentityProvider" id="handler" dataPath="/." > 
+	<div sclass="section" id="idSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.identification') }" />
+		<customfield3 label="${c:l('federacio.zul.IdpType')}"
+			id="idpType"
+			bind="/federationMember/idpType" 
+			dataType="STRING"
+			enumeration="com.soffid.iam.addons.federation.common.IdentityProviderType"
+			required="true"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			onChange='ref:handler.onChangeType' />
+		<customfield3 label="${c:l('federacio.zul.publicId')}"
+			dataType="STRING"
+			bind="/federationMember/publicId" maxlength="255"
+			onChange="ref:handler.onChangeName"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			id="idpPublicId" />
+		<customfield3 label="${c:l('federacio.zul.Name')}"
+			dataType="STRING"
+			bind="/federationMember/name" maxlength="255" 
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+		<customfield3 id="organization"
+			label="${c:l('federacio.zul.Organization')}"
+			bind="/federationMember/organization"
+			dataType='STRING' maxlength="255"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 id="contact"
+			label="${c:l('federacio.zul.contact')}"
+			bind="/federationMember/contact"
+			dataType='STRING' maxlength="255"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+	</div>
+	<div sclass="section" id="configurationSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.configuration') }" />
+		<customfield3 label="${c:l('federacio.zul.metadades')}"
+			dataType="STRING"
+			multiline='true'
+			bind= "/federationMember/metadades" id="metadades"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+			onChange="ref:handler.changeMetadata"/>
+		<h:a id="fed_ext_link" href="" target="_blank">${c:l('federacio.zul.registerLink') }</h:a>
+		<customfield3 id="oauthKey"  label="${c:l('federacio.zul.oAuthKey')}"
+			dataType="STRING"
+			bind="/federationMember/oauthKey" 
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 id="oauthSecret"
+			label="${c:l('federacio.zul.oAuthSecret')}"
+			dataType='PASSWORD'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+	</div>
+	<div sclass="section" id="provisionSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.provisioning') }" />
+		<customfield3 label="${c:l('federacio.zul.DomainExpression')}"
+			bind="/federationMember/domainExpression" id="domainExpression"
+			dataType='STRING' maxlength="255"
+			placeholder="Regular expression to detect users of this identity provider"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 id="loginHintScriptRow"
+			label="${c:l('federacio.zul.LoginHintScript')}"
+			multiline='true'
+			placeholder="Script to modify the login-hint parameter to send to this identity provider. By default, the plain user name will be sent"
+			dataType="STRING"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/loginHintScript"
+			selectIcon="/img/pencil.svg"
+			javascript='{"loginHint":"java.lang.String", "serviceLocator":"com.soffid.iam.ServiceLocator"}' />
+		<customfield3 label="${c:l('federacio.zul.ScriptParse')}"
+			bind="/federationMember/scriptParse" id="autoprovisionScriptRow"
+			placeholder="Script to bind or register a new identity. Return the user name of the owner identity for the authenticated account."
+			dataType='STRING'
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			selectIcon="/img/pencil.svg"
+			javascript='{"user":"com.soffid.iam.api.User", "serviceLocator":"com.soffid.iam.ServiceLocator"}' />
+	</div>
+	<div sclass="section" id="networkSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.network') }" />
+		<customfield3 id="hostname"
+			label="${c:l('federacio.zul.Hostname')}"
+			bind="/federationMember/hostName"
+			dataType='STRING' maxlength="255"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 id="port1"
+			label="${c:l('federacio.zul.PortStandard')}"
+			bind="/federationMember/standardPort"
+			dataType='NUMBER'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 
+			label="${c:l('federacio.zul.disableSSL')}"
+			id='id_disableSSL'
+			onChange="ref:handler.enableIDPComponents()"
+			bind="/federationMember/disableSSL"
+			dataType='BOOLEAN'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 id="port2"
+			label="${c:l('federacio.zul.PortCertificatClient')}"
+			bind="/federationMember/clientCertificatePort"
+			dataType='NUMBER'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<div sclass="databox" id="sslKey">
+			<label sclass="label" value="${c:l('federacio.zul.publicKeySSL')}"/>
+			<div sclass="container">
+				<divVisible bind="/federationMember/sslPublicKey" valorVisible="null">
+					<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
+					<separator/>
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+						image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="ref:handler.generateSslKey()"/>
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+						image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="ref:handler.uploadSslPkcs12()" />
+				</divVisible>
+				<divVisible bind="/federationMember/sslPublicKey" valorNoVisible="null">
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+						image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="ref:handler.generateSslKey()"/>
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+						image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" 
+						onClick="ref:handler.deleteSslKey()" />
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+						image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="ref:handler.generateSslPKCS10()"/>
+				</divVisible>
+			</div>
+		</div>
+		<customfield3 id="certificatechainSsl"
+			label="${c:l('federacio.zul.certificateChainSSL')}"
+			dataType="STRING"
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/sslCertificate"/>
+	</div>
+	<div sclass="section" id="certificateSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.samlSecurity') }" />
+		<div sclass="databox">
+			<label sclass="label" value="${c:l('federacio.zul.publicKey')}"/>
+			<div sclass="container">
+				<divVisible bind="/federationMember/publicKey" valorVisible="null">
+					<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
+					<separator/>
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+					image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="ref:handler.generateKey()" />
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+					image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="ref:handler.uploadPkcs12()" />
+				</divVisible>
+				<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+					image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="ref:handler.generateKey()" />
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+					image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" 
+					onClick="ref:handler.deleteKey()" />
+					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+					image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="ref:handler.generatePKCS10()" />
+				</divVisible>
+			</div>
+		</div>
+		<customfield3 id="certificatechain"
+			label="${c:l('federacio.zul.certificateChain')}"
+			dataType="STRING"
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/certificateChain"/>
+	</div>
+	<div sclass="section" id="sessionSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.sessionManagement') }" />
+		<customfield3 label="${c:l('federacio.zul.timeout')}"
+			id="sessionTimeout"
+			bind="/federationMember/sessionTimeout" dataType="NUMBER"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+		<customfield3 label="${c:l('federacio.zul.refreshTimeout')}"
+			id="oauthSessionTimeout"
+			bind="/federationMember/oauthSessionTimeout" 
+			dataType="NUMBER"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+		<customfield3 label="${c:l('federacio.zul.ssoCookieName')}"
+			dataType="STRING"
+			bind="/federationMember/ssoCookieName" maxlength="120"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+		<customfield3 label="${c:l('federacio.zul.ssoCookieDomain')}"
+			dataType="STRING" maxlength="120"
+			bind="/federationMember/ssoCookieDomain"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+	</div>
+	<div sclass="section" id="authenticationSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.authentication') }" />
+		<div sclass="databox">
+			<label sclass="label" value="${c:l('federacio.zul.allowedAuthenticationMethods')}"/>
+			<div sclass="container">
+				<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/federationMember/authenticationMethods">
+					<columns>
+						<column label="${c:l('federacio.zul.firstAuthentication') }"/>
+						<column label="${c:l('federacio.zul.password') }"/>
+						<column label="${c:l('federacio.zul.kerberos') }"/>
+						<column label="${c:l('federacio.zul.broker')}"/>
+						<column label="${c:l('federacio.zul.OTP') }"/>
+						<column label="${c:l('federacio.zul.Certificate') }"/>
+						<column label="${c:l('federacio.zul.Fingerprint') }"/>
+					</columns>
+					<rows>
+						<row>
+							<label value="${c:l('federacio.zul.password') }"/>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.P') }"> <custom-attributes type="P"/></checkbox>
+							<label/>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.PF') }"> <custom-attributes type="PF"/></checkbox>
+						</row>
+						<row>
+							<label value="${c:l('federacio.zul.kerberos') }"/>
+							<label/>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.K') }"> <custom-attributes type="K"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.KF') }"> <custom-attributes type="KF"/></checkbox>
+						</row>
+						<row>
+							<label value="${c:l('federacio.zul.broker') }"/>
+							<label/>
+							<label/>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.EO') }"> <custom-attributes type="EO"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.EC') }"> <custom-attributes type="EC"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.EF') }"> <custom-attributes type="EF"/></checkbox>
+						</row>
+						<row>
+							<label value="${c:l('federacio.zul.OTP') }"/>
+							<label />
+							<label />
+							<label />
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.OF') }"> <custom-attributes type="OF"/></checkbox>
+						</row>
+						<row>
+							<label value="${c:l('federacio.zul.Certificate') }"/>
+							<label/>
+							<label/>
+							<label />
+							<label/>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.CF') }"> <custom-attributes type="CF"/></checkbox>
+						</row>
+						<row>
+							<label value="${c:l('federacio.zul.Fingerprint') }"/>
+							<label/>
+							<label/>
+							<label />
+							<label/>
+							<label/>
+							<checkbox tooltiptext="${c:l('federacio.zul.auth.F') }"> <custom-attributes type="F"/></checkbox>
+						</row>
+					</rows>
+				</grid>
+				<button label="${c:l('federacio.zul.adaptiveAuthentication') }..."
+					onClick="adaptiveAuthentication.doHighlighted()" />
+			</div>
+		</div>
+		<div sclass="databox" id="kerberosDiv">
+			<label sclass="label" value="${c:l('federacio.zul.kerberosDomain')}"/>
+			<div sclass="container">
+				<datatable dataPath="/federationMember/keytabs" id="keytabsgrid"
+					onSelect="ref:handler.onSelectKeytab"
+					onMultiSelect="ref:handler.onSelectKeytab">
+				<attribute name="columns"><![CDATA[
+- name: "${c:l('federacio.zul.kerberosDomain')}"
+  value: domain
+- name: "${c:l('federacio.zul.principalName')}"
+  value: principal
+- name: "${c:l('federacio.zul.description')}"
+  value: description
+				]]></attribute>
+				</datatable>
+				<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('network:all:create')}" >
+					<div class="deleteButton" id="deleteKeytabButton" onClick="ref:handler.deleteKeytab" visible="false">-</div>
+					<div class="addButton" onClick="ref:handler.addNewKeytab">+</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div sclass="section" id="advancedSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.advancedauthentication') }" />
+		<customfield3 label="${c:l('federacio.zul.allowRecover')}"
+			dataType="BOOLEAN"
+			bind="/federationMember/allowRecover" 
+			id="id_allowRecover"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+	
+		<customfield3 label="${c:l('federacio.zul.allowRegister')}"
+			dataType="BOOLEAN"
+			bind="/federationMember/allowRegister" 
+			id="id_allowRegister"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+			
+		<customfield3 label="${c:l('usuaris.zul.Tipus')}"
+			dataType="USER_TYPE" id="userTypeToRegister"
+			bind="/federationMember/userTypeToRegister"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+	
+		<customfield3 label="${c:l('usuaris.zul.Grupprimari-2')}"
+			dataType="GROUP" id="groupToRegister"
+			bind="/federationMember/groupToRegister"
+			required="true"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+	
+	
+		<customfield3 label="${c:l('federacio.zul.registerExternal')}"
+			dataType="BOOLEAN"
+			id="registerExternalCheckbox" bind="/federationMember/registerExternalIdentities" 
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+
+	</div>
+
+	<div id="profilesSection" sclass="section">
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.Profiles') }" />
+		<div sclass="databox">
+			<label sclass="label" value=""/>
+			<div sclass="container">
+				<datatable dataPath="/profile" id="profilesgrid"
+					use="com.soffid.iam.addons.federation.web.ProfileDatatable"
+					sortColumn="0"	
+					onSelect="ref:handler.onSelectProfile">
+				<attribute name="columns" ><![CDATA[
+- name: "${c:l('federa_atribut.zul.Name-2')}"
+  value: classe.value
+				]]></attribute>
+				</datatable>
+			</div>
+		</div>
+		
+	</div>
+
+	<div id="serviceProvidersSection" sclass="section">
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.ServiceProviders') }" />
+		<div sclass="databox">
+			<label sclass="label" value=""/>
+			<div sclass="container">
+				<datatable dataPath="/federationMember/serviceProvider" id="serviceprovidersgrid"
+					sortColumn="0"	
+					onSelect="ref:handler.serviceProviderSelect">
+				<attribute name="columns" ><![CDATA[
+- name: "${c:l('federa_atribut.zul.Name-2')}"
+  value: name
+				]]></attribute>
+				</datatable>
+				<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('network:all:create')}" >
+					<div class="deleteButton" onClick="ref:handler.serviceProviderDelete" visible="false">-</div>
+					<div class="addButton" onClick="ref:handler.serviceProviderAdd">+</div>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+
+
+	<div style="text-align: right; width: 100%">
+		<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">
+		</databutton>
+		<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.apply"/>
+	</div>
+	
+	<window id="pkcs12" closable="true" position="top, center"
+		sizable="false" 
+		visible="false"
+		style="min-width: 40em; width: 80%">
+	
+		<wizard id="wizard">
+				<attribute name="steps">
+		- ${c:l("fileupload.selectFile")}
+		- ${c:l("federacio.zul.enterPin")}
+		- ${c:l("user-account-new.Finish")}
+				</attribute>
+			<div id="step1" >
+				<fileupload style="width: 600px; height: 120px; padding: 20px 0px 20px 100px"
+					id="${c:l('csvimport.upload') }" 
+					onUpload="ref:handler.onUpload"
+					onClose="ref:handler.cancelUpload"
+					mold="compact"/>
+			</div>
+			<div id="step2" visible="false" style="min-width: 600px; padding: 20px; width: 100%">
+				<customfield3 label="${c:l('federacio.zul.pin') }" dataType="PASSWORD" maxlength="64" id="pin"/> 				
+				<div style="text-align: right; width: 100%">
+					<button label="${c:l('user_createaccount.Back')}" image="/img/undo-r.svg" onClick="ref:handler.step2back" />
+					<button label="${c:l('altaDocumento.btnBrowse')}" image="/img/save-r.svg" onClick="ref:handler.doUploadPcks12" />
+				</div>
+			</div>
+		</wizard>	
+	</window>
+
+	<window id="serviceProviderWindow" closable="true" position="top, center"
+		sizable="false" 
+		visible="false"
+		style="min-width: 40em; width: 80%">
+	
+		<datatable dataPath="//providers/model:/serviceprovider" id="serviceprovidersgrid"
+			sortColumn="0"	
+			onSelect="ref:handler.serviceProviderWizardSelect">
+		<attribute name="columns" ><![CDATA[
+- name: "${c:l('federa_atribut.zul.Name-2')}"
+  value: name
+- name: "${c:l('federacio.zul.publicId')}"
+  value: publicId
+- name: "${c:l('federationMember.zul.EntityGroup-2')}"
+  value: entityGroup.name
+				]]></attribute>
+		</datatable>
+
+			<div style="text-align: right; width: 100%">
+				<button label="${c:l('user_createaccount.Back')}" image="/img/undo-r.svg" onClick="ref:handler.serviceProviderWizardBack" id="cancel"/>
+				<button label="${c:l('common.apply')}" image="/img/save-r.svg" onClick="ref:handler.serviceProviderWizardNext" id="ok" disabled="true"/>
+			</div>
+	</window>
+	
+	
+	<window id="profileWindow" closable="true" position="top, center"
+		sizable="false" 
+		visible="false"
+		style="min-width: 40em; width: 80%">
+		<form2 dataPath="../profilesgrid:/" id = "form">
+			<customfield3 label="${c:l('federa_profile.zul.classe')}"
+						readonly="true" bind="classe"  dataType="STRING"
+						id="classe" ></customfield3>
+			<customfield3 label="${c:l('federa_profile.zul.enabled')}" dataType="boolean"
+				bind="enabled"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+			<customfield3 id="r_signResponses" label="${c:l('federa_profile.zul.signResponses')}"
+				bind="signResponses" dataType="STRING"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
+			<customfield3 id="r_signAssertions" label="${c:l('federa_profile.zul.signAssertions')}"
+				bind="signAssertions" dataType="STRING"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
+			<customfield3 id="r_signRequests" label="${c:l('federa_profile.zul.signAssertions')}"
+				bind="signRequests" dataType="STRING"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
+			<customfield3 id="r_outboundArtifactType" label="${c:l('federa_profile.zul.outboundArtifactType')}"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				bind="outboundArtifactType" maxlength="255"/>
+			<customfield3 id="r_assertionLifetime" label="${c:l('federa_profile.zul.assertionLifetime')}"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				bind="assertionLifetime"
+				maxlength="255"/>
+			<customfield3 id="r_encryptAssertions" label="${c:l('federa_profile.zul.encryptAssertions')}"
+				bind="encryptRequests" dataType="STRING"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
+			<customfield3 id="r_encryptNameIds" label="${c:l('federa_profile.zul.encryptNameIds')}"
+				bind="encryptNameIds" dataType="STRING"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
+			<customfield3 id="r_assertionProxyCount" label="${c:l('federa_profile.zul.assertionProxyCount')}"
+				bind="assertionProxyCount" dataType="NUMBER"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+			<customfield3 id="r_includeAttributeStatement" label="${c:l('federa_profile.zul.includeAttributeStat')}"
+				bind="includeAttributeStatement" dataType="BOOLEAN"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+			<customfield3 id="r_localityAddress" label="${c:l('federa_profile.zul.includeAttributeStat')}"
+				bind="localityAddress" dataType="STRING" maxlength="255"
+					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+			<customfield3 id="r_localityDNSName" label="${c:l('federa_profile.zul.localityDNSName')}"
+				bind="localityDNSName" maxlength="255"
+					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+			<customfield3 id="r_maximumSPSessionLifetime" 
+				label="${c:l('federa_profile.zul.maximumSPSessionLife')}"
+				bind="maximumSPSessionLifetime"
+					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+			<customfield3 id="r_discoveryEndpoint" label="${c:l('federa_profile.zul.discoveryEndpoint')}"
+				value="/.well-known/openid-configuration"/>
+			<customfield3 id="r_authorizationEndpoint" label="${c:l('federa_profile.zul.authorizationEndpoint')}"
+				bind="authorizationEndpoint"
+					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+			<customfield3 id="r_tokenEndpoint" label="${c:l('federa_profile.zul.tokenEndpoint')}"
+				bind="tokenEndpoint"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_revokeEndpoint" label="${c:l('federa_profile.zul.revokeEndpoint')}"
+				bind="revokeEndpoint"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_userinfoEndpoint" label="${c:l('federa_profile.zul.userinfoEndpoint')}"
+				bind="userInfoEndpoint"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/save-r.svg" label="${c:l('common.apply') }" onClick="ref:handler.applyProfile"/>
+			</div>
+		</form2>
+	</window>
+	
+	<window id="adaptiveAuthentication" visible="false" closable="close" title="${c:l('federacio.zul.adaptiveAuthentication') }"
+		position="top, center"
+		style="width: 80%; min-width: 700px; max-width: 1024px;">
+		<style>
+			div.auth.grid > div > table > tbody > tr:hover > td  div.box,
+			div.auth.grid > div > table > tbody > tr:hover > td  div.box td.gc {
+				background-color: #f0f0f0;
+			}
+		</style>
+		<grid dataPath="federationMember/extendedAuthenticationMethods" id="grid" sclass="auth grid">
+			<datarow>
+				<div style="border-bottom: solid 1px #e0e0e0; padding-bottom: 10px; padding-right: 5px" sclass="box">
+					<hbox width="100%" widths="*, 32px">
+						<div>
+							<customfield3
+								label="${c:l('federacio.zul.description')}"
+								placeholder="Rule description"
+								dataType="STRING"
+								readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+								bind="description" />
+							<customfield3
+								label="${c:l('federacio.zul.condition')}"
+								multiline='true'
+								placeholder="Script to enable this rule. Return true or false."
+								dataType="STRING"
+								readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+								bind="expression"
+								selectIcon="/img/pencil.svg"
+								javascript='{"dayOfWeek": "java.long.Integer",
+										"daysSinceLastLogon":"java.long.Integer",
+										"daysSinceLastLogonFromSameHost":"java.lang.Integer",
+										"failuresForSameIp":"java.lang.Integer",
+										"failuresForSameUser":"java.lang.Integer",
+										"failuresRatio":"java.lang.Integer",
+										"hour":"java.lang.Integer",
+										"identityProvider":"java.lang.String",
+										"ipAddress":"java.lang.String",
+										"minute":"java.lang.Integer",
+										"newDevice":"java.lang.Boolean",
+										"sameCountry":"java.lang.Boolean",
+										"serviceProvider":"java.lang.String",
+										"sourceCountry": "java.lang.String",
+										"user": "com.soffid.iam.api.User"}'/>
+							
+							<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/authenticationMethods"
+								style="margin-left: 192px">
+								<columns>
+									<column label="${c:l('federacio.zul.firstAuthentication') }"/>
+									<column label="${c:l('federacio.zul.password') }"/>
+									<column label="${c:l('federacio.zul.kerberos') }"/>
+									<column label="${c:l('federacio.zul.broker')}"/>
+									<column label="${c:l('federacio.zul.OTP') }"/>
+									<column label="${c:l('federacio.zul.Certificate') }"/>
+									<column label="${c:l('federacio.zul.Fingerprint') }"/>
+								</columns>
+								<rows>
+									<row>
+										<label value="${c:l('federacio.zul.password') }"/>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.P') }"> <custom-attributes type="P"/></checkbox>
+										<label/>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.PF') }"> <custom-attributes type="PF"/></checkbox>
+									</row>
+									<row>
+										<label value="${c:l('federacio.zul.kerberos') }"/>
+										<label/>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.K') }"> <custom-attributes type="K"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.KF') }"> <custom-attributes type="KF"/></checkbox>
+									</row>
+									<row>
+										<label value="${c:l('federacio.zul.broker') }"/>
+										<label/>
+										<label/>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.EO') }"> <custom-attributes type="EO"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.EC') }"> <custom-attributes type="EC"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.EF') }"> <custom-attributes type="EF"/></checkbox>
+									</row>
+									<row>
+										<label value="${c:l('federacio.zul.OTP') }"/>
+										<label />
+										<label />
+										<label />
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.OF') }"> <custom-attributes type="OF"/></checkbox>
+									</row>
+									<row>
+										<label value="${c:l('federacio.zul.Certificate') }"/>
+										<label/>
+										<label/>
+										<label />
+										<label/>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.CF') }"> <custom-attributes type="CF"/></checkbox>
+									</row>
+									<row>
+										<label value="${c:l('federacio.zul.Fingerprint') }"/>
+										<label/>
+										<label/>
+										<label />
+										<label/>
+										<label/>
+										<checkbox tooltiptext="${c:l('federacio.zul.auth.F') }"> <custom-attributes type="F"/></checkbox>
+									</row>
+								</rows>
+							</grid>
+						</div>
+						<div style="text-align: right">
+							<imageclic src="/img/move-up.svg" width="24px" onClick="ref:handler.adaptativeUp">
+							</imageclic>
+							<imageclic src="/img/trash.svg"  width="24px" onClick="ref:handler.adaptativeRemove">
+							</imageclic>
+							<imageclic src="/img/move-down.svg"  width="24px" onClick="ref:handler.adaptativeDown">
+							</imageclic>
+						</div>
+					</hbox>
+				</div>
+			</datarow>
+		</grid>
+		<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('network:all:create')}" >
+			<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false">-</div>
+			<div class="addButton" onClick="ref:handler.adaptativeAdd">+</div>
+		</div>
+		<div style="text-align: right; width: 100%">
+			<button image="/img/save-r.svg" label="${c:l('common.apply') }" onClick="ref:handler.applyAdaptative"/>
+		</div>
+	</window>
+	
+</div>								

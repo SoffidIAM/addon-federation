@@ -38,7 +38,7 @@ import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
@@ -56,6 +56,7 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.AuthorizationResponse;
+import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
@@ -126,6 +127,10 @@ public class Autenticator {
 	        }
 		}
     	
+        TokenInfo ti = (TokenInfo) req.getAttribute("$$internaltoken$$");
+        if (ti != null && checkToken(ctx, req, resp, config, ti)) {
+        	return true;
+        }
 //    	LOG.info("Find cookie");
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
@@ -143,10 +148,21 @@ public class Autenticator {
         return false;
     }
 
+	private boolean checkToken(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config,
+			TokenInfo ti) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException, ServletException {
+		if (ti == null)
+			return false;
+		String user = ti.getUser();
+		if (user == null)
+			return false;
+		autenticate2(user, ctx, req, resp, ti.getAuthenticationMethod(), true);
+		return true;
+	}
+
 	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException, ServletException {
 		String value = c.getValue();
-		FederacioService fs = new RemoteServiceLocator().getFederacioService();
+		FederationService fs = new RemoteServiceLocator().getFederacioService();
 		SamlValidationResults check = fs.validateSessionCookie(value);
 		if (check.isValid() && check.getUser() != null)
 		{
@@ -197,7 +213,7 @@ public class Autenticator {
 			for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
 			{
 //				LOG.info("Checking session cookie against session "+sessio.getId());
-				byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+				byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
 				String digestString = Base64.encodeBytes(digest);
 				if (digestString.equals(hash))
 				{
@@ -244,12 +260,13 @@ public class Autenticator {
 
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
-        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(sessio.getKey().getBytes("UTF-8"));
+        	byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
         	String digestString = Base64.encodeBytes(digest);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
        		cookie.setMaxAge ( -1 );
         	cookie.setSecure(true);
+        	cookie.setHttpOnly(true);
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	resp.addCookie(cookie);
@@ -420,7 +437,7 @@ public class Autenticator {
 						SessionService ss = new RemoteServiceLocator().getSessionService();
 						Session soffidSession = ss
 								.getSession(Long.decode(sessionid), sessionKey);
-						if (ss != null)
+						if (ss != null && soffidSession != null)
 							ss.destroySession(soffidSession);
 					}
 		        }
@@ -523,12 +540,13 @@ public class Autenticator {
 
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
-        	byte digest[] = MessageDigest.getInstance("SHA-1").digest(session.getKey().getBytes("UTF-8"));
+        	byte digest[] = MessageDigest.getInstance("SHA-256").digest(session.getKey().getBytes("UTF-8"));
         	String digestString = Base64.encodeBytes(digest);
         	User user = ServiceLocator.instance().getServerService().getUserInfo(session.getUserName(), null);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
        		cookie.setMaxAge ( -1 );
+        	cookie.setHttpOnly(true);
         	cookie.setSecure(true);
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());

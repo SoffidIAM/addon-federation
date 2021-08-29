@@ -6,5 +6,6 @@ import com.soffid.mda.annotation.Enumeration;
 public class ServiceProviderType {
 //	public static String SOFFID = "soffid";
 	public static String SAML = "saml";
+	public static String SOFFID_SAML = "soffid-saml";
 	public static String OPENID_CONNECT = "openid-connect";
 }

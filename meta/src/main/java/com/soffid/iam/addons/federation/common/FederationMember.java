@@ -47,6 +47,18 @@ public class FederationMember {
 	public java.lang.String privateKey;
 
 	@Nullable
+	@Description("SSL private key in PEM format")
+	public java.lang.String sslPrivateKey;
+
+	@Nullable
+	@Description("SSL public key in PEM format")
+	public java.lang.String sslPublicKey;
+
+	@Nullable
+	@Description("SSL certificates in PEM format")
+	public java.lang.String sslCertificate;
+
+	@Nullable
 	public java.lang.String certificateChain;
 
 	@Nullable
@@ -135,6 +147,10 @@ public class FederationMember {
 	@Nullable
 	Long sessionTimeout;
 
+	@Description ("Identity Provider session timeout for oAuth sessions (in seconds)")
+	@Nullable
+	Long oauthSessionTimeout;
+
 	@Description("Bean shell expression to generate user id")
 	@Nullable
 	public String uidExpression;
@@ -171,6 +187,11 @@ public class FederationMember {
 	@Nullable
 	public String openidUrl;
 
+	@Description("Login hint script")
+	@Attribute(defaultValue = "\"loginHint\"")
+	@Nullable
+	public String loginHintScript;
+
 	@Description("Open ID mechanisms: Implicit, AuthorizationCode, Password, PasswordClientCredentals")
 	@Attribute(defaultValue="new java.util.HashSet()")
 	@Nullable
@@ -185,4 +206,7 @@ public class FederationMember {
 	@Attribute(defaultValue="new java.util.LinkedList()")
 	public List<AuthenticationMethod> extendedAuthenticationMethods;
 
+	@Nullable
+	@Attribute(defaultValue="new java.util.LinkedList()")
+	public List<String> impersonations;
 }

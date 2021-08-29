@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.api.Password;
@@ -61,18 +62,23 @@ public class UserPasswordAction extends HttpServlet {
                         return;
                     } else {
 	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-	            		ctx.authenticated(u, "P", resp);
-	            		ctx.store(req);
-	            		if ( ctx.isFinished())
-	            		{
-	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
-	            			return;
-	            		}
-	            		else
-	            		{
-	            	        RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
-	            	        dispatcher.forward(req, resp);
-	            	        return;
+	            		if (ctx == null) {
+	                        error = "Session timeout"; //$NON-NLS-1$
+	                        LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Session timeout");
+	            		} else {
+	            			ctx.authenticated(u, "P", resp);
+	            			ctx.store(req);
+	            			if ( ctx.isFinished())
+	            			{
+	            				new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+	            				return;
+	            			}
+	            			else
+	            			{
+	            				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+	            				dispatcher.forward(req, resp);
+	            				return;
+	            			}
 	            		}
                     }
                 } else {
@@ -88,8 +94,8 @@ public class UserPasswordAction extends HttpServlet {
                 }
             } catch (UnknownUserException e) {
             } catch (Exception e) {
-                error = Messages.getString("UserPasswordAction.internal.error")+e.toString(); //$NON-NLS-1$
-                e.printStackTrace();
+                error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
+                LogFactory.getLog(getClass()).info("Error authenticating user "+u, e);
             }
         }
         req.setAttribute("ERROR", error); //$NON-NLS-1$

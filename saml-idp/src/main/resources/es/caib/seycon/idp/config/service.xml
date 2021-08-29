@@ -7,8 +7,10 @@
           xmlns:profile="urn:mace:shibboleth:2.0:idp:profile-handler"
           xmlns:relyingParty="urn:mace:shibboleth:2.0:relying-party"
           xmlns:resource="urn:mace:shibboleth:2.0:resource" 
+          xmlns:soffid-resolver="urn:soffid.com:shibboleth:2.0:resolver"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:mace:shibboleth:2.0:services classpath:/schema/shibboleth-2.0-services.xsd
+          xsi:schemaLocation="urn:soffid.com:shibboleth:2.0:resolver classpath:/schema/SeuExtension.xsd
+                              urn:mace:shibboleth:2.0:services classpath:/schema/shibboleth-2.0-services.xsd
                               urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd
                               urn:mace:shibboleth:2.0:attribute:authority classpath:/schema/shibboleth-2.0-attribute-authority.xsd
                               urn:mace:shibboleth:2.0:resolver classpath:/schema/shibboleth-2.0-attribute-resolver.xsd
@@ -17,14 +19,12 @@
                               urn:mace:shibboleth:2.0:resource classpath:/schema/shibboleth-2.0-resource.xsd">
 
     <srv:Service id="shibboleth.AttributeResolver"
-             xsi:type="attribute-resolver:ShibbolethAttributeResolver">
+             xsi:type="soffid-resolver:SoffidAttributeResolver">
         <srv:ConfigurationResource file="${conf}/attribute-resolver.xml" xsi:type="resource:FilesystemResource" />
     </srv:Service>
 
     <srv:Service id="shibboleth.AttributeFilterEngine"
-             xsi:type="attribute-afp:ShibbolethAttributeFilteringEngine"
-             configurationResourcePollingFrequency="PT1M">
-        <srv:ConfigurationResource file="${conf}/attribute-filter.xml" xsi:type="resource:FilesystemResource" />
+             xsi:type="soffid-resolver:SoffidAttributeFilter">
     </srv:Service>
     
     <srv:Service id="shibboleth.SAML1AttributeAuthority"

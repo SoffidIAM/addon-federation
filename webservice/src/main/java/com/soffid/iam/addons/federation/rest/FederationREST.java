@@ -23,7 +23,7 @@ import com.soffid.iam.addons.federation.rest.json.ValidateCredentialsJSONRequest
 import com.soffid.iam.addons.federation.rest.json.ValidateDomainJSONRequest;
 import com.soffid.iam.addons.federation.rest.json.ValidateDomainJSONResponse;
 import com.soffid.iam.addons.federation.rest.response.ResponseBuilder;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
 
 @Path("/federation/rest")
@@ -31,7 +31,7 @@ import com.soffid.iam.api.SamlRequest;
 @Consumes({ "application/rest+json", "application/json" })
 public class FederationREST {
 	@EJB 
-	com.soffid.iam.addons.federation.service.ejb.FederacioService federationService;
+	com.soffid.iam.addons.federation.service.ejb.FederationService federationService;
 	
 	@Path("/validate-domain")
 	@POST

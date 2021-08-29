@@ -39,16 +39,26 @@
 		}
 	}
   
+	function updateFormHash () {
+		if (document.location.hash) {
+			var forms = document.forms;
+			for (var i = 0; i < forms.length; i++) {
+				var form = forms.item(i);
+				form.setAttribute("action", form.getAttribute("action")+document.location.hash);	
+			}			
+		}
+	}
+	
 	var fingerprintChallenge = "${fingerprintChallenge}";
 	var fingerprintToRemove = '${fingerprintToRemove}';
 	</script>
 
-	<script src="/js/jquery-1.3.2.min.js"></script>
+	<script src="/js/jquery-3.6.0.slim.min.js"></script>
 	<script src="/js/fingerprint.js"></script>
 
 </head>
 
-<body onLoad="activateFingerprint()">
+<body onLoad="updateFormHash(); activateFingerprint(); ">
 
 	<div id="language">
 		<ul class="qtrans_language_chooser" id="qtranslate-chooser">
@@ -63,7 +73,7 @@
 			<p class="header">${title}</p>
 			{if passwordAllowed} 
 			<div class="logintype"  id ="passlogin">
-				<form method="post" action="${passwordLoginUrl}">
+				<form method="post" action="${passwordLoginUrl}" id="form-pass">
 					<div class="upinput">
 						<span class="labeltextbox">
 							<span class="label">
@@ -88,7 +98,7 @@
 			{endif}
 			{if otpAllowed} 
 			<div class="logintype"  id ="otplogin">
-				<form method="post" action="${otpLoginUrl}">
+				<form method="post" action="${otpLoginUrl}" id="form-otp">
 					<div class="otpinput">
 						<span class="labeltextbox">
 							<span class="label">

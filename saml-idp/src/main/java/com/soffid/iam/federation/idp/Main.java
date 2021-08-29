@@ -16,15 +16,13 @@ import java.util.EnumSet;
 import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Set;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
+import javax.servlet.ServletException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-
-import net.shibboleth.utilities.jetty7.DelegateToApplicationSslContextFactory;
 
 import org.eclipse.jetty.http.security.Constraint;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -37,6 +35,7 @@ import org.eclipse.jetty.server.DispatcherType;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.SessionManager;
 import org.eclipse.jetty.server.bio.SocketConnector;
+import org.eclipse.jetty.server.session.HashSessionManager;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.server.ssl.SslSocketConnector;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
@@ -56,7 +55,8 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.utils.Security;
@@ -66,6 +66,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
 import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
 import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
+import es.caib.seycon.idp.openid.server.ImpersonationEndpoint;
 import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
@@ -85,6 +86,7 @@ import es.caib.seycon.idp.ui.ErrorServlet;
 import es.caib.seycon.idp.ui.LogFilter;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
+import es.caib.seycon.idp.ui.MetadataServlet;
 import es.caib.seycon.idp.ui.NtlmAction;
 import es.caib.seycon.idp.ui.OTPAction;
 import es.caib.seycon.idp.ui.P3PFilter;
@@ -96,11 +98,6 @@ import es.caib.seycon.idp.ui.PasswordChangedForm;
 import es.caib.seycon.idp.ui.PasswordRecoveryAction;
 import es.caib.seycon.idp.ui.PasswordRecoveryAction2;
 import es.caib.seycon.idp.ui.PasswordRecoveryForm;
-import es.caib.seycon.idp.ui.broker.QueryUserIdPServlet;
-import es.caib.seycon.idp.ui.broker.SAMLSSOPostServlet;
-import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
-import es.caib.seycon.idp.ui.cred.RegisterCredential;
-import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
@@ -108,6 +105,11 @@ import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
 import es.caib.seycon.idp.ui.UserPasswordAction;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
+import es.caib.seycon.idp.ui.broker.QueryUserIdPServlet;
+import es.caib.seycon.idp.ui.broker.SAMLSSOPostServlet;
+import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
+import es.caib.seycon.idp.ui.cred.RegisterCredential;
+import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberAction;
@@ -115,6 +117,7 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import net.shibboleth.utilities.jetty7.DelegateToApplicationSslContextFactory;
 
 public class Main {
 
@@ -182,15 +185,18 @@ public class Main {
             Integer port = c.getStandardPort();
             Integer port2 = c.getClientCertPort();
     
-            if (c.getFederationMember().getDisableSSL() != null &&
-            		c.getFederationMember().getDisableSSL().booleanValue())
+            
+            
+            boolean plainSocket = c.getFederationMember().getDisableSSL() != null &&
+            		c.getFederationMember().getDisableSSL().booleanValue();
+			if (plainSocket)
                 installPlainConnector(host, port);
             else
             	installSSLConnector(host, port);
             installClientCertConnector(host, port2);
     
             // Deploy war
-            deployWar();
+            deployWar(plainSocket);
     
             // Start
             server.setSendServerVersion(false);
@@ -277,6 +283,16 @@ public class Main {
         
         connector.setHostHeader(host);
 
+        connector.setRequestBufferSize( 64 * 1024);
+        connector.setHeaderBufferSize( 64 * 1024);
+        try {
+        	String s = new RemoteServiceLocator().getServerService().getConfig("soffid.syncserver.bufferSize");
+        	if (s != null) {
+        		connector.setRequestBufferSize( Integer.parseInt(s));
+        		connector.setHeaderBufferSize( Integer.parseInt(s));
+        	}
+        } catch (Throwable e) {}
+
         server.addConnector(connector);
     }
 
@@ -286,6 +302,16 @@ public class Main {
 
         SocketConnector connector = new SocketConnector();
 
+        connector.setRequestBufferSize( 64 * 1024);
+        connector.setHeaderBufferSize( 64 * 1024);
+        try {
+        	String s = new RemoteServiceLocator().getServerService().getConfig("soffid.syncserver.bufferSize");
+        	if (s != null) {
+        		connector.setRequestBufferSize( Integer.parseInt(s));
+        		connector.setHeaderBufferSize( Integer.parseInt(s));
+        	}
+        } catch (Throwable e) {}
+        
         connector.setPort(port == null ? 80 : port.intValue());
         // connector.setHost(host);
         connector.setAcceptors(2);
@@ -303,7 +329,7 @@ public class Main {
         installConnector(host, port, true);
     }
 
-    private void deployWar() throws FileNotFoundException, IOException,
+    private void deployWar(boolean plainSocket) throws FileNotFoundException, IOException,
             UnrecoverableKeyException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException,
             InternalErrorException, InvalidKeyException, IllegalStateException,
@@ -325,7 +351,6 @@ public class Main {
         File f2 = c.extractConfigFile("service.xml"); //$NON-NLS-1$
         String conf = f1.toURI().toString() + "; " + f2.toURI().toString() //$NON-NLS-1$
                 + ";"; //$NON-NLS-1$
-        System.out.println("Confg = " + conf); //$NON-NLS-1$
         ctx.setInitParameter("contextConfigLocation", conf); //$NON-NLS-1$
 
         EventListener el = new ContextLoaderListener();
@@ -395,6 +420,10 @@ public class Main {
 	        servlet.setInitParameter("AllowedIPs", //$NON-NLS-1$
 	                "127.0.0.1/32 ::1/128"); //$NON-NLS-1$
 	        ctx.addServlet(servlet, "/status"); //$NON-NLS-1$
+	        servlet = new ServletHolder(MetadataServlet.class);
+	        servlet.setInitOrder(1);
+	        servlet.setName("Metadata servlet"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, MetadataServlet.URI); //$NON-NLS-1$
         }
         SAMLProfile openIdProfile = useOpenidProfile();
         if (openIdProfile != null)
@@ -436,6 +465,15 @@ public class Main {
 	        				openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
 
         	servlet = new ServletHolder(
+	                ImpersonationEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("ImpersonationEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getUserInfoEndpoint() == null ? 
+	        				"/userinfo/impersonate": 
+	        				openIdProfile.getUserInfoEndpoint()+"/impersonate"); //$NON-NLS-1$
+
+	        servlet = new ServletHolder(
 	                SessionCookieEndpoint.class);
 	        servlet.setInitOrder(2);
 	        servlet.setName("SessionCookieEndpoint"); //$NON-NLS-1$
@@ -507,33 +545,28 @@ public class Main {
         ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
         ctx.setErrorHandler(errorHandler);
         
+        errorHandler.addErrorPage(400, ErrorServlet.URI);
         errorHandler.addErrorPage(401, UserPasswordFormServlet.URI);
-        errorHandler.addErrorPage(500, ErrorServlet.URI);
+        errorHandler.addErrorPage(Throwable.class, ErrorServlet.URI);
+        for (int i = 402; i <= 416; i++)
+        	errorHandler.addErrorPage(i, ErrorServlet.URI);
+        for (int i = 500; i <= 505; i++)
+        	errorHandler.addErrorPage(i, ErrorServlet.URI);
         
         if (needsKerberos(c))
         	configureSpnego(ctx, c);
         	
-
-        /**
-         * <!-- Send request to the EntityID to the SAML metadata handler. -->
-         * <servlet> <servlet-name>shibboleth_jsp</servlet-name>
-         * <jsp-file>/shibboleth.jsp</jsp-file> </servlet>
-         * 
-         * <servlet-mapping> <servlet-name>shibboleth_jsp</servlet-name>
-         * <url-pattern>/shibboleth</url-pattern> </servlet-mapping>
-         * 
-         * <error-page> <error-code>500</error-code>
-         * <location>/error.jsp</location> </error-page>
-         * 
-         * <error-page> <error-code>404</error-code>
-         * <location>/error-404.jsp</location> </error-page>
-         */
-
         ctx.setSessionHandler(new SessionHandler());
         int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
         				:c.getFederationMember().getSessionTimeout().intValue();
-        ctx.getSessionHandler().getSessionManager().setMaxInactiveInterval(timeout); // 20 minutes timeout
-        ctx.getSessionHandler().getSessionManager().addEventListener(new SessionListener());
+        HashSessionManager sessionManager = new HashSessionManager();
+        if (!plainSocket) {
+        	sessionManager.setHttpOnly(true);
+        	sessionManager.setSecureCookies(true);
+        }
+		sessionManager.setMaxInactiveInterval(timeout); // 20 minutes timeout
+        sessionManager.addEventListener(new SessionListener());
+        ctx.getSessionHandler().setSessionManager(sessionManager);
         
 
     }
@@ -553,7 +586,7 @@ public class Main {
 
 	private SAMLProfile useOpenidProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
-		FederacioService federacioService = c.getFederationService();
+		FederationService federacioService = c.getFederationService();
 		FederationMember fm = c.getFederationMember();
 		
         Collection<SAMLProfile> profiles = federacioService
@@ -570,7 +603,7 @@ public class Main {
 
 	private boolean useSamldProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
-		FederacioService federacioService = c.getFederationService();
+		FederationService federacioService = c.getFederationService();
 		FederationMember fm = c.getFederationMember();
 		
         Collection<SAMLProfile> profiles = federacioService

@@ -1,5 +1,7 @@
 package es.caib.seycon.idp.shibext;
 
+import org.springframework.beans.factory.xml.BeanDefinitionParser;
+
 import edu.internet2.middleware.shibboleth.common.config.BaseSpringNamespaceHandler;
 
 public class NamespaceHandler extends BaseSpringNamespaceHandler {
@@ -15,5 +17,12 @@ public class NamespaceHandler extends BaseSpringNamespaceHandler {
         registerBeanDefinitionParser(SoffidSAML2SLOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SoffidSAML2SLOProfileHandlerBeanDefinitionParser());
 
+        BeanDefinitionParser parser = new SoffidAttributeResolverBeanDefinitionParser();
+        
+        registerBeanDefinitionParser(SoffidAttributeFilterBeanDefinitionParser.SCHEMA_TYPE, 
+        		new SoffidAttributeFilterBeanDefinitionParser());
+
+        registerBeanDefinitionParser(SoffidAttributeResolverBeanDefinitionParser.SCHEMA_TYPE, parser);
+        
     }
 }

@@ -10,10 +10,17 @@ public class TokenInfo {
 	OpenIdRequest request;
 	long created;
 	long expires;
+	long expiresRefresh;
 	long authentication;
 	private String authenticationMethod;
 	Long sessionId;
 	String sessionKey;
+	
+	public String toString() {
+		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
+				+", User: "+user+", AuthenticationMethod: "+authentication+", SessionId: "+sessionId
+				+", SessionKey: "+sessionKey+", Request: "+request.toString()+"]";
+	}
 	
 	public String getUser() {
 		return user;
@@ -80,5 +87,21 @@ public class TokenInfo {
 	}
 	public void setSessionKey(String sessionKey) {
 		this.sessionKey = sessionKey;
+	}
+
+	public long getExpiresRefresh() {
+		return expiresRefresh;
+	}
+
+	public void setExpiresRefresh(long expriresRefresh) {
+		this.expiresRefresh = expriresRefresh;
+	}
+	
+	boolean isExpired() {
+		return System.currentTimeMillis() > expires;
+	}
+
+	boolean isRefreshExpired() {
+		return System.currentTimeMillis() > expiresRefresh;
 	}
 }

@@ -17,13 +17,14 @@ import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.LoginServlet;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
@@ -53,7 +54,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 
     	try {
 			IdpConfig cfg = IdpConfig.getConfig();
-			FederacioService federacioService = new RemoteServiceLocator().getFederacioService();
+			FederationService federacioService = new RemoteServiceLocator().getFederacioService();
 			
 			SamlValidationResults sl = federacioService.authenticate( cfg.getPublicId(), 
 					"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST", 
@@ -120,7 +121,8 @@ public class SAMLSSOPostServlet extends BaseForm {
         		}
 			}
 		} catch (Exception e) {
-			req.setAttribute("ERROR", e.toString());
+			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
+            LogFactory.getLog(getClass()).info("Error validating openid request ", e);
 		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
 		    dispatcher.forward(req, resp);
 		}

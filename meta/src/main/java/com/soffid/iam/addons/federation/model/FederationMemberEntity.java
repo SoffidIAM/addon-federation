@@ -73,7 +73,11 @@ public abstract class FederationMemberEntity {
 	@Nullable
 	public java.lang.String standardPort;
 
+	@Description ("Identity Provider session timeout for oAuth sessions (in seconds)")
+	@Nullable
+	Long oauthSessionTimeout;
 
+	
 	@Column (name="FED_ENT_ID")
 	public com.soffid.iam.addons.federation.model.EntityGroupEntity entityGroup;
 
@@ -157,7 +161,7 @@ public abstract class FederationMemberEntity {
 			+ "where (:tipusFM='I') and  "
 			+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  and "
 			+ "(:publicId is null or fm.publicId like :publicId) and "
-			+ "fm.tenant.id=:tenantId"
+			+ "fm.tenant.id=:tenantId "
 			+ "union "
 			+ "select fm "
 			+ "from com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm "
@@ -190,3 +194,9 @@ public abstract class FederationMemberEntity {
 	}
 
 }
+
+@Index( name="SC_FEDERA_UK", columns = {"FED_TEN_ID", "FED_NAME", "FED_CLASSE"}, unique = true, entity=FederationMemberEntity.class)
+class FederationMembrEntityUK {}
+
+@Index( name="SC_FEDERA_UK2", columns = {"FED_TEN_ID", "FED_PUBID"}, unique = true, entity=FederationMemberEntity.class)
+class FederationMembrEntityUK2 {}

@@ -210,11 +210,27 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 		}
 
 		// VirtualIdentityProvider
-		if (source.getIdentityProvider() != null && source.getIdentityProvider().getId() != null) {
-			FederationMember idp = source.getIdentityProvider();
-			VirtualIdentityProviderEntity vip = (VirtualIdentityProviderEntity) getFederationMemberEntityDao()
-					.federationMemberToEntity(idp);
-			target.setVirtualIdentityProvider(vip);
+		if (source.getIdentityProvider() != null) {
+			if ( source.getIdentityProvider().getId() != null) {
+				FederationMember idp = source.getIdentityProvider();
+				VirtualIdentityProviderEntity vip = (VirtualIdentityProviderEntity) getFederationMemberEntityDao()
+						.federationMemberToEntity(idp);
+				target.setVirtualIdentityProvider(vip);
+			} else {
+				for (FederationMemberEntity fm:getFederationMemberEntityDao().findFMByEntityGroupAndPublicIdAndTipus("%", 
+						source.getIdentityProvider().getPublicId(),
+						"V")) 
+				{
+					target.setVirtualIdentityProvider((VirtualIdentityProviderEntity) fm);
+				}
+				for (FederationMemberEntity fm:getFederationMemberEntityDao().findFMByEntityGroupAndPublicIdAndTipus("%", 
+						source.getIdentityProvider().getPublicId(),
+						"I")) 
+				{
+					target.setVirtualIdentityProvider((VirtualIdentityProviderEntity) fm);
+				}
+				
+			}
 		} // else throw new Exception
 			// ("No s'ha trobat el identity provider del SAMLProfile");
 

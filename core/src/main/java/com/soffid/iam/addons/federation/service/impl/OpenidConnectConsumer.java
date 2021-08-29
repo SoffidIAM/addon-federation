@@ -67,6 +67,12 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			serviceBuilder.scope(scope.toString());
 		}
 	
+
+		for (String param: new String[] {"prompt", "display", "max_age", "ui_locales", "ui_hint"}) {
+			if (cfg.get(param) != null) 
+				params.put(param, (String) cfg.get(param));
+		}
+
 		accessTokenEndpoint = (String) cfg.get("token_endpoint");
 		if (accessTokenEndpoint == null)
 			throw new InternalErrorException("Missing token_endpoint member in "+idp.getName()+" metadata");
@@ -82,8 +88,6 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		service = serviceBuilder.state(secretState)
 			    .callback(returnToUrl)
 			    .build( new CustomOAuthService());
-
-
 	}
 
 	public boolean verifyResponse(Map<String,String> httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {

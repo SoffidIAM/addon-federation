@@ -10,7 +10,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.opensaml.util.storage.StorageService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -18,13 +20,8 @@ import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
 import com.soffid.iam.service.OTPValidationService;
 
-import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
-import edu.internet2.middleware.shibboleth.common.session.SessionManager;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
-import edu.internet2.middleware.shibboleth.idp.profile.IdPProfileHandlerManager;
-import edu.internet2.middleware.shibboleth.idp.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
@@ -34,7 +31,7 @@ import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserPasswordFormServlet extends BaseForm {
-
+	static Log log = LogFactory.getLog(UserPasswordFormServlet.class);
     /**
 	 * 
 	 */
@@ -91,6 +88,14 @@ public class UserPasswordFormServlet extends BaseForm {
 
             Collection<FederationMember> vip = ip.getVirtualIdentityProvider();
             
+        	log.info("Displaying login page");
+        	log.info("Current user "+ctx.getUser());
+        	log.info("Allowed authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Requested authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Authentication step "+ctx.getStep());
+        	log.info("Next authentication factor "+ctx.getNextFactor());
+            
             HtmlGenerator g = new HtmlGenerator(context, req);
             g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
@@ -111,7 +116,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
-        	
+
             boolean otpAllowed = ctx.getNextFactor().contains("O");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {

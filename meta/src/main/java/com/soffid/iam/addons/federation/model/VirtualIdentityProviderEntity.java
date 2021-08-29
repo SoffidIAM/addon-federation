@@ -85,5 +85,10 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Column (name="FED_CONSEN")
 	@Nullable
 	public Boolean consent;
+
+	@Column (name="FED_LOGHIN", length = 4096)
+	@Nullable
+	public String loginHintScript;
+
 }
 

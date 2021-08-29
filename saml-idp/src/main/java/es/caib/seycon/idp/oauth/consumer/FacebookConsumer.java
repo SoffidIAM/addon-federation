@@ -1,11 +1,7 @@
 package es.caib.seycon.idp.oauth.consumer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -23,7 +19,6 @@ import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
 import com.github.scribejava.apis.FacebookApi;
-import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.OAuthRequest;
@@ -31,8 +26,6 @@ import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
 import com.soffid.iam.addons.federation.common.FederationMember;
 
-import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class FacebookConsumer extends OAuth2Consumer 

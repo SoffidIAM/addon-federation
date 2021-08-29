@@ -14,9 +14,11 @@ public class AttributePolicy {
 	public java.lang.Long id;
 
 	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "new com.soffid.iam.addons.federation.common.Attribute()")
 	public com.soffid.iam.addons.federation.common.Attribute attribute;
 
 	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "new com.soffid.iam.addons.federation.common.AttributePolicyCondition()")
 	public com.soffid.iam.addons.federation.common.AttributePolicyCondition attributePolicyCondition;
 
 	@Nullable

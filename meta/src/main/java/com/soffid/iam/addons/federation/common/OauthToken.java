@@ -38,6 +38,9 @@ public class OauthToken {
 	@Nullable
 	Date expires;
 	
+	@Nullable
+	Date refreshExpires;
+
 	Date created;
 	
 	Date authenticated;

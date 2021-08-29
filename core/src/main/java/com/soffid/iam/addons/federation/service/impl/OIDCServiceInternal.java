@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.opensaml.core.config.InitializationException;
 
+import com.soffid.iam.ServiceLocator;
+import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
@@ -135,7 +137,12 @@ public class OIDCServiceInternal extends AbstractFederationService {
 				c = new OpenidConnectConsumer(sp, idp);
 			else
 				throw new InternalErrorException("Unsupported identity provider "+ idp.getIdpType().toString());
-	
+
+			if (userName != null) {
+	        	userName = FederationServiceLocator.instance().getFederationService().getLoginHint(identityProvider, userName);
+				c.setRequestedUser(userName);
+			}
+			
 			String newID = c.secretState;
 			SamlRequest r = new SamlRequest();
 			c.authRequest(r);

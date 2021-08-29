@@ -10,6 +10,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -29,6 +30,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -57,6 +59,7 @@ import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.ProcessInstance;
 
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
@@ -70,6 +73,7 @@ import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
+import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.UserConsent;
@@ -81,6 +85,7 @@ import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
@@ -117,6 +122,7 @@ import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.service.ConfigurationService;
+import com.soffid.iam.service.impl.bshjail.SecureInterpreter;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
@@ -127,16 +133,17 @@ import bsh.Interpreter;
 import bsh.NameSpace;
 import bsh.Primitive;
 import bsh.TargetError;
+import bsh.UtilEvalError;
 import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.SeyconException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 /**
- * @see es.caib.seycon.ng.servei.FederacioService
+ * @see es.caib.seycon.ng.servei.FederationService
  */
-public class FederacioServiceImpl 
-	extends FederacioServiceBase {
+public class FederationServiceImpl 
+	extends FederationServiceBase {
 
 	private static final String EMAIL = "EMAIL"; //$NON-NLS-1$
 	private static final String RECOVER_KEY = "RecoverKey"; //$NON-NLS-1$
@@ -145,7 +152,7 @@ public class FederacioServiceImpl
 	Log log = LogFactory.getLog(getClass());
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#create(com.soffid.iam.addons.federation.common.EntityGroup)
+	 * @see es.caib.seycon.ng.servei.FederationService#create(com.soffid.iam.addons.federation.common.EntityGroup)
 	 */
 	protected com.soffid.iam.addons.federation.common.EntityGroup handleCreate(com.soffid.iam.addons.federation.common.EntityGroup entityGroup)
 			throws java.lang.Exception {
@@ -159,7 +166,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#update(com.soffid.iam.addons.federation.common.EntityGroup)
+	 * @see es.caib.seycon.ng.servei.FederationService#update(com.soffid.iam.addons.federation.common.EntityGroup)
 	 */
 	protected com.soffid.iam.addons.federation.common.EntityGroup handleUpdate(com.soffid.iam.addons.federation.common.EntityGroup entityGroup)
 			throws java.lang.Exception {
@@ -173,7 +180,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#delete(com.soffid.iam.addons.federation.common.EntityGroup)
+	 * @see es.caib.seycon.ng.servei.FederationService#delete(com.soffid.iam.addons.federation.common.EntityGroup)
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.EntityGroup entityGroup) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
@@ -190,7 +197,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#create(com.soffid.iam.addons.federation.common.FederationMember)
+	 * @see es.caib.seycon.ng.servei.FederationService#create(com.soffid.iam.addons.federation.common.FederationMember)
 	 */
 	protected com.soffid.iam.addons.federation.common.FederationMember handleCreate(com.soffid.iam.addons.federation.common.FederationMember federationMember)
 			throws java.lang.Exception {
@@ -204,6 +211,8 @@ public class FederacioServiceImpl
 				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) entity, federationMember);
 			}
+			if (entity instanceof ServiceProviderEntity)
+				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
@@ -211,8 +220,30 @@ public class FederacioServiceImpl
 	}
 
 
+	private void updateImpersonations(ServiceProviderEntity entity, FederationMember federationMember) {
+		LinkedList<String> l = new LinkedList<String>(federationMember.getImpersonations());
+		for (Iterator<ImpersonationEntity> iterator = entity.getImpersonations().iterator(); iterator.hasNext();) {
+			ImpersonationEntity imp = iterator.next();
+			if (l.contains(imp.getUrl()))
+				l.remove(imp.getUrl());
+			else {
+				getImpersonationEntityDao().remove(imp);
+				iterator.remove();
+			}
+		}
+		for (String url: l) {
+			if (url != null && !url.trim().isEmpty()) {
+				ImpersonationEntity imp = getImpersonationEntityDao().newImpersonationEntity();
+				imp.setServiceProvider(entity);
+				imp.setUrl(url);
+				getImpersonationEntityDao().create(imp);
+				entity.getImpersonations().add(imp);
+			}
+		}
+	}
+
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#update(com.soffid.iam.addons.federation.common.FederationMember)
+	 * @see es.caib.seycon.ng.servei.FederationService#update(com.soffid.iam.addons.federation.common.FederationMember)
 	 */
 	protected com.soffid.iam.addons.federation.common.FederationMember handleUpdate(com.soffid.iam.addons.federation.common.FederationMember federationMember)
 			throws java.lang.Exception {
@@ -322,6 +353,7 @@ public class FederacioServiceImpl
 			} else if (entity instanceof ServiceProviderEntity) {
 				ServiceProviderEntity sp = (ServiceProviderEntity) entity;
 				getVirtualIdentityProviderEntityDao().update(sp);
+				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 				String desc = sp.getPublicId() + (sp.getName() != null ? " - " + sp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
 				return getFederationMemberEntityDao().toFederationMember(sp);
@@ -346,9 +378,9 @@ public class FederacioServiceImpl
 		}
 	}
 
-	private void updateAuthenticationMethods(VirtualIdentityProviderEntity vip, FederationMember federationMember) throws InternalErrorException {
+	private void updateAuthenticationMethods(VirtualIdentityProviderEntity vip, FederationMember federationMember) throws InternalErrorException, MalformedURLException, UtilEvalError {
 		getAuthenticationMethodEntityDao().remove(vip.getExtendedAuthenticationMethods());
-		vip.getKeytabs().clear();
+		vip.getExtendedAuthenticationMethods().clear();
 		int order = 1;
 		for ( AuthenticationMethod method: federationMember.getExtendedAuthenticationMethods())
 		{
@@ -365,13 +397,13 @@ public class FederacioServiceImpl
 	}
 
 	private void testCondition(AuthenticationMethod method, AdaptiveEnvironment env) 
-			throws InternalErrorException 
+			throws InternalErrorException, MalformedURLException, UtilEvalError 
 	{
-		Interpreter interpret = new Interpreter();
+		SecureInterpreter interpret = new SecureInterpreter();
 		NameSpace ns = interpret.getNameSpace();
 
 		EnvironmentNamespace newNs = new EnvironmentNamespace(env);
-		
+		newNs.setVariable("serviceLocator", ServiceLocator.instance(), false);
 		try {
 			Object result = interpret.eval(method.getExpression(), newNs);
 			if (result instanceof Primitive)
@@ -394,7 +426,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#delete(com.soffid.iam.addons.federation.common.FederationMember)
+	 * @see es.caib.seycon.ng.servei.FederationService#delete(com.soffid.iam.addons.federation.common.FederationMember)
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.FederationMember federationMember) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
@@ -442,6 +474,7 @@ public class FederacioServiceImpl
 				ArrayList<ServiceProviderVirtualIdentityProviderEntity> oldrps = new ArrayList<ServiceProviderVirtualIdentityProviderEntity>(
 						getServiceProviderVirtualIdentityProviderEntityDao().findBySP(sp.getId()));
 				getServiceProviderVirtualIdentityProviderEntityDao().remove(oldrps);
+				getImpersonationEntityDao().remove(sp.getImpersonations());
 				sp.setServiceProviderVirtualIdentityProvider(null);
 				getServiceProviderEntityDao().remove(sp);
 
@@ -454,7 +487,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#create(com.soffid.iam.addons.federation.common.SAMLProfile)
+	 * @see es.caib.seycon.ng.servei.FederationService#create(com.soffid.iam.addons.federation.common.SAMLProfile)
 	 */
 	protected com.soffid.iam.addons.federation.common.SAMLProfile handleCreate(com.soffid.iam.addons.federation.common.SAMLProfile samlProfile)
 			throws java.lang.Exception {
@@ -479,11 +512,13 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#update(com.soffid.iam.addons.federation.common.SAMLProfile)
+	 * @see es.caib.seycon.ng.servei.FederationService#update(com.soffid.iam.addons.federation.common.SAMLProfile)
 	 */
 	protected com.soffid.iam.addons.federation.common.SAMLProfile handleUpdate(com.soffid.iam.addons.federation.common.SAMLProfile samlProfile)
 			throws java.lang.Exception {// throw new Exception ("ups");
-		if (AutoritzacionsUsuari.canUpdateAllIdentityFederation()) {
+		if (samlProfile.getId() == null)
+			return handleCreate(samlProfile);
+		else if (AutoritzacionsUsuari.canUpdateAllIdentityFederation()) {
 			ProfileEntity entity = getProfileEntityDao().sAMLProfileToEntity(samlProfile);
 			// Atenció amb l'herència.. si ja existeix i es canvia el tipus s'ha
 			// de fer un casting (!!)
@@ -521,7 +556,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#delete(com.soffid.iam.addons.federation.common.SAMLProfile)
+	 * @see es.caib.seycon.ng.servei.FederationService#delete(com.soffid.iam.addons.federation.common.SAMLProfile)
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.SAMLProfile samlProfile) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
@@ -622,7 +657,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#create(com.soffid.iam.addons.federation.common.Policy)
+	 * @see es.caib.seycon.ng.servei.FederationService#create(com.soffid.iam.addons.federation.common.Policy)
 	 */
 	protected com.soffid.iam.addons.federation.common.Policy handleCreate(com.soffid.iam.addons.federation.common.Policy policy) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canCreateAllIdentityFederation()) {
@@ -694,13 +729,13 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#update(com.soffid.iam.addons.federation.common.Policy)
+	 * @see es.caib.seycon.ng.servei.FederationService#update(com.soffid.iam.addons.federation.common.Policy)
 	 */
 	protected com.soffid.iam.addons.federation.common.Policy handleUpdate(com.soffid.iam.addons.federation.common.Policy policy) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canUpdateAllIdentityFederation()) {
 			// TODO: fer-lo bé...
 			Policy clon = clonaPolicy(policy, true);
-			delete(policy);
+			handleDelete(policy);
 			Policy nova = create(clon);
 			guardaDataModificacioPolitiques();
 			creaAuditoria("SC_POLICY", "U", policy.getName()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -711,11 +746,13 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#delete(com.soffid.iam.addons.federation.common.Policy)
+	 * @see es.caib.seycon.ng.servei.FederationService#delete(com.soffid.iam.addons.federation.common.Policy)
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.Policy policy) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
 			PolicyEntity entity = getPolicyEntityDao().load(policy.getId());
+			if (entity == null)
+				entity = getPolicyEntityDao().findByName(policy.getName());
 			if (entity == null)
 				return;
 						
@@ -783,7 +820,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#create(com.soffid.iam.addons.federation.common.Attribute)
+	 * @see es.caib.seycon.ng.servei.FederationService#create(com.soffid.iam.addons.federation.common.Attribute)
 	 */
 	protected com.soffid.iam.addons.federation.common.Attribute handleCreate(com.soffid.iam.addons.federation.common.Attribute attribute) throws java.lang.Exception {
 		AttributeEntityDao dao = getAttributeEntityDao();
@@ -794,7 +831,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#update(com.soffid.iam.addons.federation.common.Attribute)
+	 * @see es.caib.seycon.ng.servei.FederationService#update(com.soffid.iam.addons.federation.common.Attribute)
 	 */
 	protected com.soffid.iam.addons.federation.common.Attribute handleUpdate(com.soffid.iam.addons.federation.common.Attribute attribute) throws java.lang.Exception {
 		AttributeEntityDao dao = getAttributeEntityDao();
@@ -805,7 +842,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#delete(com.soffid.iam.addons.federation.common.Attribute)
+	 * @see es.caib.seycon.ng.servei.FederationService#delete(com.soffid.iam.addons.federation.common.Attribute)
 	 */
 	protected void handleDelete(com.soffid.iam.addons.federation.common.Attribute attribute) throws java.lang.Exception {
 		AttributeEntityDao dao = getAttributeEntityDao();
@@ -814,7 +851,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#findEntityGroupByNom(java.lang.String)
+	 * @see es.caib.seycon.ng.servei.FederationService#findEntityGroupByNom(java.lang.String)
 	 */
 	protected java.util.Collection<EntityGroupMember> handleFindEntityGroupByNom(java.lang.String nom) throws java.lang.Exception {
 		Collection entityGroups = null;
@@ -823,7 +860,7 @@ public class FederacioServiceImpl
 			entityGroups = getEntityGroupEntityDao().findByName(nom);
 		} else {
 			EntityGroupMember arrel = new EntityGroupMember("ARREL"); //$NON-NLS-1$
-			arrel.setDescripcio("Federation"); //$NON-NLS-1$
+			arrel.setDescription("Federation"); //$NON-NLS-1$
 			resultat.add(arrel);
 			return resultat;
 		}
@@ -843,7 +880,7 @@ public class FederacioServiceImpl
 	}
 
 	/**
-	 * @see es.caib.seycon.ng.servei.FederacioService#findPolicies(com.soffid.iam.addons.federation.common.FederationMember)
+	 * @see es.caib.seycon.ng.servei.FederationService#findPolicies(com.soffid.iam.addons.federation.common.FederationMember)
 	 */
 	/*protected java.util.Collection handleFindPolicies(com.soffid.iam.addons.federation.common.FederationMember federationMember)
 			throws java.lang.Exception {
@@ -868,21 +905,21 @@ public class FederacioServiceImpl
 
 		// Hem de cercar els fills segons el tipus
 		// EntityGroup
-		if ("ARREL".equals(groupMember.getTipus())) { //$NON-NLS-1$
+		if ("ARREL".equals(groupMember.getType())) { //$NON-NLS-1$
 			return handleFindEntityGroupByNom("%"); //$NON-NLS-1$
-		} else if (EG_EG.equals(groupMember.getTipus())) {
-			if (groupMember.getEntityGrupPare() != null) {
+		} else if (EG_EG.equals(groupMember.getType())) {
+			if (groupMember.getEntityGroup() != null) {
 
-				EntityGroup pare = groupMember.getEntityGrupPare();
+				EntityGroup pare = groupMember.getEntityGroup();
 				// Afegim fills ficticis per agrupar IdP i SP
 
 				resultat.add(new EntityGroupMember("Identity Providers", EG_IDP_ROOT, pare, null)); //$NON-NLS-1$
 				resultat.add(new EntityGroupMember("Service Providers", EG_SP_ROOT, pare, null)); //$NON-NLS-1$
 
 			}
-		} else if (EG_IDP_ROOT.equals(groupMember.getTipus())) {
+		} else if (EG_IDP_ROOT.equals(groupMember.getType())) {
 			// Cerquem els seus IDPs fills
-			EntityGroup pare = groupMember.getEntityGrupPare();
+			EntityGroup pare = groupMember.getEntityGroup();
 			Collection idp = getIdentityProviderEntityDao().findIDPByEntityGroupId(pare.getId());
 
 			for (Iterator<FederationMemberEntity> it = idp.iterator(); it.hasNext();) {
@@ -891,8 +928,8 @@ public class FederacioServiceImpl
 				String desc = fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				resultat.add(new EntityGroupMember(desc, EG_IDP, pare, fm));
 			}
-		} else if (EG_SP_ROOT.equals(groupMember.getTipus())) {
-			EntityGroup pare = groupMember.getEntityGrupPare();
+		} else if (EG_SP_ROOT.equals(groupMember.getType())) {
+			EntityGroup pare = groupMember.getEntityGroup();
 
 			Collection sp = getServiceProviderEntityDao().findSPByEntityGroupId(pare.getId());
 
@@ -904,10 +941,10 @@ public class FederacioServiceImpl
 				String desc = fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				resultat.add(new EntityGroupMember(desc, EG_SP, pare, fm));
 			}
-		} else if (EG_IDP.equals(groupMember.getTipus())) {
+		} else if (EG_IDP.equals(groupMember.getType()) && groupMember.getFederationMember() != null && groupMember.getFederationMember().getId() != null) {
 			// IDENTITY PROVIDER
 
-			EntityGroup pare = groupMember.getEntityGrupPare();
+			EntityGroup pare = groupMember.getEntityGroup();
 			FederationMember fm = groupMember.getFederationMember();
 
 			// Obtenim els membres per id del grup pare
@@ -931,16 +968,16 @@ public class FederacioServiceImpl
 	protected EntityGroupMember handleCreate(EntityGroupMember entityGroupMember) throws Exception {
 		// Aqui es poden crear EntityGroup i FederationMember
 		// ho mirem en el tipus
-		if (EG_EG.equals(entityGroupMember.getTipus())) {
-			EntityGroup eg = entityGroupMember.getEntityGrupPare();
+		if (EG_EG.equals(entityGroupMember.getType())) {
+			EntityGroup eg = entityGroupMember.getEntityGroup();
 			// Obtenim el name de la descripció
-			eg.setName(entityGroupMember.getDescripcio());
+			eg.setName(entityGroupMember.getDescription());
 			eg = this.create(eg);
-			entityGroupMember.setEntityGrupPare(eg);
+			entityGroupMember.setEntityGroup(eg);
 			guardaDataModificacioFederacio();
 			return entityGroupMember;
-		} else if (EG_IDP.equals(entityGroupMember.getTipus()) || EG_VIP.equals(entityGroupMember.getTipus())
-				|| EG_SP.equals(entityGroupMember.getTipus())) {
+		} else if (EG_IDP.equals(entityGroupMember.getType()) || EG_VIP.equals(entityGroupMember.getType())
+				|| EG_SP.equals(entityGroupMember.getType())) {
 			// Federation member, establim el seu publicid
 			// el seu EntityGroup pare ha d'existir ja..
 			FederationMember fm = entityGroupMember.getFederationMember();
@@ -956,19 +993,19 @@ public class FederacioServiceImpl
 	@Override
 	protected EntityGroupMember handleUpdate(EntityGroupMember entityGroupMember) throws Exception {
 		// Ho fem mirant el tipus
-		if ("EG".equals(entityGroupMember.getTipus())) { //$NON-NLS-1$
-			EntityGroup eg = entityGroupMember.getEntityGrupPare();
+		if ("EG".equals(entityGroupMember.getType())) { //$NON-NLS-1$
+			EntityGroup eg = entityGroupMember.getEntityGroup();
 			if (eg != null) {
 				// Posem l'atribut que es sutitueix al UI
-				eg.setName(entityGroupMember.getDescripcio());
+				eg.setName(entityGroupMember.getDescription());
 				eg = this.update(eg);
 				guardaDataModificacioFederacio();
-				entityGroupMember.setEntityGrupPare(eg);
+				entityGroupMember.setEntityGroup(eg);
 				return entityGroupMember;
 			} else
 				throw new SeyconException(Messages.getString("FederacioServiceImpl.EntityGroupNotFounded")); //$NON-NLS-1$
-		} else if ("SP".equals(entityGroupMember.getTipus()) || "IDP".equals(entityGroupMember.getTipus()) //$NON-NLS-1$ //$NON-NLS-2$
-				|| "VIP".equals(entityGroupMember.getTipus())) { //$NON-NLS-1$
+		} else if ("SP".equals(entityGroupMember.getType()) || "IDP".equals(entityGroupMember.getType()) //$NON-NLS-1$ //$NON-NLS-2$
+				|| "VIP".equals(entityGroupMember.getType())) { //$NON-NLS-1$
 			FederationMember fm = entityGroupMember.getFederationMember();
 			if (fm != null) {
 				// Posem l'atribut que es sutitueix al UI
@@ -987,15 +1024,15 @@ public class FederacioServiceImpl
 	protected void handleDelete(EntityGroupMember entityGroupMember) throws Exception {
 
 		// Branques artificials... que no existeixen a la bbdd
-		if ("SP_ROOT".equals(entityGroupMember.getTipus()) || "IDP_ROOT".equals(entityGroupMember.getTipus())) //$NON-NLS-1$ //$NON-NLS-2$
+		if ("SP_ROOT".equals(entityGroupMember.getType()) || "IDP_ROOT".equals(entityGroupMember.getType())) //$NON-NLS-1$ //$NON-NLS-2$
 			return;
 
 		// hem d'esborrar segons el tipus de membre (FM o EG)
-		EntityGroup eg = entityGroupMember.getEntityGrupPare();
+		EntityGroup eg = entityGroupMember.getEntityGroup();
 		if (eg != null) {
 			// FM
-			if ("IDP".equals(entityGroupMember.getTipus()) || "SP".equals(entityGroupMember.getTipus()) //$NON-NLS-1$ //$NON-NLS-2$
-					|| "VIP".equals(entityGroupMember.getTipus())) {  //$NON-NLS-1$
+			if ("IDP".equals(entityGroupMember.getType()) || "SP".equals(entityGroupMember.getType()) //$NON-NLS-1$ //$NON-NLS-2$
+					|| "VIP".equals(entityGroupMember.getType())) {  //$NON-NLS-1$
 				FederationMember fm = entityGroupMember.getFederationMember();
 				if (fm != null) {
 					this.delete(fm);
@@ -1003,7 +1040,7 @@ public class FederacioServiceImpl
 					return;
 				} else
 					throw new SeyconException(Messages.getString("FederacioServiceImpl.FederationMemberNotFounded")); //$NON-NLS-1$
-			} else if ("EG".equals(entityGroupMember.getTipus())) { //$NON-NLS-1$
+			} else if ("EG".equals(entityGroupMember.getType())) { //$NON-NLS-1$
 				// EG
 				this.delete(eg);
 				guardaDataModificacioFederacio();
@@ -1022,6 +1059,38 @@ public class FederacioServiceImpl
 		}
 		return null;
 
+	}
+
+
+	@Override
+	protected Collection<SAMLProfile> handleFindAllProfilesByFederationMember(FederationMember federationMember) throws Exception {
+		Map<SamlProfileEnumeration, SAMLProfile> profiles = new HashMap<SamlProfileEnumeration, SAMLProfile>();
+		for ( Object type: SamlProfileEnumeration.literals()) {
+			SamlProfileEnumeration e = SamlProfileEnumeration.fromString(type.toString());
+			SAMLProfile p = new SAMLProfile();
+			p.setClasse(e);
+			p.setEnabled(false);
+			p.setEncryptAssertions(SAMLRequirementEnumeration.CONDITIONAL);
+			p.setEncryptNameIds(SAMLRequirementEnumeration.NEVER);
+			p.setIncludeAttributeStatement(true);
+			p.setSignResponses(SAMLRequirementEnumeration.CONDITIONAL);
+			p.setSignAssertions(SAMLRequirementEnumeration.NEVER);
+			p.setSignRequests(SAMLRequirementEnumeration.CONDITIONAL);
+			p.setUserInfoEndpoint("/userinfo");
+			p.setTokenEndpoint("/token");
+			p.setRevokeEndpoint("/revoke");
+			p.setAuthorizationEndpoint("/authorization");
+			p.setAssertionLifetime("PT5M");
+			p.setIdentityProvider(federationMember);
+			profiles.put(p.getClasse(), p);
+		}
+		profiles.remove(SamlProfileEnumeration.SAML_PRO);
+		final Collection<SAMLProfile> l = handleFindProfilesByFederationMember(federationMember);
+		if (l != null) for (SAMLProfile p: l) {
+			profiles.put(p.getClasse(), p);
+		}
+		
+		return profiles.values();
 	}
 
 	@Override
@@ -1256,7 +1325,7 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected String[] handleGenerateKeys() throws Exception {
+	protected String[] handleGenerateKeys(String name) throws Exception {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA"); //$NON-NLS-1$
 		SecureRandom r = SecureRandom.getInstance("SHA1PRNG"); //$NON-NLS-1$
 		keyGen.initialize(1024, r);
@@ -1276,7 +1345,7 @@ public class FederacioServiceImpl
 		pwpu.writeObject(new JcaMiscPEMGenerator(publickey));
 		pwpu.close();
 		
-		Object cert = generateSelfSignedCert (pair);
+		Object cert = generateSelfSignedCert (pair, name);
 		StringWriter swcert = new StringWriter();
 		PemWriter pwcert = new PemWriter(swcert);
 		pwcert.writeObject(new JcaMiscPEMGenerator(cert));
@@ -1299,8 +1368,7 @@ public class FederacioServiceImpl
         return generator;
     }
 
-	private Object generateSelfSignedCert(KeyPair pair) throws CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchProviderException, NoSuchAlgorithmException, SignatureException {
-		String name = "Autosigned-"+System.currentTimeMillis();
+	private Object generateSelfSignedCert(KeyPair pair, String name) throws CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchProviderException, NoSuchAlgorithmException, SignatureException {
 		String dn = "CN="+name+",OU=Federation services,O=SOFFID";
         X509V3CertificateGenerator generator = getX509Generator(dn);
         Vector<ASN1ObjectIdentifier> tags = new Vector<ASN1ObjectIdentifier>();
@@ -1322,13 +1390,7 @@ public class FederacioServiceImpl
 	}
 
 	@Override
-	protected String handleGeneratePKCS10(FederationMember federationMember) throws Exception {
-		FederationMember fm = federationMember;
-		if (fm.getPrivateKey() == null || "".equals(fm.getPrivateKey().trim()) || fm.getPublicKey() == null //$NON-NLS-1$
-				|| "".equals(fm.getPublicKey().trim())) { //$NON-NLS-1$
-			throw new Exception(Messages.getString("FederacioServiceImpl.MakePKCS10Message"));  //$NON-NLS-1$
-		}
-
+	protected String handleGeneratePKCS10(FederationMember fm, String privateKey, String publicKey) throws Exception {
 		java.security.PrivateKey _privateKey = null;
 		java.security.PublicKey _publicKey = null;
 
@@ -1338,7 +1400,7 @@ public class FederacioServiceImpl
 			
 		}
 
-		PEMParser pemParser = new PEMParser(new StringReader(fm.getPrivateKey()));
+		PEMParser pemParser = new PEMParser(new StringReader(privateKey));
 		Object object = pemParser.readObject();
 		if (object instanceof PEMKeyPair) {
 			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
@@ -1349,7 +1411,7 @@ public class FederacioServiceImpl
 		}
 		pemParser.close();
 
-		pemParser = new PEMParser(new StringReader(fm.getPublicKey()));
+		pemParser = new PEMParser(new StringReader(publicKey));
 		object = pemParser.readObject();
 		if (object instanceof SubjectPublicKeyInfo) {
 			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
@@ -1889,7 +1951,7 @@ public class FederacioServiceImpl
 	protected OauthToken handleCreateOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e;
 		if (token.getAuthorizationCode() != null) {
-			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
 			if (e != null) {
 				if (e.getExpires().after(new Date())) {
 					getOauthTokenEntityDao().remove(e);
@@ -1899,7 +1961,7 @@ public class FederacioServiceImpl
 			}			
 		}
 		if (token.getToken() != null) {
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+			e = getOauthTokenEntityDao().findByToken(token.getToken());
 			if (e != null) {
 				if (e.getExpires().after(new Date())) {
 					getOauthTokenEntityDao().remove(e);
@@ -1909,7 +1971,7 @@ public class FederacioServiceImpl
 			}			
 		}
 		if (token.getRefreshToken() != null) {
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getRefreshToken());
+			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
 			if (e != null) {
 				if (e.getExpires().after(new Date())) {
 					getOauthTokenEntityDao().remove(e);
@@ -1925,7 +1987,7 @@ public class FederacioServiceImpl
 
 	@Override
 	protected OauthToken handleFindOauthTokenByRefreshToken(String idp, String token) throws Exception {
-		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(idp, token);
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByRefreshToken(token);
 		if (entity == null)
 			return null;
 		else
@@ -1934,7 +1996,7 @@ public class FederacioServiceImpl
 
 	@Override
 	protected OauthToken handleFindOauthTokenByToken(String idp, String token) throws Exception {
-		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndToken(idp, token);
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByToken(token);
 		if (entity == null)
 			return null;
 		else
@@ -1944,26 +2006,32 @@ public class FederacioServiceImpl
 	@Override
 	protected void handleDeleteOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
-		if (token.getToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
-		else if (token.getRefreshToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(token.getIdentityProvider(), token.getRefreshToken());
-		else if (token.getAuthorizationCode() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
-			
-		if (e != null)
-			getOauthTokenEntityDao().remove(e);;
+		if (token.getToken() != null) {
+			e = getOauthTokenEntityDao().findByToken(token.getToken());
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
+		if (token.getRefreshToken() != null) {
+			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
+		if (token.getAuthorizationCode() != null) {
+			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
+			if (e != null)
+				getOauthTokenEntityDao().remove(e);
+		}
 	}
 
 	@Override
 	protected void handleUpdateOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
 		if (token.getToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndToken(token.getIdentityProvider(), token.getToken());
+			e = getOauthTokenEntityDao().findByToken(token.getToken());
 		else if (token.getRefreshToken() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndRefreshToken(token.getIdentityProvider(), token.getRefreshToken());
+			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
 		else if (token.getAuthorizationCode() != null)
-			e = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(token.getIdentityProvider(), token.getAuthorizationCode());
+			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
 			
 		if (e != null) {
 			getOauthTokenEntityDao().oauthTokenToEntity(token, e, true);
@@ -1974,7 +2042,7 @@ public class FederacioServiceImpl
 	@Override
 	protected OauthToken handleFindOauthTokenByAuthorizationCode(String idp, String authorizationCode)
 			throws Exception {
-		OauthTokenEntity entity = getOauthTokenEntityDao().findByIdentityProviderAndAuthorzaitionCode(idp, authorizationCode);
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByAuthorizationCode(authorizationCode);
 		if (entity == null)
 			return null;
 		else
@@ -2024,6 +2092,47 @@ public class FederacioServiceImpl
 			if (uc != null)
 				getUserConsentEntityDao().remove(uc);
 		}
+  }
+
+	protected String handleGetLoginHint(String idpName, String loginHint) throws Exception {
+		
+		List<FederationMemberEntity> idpEntities = getVirtualIdentityProviderEntityDao().findFMByPublicId(idpName);
+		if (idpEntities == null || idpEntities.isEmpty())
+			return loginHint;
+		for (FederationMemberEntity fm: idpEntities) {
+			if (fm instanceof VirtualIdentityProviderEntity) {
+				VirtualIdentityProviderEntity idp = (VirtualIdentityProviderEntity) fm;
+				if (idp.getLoginHintScript() == null || idp.getLoginHintScript().trim().isEmpty())
+					return null;
+				Interpreter interpret = new Interpreter();
+				NameSpace ns = interpret.getNameSpace();
+				
+				try {
+					ns.setVariable("loginHint", loginHint, false);
+					ns.setVariable("serviceLocator", ServiceLocator.instance(), false);
+					Object result = interpret.eval(idp.getLoginHintScript());
+					if (result instanceof Primitive)
+					{
+						result = ((Primitive)result).getValue();
+					}
+					if (result != null)
+						loginHint = result.toString();
+				} catch (TargetError e) {
+					throw new InternalErrorException("Error evaluating loginHint\n"+idp.getLoginHintScript()+"\nMessage:"+
+							e.getTarget().getMessage(),
+							e.getTarget());
+				} catch (EvalError e) {
+					String msg;
+					try {
+						msg = e.getMessage() + "[ "+ e.getErrorText()+"] ";
+					} catch (Exception e2) {
+						msg = e.getMessage();
+					}
+					throw new InternalErrorException("Error evaluating loginHint \n"+idp.getLoginHintScript()+"\nMessage:"+msg);
+				}
+			}
+		}
+		return loginHint;
 	}
 
 }

@@ -41,6 +41,7 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMEncryptor;
+import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
@@ -54,7 +55,7 @@ import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.config.Config;
@@ -116,7 +117,7 @@ public class IdpConfig {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         
         try {
-        	federationService = (FederacioService) rsl.getRemoteService(FederacioService.REMOTE_PATH);
+        	federationService = (FederationService) rsl.getRemoteService(FederationService.REMOTE_PATH);
         	userCredentialService = (UserCredentialService) rsl.getRemoteService(UserCredentialService.REMOTE_PATH);
         } finally {
         	Thread.currentThread().setContextClassLoader(oldClassLoader);
@@ -135,7 +136,7 @@ public class IdpConfig {
     public String getPublicCert() {
         return publicCert;
     }
-    public FederacioService getFederationService() {
+    public FederationService getFederationService() {
         return federationService;
     }
     public FederationMember getFederationMember() {
@@ -145,7 +146,7 @@ public class IdpConfig {
     String publicCert;
     Config seyconConfig;
     
-    private FederacioService federationService;
+    private FederationService federationService;
     private FederationMember federationMember;
     private Collection<FederationMember> virtualFederationMembers;
     long lastQuery = 0;
@@ -295,34 +296,16 @@ public class IdpConfig {
         
 
         // Now read the private and public key
-		PEMParser pemParser = new PEMParser(new StringReader(
-                federationMember.getPrivateKey()));
-		Object object = pemParser.readObject();
-	    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-
-	    keyPair = converter.getKeyPair((PEMKeyPair) object);
-		pemParser.close();
-        Key k = keyPair.getPrivate();
-        
-        JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
+		Object object;
+		keyPair = readKeyPair(federationMember.getPrivateKey());
+		Key k = keyPair.getPrivate();
+		
         if (federationMember.getCertificateChain() == null) 
         {
             throw new IOException ("Missing certificate chain"); //$NON-NLS-1$
         }
         
-        certs = new LinkedList<Certificate>();
-		pemParser = new PEMParser(new StringReader(
-                federationMember.getCertificateChain()));
-		do {
-			object = pemParser.readObject();
-			if (object == null) break;
-			System.out.println(">>> object  ="+object);
-			System.out.println(">>> instance of ="+object.getClass());
-			if (object instanceof X509CertificateHolder)
-			{
-				certs.add(converter2.getCertificate((X509CertificateHolder) object));
-			}
-		} while (true);
+        certs = parseCerts(federationMember.getCertificateChain());
 
         if (federationMember.getPublicKey() == null) {
     		JcaMiscPEMGenerator gen = new JcaMiscPEMGenerator(keyPair.getPublic());
@@ -362,10 +345,46 @@ public class IdpConfig {
         String keystorePath = SeyconKeyStore.getKeyStoreFile().getPath();
         KeyStore ks = KeyStore.getInstance(SeyconKeyStore.getKeyStoreType());
         ks.load(new FileInputStream(keystorePath), p.getPassword().toCharArray());
-        ks.setKeyEntry("idp",k, p.getPassword().toCharArray(), certs.toArray(new Certificate[certs.size()])); //$NON-NLS-1$
+        if (federationMember.getSslPrivateKey() == null || federationMember.getSslPrivateKey().trim().isEmpty() ||
+        	federationMember.getSslCertificate() == null || federationMember.getSslCertificate().trim().isEmpty()) {
+        	ks.setKeyEntry("idp",k, p.getPassword().toCharArray(), certs.toArray(new Certificate[certs.size()])); //$NON-NLS-1$
+        } else {
+    		KeyPair keyPair2 = readKeyPair(federationMember.getSslPrivateKey());
+        	LinkedList<Certificate> certs2 = parseCerts(federationMember.getSslCertificate());
+        	ks.setKeyEntry("idp",keyPair2.getPrivate(), p.getPassword().toCharArray(), certs2.toArray(new Certificate[certs2.size()])); //$NON-NLS-1$
+        }
         ks.store(new FileOutputStream(keystorePath), p.getPassword().toCharArray());
         
+        
     }
+
+	protected LinkedList<Certificate> parseCerts(String pemCerts) throws IOException, CertificateException {
+		Object object;
+		JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
+		LinkedList<Certificate> certs = new LinkedList<Certificate>();
+		PEMParser pemParser = new PEMParser(new StringReader(
+                pemCerts));
+		do {
+			object = pemParser.readObject();
+			if (object == null) break;
+			System.out.println(">>> object  ="+object);
+			System.out.println(">>> instance of ="+object.getClass());
+			if (object instanceof X509CertificateHolder)
+			{
+				certs.add(converter2.getCertificate((X509CertificateHolder) object));
+			}
+		} while (true);
+		return certs;
+	}
+
+	protected KeyPair readKeyPair(String pemKey) throws IOException, PEMException {
+		PEMParser pemParser = new PEMParser(new StringReader(pemKey));
+		Object object = pemParser.readObject();
+	    JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+	    pemParser.close();
+        
+	    return converter.getKeyPair((PEMKeyPair) object);
+	}
     
     public File getConfDir () throws FileNotFoundException, IOException {
         File homeDir = Config.getConfig().getHomeDir();

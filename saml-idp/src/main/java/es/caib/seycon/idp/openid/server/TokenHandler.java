@@ -28,7 +28,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.soffid.iam.addons.federation.common.OauthToken;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.remote.RemoteServiceLocator;
 import com.soffid.iam.service.SessionService;
@@ -75,7 +75,7 @@ public class TokenHandler {
 		for ( Iterator<TokenInfo> it = pendingTokens.iterator(); it.hasNext();) 
 		{
 			TokenInfo t = it.next();
-			if (t.expires < now) {
+			if (t.isExpired()) {
 				getFederationService().deleteOauthToken(generateOauthToken(t));
 				it.remove();
 			}
@@ -83,7 +83,7 @@ public class TokenHandler {
 		for ( Iterator<TokenInfo> it = activeTokens.iterator(); it.hasNext();) 
 		{
 			TokenInfo t = it.next();
-			if (t.expires < now) {
+			if (t.isExpired() && t.isRefreshExpired()) {
 				if (t.getRefreshToken() != null)
 					refreshTokens.remove(t.getRefreshToken());
 				getFederationService().deleteOauthToken(generateOauthToken(t));
@@ -110,7 +110,10 @@ public class TokenHandler {
 			if (o != null)
 				ti = parseOauthToken(o);
 		}
-		return ti;
+		if (ti == null || ti.isExpired())
+			return null;
+		else
+			return ti;
 	}
 	
 	public TokenInfo getRefreshToken(String refreshToken) throws InternalErrorException 
@@ -122,7 +125,10 @@ public class TokenHandler {
 			if (o != null)
 				ti = parseOauthToken(o);
 		}
-		return ti;
+		if (ti == null || ti.isRefreshExpired())
+			return null;
+		else
+			return ti;
 	}
 
 	public synchronized void generateToken(TokenInfo t) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
@@ -138,6 +144,13 @@ public class TokenHandler {
 		refreshTokens.put(t.refreshToken, t);
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
+		Long refreshTimeout = t.request.getFederationMember().getOauthSessionTimeout();
+		if (refreshTimeout == null)
+			refreshTimeout = IdpConfig.getConfig().getFederationMember().getOauthSessionTimeout();
+		if (refreshTimeout == null)
+			t.expiresRefresh = System.currentTimeMillis() + 24L * 60 * 60 * 1000L; // 1 day
+		else
+			t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
 		getFederationService().createOauthToken(generateOauthToken(t));
@@ -255,7 +268,10 @@ public class TokenHandler {
 			if (o != null)
 				ti = parseOauthToken(o);
 		}
-		return ti;
+		if (ti == null || ti.isExpired())
+			return null;
+		else
+			return ti;
 	}
 
 	private String getIdentityProvider()  {
@@ -266,7 +282,7 @@ public class TokenHandler {
 		}
 	}
 	
-	private FederacioService getFederationService()  {
+	private FederationService getFederationService()  {
 		try {
 			return IdpConfig.getConfig().getFederationService();
 		} catch (Exception e) {
@@ -281,9 +297,10 @@ public class TokenHandler {
 		o.setAuthorizationCode(t.getAuthorizationCode());
 		o.setCreated(new Date(t.getCreated()));
 		o.setExpires(new Date(t.getExpires()));
+		o.setRefreshExpires(new Date(t.getExpiresRefresh()));
 		o.setIdentityProvider(getIdentityProvider());
 		o.setRefreshToken(t.getRefreshToken());
-		o.setServiceProvider(t.getRequest().getFederationMember().getName());
+		o.setServiceProvider(t.getRequest().getFederationMember().getPublicId());
 		o.setToken(t.getToken());
 		o.setUser(t.getUser());
 		o.setSessionId(t.getSessionId());
@@ -298,6 +315,7 @@ public class TokenHandler {
 		t.setAuthorizationCode(o.getAuthorizationCode());
 		t.setCreated(o.getCreated().getTime());
 		t.setExpires(o.getExpires().getTime());
+		t.setExpiresRefresh(o.getRefreshExpires().getTime());
 		t.setRefreshToken(o.getRefreshToken());
 		t.setRequest(new OpenIdRequest());
 		t.getRequest().setFederationMember(getFederationService().findFederationMemberByPublicId(o.getServiceProvider()));
@@ -332,7 +350,7 @@ public class TokenHandler {
 		if (t.getSessionId() != null) {
 			SessionService sessionService = new RemoteServiceLocator().getSessionService();
 			Session oldSession = sessionService.getSession(t.getSessionId(), t.getSessionKey());
-			if (session != null)
+			if (oldSession != null)
 				sessionService.destroySession(oldSession);
 		}
 		t.setSessionId(session.getId());

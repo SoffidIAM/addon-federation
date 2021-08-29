@@ -112,9 +112,9 @@ public class AuthenticationMethodFilter {
 	private FederationMember guessFederationMember(String publicId, String clientId) throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
 		IdpConfig config = IdpConfig.getConfig();
 		EntityGroupMember m = new EntityGroupMember();
-		m.setTipus("IDP");
+		m.setType("IDP");
 		m.setFederationMember(config.getFederationMember());
-		m.setEntityGrupPare( config.getFederationMember().getEntityGroup() );
+		m.setEntityGroup( config.getFederationMember().getEntityGroup() );
 		for (EntityGroupMember children: config.getFederationService().findChildren(m))
 		{
 			FederationMember vip = children.getFederationMember();

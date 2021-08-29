@@ -6,6 +6,11 @@
 <?component name="input_etiqueta" macro-uri="/comu/input_etiqueta.zul"?>
 <?component name="input_password" macro-uri="/comu/input_password.zul"?>
 <frame xmlns:h="http://www.w3.org/1999/xhtml"> 
+	<style>
+	div.inputField.impersonation input.textbox2m {
+		width: 400px;
+	}
+	</style>
 
 	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml">
 		<attribute name="onCommit">
@@ -206,7 +211,7 @@
 			refrescaArbre();
 		}
 		
-		void generaClaus(Component filera, Component campCertificateChain) {
+		void generaClaus(Component filera, Component campCertificateChain, boolean ssl) {
 			// Demanem confirmació:
 			arbre = esquema.getFellow("lista").getFellow("treebox");
 			obj = arbre.selectedItem;
@@ -231,9 +236,15 @@
 						fm.setPublicKey(res[0]);
 						fm.setPrivateKey(res[1]);
 						fm.setCertificateChain(res[2]);
-						ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
-						ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
-						ctx.setValue("/federationMember/certificateChain",fm.getCertificateChain());
+						if (ssl) {
+							ctx.setValue("/federationMember/sslPrivateKey",fm.getPrivateKey());
+							ctx.setValue("/federationMember/sslPublicKey",fm.getPublicKey());
+							ctx.setValue("/federationMember/sslCertificate",fm.getCertificateChain());
+						} else {
+							ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
+							ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
+							ctx.setValue("/federationMember/certificateChain",fm.getCertificateChain());
+						}
 						try {
 							campCertificateChain.getFellow("dada").setValue(res[2]);
 						} catch(Exception e) {
@@ -259,10 +270,11 @@
 			
 		}
 		
-		void openPkcs12 (Component filera, Component certificateChain)
+		void openPkcs12 (Component filera, Component campCertificateChain, boolean ssl)
 		{
 			page.setAttribute("pkcs12row", filera);
-			page.setAttribute("pkcs12chain", certificateChain);
+			page.setAttribute("pkcs12chain", campCertificateChain);
+			page.setAttribute("ssl", ssl);
 			pkcs12window.getFellow("pkcs12pin").setValue("");
 			pkcs12window.doHighlighted();
 		}
@@ -270,7 +282,8 @@
 		void parsePkcs12(org.zkoss.util.media.Media m) {
 			pkcs12window.setVisible(false);
 			Component filera = page.getAttribute("pkcs12row");
-			Component certificateChain = page.getAttribute("pkcs12chain");
+			Component campCertificateChain = page.getAttribute("pkcs12chain");
+			boolean ssl = page.getAttribute("ssl");
 			String password = pkcs12pin.getValue();
 			pkcs12pin.setValue("");
 			byte [] data;
@@ -337,16 +350,19 @@
 						ctx = ds.getJXPathContext();
 						//registre = ctx.getValue("/");
 						// 0 = publica, 1 = privada
-						fm.setPublicKey(res[1]);
-						fm.setPrivateKey(res[0]);
-						fm.setCertificateChain(res[2]);
-						ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
-						ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
-						ctx.setValue("/federationMember/certificateChain",fm.getCertificateChain());
+						if (ssl) {
+							ctx.setValue("/federationMember/sslPrivateKey",fm.getPrivateKey());
+							ctx.setValue("/federationMember/sslPublicKey",fm.getPublicKey());
+							ctx.setValue("/federationMember/sslCertificate",fm.getCertificateChain());
+						} else {
+							ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
+							ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
+							ctx.setValue("/federationMember/certificateChain",fm.getCertificateChain());
+						}
 						try {
-							certificateChain.getFellow("dada").setValue(res[2]);
+							campCertificateChain.getFellow("dada").setValue(res[2]);
 						} catch(Exception e) {
-							certificateChain.setValue(res[2]);
+							campCertificateChain.setValue(res[2]);
 						}
 						//pointer = ctx.getPointer(obj.value.getXPath());
 						//pointer.invalidate();
@@ -371,8 +387,7 @@
 			
 		}
 		
-		
-		void esborraClaus(Component filera, Component campCertificateChain) {
+		void esborraClaus(Component filera, Component campCertificateChain, boolean ssl) {
 			// Demanem confirmació:
 			arbre = esquema.getFellow("lista").getFellow("treebox");
 			obj = arbre.selectedItem;
@@ -386,9 +401,15 @@
 					fm.setPublicKey(null);
 					fm.setPrivateKey(null);
 					fm.setCertificateChain(null);
-					ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
-					ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
-					ctx.setValue("/federationMember/certificateChain",null);
+					if (ssl) {
+						ctx.setValue("/federationMember/sslPrivateKey",fm.getPrivateKey());
+						ctx.setValue("/federationMember/sslPublicKey",fm.getPublicKey());
+						ctx.setValue("/federationMember/sslCertificate",fm.getCertificateChain());
+					} else {
+						ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
+						ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
+						ctx.setValue("/federationMember/certificateChain",null);
+					}
 					try {
 						campCertificateChain.getFellow("dada").setValue("");
 					} catch(Exception e) {
@@ -413,7 +434,7 @@
 				}
 		}		
 		
-		void generaPKCS10() {
+		void generaPKCS10(boolean ssl) {
 			arbre = esquema.getFellow("lista").getFellow("treebox");
 			obj = arbre.selectedItem;
 			if (obj!=null && obj.value!=null && obj.value.instance !=null) {
@@ -425,7 +446,7 @@
 					com.soffid.iam.addons.federation.service.ejb.FederacioService federacioService = 
 							context.lookup(com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.JNDI_NAME);
 					
-					String res = federacioService.generatePKCS10(fm);
+					String res = ssl? federacioService.generatePKCS10(fm):  federacioService.generateSSLPKCS10(fm) ;
 					String nom = fm.getName();
 					if (nom==null || "".equals(nom.trim())) nom = "pkcs10"; else nom = nom+".pkcs10"; 
 					org.zkoss.util.media.AMedia pkcs = new org.zkoss.util.media.AMedia(nom,"txt","binary/octet-stream",res);
@@ -703,6 +724,7 @@
 					hostname.getFellow("dada").setDisabled(!marcat);
 					port1.getFellow("dada").setDisabled(!marcat);
 					port2.getFellow("dada").setDisabled(!marcat);
+					certificatechainSsl.getFellow("dada").setDisabled(!marcat);
 					certificatechain.getFellow("dada").setDisabled(!marcat);
 					metadades.setDisabled(marcat);
 					organization.getFellow("dada").setDisabled(!marcat);
@@ -748,6 +770,7 @@
 					}
 					
 					autoprovisionScriptRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
+					loginHintScriptRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
 					autoprovisionPatternRow.setVisible( ! IdentityProviderType.SOFFID.equals( idpType ) );
 					metadadesRow.setVisible(IdentityProviderType.SOFFID.equals( idpType ) ||
 							IdentityProviderType.SAML.equals( idpType ) ||
@@ -819,6 +842,7 @@
 					r_sp_openid3.setVisible(openid);
 					r_sp_openid4.setVisible(openid);
 					r_sp_openid5.setVisible(openid);
+					r_sp_openid6.setVisible(openid);
 				}	
 				
 				void updateOpenidMechanism() {
@@ -1087,6 +1111,39 @@
 										</div>
 									</div>
 								</row>
+								<row id="loginHintScriptRow">
+									<hbox widths="*,24px">
+										<input_etiqueta value="${c:l('federacio.zul.LoginHintScript')}"/>
+										<imageclic 
+											src="/img/info.png"
+											title="The variable loginHint contains current user name. The actual login_hint must be returned. Leave blank to prevent login_hint method"
+										/>
+									</hbox>
+									<div>
+										<codemirror bind="/federationMember/loginHintScript" id="loginHint"
+												linenumbers="true" visible="true" 
+												readonly="${!canModifyFI}"
+												height="10em" language="java" style="width:98%">
+											<attribute name='onCreate'><![CDATA[
+												self.setGlobalVars("{\"loginHint\":\"java.lang.String\"}");
+											]]></attribute>
+										</codemirror>
+										<div style="display: table;">
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="serviceLocator:"/>
+												<label style="display:table-cell;" value="${c:l('federacio.zul.serviceLocator')}"/>
+											</div>
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="loginHint"/>
+												<label style="display:table-cell;" value="Current user name"/>
+											</div>
+											<div style="dislay: table-row;">
+												<label style="display:table-cell;  width:10em;" value="return value:"/>
+												<label style="display:table-cell;" value="Actual login hint"/>
+											</div>
+										</div>
+									</div>
+								</row>
 								<row  id="firstRowToHide">
 									<input_etiqueta value="${c:l('federacio.zul.Organization')}"/>
 									<input_dada bind="/federationMember/organization" id="organization" lectura="${!canModifyFI}" maxim="255" width_custom="98%"/>
@@ -1113,6 +1170,29 @@
 									<input_etiqueta value="${c:l('federacio.zul.PortCertificatClient')}"/>
 									<input_dada bind="/federationMember/clientCertificatePort" disabled="true" id="port2" lectura="${!canModifyFI}" maxim="20" width_custom="98%"/>
 								</row>
+
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.certificateChainSSL')}"/>
+									<input_dada bind="/federationMember/sslCertificate" disabled="true" id="certificatechainSsl" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
+								</row>								
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.publicKeySSL')}"/>
+									<vbox id="r_publicKeySsl">
+										<divVisible bind="/federationMember/sslPublicKey" valorVisible="null">
+											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
+											<separator/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechainSsl, true)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, certificatechainSsl, true)" width="200px"/>
+										</divVisible>
+										<divVisible bind="/federationMember/sslPublicKey" valorNoVisible="null">
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechainSsl, true)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" 
+												onClick="esborraClaus(self.parent.parent, certificatechainSsl, true)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10(true)" width="200px"/>
+										</divVisible>
+									</vbox>
+								</row>
+
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.certificateChain')}"/>
 									<input_dada bind="/federationMember/certificateChain" disabled="true" id="certificatechain" lectura="${!canModifyFI}" rows_custom="4" width_custom="98%"/>
@@ -1123,19 +1203,24 @@
 										<divVisible bind="/federationMember/publicKey" valorVisible="null">
 											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 											<separator/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain)" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, certificatechain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain, false)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, certificatechain, false)" width="200px"/>
 										</divVisible>
 										<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain)" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, certificatechain, false)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" 
+											onClick="esborraClaus(self.parent.parent, certificatechain, false)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10(false)" width="200px"/>
 										</divVisible>
 									</vbox>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.timeout')}"/>
 									<input_dada bind="/federationMember/sessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
+								</row>
+								<row>
+									<input_etiqueta value="${c:l('federacio.zul.refreshTimeout')}"/>
+									<input_dada bind="/federationMember/oauthSessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.ssoCookieName')}"/>
@@ -1331,7 +1416,7 @@
 						</tabpanel>
 						<tabpanel id="tp_sp">
 						<grid id="g_sp">
-							<columns visible="false"><column width="130px"/> <column width="*"/></columns>
+							<columns visible="false"><column width="130px" valign="top"/> <column width="*" valign="top"/></columns>
 							<rows>
 								<row>
 									<input_etiqueta value="${c:l('federacio.zul.Tipus')}"/>
@@ -1437,6 +1522,10 @@
 									</textbox>
 								</row>
 								<row>
+									<input_etiqueta value="${c:l('federacio.zul.impersonationUrl')} :"/>
+									<inputfield noLabel="true" sclass="impersonation inputField" bind="/federationMember/impersonations" dataType="STRING" multiValue="true"/>
+								</row>
+								<row>
 									<input_etiqueta value="${c:l('federacio.zul.uidScript')}"/>
 									<input_dada rows_custom="4"  value="&lt;Mazinger/&gt;" width="100%" bind="/federationMember/uidExpression" />
 								</row>
@@ -1530,6 +1619,10 @@
 								<row id="r_sp_openid5">
 									<input_etiqueta value="${c:l('federacio.zul.openidUrl')}"/>
 									<textbox  width="100%" bind="/federationMember/openidUrl"  onChange="" />
+								</row>
+								<row id="r_sp_openid6">
+									<input_etiqueta value="${c:l('federacio.zul.refreshTimeout')}"/>
+									<input_dada bind="/federationMember/oauthSessionTimeout" lectura="${!canModifyFI}" maxim="120"/>
 								</row>
 							</rows>
 						</grid>
@@ -2468,7 +2561,7 @@
 							<textbox bind="value" onChange="" multiline="true" rows="1"
 								style="width:95%; margin-left: 8px; margn-right:8px">
 							</textbox>
-							<imageclic src="/img/pencil.png" width="24px">
+							<imageclic src="/img/pencil.svg" width="24px">
 								<attribute name="onClick"><![CDATA[
 									    Events.sendEvent(new Event ("onEdit", 
 								    		desktop.getPage("editor").getFellow("top"),
@@ -2581,7 +2674,7 @@
 								onChange="" 
 								height="5em" bind="@expression" >
 						</textbox>
-						<imageclic style="display:table-cell" src="/img/pencil.png" width="2em" >
+						<imageclic style="display:table-cell" src="/img/pencil.svg" width="2em" >
 							<attribute name="onClick"><![CDATA[
 							    Events.sendEvent(new Event ("onEdit", 
 							    		desktop.getPage("editor").getFellow("top"),
