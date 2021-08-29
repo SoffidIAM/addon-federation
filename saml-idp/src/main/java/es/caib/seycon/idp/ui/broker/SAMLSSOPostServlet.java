@@ -17,7 +17,7 @@ import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
@@ -54,7 +54,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 
     	try {
 			IdpConfig cfg = IdpConfig.getConfig();
-			FederacioService federacioService = new RemoteServiceLocator().getFederacioService();
+			FederationService federacioService = new RemoteServiceLocator().getFederacioService();
 			
 			SamlValidationResults sl = federacioService.authenticate( cfg.getPublicId(), 
 					"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST", 

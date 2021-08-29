@@ -412,7 +412,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				throw new InternalErrorException(String.format("Unable to find a suitable endpoint for IdP %s"), idp.getEntityID());
 
 			if (userName != null) {
-	        	userName = FederationServiceLocator.instance().getFederacioService().getLoginHint(identityProvider, userName);
+	        	userName = FederationServiceLocator.instance().getFederationService().getLoginHint(identityProvider, userName);
 			}
 			if (userName != null && ! userName.trim().isEmpty())
 			{

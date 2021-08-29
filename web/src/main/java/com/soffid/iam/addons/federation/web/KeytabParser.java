@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 
 import javax.security.auth.kerberos.KerberosPrincipal;
 
@@ -16,6 +17,9 @@ import org.zkoss.zk.ui.UiException;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
+import com.soffid.iam.utils.Security;
+
+import es.caib.zkib.component.DateFormats;
 
 public class KeytabParser {
 	public void parse (Media media, FederationMember federationMember) throws IOException
@@ -48,7 +52,7 @@ public class KeytabParser {
 		{
 			PrincipalName principal = entry.getService();
 			KerberosKeytab kkt = new KerberosKeytab();
-			kkt.setDescription("");
+			kkt.setDescription("Loaded by "+Security.getCurrentAccount()+" on "+DateFormats.getDateTimeFormat().format(new Date()));
 			kkt.setDomain( principal.getRealmAsString() );
 			kkt.setPrincipal( principal.getName() );
 			kkt.setKeyTab(bout.toByteArray());

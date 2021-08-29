@@ -3,7 +3,7 @@ package com.soffid.iam.addons.federation.test;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.test.AbstractHibernateTest;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -22,7 +22,7 @@ public class RSATest extends AbstractHibernateTest {
 	public void testRsa () throws Throwable
 	{
 		try {
-			FederacioService fed = (FederacioService) context.getBean(FederacioService.SERVICE_NAME);
+			FederationService fed = (FederationService) context.getBean(FederationService.SERVICE_NAME);
 			InputStream in = getClass().getClassLoader().getResourceAsStream("rsa/pkcs12-test.p12");
 			byte b[] = new byte [99999];
 			int length = in.read(b);

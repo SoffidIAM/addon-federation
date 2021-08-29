@@ -38,7 +38,7 @@ import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
@@ -162,7 +162,7 @@ public class Autenticator {
 	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException, ServletException {
 		String value = c.getValue();
-		FederacioService fs = new RemoteServiceLocator().getFederacioService();
+		FederationService fs = new RemoteServiceLocator().getFederacioService();
 		SamlValidationResults check = fs.validateSessionCookie(value);
 		if (check.isValid() && check.getUser() != null)
 		{

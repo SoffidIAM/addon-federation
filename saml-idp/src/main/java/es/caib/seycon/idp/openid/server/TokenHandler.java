@@ -28,7 +28,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.soffid.iam.addons.federation.common.OauthToken;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.remote.RemoteServiceLocator;
 import com.soffid.iam.service.SessionService;
@@ -282,7 +282,7 @@ public class TokenHandler {
 		}
 	}
 	
-	private FederacioService getFederationService()  {
+	private FederationService getFederationService()  {
 		try {
 			return IdpConfig.getConfig().getFederationService();
 		} catch (Exception e) {

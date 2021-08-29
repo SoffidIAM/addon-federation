@@ -31,7 +31,7 @@ import org.json.JSONObject;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -103,7 +103,7 @@ public class JWKEndpoint extends HttpServlet {
 	
 	private SAMLProfile useOpenidProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
-		FederacioService federacioService = c.getFederationService();
+		FederationService federacioService = c.getFederationService();
 		FederationMember fm = c.getFederationMember();
 		
         Collection<SAMLProfile> profiles = federacioService

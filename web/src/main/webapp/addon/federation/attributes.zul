@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+<frame xmlns:h="http://www.w3.org/1999/xhtml" mold="div" style="position: relative" 
+	use="com.soffid.iam.addons.federation.web.AttributeHandler" id="frame">
+
+	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml" />
+
+	<div sclass="card" id="card">
+		<div sclass="card__face card__face--front">
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame">
+				<menu2>
+					<menu2item image="/img/add.svg" label="${c:l('agents.zul.Afegeixnou') }" if="${soffid:isUserInRole('federation-attribute:create')}"  onClick="ref:frame.addNew"/>
+					<menu2item image="/img/import.svg" label="${c:l('tenant.zul.import') }" if="${soffid:isUserInRole('federation-attribute:create') || soffid:isUserInRole('federation-attribute:update')}" onClick="ref:frame.importCsv"/>
+					<menu2item image="/img/download.svg" label="${c:l('zkdb.download') }" onClick="ref:frame.downloadCsv"/>
+				</menu2>
+			</div>
+			<datatable id="listbox" autocommit="true" dataPath="/model:/atribut"
+			    maxheight="70vh"
+				multiselect="true"
+				onMultiSelect="ref:frame.multiSelect"
+				sortColumn="0" onSelect="ref:frame.showDetails">
+				<attribute name="columns">
+					<![CDATA[
+		- name: ${c:l('federa_atribut.zul.Name-2')}
+		  value: name
+		- name: ${c:l('federa_atribut.zul.ShortName-2')}
+		  value: shortName
+		- name: ${c:l('federa_atribut.zul.Oid')}
+		  value: oid
+		- name: ${c:l('federa_atribut.zul.openidName')}
+		  value: openidName
+		- name: ${c:l('federacio.zul.value') }
+		  value: value
+					]]>
+				</attribute>
+			</datatable>
+			<div width="100%" style="text-align: right"   >
+				<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false" if="${soffid:isUserInRole('federation-attribute:delete')}">-</div>
+				<div class="addButton" onClick="ref:frame.addNew" if="${soffid:isUserInRole('federation-attribute:create')}">+</div>
+			</div>
+		</div>
+		
+		<div sclass="card__face card__face--back">
+			<div id="dades">
+				<div use="com.soffid.iam.web.component.NavigationBar" frame="frame" lastAction="ref:frame.hideDetails">
+					<pager datatable="listbox"/>
+					
+					<menu2>
+						<menu2item if="${soffid:isUserInRole('federation-attribute:delete')}" image="/img/trash.svg" label="${c:l('plugins.zul.Delete') }" onClick="ref:frame.delete"/>
+					</menu2>
+					
+					<databutton image="/img/save.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.applyNoClose" onlyIcon="true"/>
+				</div>
+				<form2 id="form" onChangeXPath="ref:frame.onChangeDades"
+					dataPath="/listbox:/." width="100%">
+					<customfield3 dataType="STRING" maxlength="100"
+						bind="name"
+						label="${c:l('federa_atribut.zul.Name-2')}"/>
+					<customfield3 dataType="STRING" maxlength="100"
+						bind="shortName"
+						label="${c:l('federa_atribut.zul.ShortName-2')}"/>
+					<customfield3 dataType="STRING" maxlength="100"
+						bind="oid"
+						label="${c:l('federa_atribut.zul.Oid')}"/>
+					<customfield3 dataType="STRING" maxlength="100"
+						bind="openidName"
+						label="${c:l('federa_atribut.zul.openidName')}"/>
+					<customfield3 id="script"
+						label="${c:l('federacio.zul.value')}"
+						multiline='true'
+						placeholder="Script to compute the attribute value. By default the original source attribute will be copied"
+						dataType="STRING"
+						bind="value"
+						selectIcon="/img/pencil.svg" />
+				</form2>
+				<div style="text-align: right; width: 100%">
+					<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">
+					</databutton>
+					<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.apply"/>
+				</div>
+			</div>
+		</div>
+	</div>
+</frame>

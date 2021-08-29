@@ -15,7 +15,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
 
 import es.caib.seycon.idp.config.IdpConfig;
@@ -53,7 +53,7 @@ public class SAMLSSORequest extends BaseForm {
         try {
 
 	    	IdpConfig cfg = IdpConfig.getConfig();
-			FederacioService federacioService = new RemoteServiceLocator().getFederacioService();
+			FederationService federacioService = new RemoteServiceLocator().getFederacioService();
 			
 			Long timeOut = cfg.getFederationMember().getSessionTimeout();
 			SamlRequest samlRequest = federacioService.generateSamlRequest( cfg.getPublicId(),

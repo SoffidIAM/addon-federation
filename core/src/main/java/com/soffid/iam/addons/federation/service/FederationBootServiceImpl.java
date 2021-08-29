@@ -41,7 +41,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 			bindAdministrationServlet("/SAML/metadata.xml", null, MetadataGenerator.class);
 
 		SoffidApplication.getJetty(). 
-			publish(getFederacioService(), FederacioService.REMOTE_PATH, "agent");
+			publish(getFederationService(), FederationService.REMOTE_PATH, "agent");
 		SoffidApplication.getJetty(). 
 			publish(getUserBehaviorService(), UserBehaviorService.REMOTE_PATH, "agent");
 		SoffidApplication.getJetty(). 
@@ -55,7 +55,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
  	
  	private void testAttribute (String name, String shortName, String oid, String openId, String value) throws InternalErrorException
  	{
-		FederacioService fds = getFederacioService();
+		FederationService fds = getFederationService();
 		Collection<Attribute> atts = fds.findAtributs(name, null, null);
 		if (atts.isEmpty())
 		{

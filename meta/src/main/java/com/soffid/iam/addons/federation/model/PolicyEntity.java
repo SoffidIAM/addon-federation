@@ -37,6 +37,13 @@ public abstract class PolicyEntity {
 		java.lang.Long id) {
 	 return null;
 	}
+
+	@DaoFinder
+	public com.soffid.iam.addons.federation.model.PolicyEntity findByName(
+		java.lang.String name) {
+	 return null;
+	}
+
 	@DaoFinder("from com.soffid.iam.addons.federation.model.PolicyEntity as policyEntity "
 			+ "where policyEntity.identiyProvider.id = :id and policyEntity.tenant.id=:tenantId")
 	public java.util.List<com.soffid.iam.addons.federation.model.PolicyEntity> findByidentiyProviderId(

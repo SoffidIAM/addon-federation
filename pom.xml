@@ -252,6 +252,6 @@
 		</dependencies>
 	</dependencyManagement>
 	<properties>
-		<console.version>3.0.0-beta-1</console.version>
+		<console.version>3.1.0-SNAPSHOT</console.version>
 	</properties>
 </project>

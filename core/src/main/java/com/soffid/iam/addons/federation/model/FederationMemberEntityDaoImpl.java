@@ -19,6 +19,7 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.model.GroupEntity;
 import com.soffid.iam.model.UserTypeEntity;
@@ -179,7 +180,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Obtenim l'instància
 			ServiceProviderEntity sp = (ServiceProviderEntity) source;
 			// Heretats de VIP
-			target.setServiceProviderType(sp.getServiceProviderType());
+			if (source.isInternal() && sp.getServiceProviderType() == ServiceProviderType.SAML)
+				target.setServiceProviderType(ServiceProviderType.SOFFID_SAML);
+			else
+				target.setServiceProviderType(sp.getServiceProviderType());
 			target.setPublicId(sp.getPublicId());
 			target.setNameIdFormat(sp.getNameIdFormat());
 			target.setCertificateChain(sp.getCertificateChain());
@@ -500,6 +504,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			ServiceProviderEntity sp = (ServiceProviderEntity) target;
 			// Heretats de VIP
 			sp.setServiceProviderType( source.getServiceProviderType() );
+			sp.setInternal(source.getServiceProviderType() == ServiceProviderType.SOFFID_SAML);
 			sp.setPublicId(source.getPublicId());
 			sp.setNameIdFormat(source.getNameIdFormat());
 			sp.setUidExpression(source.getUidExpression());

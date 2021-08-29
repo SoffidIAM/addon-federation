@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?page id="providers" title="Service and identity providers"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+<?component name="provider_root" macro-uri="provider-root.zul"?>
+<?component name="entity_group" macro-uri="entity-group.zul"?>
+<?component name="service_provider" macro-uri="service-provider.zul"?>
+<?component name="identity_provider" macro-uri="identity-provider.zul"?>
+<?component name="service_providers" macro-uri="service-providers.zul"?>
+<?component name="identity_providers" macro-uri="identity-providers.zul"?>
+<frame xmlns:h="http://www.w3.org/1999/xhtml" mold="div" style="position: relative" 
+	use="com.soffid.iam.addons.federation.web.ProviderHandler" id="frame">
+	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml"/>
+	<div sclass="card" id="card">
+		<div sclass="card__face card__face--front">
+	
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame">
+				<menu2>
+					<menu2item image="/img/import.svg" label="${c:l('tenant.zul.import') }" if="${soffid:isUserInRole('federation:create') &amp;&amp; soffid:isUserInRole('federation:update') &amp;&amp; soffid:isUserInRole('federation:delete')}" onClick="ref:frame.importCsv"/>
+					<menu2item image="/img/download.svg" label="${c:l('zkdb.download') }" onClick="ref:frame.downloadCsv"/>
+				</menu2>
+			</div>
+			<datatree2 id="listbox"
+				width="100%" dataPath="/model:/"
+				header="${c:l('com.soffid.iam.api.Group.name') }" 
+				openLevels="5"
+				enablefilter="true"
+				maxheight="70vh"
+				onAddChild="ref:frame.addChild"
+				onSelect="ref:frame.showDetails">
+				<attribute name="finders">
+				<![CDATA[
+- path: /entitygroupmember
+  icon: >-
+      #{type == "EG"?  "/addon/federation/img/document-g.png" : 
+      type == "IDP"?  "/addon/federation/img/document-i.png" : 
+      type == "SP" ? "/addon/federation/img/document-s.png" : 
+      type == "VIP"?  "/addon/federation/img/document-v.png" : 
+      type == "IDP"?  "/addon/federation/img/document-i.png" : 
+      null}  
+  value: /description
+  leaf: #{type != "SP_ROOT" && type != "IDP_ROOT" && type != "ARREL" && type != "EG"  && (type != "IDP" || federationMember.idpType != "soffid")}
+  ${soffid:isUserInRole('federation:create') ? "tail":"no-tail"}: >-
+      #{type=="SP_ROOT" || type =="IDP_ROOT" || (type == "IDP" && federationMember.idpType == "soffid") || type == "ARREL" ? "<button class='small-button' onclick='zkDatatree2.sendClientAction(this, &quot;onAddChild&quot)'>" : ""}
+      #{type=="SP_ROOT" ? "${c:l('federacio.zul.AfegeixServiceProvid')}" :  type =="IDP_ROOT"? "${c:l('federacio.zul.addidp')}" : type == "ARREL"? "${c:l('federacio.zul.addeg') }":type == "IDP"? "${c:l('federacio.zul.addvip') }": ""}
+      #{type=="SP_ROOT" || type =="IDP_ROOT" || type == "ARREL" ||(type == "IDP" && federationMember.idpType == "soffid") ? "</button>" : ""}
+				  ]]>
+  				</attribute>
+  			</datatree2>
+
+		</div>
+		
+		<div sclass="card__face card__face--back">
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame" lastAction="ref:frame.hideDetails">
+				<pager datatree2="listbox"/>
+				
+				<menu2>
+					<menu2item if="${soffid:isUserInRole('federation:delete')}" image="/img/trash.svg" label="${c:l('plugins.zul.Delete') }" onClick="ref:frame.delete"/>
+				</menu2>
+				
+				<databutton image="/img/save.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.applyNoClose" onlyIcon="true"/>
+			</div>
+			<form2 id="form" onChangeXPath="ref:frame.onChangeForm"
+				dataPath="/listbox:/." width="100%">
+				<provider_root id="provider_root"/>
+				<entity_group id="entity_group"/>
+				<service_provider id="service_provider"/>
+				<identity_provider id="identity_provider"/>
+				<service_providers id="service_providers"/>
+				<identity_providers id="identity_providers"/>
+			</form2>
+		</div>
+	</div>
+</frame>

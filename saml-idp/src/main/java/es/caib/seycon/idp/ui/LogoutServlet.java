@@ -56,7 +56,7 @@ public class LogoutServlet extends HttpServlet {
 				        		if (c.getName().equals(ip.getSsoCookieName()))
 				        		{
 				        			new es.caib.seycon.ng.addons.federation.remote.RemoteServiceLocator()
-				        				.getFederacioService()
+				        				.getFederationService()
 				        				.expireSessionCookie(c.getValue());
 				        		}
 				        	}

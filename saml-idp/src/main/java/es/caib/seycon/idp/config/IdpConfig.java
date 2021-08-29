@@ -55,7 +55,7 @@ import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.config.Config;
@@ -117,7 +117,7 @@ public class IdpConfig {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         
         try {
-        	federationService = (FederacioService) rsl.getRemoteService(FederacioService.REMOTE_PATH);
+        	federationService = (FederationService) rsl.getRemoteService(FederationService.REMOTE_PATH);
         	userCredentialService = (UserCredentialService) rsl.getRemoteService(UserCredentialService.REMOTE_PATH);
         } finally {
         	Thread.currentThread().setContextClassLoader(oldClassLoader);
@@ -136,7 +136,7 @@ public class IdpConfig {
     public String getPublicCert() {
         return publicCert;
     }
-    public FederacioService getFederationService() {
+    public FederationService getFederationService() {
         return federationService;
     }
     public FederationMember getFederationMember() {
@@ -146,7 +146,7 @@ public class IdpConfig {
     String publicCert;
     Config seyconConfig;
     
-    private FederacioService federationService;
+    private FederationService federationService;
     private FederationMember federationMember;
     private Collection<FederationMember> virtualFederationMembers;
     long lastQuery = 0;

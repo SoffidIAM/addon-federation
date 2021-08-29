@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+
+
+<div use="com.soffid.iam.addons.federation.web.IdentityProviders" id="handler">
+	<label bind="entityGroup/name"/>
+	<datatable dataPath="/entitygroupmember" multiselect="true"
+		onMultiSelect="ref:handler.multiSelect"
+		onSelect="ref:handler.select" 
+		id="listbox">
+	<attribute name="columns">
+- name: "${c:l('federacio.zul.identityProviders') }"
+  value: description
+	</attribute>
+	</datatable>
+	<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('group:create')}" >
+		<div class="deleteButton" onClick="ref:handler.deleteSelected" visible="false">-</div>
+		<div class="addButton" onClick="ref:handler.addNew">+</div>
+	</div>
+</div>

@@ -8,30 +8,28 @@ import javax.naming.InitialContext;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.zkoss.util.resource.Labels;
-import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zul.Div;
 
 import com.soffid.iam.addons.federation.common.UserConsent;
-import com.soffid.iam.addons.federation.service.ejb.FederacioService;
-import com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome;
+import com.soffid.iam.addons.federation.service.ejb.FederationService;
+import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
 
 import es.caib.zkib.component.DataTable;
-import es.caib.zkib.component.DataTree2;
 import es.caib.zkib.zkiblaf.Missatgebox;
 
 public class ConsentsTab extends Div implements AfterCompose {
 	private static final long serialVersionUID = 1L;
 	private List<UserConsent> consents;
-	private FederacioService svc;
+	private FederationService svc;
 
 	public void afterCompose() {
 		try {
 			DataTable dt = (DataTable) getFellow("consentsTable");
 			JSONArray a = new JSONArray();
-			svc = (FederacioService) new InitialContext().lookup(FederacioServiceHome.JNDI_NAME);
+			svc = (FederationService) new InitialContext().lookup(FederationServiceHome.JNDI_NAME);
 			consents = new LinkedList<UserConsent>( svc.findUserConsents() );
 			for (UserConsent c: consents) {
 				JSONObject o = new JSONObject();

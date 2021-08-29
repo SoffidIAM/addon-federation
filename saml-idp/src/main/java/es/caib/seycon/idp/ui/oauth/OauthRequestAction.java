@@ -11,7 +11,7 @@ import javax.servlet.http.HttpSession;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.oauth.consumer.FacebookConsumer;
@@ -71,7 +71,7 @@ public class OauthRequestAction extends HttpServlet {
 	        	return;
 	        }
 	        
-	        FederacioService fs = new RemoteServiceLocator().getFederacioService();
+	        FederationService fs = new RemoteServiceLocator().getFederacioService();
 	        OAuth2Consumer consumer = null;
 	        for (FederationMember fm: fs.findFederationMemberByEntityGroupAndPublicIdAndTipus(null, id, "I"))
 	        {

@@ -139,7 +139,7 @@ public class OIDCServiceInternal extends AbstractFederationService {
 				throw new InternalErrorException("Unsupported identity provider "+ idp.getIdpType().toString());
 
 			if (userName != null) {
-	        	userName = FederationServiceLocator.instance().getFederacioService().getLoginHint(identityProvider, userName);
+	        	userName = FederationServiceLocator.instance().getFederationService().getLoginHint(identityProvider, userName);
 				c.setRequestedUser(userName);
 			}
 			

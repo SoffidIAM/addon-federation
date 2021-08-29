@@ -56,7 +56,18 @@
     <complexType name="SoffidAttributeResolver">
         <annotation>
             <documentation>
-            	Custome attribute resolver
+            	Custom attribute resolver
+			</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="resolver:ShibbolethAttributeResolver"/>
+        </complexContent>
+    </complexType>
+
+    <complexType name="SoffidAttributeFilter">
+        <annotation>
+            <documentation>
+            	Custom attribute filter
 			</documentation>
         </annotation>
         <complexContent>

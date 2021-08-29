@@ -25,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
@@ -117,7 +117,7 @@ public class DataConnector extends BaseDataConnector {
     
     private String evaluateUid(ServerService server, String rpid, String principal, User ui) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
     	String uid = ui == null ? principal : ui.getUserName();
-    	FederacioService fs = new RemoteServiceLocator().getFederacioService();
+    	FederationService fs = new RemoteServiceLocator().getFederacioService();
     	for (FederationMember member: fs.findFederationMemberByEntityGroupAndPublicIdAndTipus("%", rpid, "S"))
     	{
     		if (member.getUidExpression() != null && ! member.getUidExpression().trim().isEmpty())

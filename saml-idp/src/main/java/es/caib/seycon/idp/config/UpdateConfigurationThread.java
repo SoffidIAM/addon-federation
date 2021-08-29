@@ -23,7 +23,7 @@ import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.service.AdditionalDataService;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -103,7 +103,7 @@ public class UpdateConfigurationThread extends Thread {
         
     }
     
-    private FederacioService getFederacioService () throws IOException, InternalErrorException {
+    private FederationService getFederacioService () throws IOException, InternalErrorException {
     	ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
     	Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
     	try {

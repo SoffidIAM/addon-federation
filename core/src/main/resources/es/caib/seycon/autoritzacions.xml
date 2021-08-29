@@ -24,11 +24,26 @@
 			organizationalUnit:query
 		</hereta>
 		<ambit>Soffid</ambit>
+	</autoritzacio>
+	<autoritzacio>
+		<codi>seu:federation-attributes:show</codi>
+		<descripcio>Access to identity federation attributes management window
+		</descripcio>
+		<ambit>Soffid</ambit>
 		<hereta>
-			usersDomain:query,
-			organizationalUnit:query
+			federation-attributes:query
 		</hereta>
 	</autoritzacio>
+	<autoritzacio>
+		<codi>seu:federation-policies:show</codi>
+		<descripcio>Access to federation policies management window
+		</descripcio>
+		<ambit>Soffid</ambit>
+		<hereta>
+			federation-policiess:query
+		</hereta>
+	</autoritzacio>
+
 	<autoritzacio>
 		<codi>federation:create</codi>
 		<descripcio>Create identify federations</descripcio>
@@ -50,6 +65,54 @@
 	<autoritzacio>
 		<codi>federation:query</codi>
 		<descripcio>See identify federations</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-attribute:create</codi>
+		<descripcio>Create identify federation attributes</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-attribute:update</codi>
+		<descripcio>Update identify federation attributes</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-attribute:delete</codi>
+		<descripcio>Delete identify federation attributes</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-attribute:query</codi>
+		<descripcio>See identify federation attributes</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-policy:create</codi>
+		<descripcio>Create identify federation policies</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-policy:update</codi>
+		<descripcio>Update identify federation policies</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-policy:delete</codi>
+		<descripcio>Delete identify federation policies</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-policy:query</codi>
+		<descripcio>See identify federation policies</descripcio>
 		<ambit>Identify Federation</ambit>
 	</autoritzacio>
 

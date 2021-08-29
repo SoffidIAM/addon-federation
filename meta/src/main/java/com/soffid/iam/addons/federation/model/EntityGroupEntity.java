@@ -17,10 +17,10 @@ public abstract class EntityGroupEntity {
 	@Identifier
 	public java.lang.Long id;
 
-	@Column (name="ENG_NAME")
+	@Column (name="ENG_NAME", length = 100)
 	public java.lang.String name;
 
-	@Column (name="ENG_METAURL")
+	@Column (name="ENG_METAURL", length = 100)
 	@Nullable
 	public java.lang.String metadataUrl;
 

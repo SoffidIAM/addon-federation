@@ -23,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.BaseForm;
@@ -115,7 +115,7 @@ public class QueryUserIdPServlet extends BaseForm {
     }
     
     private FederationMember searchIdentityProvider(String idp) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
-    	FederacioService federationService = IdpConfig.getConfig().getFederationService();
+    	FederationService federationService = IdpConfig.getConfig().getFederationService();
     	return federationService.findFederationMemberByPublicId(idp);
 	}
 }

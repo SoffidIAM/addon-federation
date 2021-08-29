@@ -24,9 +24,7 @@
     </srv:Service>
 
     <srv:Service id="shibboleth.AttributeFilterEngine"
-             xsi:type="attribute-afp:ShibbolethAttributeFilteringEngine"
-             configurationResourcePollingFrequency="PT1M">
-        <srv:ConfigurationResource file="${conf}/attribute-filter.xml" xsi:type="resource:FilesystemResource" />
+             xsi:type="soffid-resolver:SoffidAttributeFilter">
     </srv:Service>
     
     <srv:Service id="shibboleth.SAML1AttributeAuthority"

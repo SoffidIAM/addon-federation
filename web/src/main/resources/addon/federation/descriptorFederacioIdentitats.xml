@@ -6,7 +6,6 @@
 		<finder name="idptype" type="idptype">
 			<script-finder>
 				list = new java.util.LinkedList();
-//				list.add (new String(""));
 				for (l: com.soffid.iam.addons.federation.common.IdentityProviderType.literals())
 				{
 					list.add (l);
@@ -17,7 +16,6 @@
 		<finder name="sptype" type="sptype">
 			<script-finder>
 				list = new java.util.LinkedList();
-//				list.add (new String(""));
 				for (l: com.soffid.iam.addons.federation.common.ServiceProviderType.literals())
 				{
 					list.add (l);
@@ -27,16 +25,29 @@
 		</finder>
 		<finder name="entitygroupmember" type="entitygroupmember">
 			<ejb-finder
-				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="java:/module/FederationService-v2"
 				method="findEntityGroupByNom" if="${queryEnabled}">
 				<parameter value="-ARREL-" />
 			</ejb-finder>
 			<new-instance-bean
 				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
 		</finder>
+		
+		<finder name="serviceprovider" type="federationMember">
+			<ejb-finder
+				jndi="java:/module/FederationService-v2"
+				method="findFederationMemberByEntityGroupAndPublicIdAndTipus">
+				<parameter value="%" />
+				<parameter value="%" />
+				<parameter value="S" />
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
+		</finder>
+		
 		<finder name="policy" type="policy">
 			<ejb-finder
-				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="java:/module/FederationService-v2"
 				method="findPolicies">
 			</ejb-finder>
 			<new-instance-bean className="com.soffid.iam.addons.federation.common.Policy" />
@@ -50,10 +61,9 @@
 			<ejb-finder jndi="java:comp/env/ejb/DominiUsuariEJB" method="findAllTipusUsuari">
 			</ejb-finder>
 		</finder>		
-			
 		<finder name="atribut" type="atributObject">
 			<ejb-finder
-				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="java:/module/FederationService-v2"
 				method="findAtributs" if="${queryEnabled}">
 				<parameter value="${name}" />
 				<parameter value="${shortname}" />
@@ -68,7 +78,7 @@
 	<datanode name="atribut">
 		<finder name="atribut" type="atributObject">
 			<ejb-finder
-				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="java:/module/FederationService-v2"
 				method="findAtributs" if="${queryEnabled}">
 				<parameter value="${name}" />
 				<parameter value="${shortname}" />
@@ -79,7 +89,7 @@
 
 	<datanode name="atributObject">
 		<ejb-handler
-			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="java:/module/FederationService-v2">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -93,19 +103,19 @@
 	</datanode>
 
 	<datanode name="entitygroupmember">
-		<finder name="entitygroupmember" type="entitygroupmember">
+		<finder name="entitygroupmember" type="entitygroupmember" executeOnNewObjects="true">
 			<ejb-finder
-				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
+				jndi="java:/module/FederationService-v2"
 				method="findChildren">
 				<parameter value="${instance}" />
 			</ejb-finder>
 			<new-instance-bean
 				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
 		</finder>
-		<finder name="profile" type="profile">
+		<finder name="profile" type="profile" executeOnNewObjects="true">
 			<ejb-finder
-				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
-				method="findProfilesByFederationMember" if="${instance.federationMember != null &amp;&amp; instance.federationMember.classe != null}">
+				jndi="java:/module/FederationService-v2"
+				method="findAllProfilesByFederationMember" if="${instance.federationMember != null &amp;&amp; instance.federationMember.classe != null}">
 				<parameter value="${instance.federationMember}" />
 			</ejb-finder>
 			<new-instance-bean
@@ -113,7 +123,7 @@
 		</finder>
 
 		<ejb-handler
-			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="java:/module/FederationService-v2">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -126,36 +136,17 @@
 		</ejb-handler>
 	</datanode>
 
-	<datanode name="federationMember">
-		<finder name="federationMember" type="federationMember">
-			<ejb-finder
-				if="${tipusFM != null}"
-				jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService"
-				method="findFederationMemberByEntityGroupAndPublicIdAndTipus">
-				<parameter value="${entityGroupName}" />
-				<parameter value="${publicId}" />
-				<parameter value="${tipusFM}" />
-			</ejb-finder>
-			<new-instance-bean
-				className="com.soffid.iam.addons.federation.common.EntityGroupMember" />
-		</finder>
-		<ejb-handler
-			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
-			<insert-method method="create" returnBean="true">
-				<parameter value="${instance}" />
-			</insert-method>
-			<delete-method method="delete">
-				<parameter value="${instance}" />
-			</delete-method>
-			<update-method method="update">
-				<parameter value="${instance}" />
-			</update-method>
-		</ejb-handler>
+	<datanode name="federationMember" transient="true">
 	</datanode>
 
 	<datanode name="profile">
+		<script-handler>
+			<update-script>
+				instance.identityProvider = parent.instance.federationMember;
+			</update-script>
+		</script-handler>
 		<ejb-handler
-			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="java:/module/FederationService-v2">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -170,7 +161,7 @@
 
 	<datanode name="policy">
 		<ejb-handler
-			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="java:/module/FederationService-v2">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>
@@ -185,7 +176,7 @@
 
 	<datanode name="atributPolicy">
 		<ejb-handler
-			jndi="openejb:/local/soffid.ejb.com.soffid.iam.addons.federation.service.FederacioService">
+			jndi="java:/module/FederationService-v2">
 			<insert-method method="create" returnBean="true">
 				<parameter value="${instance}" />
 			</insert-method>

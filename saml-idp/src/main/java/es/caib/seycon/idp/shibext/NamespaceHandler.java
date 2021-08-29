@@ -18,6 +18,10 @@ public class NamespaceHandler extends BaseSpringNamespaceHandler {
                 new SoffidSAML2SLOProfileHandlerBeanDefinitionParser());
 
         BeanDefinitionParser parser = new SoffidAttributeResolverBeanDefinitionParser();
+        
+        registerBeanDefinitionParser(SoffidAttributeFilterBeanDefinitionParser.SCHEMA_TYPE, 
+        		new SoffidAttributeFilterBeanDefinitionParser());
+
         registerBeanDefinitionParser(SoffidAttributeResolverBeanDefinitionParser.SCHEMA_TYPE, parser);
         
     }

@@ -25,7 +25,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.*;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 
@@ -35,9 +35,9 @@ public class AttributeFilterGenerator {
     final static String AFP_NAMESPACE = "urn:mace:shibboleth:2.0:afp"; //$NON-NLS-1$
     final static String XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance"; //$NON-NLS-1$
     final static String BASIC_NAMESPACE = "urn:mace:shibboleth:2.0:afp:mf:basic"; //$NON-NLS-1$
-    FederacioService fs;
+    FederationService fs;
     Document doc;
-    public AttributeFilterGenerator(FederacioService fs) {
+    public AttributeFilterGenerator(FederationService fs) {
         super();
         this.fs = fs;
     }
@@ -149,10 +149,6 @@ public class AttributeFilterGenerator {
                 generateValueAttribute(cond, node);
                 generateCaseAttribute(cond, node);
                 generateAttributeIdAttribute(cond, node);
-            } else if (type.equals (ConditionType.ATTRIBUTE_SCOPE_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
             } else if (type.equals (ConditionType.ATTRIBUTE_REQUESTER_REGEX)) {
                 generateRegexAttribute(cond, node);
             } else if (type.equals (ConditionType.ATTRIBUTE_ISSUER_REGEX)) {
@@ -164,13 +160,6 @@ public class AttributeFilterGenerator {
             } else if (type.equals (ConditionType.ATTRIBUTE_VALUE_REGEX)) {
                 generateRegexAttribute(cond, node);
                 generateAttributeIdAttribute(cond, node);
-            } else if (type.equals (ConditionType.ATTRIBUTE_SCOPE_REGEX)) {
-                generateRegexAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
-            } else if (type.equals (ConditionType.SCRIPT)) {
-                Element child = doc.createElementNS(BASIC_NAMESPACE, "Script"); //$NON-NLS-1$
-                child.setTextContent(cond.getValue());
-                node.appendChild(child);
             } else if (type.equals (ConditionType.ATTRIBUTE_REQUESTER_IN_ENTITY_GROUP)) {
                 generateGroupIdAttribute(cond, node);
             } else if (type.equals (ConditionType.ATTRIBUTE_ISSUER_IN_ENTITY_GROUP)) {

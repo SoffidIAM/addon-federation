@@ -56,7 +56,7 @@ import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.utils.Security;
@@ -586,7 +586,7 @@ public class Main {
 
 	private SAMLProfile useOpenidProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
-		FederacioService federacioService = c.getFederationService();
+		FederationService federacioService = c.getFederationService();
 		FederationMember fm = c.getFederationMember();
 		
         Collection<SAMLProfile> profiles = federacioService
@@ -603,7 +603,7 @@ public class Main {
 
 	private boolean useSamldProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
-		FederacioService federacioService = c.getFederationService();
+		FederationService federacioService = c.getFederationService();
 		FederationMember fm = c.getFederationMember();
 		
         Collection<SAMLProfile> profiles = federacioService

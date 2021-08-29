@@ -31,7 +31,7 @@ import com.soffid.iam.addons.federation.common.AttributePolicyCondition;
 import com.soffid.iam.addons.federation.common.ConditionType;
 import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.sync.ServerServiceLocator;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -51,7 +51,7 @@ public class AttributeFilterGenerator extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        fs = (FederacioService) ServerServiceLocator.instance().getService(FederacioService.SERVICE_NAME);
+        fs = (FederationService) ServerServiceLocator.instance().getService(FederationService.SERVICE_NAME);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class AttributeFilterGenerator extends HttpServlet {
     final static String XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance";
     final static String BASIC_NAMESPACE = "urn:mace:shibboleth:2.0:afp:mf:basic";
     
-    FederacioService fs;
+    FederationService fs;
     Document doc;
     
     public AttributeFilterGenerator() {
@@ -170,10 +170,10 @@ public class AttributeFilterGenerator extends HttpServlet {
                 generateValueAttribute(cond, node);
                 generateCaseAttribute(cond, node);
                 generateAttributeIdAttribute(cond, node);
-            } else if (type.equals (ConditionType.ATTRIBUTE_SCOPE_STRING)) {
-                generateValueAttribute(cond, node);
-                generateCaseAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
+//            } else if (type.equals (ConditionType.ATTRIBUTE_SCOPE_STRING)) {
+//                generateValueAttribute(cond, node);
+//                generateCaseAttribute(cond, node);
+//                generateAttributeIdAttribute(cond, node);
             } else if (type.equals (ConditionType.ATTRIBUTE_REQUESTER_REGEX)) {
                 generateRegexAttribute(cond, node);
             } else if (type.equals (ConditionType.ATTRIBUTE_ISSUER_REGEX)) {
@@ -184,14 +184,14 @@ public class AttributeFilterGenerator extends HttpServlet {
                 generateRegexAttribute(cond, node);
             } else if (type.equals (ConditionType.ATTRIBUTE_VALUE_REGEX)) {
                 generateRegexAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
-            } else if (type.equals (ConditionType.ATTRIBUTE_SCOPE_REGEX)) {
-                generateRegexAttribute(cond, node);
-                generateAttributeIdAttribute(cond, node);
-            } else if (type.equals (ConditionType.SCRIPT)) {
-                Element child = doc.createElementNS(BASIC_NAMESPACE, "Script");
-                child.setTextContent(cond.getValue());
-                node.appendChild(child);
+//                generateAttributeIdAttribute(cond, node);
+//            } else if (type.equals (ConditionType.ATTRIBUTE_SCOPE_REGEX)) {
+//                generateRegexAttribute(cond, node);
+//                generateAttributeIdAttribute(cond, node);
+//            } else if (type.equals (ConditionType.SCRIPT)) {
+//                Element child = doc.createElementNS(BASIC_NAMESPACE, "Script");
+//                child.setTextContent(cond.getValue());
+//                node.appendChild(child);
             } else if (type.equals (ConditionType.ATTRIBUTE_REQUESTER_IN_ENTITY_GROUP)) {
                 generateGroupIdAttribute(cond, node);
             } else if (type.equals (ConditionType.ATTRIBUTE_ISSUER_IN_ENTITY_GROUP)) {

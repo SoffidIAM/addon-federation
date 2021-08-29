@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+<frame xmlns:h="http://www.w3.org/1999/xhtml" mold="div" style="position: relative" 
+	use="com.soffid.iam.addons.federation.web.PolicyHandler" id="frame">
+
+	<style>
+	   div.div_condition {
+	   	display: inline-block;
+	   }
+	   span.checkbox label {
+	   	display:inline-block;
+	   	min-width: 0;
+	   }	
+	</style>
+	<datamodel id="model" rootNode="federacioIdentitats" src="addon/federation/descriptorFederacioIdentitats.xml" />
+
+	<div sclass="card" id="card">
+		<div sclass="card__face card__face--front">
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame">
+				<menu2>
+					<menu2item image="/img/add.svg" label="${c:l('agents.zul.Afegeixnou') }" if="${soffid:isUserInRole('federation-attribute:create')}"  onClick="ref:frame.addNew"/>
+					<menu2item image="/img/import.svg" label="${c:l('tenant.zul.import') }" if="${soffid:isUserInRole('federation-attribute:create') || soffid:isUserInRole('federation-attribute:update')}" onClick="ref:frame.importCsv"/>
+					<menu2item image="/img/download.svg" label="${c:l('zkdb.download') }" onClick="ref:frame.downloadCsv"/>
+				</menu2>
+			</div>
+			<datatable id="listbox" autocommit="true" dataPath="/model:/policy"
+			    maxheight="70vh"
+				multiselect="true"
+				onMultiSelect="ref:frame.multiSelect"
+				sortColumn="0" onSelect="ref:frame.showDetails">
+				<attribute name="columns">
+					<![CDATA[
+		- name: ${c:l('federacio.Politica')}
+		  value: name
+					]]>
+				</attribute>
+			</datatable>
+			<div width="100%" style="text-align: right"   >
+				<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false">-</div>
+				<div class="addButton" onClick="ref:frame.addNew" if="${soffid:isUserInRole('federation-policy:create')}">+</div>
+			</div>
+		</div>
+		
+		<div sclass="card__face card__face--back">
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame" lastAction="ref:frame.hideDetails">
+				<pager datatable="listbox"/>
+				
+				<menu2>
+					<menu2item if="${soffid:isUserInRole('federation-attribute:delete')}" image="/img/trash.svg" label="${c:l('plugins.zul.Delete') }" onClick="ref:frame.delete"/>
+				</menu2>
+				
+				<databutton image="/img/save.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.applyNoClose" onlyIcon="true"/>
+			</div>
+			<form2 id="form" onChangeXPath="ref:frame.onChangeDades"
+					dataPath="/listbox:/." width="100%">
+				<customfield3 label="${c:l('federacio.Politica')}" readonly="true" dataType="STRING" disabled="true" bind="name"/>
+				<h:div sclass="databox" selecticon="yes">
+					<label sclass="label" value="${c:l('policyCondition.zul.Condicia')}"></label>
+					<div sclass="container">
+						<textbox readonly="true" id="condition" multiline="true"/>
+						<imageclic sclass="selecticon imageclic" src="/img/pencil.svg" onClick="ref:frame.openCondition"/>
+					</div>
+				</h:div>
+				<label sclass="etiqueta" value="${c:l('federacio.zul.attributes')}"/>
+
+				<datatable id="attributesListbox" autocommit="true" dataPath="/listbox:/attributePolicy"
+					use="com.soffid.iam.addons.federation.web.AttributePolicyDataTable"
+				    maxheight="70vh"
+					multiselect="true"
+					onSelect="ref:frame.selectAttribute"
+					onMultiSelect="ref:frame.multiSelect"
+					sortColumn="0">
+					<attribute name="columns">
+						<![CDATA[
+			- name: ${c:l('federacio.zul.attribute')}
+			  value: attribute.name
+			- name: ${c:l('federacio.zul.action')}
+			  template: #{attributePolicyCondition.allow ? "${c:l('federacio.zul.allow') }": "${c:l('federacio.zul.deny') }"}
+			- name: ${c:l('federacio.zul.condition')}
+			  value: expression
+						]]>
+					</attribute>
+				</datatable>
+				<div width="100%" style="text-align: right"   >
+					<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false">-</div>
+					<div class="addButton" onClick="ref:frame.addNewAttribute" if="${soffid:isUserInRole('federation-policy:create')}">+</div>
+				</div>
+				<div style="text-align: right; width: 100%">
+					<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">
+					</databutton>
+					<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.apply"/>
+				</div>
+			</form2>
+		</div>
+	</div>
+	
+	<window id="conditionWindow" closable="true" position="top, center"
+		sizable="false" 
+		visible="false"
+		style="min-width: 40em; width: 80%">
+		<div style="width: 100%; vertical-align: top" 
+			use="com.soffid.iam.addons.federation.web.ExpressionEditor"
+			id="handler" 
+			dataPath="/listbox:/condition">
+			<div style="width: 50%; display: inline-block; vertical-align: top">
+				<datatree2 id="dt" header="${c:l('policyCondition.zul.Condicia') }" 
+					onSelect="ref:handler.onSelect"
+					onAddExpression="ref:handler.addExpression">
+				<attribute name="finders"><![CDATA[
+		- path: condition
+		  value: value
+		  leaf: #{leaf}
+		  tail: #{tail}
+				]]></attribute>
+				</datatree2>
+			</div>
+			<div style="width: 50%; display: inline-block; vertical-align: top">
+				<div sclass="navigation-bar dummy">
+					<databutton image="/img/trash.svg" label="${c:l('agents.DeleteAgent') }" onClick="ref:handler.removeExpression" id="removeIcon" onlyIcon="true"/>
+				</div>
+				<customfield3 id="not" label="${c:l('federation.not') }" dataType="BOOLEAN" onChange="ref:handler.updateNot" visible="true" />
+				<customfield3 id="type" label="${c:l('federacio.zul.Tipus') }" dataType="STRING" onChange="ref:handler.updateType" visible="true"
+					enumeration="com.soffid.iam.addons.federation.common.ConditionType"/>
+				<customfield3 id="attributeNameFormat" label="${c:l('federation.nameIdFormat') }" dataType="STRING" onChange="ref:handler.updateAttributeNameFormat" visible="false"/>
+				<customfield3 id="groupId" label="${c:l('federation.entityGroup') }" dataType="STRING" onChange="ref:handler.updateGroupId" visible="false"/>
+				<customfield3 id="nameId" label="${c:l('federacio.zul.attribute') }" dataType="STRING" onChange="ref:handler.updateNameId"/>
+				<customfield3 id="attribute" label="${c:l('federacio.zul.attribute') }" dataType="STRING" onChange="ref:handler.updateAttribute" 
+					keysPath="/model:/atribut/name" valuesPath="/model:/atribut/name"/>
+				<customfield3 id="value" label="${c:l('policyCondition.zul.Value') }" dataType="STRING" onChange="ref:handler.updateValue" />
+				<customfield3 id="ignoreCase" label="${c:l('federacio.zul.ignoreCase') }" dataType="BOOLEAN" onChange="ref:handler.updateIgnoreCase" visible="true" />
+				<customfield3 id="regex" label="${c:l('federacio.zul.regex') }" dataType="STRING" onChange="ref:handler.updateRegex" />
+			</div>
+			<div style="text-align: right; width: 100%">
+				<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" onClick="ref:handler.apply"/>
+			</div>
+		</div>
+	</window>
+
+	<window id="attributeWindow" closable="true" position="top, center"
+		sizable="false" 
+		visible="false"
+		style="min-width: 40em; width: 80%">
+		<div style="width: 100%; vertical-align: top" 
+			use="com.soffid.iam.addons.federation.web.ExpressionEditor"
+			id="handler" 
+			dataPath="/attributesListbox:/.">
+			<customfield3 label="${c:l('federacio.zul.attribute') }" dataType="STRING" 
+						bind="/attributesListbox:/attribute/name" 
+						keysPath="/model:/atribut/name" valuesPath="/model:/atribut/name"
+						onChange="ref:handler.changeAttribute"
+						required="true"/>
+			
+			<customfield3 label="${c:l('federacio.zul.allow') }" dataType="BOOLEAN" 
+						bind="/attributesListbox:/attributePolicyCondition/allow"/>
+
+			<div style="width: 50%; display: inline-block; vertical-align: top">
+				<datatree2 id="dt" header="${c:l('policyCondition.zul.Condicia') }" 
+					onSelect="ref:handler.onSelect"
+					onAddExpression="ref:handler.addExpression">
+				<attribute name="finders"><![CDATA[
+		- path: condition
+		  value: value
+		  leaf: #{leaf}
+		  tail: #{tail}
+				]]></attribute>
+				</datatree2>
+			</div>
+			<div style="width: 50%; display: inline-block; vertical-align: top">
+				<div sclass="navigation-bar dummy">
+					<databutton image="/img/trash.svg" label="${c:l('agents.DeleteAgent') }" onClick="ref:handler.removeExpression" id="removeIcon" onlyIcon="true"/>
+				</div>
+				<customfield3 id="not" label="${c:l('federation.not') }" dataType="BOOLEAN" onChange="ref:handler.updateNot" visible="true" />
+				<customfield3 id="type" label="${c:l('federacio.zul.Tipus') }" dataType="STRING" onChange="ref:handler.updateType" visible="true"
+					enumeration="com.soffid.iam.addons.federation.common.ConditionType"/>
+				<customfield3 id="attributeNameFormat" label="${c:l('federation.nameIdFormat') }" dataType="STRING" onChange="ref:handler.updateAttributeNameFormat" visible="false"/>
+				<customfield3 id="groupId" label="${c:l('federation.entityGroup') }" dataType="STRING" onChange="ref:handler.updateGroupId" visible="false"/>
+				<customfield3 id="nameId" label="${c:l('federacio.zul.attribute') }" dataType="STRING" onChange="ref:handler.updateNameId"/>
+				<customfield3 id="attribute" label="${c:l('federacio.zul.attribute') }" dataType="STRING" onChange="ref:handler.updateAttribute" 
+					keysPath="/model:/atribut/name" valuesPath="/model:/atribut/name"/>
+				<customfield3 id="value" label="${c:l('policyCondition.zul.Value') }" dataType="STRING" onChange="ref:handler.updateValue" />
+				<customfield3 id="ignoreCase" label="${c:l('federacio.zul.ignoreCase') }" dataType="BOOLEAN" onChange="ref:handler.updateIgnoreCase" visible="true" />
+				<customfield3 id="regex" label="${c:l('federacio.zul.regex') }" dataType="STRING" onChange="ref:handler.updateRegex" />
+			</div>
+			<div style="text-align: right; width: 100%">
+				<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" onClick="ref:handler.apply"/>
+			</div>
+		</div>
+	</window>
+
+</frame>

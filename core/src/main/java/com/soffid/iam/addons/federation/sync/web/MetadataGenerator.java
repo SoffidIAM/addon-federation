@@ -40,7 +40,7 @@ import org.xml.sax.SAXParseException;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
-import com.soffid.iam.addons.federation.service.FederacioService;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.sync.ServerServiceLocator;
 import com.soffid.iam.utils.Security;
 
@@ -50,8 +50,8 @@ public class MetadataGenerator extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        federacioService = (FederacioService) ServerServiceLocator.instance().
-        		getService(FederacioService.SERVICE_NAME);
+        federacioService = (FederationService) ServerServiceLocator.instance().
+        		getService(FederationService.SERVICE_NAME);
     }
 
     /**
@@ -64,7 +64,7 @@ public class MetadataGenerator extends HttpServlet {
     final static String RP_NAMESPACE = "urn:mace:shibboleth:2.0:relying-party";
     final static String SECURITY_NAMESPACE = "urn:mace:shibboleth:2.0:security";
     final static String METADATA_NAMESPACE = "urn:oasis:names:tc:SAML:2.0:metadata";
-    FederacioService federacioService;
+    FederationService federacioService;
     Document doc;
     private DocumentBuilder dBuilder;
 
@@ -140,10 +140,10 @@ public class MetadataGenerator extends HttpServlet {
 
 
     private boolean generateFederationMember(Element element, EntityGroupMember eg) throws SAXException, IOException, InternalErrorException {
-        if (eg.getTipus().equals( "EG") ) {
+        if (eg.getType().equals( "EG") ) {
             boolean anyChild = false;
             Element node = doc.createElementNS(METADATA_NAMESPACE, "EntitiesDescriptor");
-            node.setAttribute("Name", eg.getDescripcio());
+            node.setAttribute("Name", eg.getDescription());
             
             if (generateChildEntities(eg, node)) {
                 element.appendChild(node);
