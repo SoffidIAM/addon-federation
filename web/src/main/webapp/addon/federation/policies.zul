@@ -54,7 +54,7 @@
 			</div>
 			<form2 id="form" onChangeXPath="ref:frame.onChangeDades"
 					dataPath="/listbox:/." width="100%">
-				<customfield3 label="${c:l('federacio.Politica')}" readonly="true" dataType="STRING" disabled="true" bind="name"/>
+				<customfield3 label="${c:l('federacio.Politica')}" readonly="true" dataType="STRING" bind="name"/>
 				<h:div sclass="databox" selecticon="yes">
 					<label sclass="label" value="${c:l('policyCondition.zul.Condicia')}"></label>
 					<div sclass="container">
