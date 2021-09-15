@@ -447,7 +447,7 @@
 				bind="assertionLifetime"
 				maxlength="255"/>
 			<customfield3 id="r_encryptAssertions" label="${c:l('federa_profile.zul.encryptAssertions')}"
-				bind="encryptRequests" dataType="STRING"
+				bind="encryptAssertions" dataType="STRING"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
 			<customfield3 id="r_encryptNameIds" label="${c:l('federa_profile.zul.encryptNameIds')}"
