@@ -804,7 +804,8 @@ public class FederationServiceImpl
 			PolicyConditionEntity condition = entity.getCondition();
 			entity.setCondition(null);
 			getPolicyEntityDao().update(entity);
-			getPolicyConditionEntityDao().remove(condition);
+			if (condition != null)
+				getPolicyConditionEntityDao().remove(condition);
 			// I les seves condicions
 			getAttributePolicyEntityDao().remove(entity.getAttributePolicy());
 			// I finalment esborrem la politica

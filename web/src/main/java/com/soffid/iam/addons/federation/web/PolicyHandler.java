@@ -137,7 +137,7 @@ public class PolicyHandler extends FrameHandler {
 	}
 	
 	public void addNewAttribute(Event ev) throws Exception {
-		
+		applyNoClose(ev);
 		DataTable dt = (DataTable) getFellow("listbox");
 		final AttributePolicy att = new AttributePolicy();
 //		att.setAttribute(attributes.getFirst());
@@ -146,5 +146,13 @@ public class PolicyHandler extends FrameHandler {
 		DataTable dt2 = (DataTable) getFellow("attributesListbox");
 		dt2.setSelectedIndex(dt2.getModel().getSize()-1);
 		selectAttribute(ev);
+	}
+
+	@Override
+	public void addNew() throws Exception {
+		super.addNew();
+		PolicyCondition c = new PolicyCondition();
+		c.setType(ConditionType.ANY);
+		XPathUtils.setValue(getForm(), "condition", c);
 	}
 }
