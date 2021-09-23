@@ -55,10 +55,11 @@
 				<form2 id="form" onChangeXPath="ref:frame.onChangeDades"
 					dataPath="/listbox:/." width="100%">
 					<customfield3 dataType="STRING" maxlength="100"
+						required="true"
 						bind="name"
 						label="${c:l('federa_atribut.zul.Name-2')}"/>
 					<customfield3 dataType="STRING" maxlength="100"
-						bind="shortName"
+						required="true"
 						label="${c:l('federa_atribut.zul.ShortName-2')}"/>
 					<customfield3 dataType="STRING" maxlength="100"
 						bind="oid"
