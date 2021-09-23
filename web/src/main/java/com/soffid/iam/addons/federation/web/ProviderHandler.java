@@ -1,5 +1,6 @@
 package com.soffid.iam.addons.federation.web;
 
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 
 import com.soffid.iam.addons.federation.common.EntityGroup;
@@ -8,6 +9,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.web.component.FrameHandler;
+import com.soffid.iam.web.component.Menu2item;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.zkib.component.DataTree2;
@@ -38,6 +40,11 @@ public class ProviderHandler extends FrameHandler {
 		try {
 			type = (String) XPathUtils.eval(getListbox(), "type");
 		} catch (Exception e) {}
+		Component item = getFellow("deleteMenuOption");
+		item.setVisible("SP".equals(type) ||
+				"EG".equals(type) ||
+				"VIP".equals(type) ||
+				"IDP".equals(type));
 		getFellow("provider_root").setVisible("ARREL".equals(type));
 		getFellow("entity_group").setVisible("EG".equals(type));
 		getFellow("service_provider").setVisible("SP".equals(type));
