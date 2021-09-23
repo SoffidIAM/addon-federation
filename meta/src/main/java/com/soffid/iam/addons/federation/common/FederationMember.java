@@ -129,6 +129,7 @@ public class FederationMember {
 	public Boolean consent;
 
 	@Nullable
+	@Attribute(defaultValue = "Boolean.FALSE")
 	public Boolean disableSSL;
 
 	@Nullable
