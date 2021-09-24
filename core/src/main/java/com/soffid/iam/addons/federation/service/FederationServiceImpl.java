@@ -918,7 +918,7 @@ public class FederationServiceImpl
 				resultat.add(new EntityGroupMember("Service Providers", EG_SP_ROOT, pare, null)); //$NON-NLS-1$
 
 			}
-		} else if (EG_IDP_ROOT.equals(groupMember.getType())) {
+		} else if (EG_IDP_ROOT.equals(groupMember.getType()) && groupMember.getEntityGroup().getId() != null) {
 			// Cerquem els seus IDPs fills
 			EntityGroup pare = groupMember.getEntityGroup();
 			Collection idp = getIdentityProviderEntityDao().findIDPByEntityGroupId(pare.getId());
@@ -929,7 +929,7 @@ public class FederationServiceImpl
 				String desc = fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				resultat.add(new EntityGroupMember(desc, EG_IDP, pare, fm));
 			}
-		} else if (EG_SP_ROOT.equals(groupMember.getType())) {
+		} else if (EG_SP_ROOT.equals(groupMember.getType()) && groupMember.getEntityGroup().getId() != null) {
 			EntityGroup pare = groupMember.getEntityGroup();
 
 			Collection sp = getServiceProviderEntityDao().findSPByEntityGroupId(pare.getId());

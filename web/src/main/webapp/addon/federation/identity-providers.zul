@@ -11,7 +11,9 @@
 		id="listbox">
 	<attribute name="columns">
 - name: "${c:l('federacio.zul.identityProviders') }"
-  value: description
+  value: federationMember.publicId
+- name: "${c:l('federa_atribut.zul.Name-2') }"
+  value: federationMember.name
 	</attribute>
 	</datatable>
 	<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('group:create')}" >
