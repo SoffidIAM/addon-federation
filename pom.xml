@@ -10,7 +10,7 @@
 	<artifactId>root</artifactId>
 	<packaging>pom</packaging>
 	<name>SAML Federation</name>
-	<version>3.0.1-SNAPSHOT</version>
+	<version>3.1.4-SNAPSHOT</version>
 	<description>SOFFID IAM Federation addon</description>
 	<prerequisites>
 		<maven>2.0.1</maven>
@@ -252,6 +252,6 @@
 		</dependencies>
 	</dependencyManagement>
 	<properties>
-		<console.version>3.1.0-SNAPSHOT</console.version>
+		<console.version>3.1.0</console.version>
 	</properties>
 </project>
