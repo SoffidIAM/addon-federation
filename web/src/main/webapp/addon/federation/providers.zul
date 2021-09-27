@@ -17,7 +17,6 @@
 			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame">
 				<menu2>
 					<menu2item image="/img/import.svg" label="${c:l('tenant.zul.import') }" if="${soffid:isUserInRole('federation:create') &amp;&amp; soffid:isUserInRole('federation:update') &amp;&amp; soffid:isUserInRole('federation:delete')}" onClick="ref:frame.importCsv"/>
-					<menu2item image="/img/download.svg" label="${c:l('zkdb.download') }" onClick="ref:frame.downloadCsv"/>
 				</menu2>
 			</div>
 			<datatree2 id="listbox"

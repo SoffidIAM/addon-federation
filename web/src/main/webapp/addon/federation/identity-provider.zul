@@ -187,8 +187,9 @@
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.authentication') }" />
 		<div sclass="databox">
 			<label sclass="label" value="${c:l('federacio.zul.allowedAuthenticationMethods')}"/>
-			<div sclass="container">
-				<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/federationMember/authenticationMethods">
+			<div sclass="container" >
+				<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/federationMember/authenticationMethods"
+					style="display: block; margin-bottom: 0px;vertical-align: bottom;  position: initial; width: 100%; white-space: normal">
 					<columns>
 						<column label="${c:l('federacio.zul.firstAuthentication') }"/>
 						<column label="${c:l('federacio.zul.password') }"/>
