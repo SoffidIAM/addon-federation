@@ -269,8 +269,7 @@ public class Main {
         factory.setCertAlias("idp"); //$NON-NLS-1$
         factory.setWantClientAuth(wantClientAuth);
         factory.setExcludeCipherSuites(new String[] {
-        		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",
-        		
+        		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",        		
         });
 //        factory.setIncludeCipherSuites(cipherSuites);
         SslSocketConnector connector = new SslSocketConnector(factory);
@@ -280,6 +279,9 @@ public class Main {
         connector.setAcceptors(2);
         connector.setAcceptQueueSize(10);
         connector.setMaxIdleTime(60000);
+        connector.setHandshakeTimeout(2000);
+        connector.setLowResourcesMaxIdleTime(2000);
+        connector.setSoLingerTime(10000);
         
         connector.setHostHeader(host);
 
