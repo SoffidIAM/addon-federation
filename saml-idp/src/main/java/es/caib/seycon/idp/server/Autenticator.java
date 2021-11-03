@@ -18,6 +18,7 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -70,7 +71,8 @@ import es.caib.seycon.util.Base64;
 
 public class Autenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
-
+    static Hashtable<String, Long> lastLogout = new Hashtable<>();
+    
     private String generateSession2 (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException
     {
         HttpSession session = req.getSession();
@@ -129,7 +131,8 @@ public class Autenticator {
     	
         TokenInfo ti = (TokenInfo) req.getAttribute("$$internaltoken$$");
         if (ti != null && checkToken(ctx, req, resp, config, ti)) {
-        	return true;
+        	if (isValidSession(ti.getUser(), ti.getCreated()))
+        		return true;
         }
 //    	LOG.info("Find cookie");
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
@@ -421,12 +424,23 @@ public class Autenticator {
 		}
     }
 
+    public boolean isValidSession(String name, long sessionTimestamp) {
+    	Long l = lastLogout.get(name);
+    	if (l == null || l.longValue() < sessionTimestamp)
+    		return true;
+    	else
+    		return false;
+    }
+    
 	public void notifyLogout(edu.internet2.middleware.shibboleth.idp.session.Session indexedSession) throws NumberFormatException, InternalErrorException, IOException {
 		Subject s = indexedSession.getSubject();
 		if (s != null)
 		{
 			for ( SessionPrincipal sp: s.getPrincipals(SessionPrincipal.class))
 			{
+				if (sp.getName() != null) {
+					lastLogout.put(sp.getName(), System.currentTimeMillis());
+				}
 		        if (sp.getSessionString() != null)
 		        {
 			        String[] split = sp.getSessionString().split("\\|");

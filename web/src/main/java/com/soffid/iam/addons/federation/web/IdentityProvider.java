@@ -2,7 +2,9 @@ package com.soffid.iam.addons.federation.web;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 
+import javax.ejb.CreateException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -12,11 +14,11 @@ import org.json.JSONObject;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 import org.zkoss.util.media.Media;
-import org.zkoss.util.resource.Labels;
 import org.zkoss.zhtml.impl.AbstractTag;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.UploadEvent;
+import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Window;
@@ -29,6 +31,7 @@ import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
 import com.soffid.iam.api.Password;
+import com.soffid.iam.bpm.api.ProcessDefinition;
 import com.soffid.iam.web.component.CustomField3;
 import com.soffid.iam.web.component.InputField3;
 import com.soffid.iam.web.component.ObjectAttributesDiv;
@@ -40,14 +43,13 @@ import es.caib.zkib.component.DataTable;
 import es.caib.zkib.component.Form2;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.datamodel.DataNode;
-import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.zkiblaf.Missatgebox;
 
-public class IdentityProvider extends Form2 implements XPathSubscriber {
+public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCompose {
 
 	private String certPath;
 	private String publicKeyPath;
@@ -629,6 +631,24 @@ public class IdentityProvider extends Form2 implements XPathSubscriber {
 		XPathUtils.createPath(ctx.getDataSource(), "/federationMember/serviceProvider", fm);
 		((DataNode)XPathUtils.eval(this, "/")).update();
 		w.setVisible(false);
+	}
+
+	@Override
+	public void afterCompose() {
+		CustomField3 cf = (CustomField3) getFellow("id_registerWorkflow");
+		List<String> w = new LinkedList<>();
+		try {
+			for (ProcessDefinition bpm: EJBLocator.getBpmEngine().findProcessDefinitions(null, true)) {
+				w.add(bpm.getName());
+			}
+			cf.setValues(w);
+		} catch (Exception e) {
+		}
+		if (w.isEmpty())
+			cf.setVisible(false);
+		else
+			cf.updateMetadata();
+		
 	}
 
 }

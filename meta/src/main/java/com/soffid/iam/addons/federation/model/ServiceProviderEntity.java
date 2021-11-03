@@ -49,6 +49,11 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	public String openidMechanism;
 
 	
+	@Description("Ask consent to share information with this service provider")
+	@Column (name="FED_CONSEN")
+	@Nullable
+	public Boolean consent;
+	
 	@DaoFinder("select sp "
 			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity sp "
 			+ "where (sp.openidClientId = :openidClientId) and sp.tenant.id=:tenantId")

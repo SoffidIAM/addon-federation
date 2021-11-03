@@ -296,6 +296,12 @@
 			id="id_allowRegister"  onChange="ref:handler.enableIDPComponents()"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 			
+		<customfield3 label="${c:l('federacio.zul.registerProcess')}"
+			dataType="STRING"
+			bind="/federationMember/registerWorkflow" 
+			id="id_registerWorkflow"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
 		<customfield3 label="${c:l('usuaris.zul.Tipus')}"
 			dataType="USER_TYPE" id="userTypeToRegister"
 			bind="/federationMember/userTypeToRegister"

@@ -2057,8 +2057,15 @@ public class FederationServiceImpl
 			return true;
 		else
 		{
-			UserConsentEntity consent = getUserConsentEntityDao().findByUserIdAndServiceProvider(user.getId(), serviceProvider);
-			return consent != null;
+			for (FederationMemberEntity sp: getFederationMemberEntityDao().findFMByPublicId(serviceProvider)) {
+				if (sp instanceof ServiceProviderEntity) {
+					if ( Boolean.TRUE.equals(((ServiceProviderEntity) sp).getConsent())) {
+						UserConsentEntity consent = getUserConsentEntityDao().findByUserIdAndServiceProvider(user.getId(), serviceProvider);
+						return consent != null;
+					}
+				}
+			}
+			return true;
 		}
 	}
 

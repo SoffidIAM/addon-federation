@@ -111,7 +111,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSessionTimeout(idp.getSessionTimeout());
 			target.setRegisterExternalIdentities(idp.getRegisterExternalIdentities());
-			target.setConsent(idp.getConsent());
 			// Service providers
 			if (idp.getServiceProviderVirtualIdentityProvider() != null) {
 				Collection spse = idp.getServiceProviderVirtualIdentityProvider();
@@ -188,6 +187,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setNameIdFormat(sp.getNameIdFormat());
 			target.setCertificateChain(sp.getCertificateChain());
 			target.setUidExpression(sp.getUidExpression());
+			target.setConsent(sp.getConsent());
 			if (sp.getOpenidMechanism() == null || sp.getOpenidMechanism().isEmpty() )
 				target.setOpenidMechanism(new HashSet<String>());
 			else
@@ -391,7 +391,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setSsoCookieName(source.getSsoCookieName());
 			idp.setSessionTimeout(source.getSessionTimeout());
 			idp.setRegisterExternalIdentities(source.getRegisterExternalIdentities());
-			idp.setConsent(source.getConsent());
 			
 			if (source.getServiceProvider() != null) {
 				// els transformem tots i es guarden a sps
@@ -508,6 +507,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			sp.setPublicId(source.getPublicId());
 			sp.setNameIdFormat(source.getNameIdFormat());
 			sp.setUidExpression(source.getUidExpression());
+			sp.setConsent(source.getConsent());
 			if (source.getCertificateChain() != null)
 				sp.setCertificateChain(source.getCertificateChain());
 			StringBuffer sb = new StringBuffer();

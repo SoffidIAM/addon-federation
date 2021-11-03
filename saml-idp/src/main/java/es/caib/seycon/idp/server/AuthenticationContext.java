@@ -2,6 +2,7 @@ package es.caib.seycon.idp.server;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.HttpCookie;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -14,7 +15,9 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -56,15 +59,23 @@ public class AuthenticationContext {
 	private User currentUser;
 	private Account currentAccount;
 	private UserCredential newCredential;
-	
-
+	long timestamp = 0;
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
 		if (r == null)
 			return null;
-		return (AuthenticationContext) r.getSession().getAttribute("Soffid-Authentication-Context");
+		AuthenticationContext auth = (AuthenticationContext) r.getSession().getAttribute("Soffid-Authentication-Context");
+		if (auth == null)
+			return null;
+		if (!auth.isFinished())
+			return auth;
+		if (new Autenticator().isValidSession(auth.getUser(), auth.getTimestamp()))
+			return auth;
+		else
+			return null;
 	}
 	
+
 	public void store (HttpServletRequest r)
 	{
 		if (r != null)
@@ -115,6 +126,7 @@ public class AuthenticationContext {
         firstFactor = null;
         secondFactor = null;
         step = 0;
+        timestamp = System.currentTimeMillis();
         
         if (nextFactor.isEmpty())
         {
@@ -358,6 +370,7 @@ public class AuthenticationContext {
     	if ( allowedAuthenticationMethods.contains(m))
     	{
     		step = 2;
+    		timestamp = System.currentTimeMillis();
     		registerNewCredential();
     		feedRatio(false);
     		if (currentUser != null)
@@ -525,6 +538,16 @@ public class AuthenticationContext {
 
 	public User getCurrentUser() {
 		return currentUser;
+	}
+
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 
 }

@@ -41,28 +41,34 @@ public class LogoutServlet extends HttpServlet {
     	{
             try 
             {
+            	session.removeAttribute("Soffid-Authentication-Context");
+
 				IdpConfig config = IdpConfig.getConfig();
 				
 				String relyingParty = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
 				
+				FederationMember ip = null;
 				if (relyingParty != null)
 				{
-					FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
-				    if (ip != null){
-				        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
-				        {
-				        	for (Cookie c: req.getCookies())
-				        	{
-				        		if (c.getName().equals(ip.getSsoCookieName()))
-				        		{
-				        			new es.caib.seycon.ng.addons.federation.remote.RemoteServiceLocator()
-				        				.getFederationService()
-				        				.expireSessionCookie(c.getValue());
-				        		}
-				        	}
-				        }
-				    }
-				}
+					ip = config.findIdentityProviderForRelyingParty(relyingParty);
+				} 
+				if (ip == null)
+					ip = config.getFederationMember();
+				
+			    if (ip != null) {
+			        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
+			        {
+			        	for (Cookie c: req.getCookies())
+			        	{
+			        		if (c.getName().equals(ip.getSsoCookieName()))
+			        		{
+			        			new es.caib.seycon.ng.addons.federation.remote.RemoteServiceLocator()
+			        				.getFederationService()
+			        				.expireSessionCookie(c.getValue());
+			        		}
+			        	}
+			        }
+			    }
 			} catch (Exception e) {
 				LogFactory.getLog(LogoutServlet.class).warn("Error expiring session", e);
 			}		
