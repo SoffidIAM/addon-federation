@@ -123,6 +123,7 @@ public class ScriptEnviroment {
 			.append(", \"daysSinceLastLogon\" : \"java.lang.Integer\"")
 			.append(", \"daysSinceLastLogonFromSameHost\" : \"java.lang.Integer\"")
 			.append(", \"failuresForSameIp\" : \"java.lang.Integer\"")
+			.append(", \"secondsSinceLastFail\" : \"java.lang.Integer\"")
 			.append(", \"failuresForSameUser\" : \"java.lang.Integer\"")
 			.append(", \"failuresRatio\" : \"java.lang.Double\"")
 			.append(", \"hour\" : \"java.lang.Integer\"")

@@ -52,20 +52,28 @@ public class UserPasswordAction extends HttpServlet {
 
             try {
                 if (v.validate(u, new Password(p))) {
-                    if (v.mustChangePassword()) {
-                        logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.7"), req.getRemoteAddr()); //$NON-NLS-1$
-                        HttpSession s = req.getSession();
-                        s.setAttribute(SessionConstants.SEU_TEMP_USER, u);
-                        s.setAttribute(SessionConstants.SEU_TEMP_PASSWORD, new Password(p));
-                        RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
-                        dispatcher.forward(req, resp);
-                        return;
-                    } else {
-	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-	            		if (ctx == null) {
-	                        error = "Session timeout"; //$NON-NLS-1$
-	                        LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Session timeout");
-	            		} else {
+                	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+                	if (ctx == null) {
+                		error = "Session timeout"; //$NON-NLS-1$
+                		LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Session timeout");
+                	} else {
+                		if (ctx.isLocked(u)) {
+                    		error = "Account is locked"; //$NON-NLS-1$
+                    		LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
+        	    			try {
+        						ctx.authenticationFailure(u);
+        					} catch (InternalErrorException e) {
+        					}
+                		}
+                		else if (v.mustChangePassword()) {
+	                        logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.7"), req.getRemoteAddr()); //$NON-NLS-1$
+	                        HttpSession s = req.getSession();
+	                        s.setAttribute(SessionConstants.SEU_TEMP_USER, u);
+	                        s.setAttribute(SessionConstants.SEU_TEMP_PASSWORD, new Password(p));
+	                        RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
+	                        dispatcher.forward(req, resp);
+	                        return;
+	                    } else {
 	            			ctx.authenticated(u, "P", resp);
 	            			ctx.store(req);
 	            			if ( ctx.isFinished())
@@ -89,6 +97,10 @@ public class UserPasswordAction extends HttpServlet {
     						ctx.authenticationFailure(u);
     					} catch (InternalErrorException e) {
     					}
+                		if (ctx.isLocked(u)) {
+                    		error = "Account is locked"; //$NON-NLS-1$
+                    		LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
+                		}
     	    		}
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }

@@ -16,6 +16,8 @@ import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.model.UserBehaviorEntity;
+import com.soffid.iam.model.UserAccountEntity;
+import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.sync.engine.extobj.AttributeReferenceParser;
 import com.soffid.iam.sync.engine.extobj.ExtensibleObjectNamespace;
 import com.soffid.iam.utils.ConfigurationCache;
@@ -84,6 +86,7 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 	@Override
 	protected void handleSetUserFailures(Long userId, long failures) throws Exception {
 		setValue (userId, "failures", Long.toString(failures));
+		setValue (userId, "lastFail", Long.toString(System.currentTimeMillis()));
 	}
 
 	@Override
@@ -107,6 +110,15 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 	}
 
 	@Override
+	protected Date handleGetLastFailedAttempt(Long userId) throws Exception {
+		String s = getValue(userId, "lastFail");
+		if (s == null || s.trim().isEmpty())
+			return null;
+		else
+			return new Date( Long.parseLong( s ));
+	}
+
+	@Override
 	protected Date handleGetLastLogon(Long userId, String hostId) throws Exception {
 		String s = getValue(userId, "lastLogon_"+hostId);
 		if (s == null)
@@ -122,6 +134,8 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 		{
 			setValue (userId, "lastLogon_"+hostId, now);
 		}
+		setValue (userId, "failures", "0");
+		setValue (userId, "lastFail", "");
 		setValue (userId, "lastLogon", now);
 		String country = handleGetCountryForIp(hostIp);
 		setValue (userId, "lastCountry", country);
@@ -195,5 +209,26 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 			log.warn("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression()+"\nMessage:"+msg);
 			return false;
 		}
+	}
+
+	@Override
+	protected boolean handleIsLocked(Long userId) throws Exception {
+		long f = handleGetUserFailures(userId);
+		if (f >= 3) {
+			Date d = handleGetLastFailedAttempt(userId);
+			if (d != null && System.currentTimeMillis() - d.getTime() < 60000 ) // 10 minutes lock
+			{
+				UserEntity user = getUserEntityDao().load(userId);
+				if (user == null)
+					return true;
+				for (UserAccountEntity userAccount: user.getAccounts()) {
+					Date d2 = userAccount.getAccount().getLastPasswordSet();
+					if (d2 != null && d2.after(d))
+						return false;
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 }

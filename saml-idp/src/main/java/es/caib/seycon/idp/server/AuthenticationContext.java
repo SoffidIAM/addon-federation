@@ -13,6 +13,7 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -417,6 +418,7 @@ public class AuthenticationContext {
 
 	public void authenticationFailure (String u) throws IOException, InternalErrorException
 	{
+		getUserData(u);
 		feedRatio(true);
 		if (u != null && currentUser != null)
 		{
@@ -426,6 +428,17 @@ public class AuthenticationContext {
 		}
 	}
 	
+	public boolean isLocked (String u) throws IOException, InternalErrorException
+	{
+		getUserData(u);
+		if (currentUser != null)
+		{
+			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
+			return ubh.isLocked(currentUser.getId());
+		}
+		return false;
+	}
+
 	private void getUserData(String userName) throws InternalErrorException, IOException {
     	IdpConfig cfg;
 		try {

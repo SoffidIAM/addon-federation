@@ -39,9 +39,9 @@ ${publicCertX509}
         <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" 
                              Location="${protocol}://${hostName}:${port}/profile/SAML2/POST/SSO" />
 
-        <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign" 
+	<SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST-SimpleSign"
                              Location="${protocol}://${hostName}:${port}/profile/SAML2/POST-SimpleSign/SSO" />
-        
+
     </IDPSSODescriptor>
 
 	<SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
