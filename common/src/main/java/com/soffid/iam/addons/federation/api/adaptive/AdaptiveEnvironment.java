@@ -21,6 +21,9 @@ public class AdaptiveEnvironment implements Serializable {
 	public int failuresForSameIp() {
 		return 0;
 	}
+	public long secondsSinceLastFail() throws InternalErrorException {
+		return 0;
+	}
 	public int failuresForSameUser() throws InternalErrorException {
 		return 0;
 	}

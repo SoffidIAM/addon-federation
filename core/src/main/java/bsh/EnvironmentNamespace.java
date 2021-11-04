@@ -40,6 +40,7 @@ public class EnvironmentNamespace extends NameSpace
 			"daysSinceLastLogon",
 			"daysSinceLastLogonFromSameHost",
 			"failuresForSameIp",
+			"secondsSinceLastFail",
 			"failuresForSameUser",
 			"failuresRatio",
 			"hour",

@@ -49,6 +49,14 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	}
 
 	@Override
+	public long secondsSinceLastFail() throws InternalErrorException {
+		if (user == null)
+			return 0;
+		Date d = getService().getLastFailedAttempt(user.getId());
+		return d == null  ? 0: (d.getTime() - System.currentTimeMillis())/1000L;
+	}
+
+	@Override
 	public double failuresRatio() {
 		return failuresRatio;
 	}
