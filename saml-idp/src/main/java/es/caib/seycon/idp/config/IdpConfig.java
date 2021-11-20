@@ -36,6 +36,8 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -71,6 +73,7 @@ public class IdpConfig {
     String publicId = null;
     com.soffid.iam.api.System system;
 	private UserCredentialService userCredentialService;
+    Log log = LogFactory.getLog(getClass());
     
     public String getFacebookKey ()
     {

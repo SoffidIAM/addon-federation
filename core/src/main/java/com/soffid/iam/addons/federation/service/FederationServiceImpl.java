@@ -1784,7 +1784,7 @@ public class FederationServiceImpl
 		{
 			String alias = e.nextElement();
 			Key key = store.getKey(alias, password.toCharArray());
-			if (key != null)
+			if (key != null && key instanceof PrivateKey)
 			{
 				privateKey = key;
 				Certificate[]  certChain=  store.getCertificateChain(alias);
