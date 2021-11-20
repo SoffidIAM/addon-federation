@@ -171,6 +171,8 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		getFellow("port2").setVisible(showCert);
 		getFellow("sslKey").setVisible(showCert);
 		getFellow("certificatechainSsl").setVisible(showCert);
+		getFellow("profilesSection").setVisible(
+				IdentityProviderType.SOFFID.equals( idpType ) || "V".equals(clazz));
 		serviceProviderSelect(null);
 	}	
 
