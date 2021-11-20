@@ -21,7 +21,6 @@ import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
 import com.soffid.iam.api.DataType;
-import com.soffid.iam.api.SoffidObjectType;
 import com.soffid.iam.web.component.CustomField3;
 import com.soffid.iam.web.component.FrameHandler;
 import com.soffid.iam.web.popup.CsvParser;
@@ -30,10 +29,6 @@ import com.soffid.iam.web.popup.ImportCsvHandler;
 import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.zkib.datasource.CommitException;
-import es.caib.zkib.datasource.DataSource;
-import es.caib.zkib.datasource.XPathUtils;
-import es.caib.zkib.jxpath.JXPathContext;
-import es.caib.zkib.jxpath.Pointer;
 import es.caib.zkib.zkiblaf.Missatgebox;
 
 public class AttributeHandler extends FrameHandler {
@@ -88,46 +83,33 @@ public class AttributeHandler extends FrameHandler {
 			{
 				m = iterator.next();
 				String name = m.get("name");
-				String network = m.get("networkName");
-				String description = m.get("description");
-				String value = m.get("value");
-				if (network != null && network.isEmpty()) network = null;
 
-				if (name != null && !name.trim().isEmpty() && m.containsKey("value"))
+				if (name != null && !name.trim().isEmpty())
 				{
 					Collection<Attribute> l = configSvc.findAtributs(name, "%", "%");
 					Attribute cfg  = l == null || l .isEmpty()? null: l.iterator().next();
 					if (cfg != null)
 					{
-						if (value == null) {
-							configSvc.delete(cfg);
-							removed ++;
-						}
-						else if (cfg.getValue() != null && cfg.getValue().equals(value))
-						{
-							unchanged ++;
-						} else {
-							if (m.containsKey("value"))
-								cfg.setValue(m.get("value"));
-							if (m.containsKey("oid"))
-								cfg.setOid(m.get("oid"));
-							if (m.containsKey("shortName"))
-								cfg.setShortName(m.get("shartName"));
-							if (m.containsKey("openidName"))
-								cfg.setOpenidName(m.get("openidName"));
-							configSvc.update(cfg);
-							updates ++;
-						}
-					} else if (value != null) {
-						inserts ++;
-						cfg = new Attribute();
-						m.put("name", m.get("name"));
 						if (m.containsKey("value"))
 							cfg.setValue(m.get("value"));
 						if (m.containsKey("oid"))
 							cfg.setOid(m.get("oid"));
 						if (m.containsKey("shortName"))
 							cfg.setShortName(m.get("shartName"));
+						if (m.containsKey("openidName"))
+							cfg.setOpenidName(m.get("openidName"));
+						configSvc.update(cfg);
+						updates ++;
+					} else {
+						inserts ++;
+						cfg = new Attribute();
+						cfg.setName(m.get("name"));
+						if (m.containsKey("value"))
+							cfg.setValue(m.get("value"));
+						if (m.containsKey("oid"))
+							cfg.setOid(m.get("oid"));
+						if (m.containsKey("shortName"))
+							cfg.setShortName(m.get("shortName"));
 						if (m.containsKey("openidName"))
 							cfg.setOpenidName(m.get("openidName"));
 						configSvc.create(cfg);
