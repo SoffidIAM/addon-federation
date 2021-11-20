@@ -442,7 +442,7 @@
 				bind="signAssertions" dataType="STRING"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
-			<customfield3 id="r_signRequests" label="${c:l('federa_profile.zul.signAssertions')}"
+			<customfield3 id="r_signRequests" label="${c:l('federa_profile.zul.signRequests')}"
 				bind="signRequests" dataType="STRING"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 				enumeration="com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration"></customfield3> 
@@ -469,26 +469,32 @@
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
 			<customfield3 id="r_localityAddress" label="${c:l('federa_profile.zul.includeAttributeStat')}"
 				bind="localityAddress" dataType="STRING" maxlength="255"
-					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
 			<customfield3 id="r_localityDNSName" label="${c:l('federa_profile.zul.localityDNSName')}"
+				dataType="STRING"
 				bind="localityDNSName" maxlength="255"
-					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
 			<customfield3 id="r_maximumSPSessionLifetime" 
 				label="${c:l('federa_profile.zul.maximumSPSessionLife')}"
 				bind="maximumSPSessionLifetime"
 					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
 			<customfield3 id="r_discoveryEndpoint" label="${c:l('federa_profile.zul.discoveryEndpoint')}"
+				dataType="STRING"
 				value="/.well-known/openid-configuration"/>
 			<customfield3 id="r_authorizationEndpoint" label="${c:l('federa_profile.zul.authorizationEndpoint')}"
+				dataType="STRING"
 				bind="authorizationEndpoint"
 					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
 			<customfield3 id="r_tokenEndpoint" label="${c:l('federa_profile.zul.tokenEndpoint')}"
+				dataType="STRING"
 				bind="tokenEndpoint"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
 			<customfield3 id="r_revokeEndpoint" label="${c:l('federa_profile.zul.revokeEndpoint')}"
+				dataType="STRING"
 				bind="revokeEndpoint"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
 			<customfield3 id="r_userinfoEndpoint" label="${c:l('federa_profile.zul.userinfoEndpoint')}"
+				dataType="STRING"
 				bind="userInfoEndpoint"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
 			<div style="text-align: right; width: 100%">
