@@ -29,12 +29,18 @@ import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Session;
+import com.soffid.iam.api.User;
 import com.soffid.iam.remote.RemoteServiceLocator;
+import com.soffid.iam.service.AccountService;
 import com.soffid.iam.service.SessionService;
+import com.soffid.iam.service.UserService;
+import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
 
 public class TokenHandler {
@@ -63,6 +69,7 @@ public class TokenHandler {
 		t.expires = t.created + 120000; // 2 Minutes to get token
 		t.authentication = t.created;
 		t.setAuthenticationMethod(authType);
+		t.updateLastUse();
 		authorizationCodes.put(t.getAuthorizationCode(), t);
 		pendingTokens.addLast(t);
 		
@@ -70,24 +77,39 @@ public class TokenHandler {
 		return t;
 	}
 	
+	long last;
 	private void expireTokens() throws InternalErrorException {
 		long now = System.currentTimeMillis();
-		for ( Iterator<TokenInfo> it = pendingTokens.iterator(); it.hasNext();) 
-		{
-			TokenInfo t = it.next();
-			if (t.isExpired()) {
-				getFederationService().deleteOauthToken(generateOauthToken(t));
-				it.remove();
+		if (now > last + 120000) return; // Only purge after 2 minutes
+		last = System.currentTimeMillis();
+		synchronized (pendingTokens) {
+			for ( Iterator<TokenInfo> it = pendingTokens.iterator(); it.hasNext();) 
+			{
+				TokenInfo t = it.next();
+				if (t.isExpired()) {
+					getFederationService().deleteOauthToken(generateOauthToken(t));
+					it.remove();
+				}
+				else if (t.isNotUsed()) {
+					it.remove();
+				}
 			}
 		}
-		for ( Iterator<TokenInfo> it = activeTokens.iterator(); it.hasNext();) 
-		{
-			TokenInfo t = it.next();
-			if (t.isExpired() && t.isRefreshExpired()) {
-				if (t.getRefreshToken() != null)
-					refreshTokens.remove(t.getRefreshToken());
-				getFederationService().deleteOauthToken(generateOauthToken(t));
-				it.remove();
+		synchronized (activeTokens) {
+	 		for ( Iterator<TokenInfo> it = activeTokens.iterator(); it.hasNext();) 
+			{
+				TokenInfo t = it.next();
+				if (t.isExpired() && t.isRefreshExpired()) {
+					if (t.getRefreshToken() != null)
+						refreshTokens.remove(t.getRefreshToken());
+					getFederationService().deleteOauthToken(generateOauthToken(t));
+					it.remove();
+				}
+				else if (t.isNotUsed()) {
+					if (t.getRefreshToken() != null)
+						refreshTokens.remove(t.getRefreshToken());
+					it.remove();
+				}
 			}
 		}
 	}
@@ -138,12 +160,16 @@ public class TokenHandler {
 			pendingTokens.remove(t);
 		}
 		getFederationService().deleteOauthToken(generateOauthToken(t));
+		
+		checkUserIsEnabled(t);
+
 		t.token = generateRandomString(129);		
 		t.authorizationCode = null;
 		t.refreshToken = generateRandomString(129);		
 		refreshTokens.put(t.refreshToken, t);
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
+		t.updateLastUse();
 		Long refreshTimeout = t.request.getFederationMember().getOauthSessionTimeout();
 		if (refreshTimeout == null)
 			refreshTimeout = IdpConfig.getConfig().getFederationMember().getOauthSessionTimeout();
@@ -166,6 +192,8 @@ public class TokenHandler {
 			refreshTokens.remove(t.refreshToken);
 		tokens.remove(t.token);
 		
+		checkUserIsEnabled(t);
+		
 		getFederationService().deleteOauthToken(generateOauthToken(t));
 
 		t.authorizationCode = null;
@@ -173,6 +201,7 @@ public class TokenHandler {
 		t.refreshToken = generateRandomString(129);		
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
+		t.updateLastUse();
 		refreshTokens.put(t.refreshToken, t);
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
@@ -180,7 +209,28 @@ public class TokenHandler {
 		getFederationService().createOauthToken(generateOauthToken(t));
 	}
 
+	private void checkUserIsEnabled(TokenInfo t) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		String user = t.getUser();
+		ServerService serverService = new RemoteServiceLocator().getServerService();
+		IdpConfig cfg = IdpConfig.getConfig();
+		
+		Account account = serverService.getAccountInfo(user, cfg.getSystem().getName());
+		if (account == null || account.isDisabled()) {
+			throw new InternalErrorException("User account is disabled");
+		}
+		User ui;
+		try {
+			ui = serverService.getUserInfo(user, cfg.getSystem().getName());
+		} catch (UnknownUserException e) {
+			ui = null;
+		}
+		if (ui != null && Boolean.FALSE.equals( ui.getActive())) {
+			throw new InternalErrorException("User is disabled");
+		}
+	}
+
 	public String generateIdToken(TokenInfo t, Map<String, Object> att) throws JSONException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+		checkUserIsEnabled(t);
 		IdpConfig c = IdpConfig.getConfig();
 		JSONObject o = new JSONObject();
 		o.put("auth_time", t.getAuthentication());

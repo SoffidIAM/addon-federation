@@ -8,6 +8,7 @@ public class TokenInfo {
 	String authorizationCode;
 	String user;
 	OpenIdRequest request;
+	long lastUse;
 	long created;
 	long expires;
 	long expiresRefresh;
@@ -79,6 +80,15 @@ public class TokenInfo {
 	public Long getSessionId() {
 		return sessionId;
 	}
+	public TokenInfo() {
+		super();
+		updateLastUse();
+	}
+
+	public void updateLastUse() {
+		lastUse = System.currentTimeMillis();
+	}
+
 	public void setSessionId(Long sessionId) {
 		this.sessionId = sessionId;
 	}
@@ -103,5 +113,17 @@ public class TokenInfo {
 
 	boolean isRefreshExpired() {
 		return System.currentTimeMillis() > expiresRefresh;
+	}
+
+	public long getLastUse() {
+		return lastUse;
+	}
+
+	public void setLastUse(long lastUse) {
+		this.lastUse = lastUse;
+	}
+
+	public boolean isNotUsed() {
+		return System.currentTimeMillis() > lastUse + 900_000; // 15 minutes
 	}
 }

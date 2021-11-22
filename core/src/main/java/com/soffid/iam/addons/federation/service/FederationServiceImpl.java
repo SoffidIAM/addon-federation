@@ -1981,6 +1981,7 @@ public class FederationServiceImpl
 				}
 			}
 		}
+		
 		e = getOauthTokenEntityDao().oauthTokenToEntity(token);
 		getOauthTokenEntityDao().create(e);
 		return getOauthTokenEntityDao().toOauthToken(e);
