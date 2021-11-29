@@ -182,6 +182,10 @@
 			dataType="STRING" maxlength="120"
 			bind="/federationMember/ssoCookieDomain"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+		<customfield3 label="${c:l('federacio.zul.consent')}"
+			dataType="BOOLEAN"
+			bind="/federationMember/consent"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 	</div>
 	<div sclass="section" id="authenticationSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.authentication') }" />
