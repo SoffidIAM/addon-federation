@@ -1514,7 +1514,7 @@
 							                        	}
 							                        }
 							                    }
-							                } catch (SAXParseException e) {
+							                } catch (org.xml.sax.SAXParseException e) {
 							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
 							                }
 										]]>
@@ -1679,7 +1679,7 @@
 							                        	}
 							                        }
 							                    }
-							                } catch (SAXParseException e) {
+							                } catch (org.xml.sax.SAXParseException e) {
 							                	es.caib.zkib.zkiblaf.Missatgebox.avis("Error parsing metadata: "+e.toString());
 							                }
 										]]>
