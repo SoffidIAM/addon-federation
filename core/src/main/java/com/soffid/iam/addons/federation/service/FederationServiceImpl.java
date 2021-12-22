@@ -213,6 +213,7 @@ public class FederationServiceImpl
 			{
 				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) entity, federationMember);
+				((VirtualIdentityProviderEntity) entity).setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
 			}
 			if (entity instanceof ServiceProviderEntity) {
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
@@ -330,6 +331,7 @@ public class FederationServiceImpl
 				}
 				// update ketyabs
 				updateKeytabs (idp, federationMember);
+				idp.setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) idp, federationMember);
 				getIdentityProviderEntityDao().update(idp);
 				String desc = idp.getPublicId() + (idp.getName() != null ? " - " + idp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -375,6 +377,7 @@ public class FederationServiceImpl
 				}
 				// update ketyabs
 				updateKeytabs (vip, federationMember);
+				vip.setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
 				updateAuthenticationMethods(vip, federationMember);
 				getFederationMemberEntityDao().update(vip);
 				String desc = vip.getPublicId() + (vip.getName() != null ? " - " + vip.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$

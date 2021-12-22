@@ -166,7 +166,7 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 		}
 	}
 
-	public String handleGetAuthenticationMethod(FederationMember fm, AdaptiveEnvironment env) throws InternalErrorException {
+	public AuthenticationMethod handleGetAuthenticationMethod(FederationMember fm, AdaptiveEnvironment env) throws InternalErrorException {
 		env.setService(this);
 		
 		for (AuthenticationMethod method: fm.getExtendedAuthenticationMethods())
@@ -175,10 +175,14 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 			{
 				log.info ("Applying adaptive profile "+method.getDescription()+" for " + 
 						(env.user() == null ? "unknown user": env.user().getUserName()));
-				return method.getAuthenticationMethods();
+				return method;
 			}
 		}
-		return fm.getAuthenticationMethods();
+		AuthenticationMethod m = new AuthenticationMethod();
+		m.setAlwaysAskForCredentials(fm.getAlwaysAskForCredentials());
+		m.setDescription("Default");
+		m.setAuthenticationMethods(fm.getAuthenticationMethods());
+		return m;
 	}
 
 	private boolean matchesCondition(AuthenticationMethod method, AdaptiveEnvironment env) throws InternalErrorException {

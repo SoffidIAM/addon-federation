@@ -134,16 +134,18 @@ public class Autenticator {
         	if (isValidSession(ti.getUser(), ti.getCreated()))
         		return true;
         }
-//    	LOG.info("Find cookie");
+        
+        if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials())) {
+        	
+        }
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
         {
         	for (Cookie c: req.getCookies())
         	{
         		if (c.getName().equals(ip.getSsoCookieName()))
         		{
-//        			LOG.info("Found session cookie "+c.getValue());
-    				if (checkExternalCookie(ctx, req, resp, config, c) || 
-    						checkOwnCookie(ctx, req, resp, config, c))
+    				if (checkExternalCookie(ctx, req, resp, config, c, ip) || 
+    						checkOwnCookie(ctx, req, resp, config, c, ip))
     					return true;
         		}
         	}
@@ -162,14 +164,13 @@ public class Autenticator {
 		return true;
 	}
 
-	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) 
+	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip) 
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException, ServletException {
 		String value = c.getValue();
 		FederationService fs = new RemoteServiceLocator().getFederacioService();
 		SamlValidationResults check = fs.validateSessionCookie(value);
 		if (check.isValid() && check.getUser() != null)
 		{
-//			LOG.info("Session cookie is valid");
 			Collection<UserAccount> accounts = new com.soffid.iam.remote.RemoteServiceLocator()
 					.getServerService()
 					.getUserAccounts(check.getUser().getId(), config.getSystem().getName());
@@ -196,15 +197,34 @@ public class Autenticator {
 		            return false;
 		        }
 		        else {
-		        	autenticate2(user, ctx, req, resp, "E", true);
+					if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials()))
+					{
+				        String entityId = (String) req.getSession()
+				        		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+						AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
+						if (authCtx == null)
+						{
+							authCtx = new AuthenticationContext();
+							authCtx.setPublicId(entityId);
+							authCtx.initialize( req );
+						}
+						authCtx.setFirstFactor(null);
+						authCtx.setSecondFactor(null);
+						authCtx.setStep(0);
+						authCtx.setUser(user);
+						authCtx.store(req);
+						return false;
+					} else {
+						autenticate2(user, ctx, req, resp, "E", true);
+						return true;
+					}
 		        }
-				return true;
 			}
 		}
 		return check.isValid();
 	}
 
-	private boolean checkOwnCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c) throws InternalErrorException, IOException, NoSuchAlgorithmException,
+	private boolean checkOwnCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip) throws InternalErrorException, IOException, NoSuchAlgorithmException,
 			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
 			CertificateException, NoSuchProviderException, SignatureException, IllegalStateException, ServletException {
 		String value = c.getValue();
@@ -218,7 +238,9 @@ public class Autenticator {
 //				LOG.info("Checking session cookie against session "+sessio.getId());
 				byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
 				String digestString = Base64.encodeBytes(digest);
-				if (digestString.equals(hash))
+				if (digestString.equals(hash) &&
+						(ip.getSessionTimeout() == null || 
+						sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() > System.currentTimeMillis()))
 				{
 					try {
 						
@@ -228,11 +250,31 @@ public class Autenticator {
 						{
 							for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
 							{
-//								LOG.info("Accepted session cookie against session "+sessio.getId());
-								autenticate2(account.getName(), ctx, req, resp,  
-										sessio.getAuthenticationMethod() == null ? "E" : sessio.getAuthenticationMethod(), 
-										true);
-				        		return true;
+								if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials()))
+								{
+							        String entityId = (String) req.getSession()
+							        		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+									AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
+									if (authCtx == null)
+									{
+										authCtx = new AuthenticationContext();
+										authCtx.setPublicId(entityId);
+										authCtx.initialize( req );
+									}
+									authCtx.setFirstFactor(null);
+									authCtx.setSecondFactor(null);
+									authCtx.setStep(0);
+									authCtx.setUser(account.getName());
+									authCtx.store(req);
+									return false;
+								}
+								else
+								{
+									autenticate2(account.getName(), ctx, req, resp,  
+											sessio.getAuthenticationMethod() == null ? "E" : sessio.getAuthenticationMethod(), 
+											true);
+					        		return true;
+								}
 							}
 						}
 					} catch (UnknownUserException e) {

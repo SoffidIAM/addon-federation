@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
+import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -67,6 +68,7 @@ public class AuthenticationContext {
 
 	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
+	private boolean alwaysAskForCredentials;
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
 		if (r == null)
@@ -120,7 +122,7 @@ public class AuthenticationContext {
     	}
     	currentUser = null;
 
-    	allowedAuthenticationMethods = findAllowedAuthenticationMethods();
+    	updateAllowedAuthenticationMethods();
         if (requestedAuthenticationMethod != null)
         {
         	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
@@ -158,7 +160,9 @@ public class AuthenticationContext {
 
         String method = getUsedMethod();
         
-        Set<String> allowed = findAllowedAuthenticationMethods();
+        Set<String> previous = allowedAuthenticationMethods;
+        updateAllowedAuthenticationMethods();
+        HashSet<String> allowed = new HashSet<>(allowedAuthenticationMethods);
         if (requestedAuthenticationMethod != null && ! requestedAuthenticationMethod.isEmpty())
         	allowed.retainAll(requestedAuthenticationMethod);
         
@@ -202,7 +206,7 @@ public class AuthenticationContext {
 	
 	
 	
-	private Set<String> findAllowedAuthenticationMethods() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+	public void updateAllowedAuthenticationMethods() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
 		IdpConfig config = IdpConfig.getConfig();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
     		
@@ -215,15 +219,15 @@ public class AuthenticationContext {
     	env.setServiceProvider(publicId);
     	env.setSourceIp(remoteIp);
     	env.setUser(currentUser);
-		String m = new RemoteServiceLocator().getUserBehaviorService().getAuthenticationMethod(fm, env );
+		AuthenticationMethod m = new RemoteServiceLocator().getUserBehaviorService().getAuthenticationMethod(fm, env );
+		alwaysAskForCredentials = Boolean.TRUE.equals( m.getAlwaysAskForCredentials() );
 
 		HashSet<String> methods = new HashSet<String>(); 
-		for ( String s: m.split(" "))
+		for ( String s: m.getAuthenticationMethods().split(" "))
 		{
 			methods.add(s);
 		}
-		return methods;
-
+		this.allowedAuthenticationMethods = methods;
 	}
 
 
@@ -301,7 +305,7 @@ public class AuthenticationContext {
 		{
 			getUserData(user);
 		
-			allowedAuthenticationMethods = findAllowedAuthenticationMethods();
+			updateAllowedAuthenticationMethods();
 	        if (requestedAuthenticationMethod != null)
 	        {
 	        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
@@ -548,6 +552,10 @@ public class AuthenticationContext {
 
 	public Challenge getChallenge() {
 		return challenge;
+  }
+  
+	public boolean isAlwaysAskForCredentials() {
+		return alwaysAskForCredentials;
 	}
 
 }

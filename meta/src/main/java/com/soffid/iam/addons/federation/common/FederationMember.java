@@ -116,6 +116,9 @@ public class FederationMember {
 	@Nullable 
 	String authenticationMethods;
 	
+	@Nullable 
+	Boolean alwaysAskForCredentials;
+
 	@Nullable
 	public String kerberosDomain;
 	

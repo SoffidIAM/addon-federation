@@ -9,5 +9,8 @@ public class ProfileNamespaceHandler extends BaseSpringNamespaceHandler {
     public void init() {
         registerBeanDefinitionParser(SoffidSAML2SLOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
                 new SoffidSAML2SLOProfileHandlerBeanDefinitionParser());
+
+        registerBeanDefinitionParser(SoffidSAML2SSOProfileHandlerBeanDefinitionParser.SCHEMA_TYPE,
+                new SoffidSAML2SSOProfileHandlerBeanDefinitionParser());
     }
 }
