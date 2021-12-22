@@ -523,4 +523,21 @@ public class AuthenticationContext {
 	public void setNewCredential(UserCredential credential) {
 		newCredential = credential;
 	}
+	public String getHostId( HttpServletResponse resp) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		if (hostId == null) {
+			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
+			if (hostId == null)
+			{
+				hostId = ubh.registerHost(remoteIp);
+				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
+				c2.setSecure(true);
+				c2.setMaxAge(Integer.MAX_VALUE);
+				c2.setHttpOnly(true);
+				resp.addCookie(c2);
+			}
+			
+		}
+		return hostId;
+	}
+
 }
