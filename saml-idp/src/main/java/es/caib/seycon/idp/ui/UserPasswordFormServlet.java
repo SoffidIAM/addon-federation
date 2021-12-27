@@ -117,7 +117,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
 
-            boolean otpAllowed = ctx.getNextFactor().contains("O");
+            boolean otpAllowed = ctx.getNextFactor().contains("O") || ctx.getNextFactor().contains("S") || ctx.getNextFactor().contains("I") || ctx.getNextFactor().contains("M");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {
             	User user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
@@ -125,6 +125,12 @@ public class UserPasswordFormServlet extends BaseForm {
             	
             	Challenge ch = new Challenge();
             	ch.setUser(user);
+            	StringBuffer otpType = new StringBuffer();
+            	if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
+            	if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
+            	if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
+            	if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
+            	ch.setOtpHandler(otpType.toString());
 	        	ch = v.selectToken(ch);
 	        	if (ch.getCardNumber() == null)
 	        	{

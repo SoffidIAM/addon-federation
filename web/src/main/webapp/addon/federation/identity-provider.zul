@@ -5,6 +5,17 @@
 
 <div  xmlns:h="http://www.w3.org/1999/xhtml"
 	use="com.soffid.iam.addons.federation.web.IdentityProvider" id="handler" dataPath="/." > 
+	<style>
+		div.auth.grid td:first-child div {
+			white-space: nowrap;
+		}
+		div.auth.grid td:not(:first-child) div {
+			text-align: center;
+		}
+		div.auth.grid td div span label {
+			display:none;
+		}
+	</style>
 	<div sclass="section" id="idSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.identification') }" />
 		<customfield3 label="${c:l('federacio.zul.IdpType')}"
@@ -194,71 +205,22 @@
 			<label sclass="label" value="${c:l('federacio.zul.allowedAuthenticationMethods')}"/>
 			<div sclass="container" >
 				<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/federationMember/authenticationMethods"
+					sclass="auth grid"
+					align="center"
 					style="display: block; margin-bottom: 0px;vertical-align: bottom;  position: initial; width: 100%; white-space: normal">
 					<columns>
-						<column label="${c:l('federacio.zul.firstAuthentication') }"/>
-						<column label="${c:l('federacio.zul.password') }"/>
-						<column label="${c:l('federacio.zul.kerberos') }"/>
-						<column label="${c:l('federacio.zul.broker')}"/>
-						<column label="${c:l('federacio.zul.OTP') }"/>
-						<column label="${c:l('federacio.zul.Certificate') }"/>
-						<column label="${c:l('federacio.zul.Fingerprint') }"/>
+						<column label="${c:l('federacio.zul.firstAuthentication') }"> </column>
+						<column label="${c:l('federacio.zul.password') }"> <custom-attributes type="P"/></column>
+						<column label="${c:l('federacio.zul.kerberos') }"> <custom-attributes type="K"/></column>
+						<column label="${c:l('federacio.zul.broker')}"> <custom-attributes type="E"/></column>
+						<column label="${c:l('federacio.zul.OTP') }"> <custom-attributes type="O"/></column>
+						<column label="${c:l('federacio.zul.Email') }"> <custom-attributes type="M"/></column>
+						<column label="${c:l('federacio.zul.SMS') }"> <custom-attributes type="S"/></column>
+						<column label="${c:l('federacio.zul.PIN') }"> <custom-attributes type="I"/></column>
+						<column label="${c:l('federacio.zul.Certificate') }"> <custom-attributes type="C"/></column>
+						<column label="${c:l('federacio.zul.Fingerprint') }"> <custom-attributes type="F"/></column>
 					</columns>
 					<rows>
-						<row>
-							<label value="${c:l('federacio.zul.password') }"/>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.P') }"> <custom-attributes type="P"/></checkbox>
-							<label/>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.PF') }"> <custom-attributes type="PF"/></checkbox>
-						</row>
-						<row>
-							<label value="${c:l('federacio.zul.kerberos') }"/>
-							<label/>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.K') }"> <custom-attributes type="K"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.KF') }"> <custom-attributes type="KF"/></checkbox>
-						</row>
-						<row>
-							<label value="${c:l('federacio.zul.broker') }"/>
-							<label/>
-							<label/>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.EO') }"> <custom-attributes type="EO"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.EC') }"> <custom-attributes type="EC"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.EF') }"> <custom-attributes type="EF"/></checkbox>
-						</row>
-						<row>
-							<label value="${c:l('federacio.zul.OTP') }"/>
-							<label />
-							<label />
-							<label />
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.OF') }"> <custom-attributes type="OF"/></checkbox>
-						</row>
-						<row>
-							<label value="${c:l('federacio.zul.Certificate') }"/>
-							<label/>
-							<label/>
-							<label />
-							<label/>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.CF') }"> <custom-attributes type="CF"/></checkbox>
-						</row>
-						<row>
-							<label value="${c:l('federacio.zul.Fingerprint') }"/>
-							<label/>
-							<label/>
-							<label />
-							<label/>
-							<label/>
-							<checkbox tooltiptext="${c:l('federacio.zul.auth.F') }"> <custom-attributes type="F"/></checkbox>
-						</row>
 					</rows>
 				</grid>
 				<button label="${c:l('federacio.zul.adaptiveAuthentication') }..."
@@ -553,71 +515,20 @@
 										"user": "com.soffid.iam.api.User"}'/>
 							
 							<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/authenticationMethods"
-								style="margin-left: 192px">
+								style="margin-left: 192px" align="center">
 								<columns>
-									<column label="${c:l('federacio.zul.firstAuthentication') }"/>
-									<column label="${c:l('federacio.zul.password') }"/>
-									<column label="${c:l('federacio.zul.kerberos') }"/>
-									<column label="${c:l('federacio.zul.broker')}"/>
-									<column label="${c:l('federacio.zul.OTP') }"/>
-									<column label="${c:l('federacio.zul.Certificate') }"/>
-									<column label="${c:l('federacio.zul.Fingerprint') }"/>
+									<column label="${c:l('federacio.zul.firstAuthentication') }"> </column>
+									<column label="${c:l('federacio.zul.password') }"> <custom-attributes type="P"/></column>
+									<column label="${c:l('federacio.zul.kerberos') }"> <custom-attributes type="K"/></column>
+									<column label="${c:l('federacio.zul.broker')}"> <custom-attributes type="E"/></column>
+									<column label="${c:l('federacio.zul.OTP') }"> <custom-attributes type="O"/></column>
+									<column label="${c:l('federacio.zul.Email') }"> <custom-attributes type="M"/></column>
+									<column label="${c:l('federacio.zul.SMS') }"> <custom-attributes type="S"/></column>
+									<column label="${c:l('federacio.zul.PIN') }"> <custom-attributes type="I"/></column>
+									<column label="${c:l('federacio.zul.Certificate') }"> <custom-attributes type="C"/></column>
+									<column label="${c:l('federacio.zul.Fingerprint') }"> <custom-attributes type="F"/></column>
 								</columns>
 								<rows>
-									<row>
-										<label value="${c:l('federacio.zul.password') }"/>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.P') }"> <custom-attributes type="P"/></checkbox>
-										<label/>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.PE') }"> <custom-attributes type="PE"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.PO') }"> <custom-attributes type="PO"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.PC') }"> <custom-attributes type="PC"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.PF') }"> <custom-attributes type="PF"/></checkbox>
-									</row>
-									<row>
-										<label value="${c:l('federacio.zul.kerberos') }"/>
-										<label/>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.K') }"> <custom-attributes type="K"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.KE') }"> <custom-attributes type="KE"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.KO') }"> <custom-attributes type="KO"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.KC') }"> <custom-attributes type="KC"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.KF') }"> <custom-attributes type="KF"/></checkbox>
-									</row>
-									<row>
-										<label value="${c:l('federacio.zul.broker') }"/>
-										<label/>
-										<label/>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.E') }"> <custom-attributes type="E"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.EO') }"> <custom-attributes type="EO"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.EC') }"> <custom-attributes type="EC"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.EF') }"> <custom-attributes type="EF"/></checkbox>
-									</row>
-									<row>
-										<label value="${c:l('federacio.zul.OTP') }"/>
-										<label />
-										<label />
-										<label />
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.O') }"> <custom-attributes type="O"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.OC') }"> <custom-attributes type="OC"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.OF') }"> <custom-attributes type="OF"/></checkbox>
-									</row>
-									<row>
-										<label value="${c:l('federacio.zul.Certificate') }"/>
-										<label/>
-										<label/>
-										<label />
-										<label/>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.C') }"> <custom-attributes type="C"/></checkbox>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.CF') }"> <custom-attributes type="CF"/></checkbox>
-									</row>
-									<row>
-										<label value="${c:l('federacio.zul.Fingerprint') }"/>
-										<label/>
-										<label/>
-										<label />
-										<label/>
-										<label/>
-										<checkbox tooltiptext="${c:l('federacio.zul.auth.F') }"> <custom-attributes type="F"/></checkbox>
-									</row>
 								</rows>
 							</grid>
 						</div>

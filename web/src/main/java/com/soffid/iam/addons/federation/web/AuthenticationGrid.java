@@ -5,14 +5,19 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.ext.AfterCompose;
 import org.zkoss.zul.Checkbox;
+import org.zkoss.zul.Column;
+import org.zkoss.zul.Columns;
 import org.zkoss.zul.Grid;
+import org.zkoss.zul.Label;
 import org.zkoss.zul.Row;
+import org.zkoss.zul.Rows;
 
 import es.caib.zkib.binder.SingletonBinder;
 import es.caib.zkib.events.XPathEvent;
@@ -97,9 +102,32 @@ public class AuthenticationGrid extends Grid implements XPathSubscriber, AfterCo
 	}
 
 	public void afterCompose() {
-		for (Checkbox cb: findCheckboxes())
-		{
-			cb.addEventListener("onCheck", onCheckListener );
+		Columns columns = getColumns();
+		Rows rows = getRows();
+		for (int i = 1; i < columns.getChildren().size(); i++) {
+			Column c = (Column) columns.getChildren().get(i);
+			String k = (String) c.getAttribute("type");
+			Row row = new Row();
+			rows.appendChild(row);
+			row.appendChild(new Label(c.getLabel()));
+			for (int j = 1; j < i; j++) {
+				row.appendChild(new Label());
+			}
+			for (int j = i; j < columns.getChildren().size(); j++) {
+				Checkbox cb = new Checkbox();
+				Column c2 = (Column) columns.getChildren().get(j);
+				String k2 = (String) c2.getAttribute("type");
+				if (i == j) {
+					cb.setAttribute("type", k);
+					cb.setTooltiptext(c.getLabel());
+				} else {
+					cb.setAttribute("type", k+k2);
+					cb.setTooltiptext(c.getLabel()+" + "+
+							c2.getLabel());
+				}
+				cb.addEventListener("onCheck", onCheckListener );
+				row.appendChild(cb);
+			}
 		}
 	}
 	
