@@ -177,7 +177,8 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 	}	
 
 	public void onChangeName(Event event) {
-		XPathUtils.setValue(this, "description",  XPathUtils.eval(this, "federationMember/publicId"));
+		XPathUtils.setValue(this, "description",  XPathUtils.eval(this, "federationMember/publicId") + " - "+
+				XPathUtils.eval(this, "federationmember/name"));
 	}
 	
 	public void changeMetadata(Event event) throws ParserConfigurationException, SAXException, IOException {
@@ -202,6 +203,7 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
                     	if (id != null)
                     	{
                     		publicid.setValue( id );
+                    		onChangeName(event);
                     	}
                     }
                 }
@@ -397,8 +399,8 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 			es.caib.zkib.zkiblaf.Missatgebox.info(org.zkoss.util.resource.Labels.getLabel("federacio.zul.wrongPin"));
 			return;
 		}
-		XPathUtils.setValue(this, publicKeyPath, res[0]);
-		XPathUtils.setValue(this, keyPath, res[1]);
+		XPathUtils.setValue(this, keyPath, res[0]);
+		XPathUtils.setValue(this, publicKeyPath, res[1]);
 		XPathUtils.setValue(this, certPath, res[2]);
 		Window w = (Window) getFellow("pkcs12");
 		w.setVisible(false);

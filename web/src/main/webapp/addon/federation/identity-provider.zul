@@ -24,6 +24,7 @@
 		<customfield3 label="${c:l('federacio.zul.Name')}"
 			dataType="STRING"
 			bind="/federationMember/name" maxlength="255" 
+			onChange="ref:handler.onChangeName"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 		<customfield3 id="organization"
 			label="${c:l('federacio.zul.Organization')}"
