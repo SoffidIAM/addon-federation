@@ -1614,19 +1614,11 @@ public class FederationServiceImpl
 		}
 		key.append(usuari.getId());
 		
-		Collection<DataType> list = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, RECOVER_KEY);
+		Collection<DataType> list = getAdditionalDataService().findDataTypesByObjectTypeAndName(User.class.getName(), RECOVER_KEY);
 		DataType tda;
 		if (list == null || list.isEmpty())
 		{
-			createDataType(RECOVER_KEY);
-			tda = new DataType ();
-			tda.setCode(RECOVER_KEY);
-			tda.setOrder(-101L);
-			tda.setType(TypeEnumeration.STRING_TYPE);
-			tda.setOperatorVisibility(AttributeVisibilityEnum.HIDDEN);
-			tda.setAdminVisibility(AttributeVisibilityEnum.EDITABLE);
-			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
-			getAdditionalDataService().create (tda);
+			tda = createDataType(RECOVER_KEY);
 		}
 		else
 		{
@@ -1754,13 +1746,14 @@ public class FederationServiceImpl
 		return usuari;
 	}
 
-	public void createDataType(String key) throws InternalErrorException {
+	public DataType createDataType(String key) throws InternalErrorException {
 		Collection<DataType> l = getAdditionalDataService().findDataTypesByScopeAndName(MetadataScope.USER, key);
 		if (l == null || l.isEmpty())
 		{
 			DataType tda = new DataType();
 			tda.setCode(key);
 			tda.setOrder(0L);
+			tda.setObjectType(User.class.getName());
 			tda.setType(TypeEnumeration.STRING_TYPE);
 			tda.setScope(MetadataScope.USER);
 			tda.setOperatorVisibility(AttributeVisibilityEnum.EDITABLE);
@@ -1768,7 +1761,10 @@ public class FederationServiceImpl
 			tda.setUserVisibility(AttributeVisibilityEnum.HIDDEN);
 
 			tda = getAdditionalDataService().create(tda);
+			return tda;
 		}
+		else
+			return l.iterator().next();
 	}
 
 	@Override

@@ -52,7 +52,9 @@ public class PasswordRecoveryAction extends HttpServlet {
 	    	
 	        String email = req.getParameter("email"); //$NON-NLS-1$
 	        
-    		String url = "https://"+config.getHostName()+":"+config.getStandardPort()+PasswordRecoveryAction2.URI;
+	        FederationMember fm = config.getFederationMember();
+	        
+    		String url = "https://"+fm.getHostName()+":"+fm.getStandardPort()+PasswordRecoveryAction2.URI;
     		
     		try
     		{
