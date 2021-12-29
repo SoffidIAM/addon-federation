@@ -62,6 +62,7 @@ public class AuthenticationContext {
 	private Account currentAccount;
 	private UserCredential newCredential;
 	long timestamp = 0;
+
 	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
