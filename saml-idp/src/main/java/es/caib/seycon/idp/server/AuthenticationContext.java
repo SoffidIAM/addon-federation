@@ -24,6 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
@@ -55,7 +58,7 @@ public class AuthenticationContext {
 	private User currentUser;
 	private Account currentAccount;
 	private UserCredential newCredential;
-	
+	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
@@ -142,14 +145,8 @@ public class AuthenticationContext {
 			String[] tp = trustedProxies.split("[, ]+");
 			if ( isTrusted (ip, tp) )
 			{
-				if (forwardedFor == null || forwardedFor.trim().isEmpty())
+				if (forwardedFor != null && !forwardedFor.trim().isEmpty())
 				{
-					try {
-						ip = InetAddress.getLocalHost().getHostAddress();
-					} catch (UnknownHostException e) {
-						ip = "127.0.0.1" ;
-					}
-				} else {
 					String[] ff = forwardedFor.split("[ ,]+");
 					for (int i = ff.length - 1; i >= 0; i--)
 					{
