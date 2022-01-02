@@ -1,6 +1,8 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
+import java.util.Set;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -66,7 +68,15 @@ public class OTPAction extends HttpServlet {
             	}
             	else if (v.validatePin(ch, p)) {
             		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-            		ctx.authenticated(u, "O", resp); //$NON-NLS-1$
+            		Set<String> nf = ctx.getNextFactor();
+            		if (nf.contains("I"))
+            			ctx.authenticated(u, "I", resp); //$NON-NLS-1$
+            		else if (nf.contains("S")) 
+            			ctx.authenticated(u, "S", resp); //$NON-NLS-1$
+            		else if (nf.contains("M")) 
+            			ctx.authenticated(u, "M", resp); //$NON-NLS-1$
+            		else if (nf.contains("O")) 
+            			ctx.authenticated(u, "O", resp); //$NON-NLS-1$
             		ctx.store(req);
             		if ( ctx.isFinished())
             		{

@@ -144,7 +144,7 @@ public class UserPasswordFormServlet extends BaseForm {
 	        	{
 	            	g.addArgument("otpAllowed",  "true"); //$NON-NLS-1$ //$NON-NLS-2$
 	            	
-	            	g.addArgument("otpToken",  ch.getCardNumber()); //$NON-NLS-1$ //$NON-NLS-2$
+	            	g.addArgument("otpToken",  ch.getCardNumber()+" "+ch.getCell()); //$NON-NLS-1$ //$NON-NLS-2$
 
 	        	}
             }
