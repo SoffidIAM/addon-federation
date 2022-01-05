@@ -58,38 +58,40 @@ public class OTPAction extends HttpServlet {
             	
             	User user = new RemoteServiceLocator().getServerService().getUserInfo(u, config.getSystem().getName());
             	
-            	Challenge ch = new Challenge();
-            	ch.setUser(user);
-            	ch = v.selectToken(ch);
-            	if (ch.getCardNumber() == null)
-            	{
+            	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+            	if (ctx == null) {
             		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
                     logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
+            	} else {
+	            	Challenge ch = ctx.getChallenge();
+	            	if (ch == null ||  ch.getCardNumber() == null)
+	            	{
+	            		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
+	                    logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
+	            	}
+	            	else if (v.validatePin(ch, p)) {
+	            		Set<String> nf = ctx.getNextFactor();
+	            		if (nf.contains("I"))
+	            			ctx.authenticated(u, "I", resp); //$NON-NLS-1$
+	            		else if (nf.contains("S")) 
+	            			ctx.authenticated(u, "S", resp); //$NON-NLS-1$
+	            		else if (nf.contains("M")) 
+	            			ctx.authenticated(u, "M", resp); //$NON-NLS-1$
+	            		else if (nf.contains("O")) 
+	            			ctx.authenticated(u, "O", resp); //$NON-NLS-1$
+	            		ctx.store(req);
+	            		if ( ctx.isFinished())
+	            		{
+	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+	            			return;
+	            		}
+	                } else {
+	            		if (ctx != null)
+	            			ctx.authenticationFailure(u);
+	                	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
+	                    logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
+	                }
             	}
-            	else if (v.validatePin(ch, p)) {
-            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-            		Set<String> nf = ctx.getNextFactor();
-            		if (nf.contains("I"))
-            			ctx.authenticated(u, "I", resp); //$NON-NLS-1$
-            		else if (nf.contains("S")) 
-            			ctx.authenticated(u, "S", resp); //$NON-NLS-1$
-            		else if (nf.contains("M")) 
-            			ctx.authenticated(u, "M", resp); //$NON-NLS-1$
-            		else if (nf.contains("O")) 
-            			ctx.authenticated(u, "O", resp); //$NON-NLS-1$
-            		ctx.store(req);
-            		if ( ctx.isFinished())
-            		{
-            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
-            			return;
-            		}
-                } else {
-            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-            		if (ctx != null)
-            			ctx.authenticationFailure(u);
-                	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
-                    logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
-                }
             } catch (UnknownUserException e) {
             } catch (Exception e) {
                 error = Messages.getString("UserPasswordAction.internal.error");

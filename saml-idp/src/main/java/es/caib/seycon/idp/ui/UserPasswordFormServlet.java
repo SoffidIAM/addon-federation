@@ -132,6 +132,7 @@ public class UserPasswordFormServlet extends BaseForm {
             	if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
             	ch.setOtpHandler(otpType.toString());
 	        	ch = v.selectToken(ch);
+	        	ctx.setChallenge(ch);
 	        	if (ch.getCardNumber() == null)
 	        	{
 	        		if ( ctx.getNextFactor().size() == 1)

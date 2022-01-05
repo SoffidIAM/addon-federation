@@ -38,6 +38,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.api.Account;
+import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.utils.ConfigurationCache;
@@ -62,6 +63,7 @@ public class AuthenticationContext {
 	private Account currentAccount;
 	private UserCredential newCredential;
 	long timestamp = 0;
+	private Challenge challenge;
 
 	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
@@ -577,6 +579,16 @@ public class AuthenticationContext {
 			
 		}
 		return hostId;
+	}
+
+
+	public void setChallenge(Challenge ch) {
+		this.challenge = ch;
+	}
+
+
+	public Challenge getChallenge() {
+		return challenge;
 	}
 
 }
