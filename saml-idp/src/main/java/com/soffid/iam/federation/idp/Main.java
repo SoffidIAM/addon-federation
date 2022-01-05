@@ -71,6 +71,7 @@ import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
 import es.caib.seycon.idp.openid.server.TokenEndpoint;
+import es.caib.seycon.idp.openid.server.TokenIntrospectionEndpoint;
 import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
@@ -449,6 +450,12 @@ public class Main {
 	        				openIdProfile.getTokenEndpoint()); //$NON-NLS-1$
 
         	servlet = new ServletHolder(
+	                TokenIntrospectionEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("TokenIntrospectionEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, "/token_info"); //$NON-NLS-1$
+
+	        servlet = new ServletHolder(
 	                RevokeEndpoint.class);
 	        servlet.setInitOrder(2);
 	        servlet.setName("RevokeEndpoint"); //$NON-NLS-1$

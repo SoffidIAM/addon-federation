@@ -55,11 +55,31 @@ public class AuthorizationResponse  {
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
-		h.generateToken (token);
 		
-		Map<String, Object>att  ;
+		Map<String, Object> att;
 		try {
-			att = new UserAttributesGenerator().generateAttributes ( ctx, token );
+			att = new UserAttributesGenerator().generateAttributes(ctx, token);
+		} catch (AttributeResolutionException e) {
+			log.warn("Error resolving attributes", e);
+			buildError(response, r, "Error resolving attributes");
+			return;
+		} catch (AttributeFilteringException e) {
+			log.warn("Error filtering attributes", e);
+			buildError(response, r, "Error resolving attributes");
+			return;
+		} catch (InternalErrorException e) {
+			log.warn("Error evaluating claims", e);
+			buildError(response, r, "Error resolving attributes");
+			return;
+		} catch (Exception e) {
+			log.warn("Error generating response", e);
+			buildError(response, r, "Error generating response");
+			return;
+		}
+
+		h.generateToken (token, att);
+		
+		try {
 			String openidToken = h.generateIdToken (token, att);
 			StringBuffer sb = new StringBuffer();
 			String url = r.getFederationMember().getOpenidUrl();
@@ -98,14 +118,6 @@ public class AuthorizationResponse  {
 				out.println("State: "+r.getState());
 			}
 			
-		} catch (AttributeResolutionException e) {
-			log.warn("Error resolving attributes", e);
-			buildError(response, r, "Error resolving attributes");
-			return;
-		} catch (AttributeFilteringException e) {
-			log.warn("Error filtering attributes", e);
-			buildError(response, r, "Error resolving attributes");
-			return;
 		} catch (InternalErrorException e) {
 			log.warn("Error evaluating claims", e);
 			buildError(response, r, "Error resolving attributes");

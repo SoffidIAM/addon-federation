@@ -37,7 +37,7 @@ public class OauthTokenEntity {
 	String authorizationCode;
 	
 	@Nullable
-	@Column (name="TOK_TOKEN")
+	@Column (name="TOK_TOKEN", length = 1024)
 	String token;
 	
 	@Column (name="TOK_REFTOK")

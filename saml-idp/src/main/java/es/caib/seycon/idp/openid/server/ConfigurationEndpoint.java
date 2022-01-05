@@ -61,13 +61,15 @@ public class ConfigurationEndpoint extends HttpServlet {
             IdpConfig c = IdpConfig.getConfig();
         	SAMLProfile openIdProfile = useOpenidProfile();
 			Map<String, Object> att = new HashMap<String, Object>();
-			att.put("issuer", "https://"+c.getHostName()+":"+c.getStandardPort());
-			att.put("authorization_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getAuthorizationEndpoint());
-			att.put("token_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());
-			att.put("userinfo_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getUserInfoEndpoint());
+			att.put("issuer", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
+			att.put("authorization_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getAuthorizationEndpoint());
+			att.put("introspection_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/token_info");
+			att.put("introspection_endpoint_auth_methods_supported", new String[] { "client_secret_basic"});
+			att.put("token_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());
+			att.put("userinfo_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getUserInfoEndpoint());
 			if (openIdProfile.getRevokeEndpoint() != null)
-				att.put("revoke_endpoint", "https://"+c.getHostName()+":"+c.getStandardPort()+openIdProfile.getRevokeEndpoint());
-			att.put("jwks_uri", "https://"+c.getHostName()+":"+c.getStandardPort()+"/.well-known/jwks.json");
+				att.put("revoke_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getRevokeEndpoint());
+			att.put("jwks_uri", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/.well-known/jwks.json");
 			JSONArray scopes = new JSONArray();
 			scopes.put("openid");
 			att.put("scopes_supported", scopes);

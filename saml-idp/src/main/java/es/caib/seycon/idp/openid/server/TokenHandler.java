@@ -153,7 +153,8 @@ public class TokenHandler {
 			return ti;
 	}
 
-	public synchronized void generateToken(TokenInfo t) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+	public synchronized void generateToken(TokenInfo t, Map<String, Object> att) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+		IdpConfig c = IdpConfig.getConfig();
 		if (t.getAuthorizationCode() != null)
 		{
 			authorizationCodes.remove(t.getAuthorizationCode());
@@ -163,7 +164,7 @@ public class TokenHandler {
 		
 		checkUserIsEnabled(t);
 
-		t.token = generateRandomString(129);		
+		
 		t.authorizationCode = null;
 		t.refreshToken = generateRandomString(129);		
 		refreshTokens.put(t.refreshToken, t);
@@ -177,6 +178,25 @@ public class TokenHandler {
 			t.expiresRefresh = System.currentTimeMillis() + 24L * 60 * 60 * 1000L; // 1 day
 		else
 			t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
+		String random = generateRandomString(129);
+		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
+				.withExpiresAt( new Date (t.getExpires()))
+				.withIssuedAt(new Date(t.getCreated()))
+				.withClaim("client_id", t.getRequest().getClientId() )
+				.withJWTId(random)
+				.withIssuer("https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
+		if (t.getRequest().getScope() != null)
+			builder.withClaim("scope", t.getRequest().getScope());
+		else
+			builder.withClaim("scope", "openid");
+
+		KeyPair keyPair = c.getKeyPair();
+		
+		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
+		String signedToken = builder.sign(algorithmRS);
+		completeJWTBuilder(att, builder, false);
+		t.token = signedToken;
+		
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
 		getFederationService().createOauthToken(generateOauthToken(t));
@@ -242,8 +262,19 @@ public class TokenHandler {
 				.withClaim("auth_time", t.getAuthentication())
 				.withClaim("nonce", t.request.getNonce())
 				.withKeyId(c.getHostName())
-				.withIssuer("https://"+c.getHostName()+":"+c.getStandardPort());
+				.withIssuer("https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
 
+		completeJWTBuilder(att, builder, false);
+
+		KeyPair keyPair = c.getKeyPair();
+		
+		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
+		String signedToken = builder.sign(algorithmRS);
+		
+		return signedToken;
+	}
+
+	public void completeJWTBuilder(Map<String, Object> att, Builder builder, boolean onlySubject) {
 		String subject = null;
 		String email = null;
 		String uid = null;
@@ -265,50 +296,54 @@ public class TokenHandler {
 				if ( openIdName.equalsIgnoreCase("email") && !values.isEmpty())
 					email = values.iterator().next().toString();
 				
-				if (values.size() == 1)
-				{
-					value = values.iterator().next();
-					if (value != null)
+				if (!onlySubject) {
+					if (values.size() == 1)
 					{
-						if (value instanceof Long)
-							builder.withClaim(openIdName, (Long)value);
-						else if (value instanceof Integer)
-							builder.withClaim(openIdName, (Integer)value);
-						else if (value instanceof Date)
-							builder.withClaim(openIdName, (Date)value);
-						else if (value instanceof Double)
-							builder.withClaim(openIdName, (Double)value);
-						else if (value instanceof Boolean)
-							builder.withClaim(openIdName, (Boolean)value);
-						else
-							builder.withClaim(openIdName, value.toString());
+						value = values.iterator().next();
+						if (value != null)
+						{
+							if (value instanceof Long)
+								builder.withClaim(openIdName, (Long)value);
+							else if (value instanceof Integer)
+								builder.withClaim(openIdName, (Integer)value);
+							else if (value instanceof Date)
+								builder.withClaim(openIdName, (Date)value);
+							else if (value instanceof Double)
+								builder.withClaim(openIdName, (Double)value);
+							else if (value instanceof Boolean)
+								builder.withClaim(openIdName, (Boolean)value);
+							else
+								builder.withClaim(openIdName, value.toString());
+						}
 					}
-				}
-				else
-				{
-					String[] data = new String[values.size()];
-					int i = 0;
-					for ( Object obj: values)
-						data[i++] = obj.toString();
-					builder.withArrayClaim(openIdName, data);
+					else
+					{
+						String[] data = new String[values.size()];
+						int i = 0;
+						for ( Object obj: values)
+							data[i++] = obj.toString();
+						builder.withArrayClaim(openIdName, data);
+					}
 				}
 			}
 		}
 		
-		if (subject == null)
+		if (onlySubject) {
+			builder.withSubject(subject != null ? subject: 
+				uid != null ? uid: 
+				email != null ? email :
+					null);
+			if (email != null)
+				builder.withClaim("email", email);
+		}
+		else  if (subject == null)
 		{
 			if (uid != null)
 				builder.withSubject(uid);
-			if (email != null)
+			if (email != null) {
 				builder.withSubject(email);
+			}
 		}
-
-		KeyPair keyPair = c.getKeyPair();
-		
-		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
-		String signedToken = builder.sign(algorithmRS);
-		
-		return signedToken;
 	}
 
 	public TokenInfo getToken(String token) throws InternalErrorException {
@@ -369,6 +404,7 @@ public class TokenHandler {
 		t.setRefreshToken(o.getRefreshToken());
 		t.setRequest(new OpenIdRequest());
 		t.getRequest().setFederationMember(getFederationService().findFederationMemberByPublicId(o.getServiceProvider()));
+		t.getRequest().setClientId(t.getRequest().getFederationMember().getOpenidClientId());
 		t.setToken(o.getToken());
 		t.setUser(o.getUser());
 		t.setSessionId(o.getSessionId());

@@ -183,15 +183,35 @@ public class TokenEndpoint extends HttpServlet {
 				}
 			}
 
+			Map<String, Object> att;
 			try {
-				h.generateToken(t);
+				att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
+			} catch (AttributeResolutionException e) {
+				log.warn("Error resolving attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (AttributeFilteringException e) {
+				log.warn("Error filtering attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (InternalErrorException e) {
+				log.warn("Error evaluating claims", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (Exception e) {
+				log.warn("Error generating response", e);
+				buildError(resp, "Error generating response", t);
+				return;
+			}
+			try {
+				h.generateToken(t, att);
 			} catch (Exception e) {
 				log.info("Error generating token", e);
 				buildError(resp, "server_error", "Internal error " + e.toString());
 				return;
 			}
 
-			generatTokenResponse(resp, h, t);
+			generatTokenResponse(resp, att, h, t);
 		} catch (Exception e) {
 			log.warn("Error generating token response", e);
 			buildError(resp, e.toString());
@@ -229,8 +249,28 @@ public class TokenEndpoint extends HttpServlet {
 				}
 
 			}
-			h.generateToken(t);
-			generatTokenResponse(resp, h, t);
+			Map<String, Object> att;
+			try {
+				att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
+			} catch (AttributeResolutionException e) {
+				log.warn("Error resolving attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (AttributeFilteringException e) {
+				log.warn("Error filtering attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (InternalErrorException e) {
+				log.warn("Error evaluating claims", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (Exception e) {
+				log.warn("Error generating response", e);
+				buildError(resp, "Error generating response", t);
+				return;
+			}
+			h.generateToken(t, att);
+			generatTokenResponse(resp, att, h, t);
 		} catch (Exception e) {
 			log.info("Error generating token", e);
 			buildError(resp, "Internal error " + e.toString(), t);
@@ -273,22 +313,9 @@ public class TokenEndpoint extends HttpServlet {
 			return;
 		}
 
-		generatTokenResponse(resp, h, t);
-	}
-
-	private void generatTokenResponse(HttpServletResponse resp, TokenHandler h, TokenInfo t)
-			throws IOException, ServletException {
 		Map<String, Object> att;
 		try {
 			att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
-			String token = h.generateIdToken(t, att);
-			JSONObject o = new JSONObject();
-			o.put("access_token", t.token);
-			o.put("token_type", "Bearer");
-			o.put("refresh_token", t.refreshToken);
-			o.put("expires_in", (t.expires - System.currentTimeMillis()) / 1000);
-			o.put("id_token", token);
-			buildResponse(resp, o);
 		} catch (AttributeResolutionException e) {
 			log.warn("Error resolving attributes", e);
 			buildError(resp, "Error resolving attributes", t);
@@ -301,10 +328,25 @@ public class TokenEndpoint extends HttpServlet {
 			log.warn("Error evaluating claims", e);
 			buildError(resp, "Error resolving attributes", t);
 			return;
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			log.warn("Error generating response", e);
 			buildError(resp, "Error generating response", t);
 			return;
+		}
+		generatTokenResponse(resp, att, h, t);
+	}
+
+	private void generatTokenResponse(HttpServletResponse resp, Map<String, Object> att, TokenHandler h, TokenInfo t)
+			throws IOException, ServletException {
+		try {
+			String token = h.generateIdToken(t, att);
+			JSONObject o = new JSONObject();
+			o.put("access_token", t.token);
+			o.put("token_type", "Bearer");
+			o.put("refresh_token", t.refreshToken);
+			o.put("expires_in", (t.expires - System.currentTimeMillis()) / 1000);
+			o.put("id_token", token);
+			buildResponse(resp, o);
 		} catch (Throwable e) {
 			log.warn("Error generating open id token", e);
 			buildError(resp, "Error generating open id token", t);
