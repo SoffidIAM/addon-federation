@@ -3,7 +3,6 @@ package com.soffid.iam.addons.federation.api.adaptive;
 import java.io.IOException;
 import java.util.Date;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.User;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -29,10 +28,10 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 
 	@Override
 	public boolean newDevice() throws InternalErrorException {
-		if (hostId == null)
+		if (hostId == null || user == null)
 			return true;
 		Date last = getService().getLastLogon(user.getId(), hostId);
-		return last != null;
+		return last == null;
 	}
 
 	@Override
