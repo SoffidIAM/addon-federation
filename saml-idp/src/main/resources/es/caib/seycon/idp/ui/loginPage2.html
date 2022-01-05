@@ -4,6 +4,8 @@
 <head>
 	
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge" >
 	<title>Soffid SAML Identity Provider</title>
 	
 	<!-- css -->
@@ -18,19 +20,23 @@
 		var xmlhttp = new XMLHttpRequest();
 		var url = "/sp-profile/user-idp?user="+encodeURIComponent(user);
 
-		xmlhttp.onreadystatechange = function() {
-		    if (this.readyState == 4 && this.status == 200) {
-		        var myArr = JSON.parse(this.responseText); 
-		        if (myArr.idp)
-		        {
-		        	location.href = "/sp-profile/SAML2/Forward?user=" +
-			        	encodeURIComponent(user) + "&idp="+
-			        	encodeURIComponent(myArr.idp);
-		        }
-		    }
-		};
-		xmlhttp.open("GET", url, true);
-		xmlhttp.send();
+		if (JSON) {
+			xmlhttp.onreadystatechange = function() {
+			    if (this.readyState == 4 && this.status == 200) {
+			        var myArr = JSON.parse(this.responseText); 
+			        if (myArr.idp)
+			        {
+			        	var url = "/sp-profile/SAML2/Forward";
+			        	if (myArr.url) url = myArr.url;
+			        	location.href = url+"?user=" +
+				        	encodeURIComponent(user) + 
+				        	"&idp="+ encodeURIComponent(myArr.idp);
+			        }
+			    }
+			};
+			xmlhttp.open("GET", url, true);
+			xmlhttp.send();
+		}
 	}
 
 	</script>
@@ -57,11 +63,15 @@
 			<div class="logintype2"  id ="passlogin">
 				<form method="post" action="${passwordLoginUrl}">
 					<div class="upinput">
-						${Username}: 
-						<input name="j_username" id="j_username" ${userReadonly}="readonly"
-								type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
-						${Password}:
-						<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+						<span class="labeltextbox">
+							${Username}: 
+							<input name="j_username" id="j_username" ${userReadonly}="readonly"
+									type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
+						</span>
+						<span class="labeltextbox">
+							${Password}:
+							<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+						</span>
 					</div>
 					<div class="upbutton">
 						<input id="loginpassbutton" name="formUCboton" type="submit" value="${Login}" />
@@ -74,11 +84,15 @@
 			<div class="logintype2"  id ="otplogin">
 				<form method="post" action="${otpLoginUrl}">
 					<div class="otpinput">
-						${Username}: 
-						<input name="j_username" id="j_username" ${userReadonly}="readonly"
-								type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
-						${OTPPin} ${otpToken}:
-						<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+						<span class="labeltextbox">
+							${Username}: 
+							<input name="j_username" id="j_username" ${userReadonly}="readonly"
+									type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
+						</span>
+						<span class="labeltextbox">
+							${OTPPin} ${otpToken}:
+							<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+						</span>
 					</div>
 					<div class="upbutton">
 						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
