@@ -10,11 +10,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.soffid.iam.addons.rememberPassword.common.MissconfiguredRecoverException;
-import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
-import com.soffid.iam.addons.rememberPassword.common.UserAnswer;
-import com.soffid.iam.addons.rememberPassword.service.Messages;
-import com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService;
+import com.soffid.iam.addons.passrecover.common.MissconfiguredRecoverException;
+import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
+import com.soffid.iam.addons.passrecover.common.UserAnswer;
+import com.soffid.iam.addons.passrecover.service.RecoverPasswordUserService;
 
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -48,14 +47,14 @@ public class PasswordRememberForm extends BaseForm {
 
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
         if (! amf.allowUserPassword())
-            throw new ServletException (Messages.getString("UserPasswordFormServlet.methodNotAllowed")); //$NON-NLS-1$
+            throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
 
     	HttpSession session = req.getSession();
         
         String email = (String) session.getAttribute("rememberPasswordEmail");
 
         try {
-            RememberPasswordChallenge challenge = (RememberPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
+            RecoverPasswordChallenge challenge = (RecoverPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
             Integer question = (Integer) session.getAttribute("rememberPasswordQuestion");
             
 	    	IdpConfig config = IdpConfig.getConfig();
@@ -69,7 +68,7 @@ public class PasswordRememberForm extends BaseForm {
             		session.setAttribute("recoverServer", server);
             	}
             	RemoteServiceLocator rsl = new RemoteServiceLocator(server);
-            	RememberPasswordUserService rpus = (RememberPasswordUserService) rsl.getRemoteService(RememberPasswordUserService.REMOTE_PATH);
+            	RecoverPasswordUserService rpus = (RecoverPasswordUserService) rsl.getRemoteService(RecoverPasswordUserService.REMOTE_PATH);
             	UsuariService us = (UsuariService) rsl.getUsuariService();
             	Usuari user = us.findUsuariByCodiTipusDadaIValorTipusDada("EMAIL", email);
 

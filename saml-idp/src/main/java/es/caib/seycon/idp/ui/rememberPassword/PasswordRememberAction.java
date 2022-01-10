@@ -12,9 +12,9 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.LogFactory;
 
-import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
-import com.soffid.iam.addons.rememberPassword.common.UserAnswer;
-import com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService;
+import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
+import com.soffid.iam.addons.passrecover.common.UserAnswer;
+import com.soffid.iam.addons.passrecover.service.RecoverPasswordUserService;
 
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -50,7 +50,7 @@ public class PasswordRememberAction extends HttpServlet {
 	    	Integer question = Integer.decode(req.getParameter("questionid"));
 	    	HttpSession session = req.getSession();
 	    	
-            RememberPasswordChallenge challenge = (RememberPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
+            RecoverPasswordChallenge challenge = (RecoverPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
 
             int i = 0;
             Iterator<UserAnswer> it = challenge.getQuestions().iterator();
@@ -77,7 +77,7 @@ public class PasswordRememberAction extends HttpServlet {
             		session.setAttribute("recoverServer", server);
             	}
             	RemoteServiceLocator rsl = new RemoteServiceLocator(server);
-            	RememberPasswordUserService rpus = (RememberPasswordUserService) rsl.getRemoteService(RememberPasswordUserService.REMOTE_PATH);
+            	RecoverPasswordUserService rpus = (RecoverPasswordUserService) rsl.getRemoteService(RecoverPasswordUserService.REMOTE_PATH);
             	if (rpus.responseChallenge(challenge))
             	{
                     req.setAttribute("ERROR", "Invalid questions"); //$NON-NLS-1$

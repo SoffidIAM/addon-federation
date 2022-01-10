@@ -10,10 +10,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.LogFactory;
-import org.opensaml.saml2.core.AuthnContext;
 
-import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
-import com.soffid.iam.addons.rememberPassword.service.RememberPasswordUserService;
+import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
+import com.soffid.iam.addons.passrecover.service.RecoverPasswordUserService;
+
 import es.caib.seycon.BadPasswordException;
 import es.caib.seycon.InvalidPasswordException;
 import es.caib.seycon.idp.client.ServerLocator;
@@ -44,7 +44,7 @@ public class PasswordResetAction extends HttpServlet {
             throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
 
         HttpSession session = req.getSession();
-        RememberPasswordChallenge challenge = (RememberPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
+        RecoverPasswordChallenge challenge = (RecoverPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
 
         if (challenge == null) 
         {
@@ -74,7 +74,7 @@ public class PasswordResetAction extends HttpServlet {
             		session.setAttribute("recoverServer", server);
             	}
             	RemoteServiceLocator rsl = new RemoteServiceLocator(server);
-	            RememberPasswordUserService rpus = (RememberPasswordUserService) rsl.getRemoteService(RememberPasswordUserService.REMOTE_PATH);
+	            RecoverPasswordUserService rpus = (RecoverPasswordUserService) rsl.getRemoteService(RecoverPasswordUserService.REMOTE_PATH);
 	            rpus.resetPassword(challenge);
             } catch (InvalidPasswordException e) {
                 error = String.format(Messages.getString("PasswordChangeRequiredAction.wrong.password"), user); //$NON-NLS-1$

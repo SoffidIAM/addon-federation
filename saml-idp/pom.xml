@@ -343,10 +343,25 @@
 			<version>5.2.0-java7again</version>
 		</dependency>
 		<dependency>
-			<groupId>com.soffid.iam.addon.remember-password</groupId>
-			<artifactId>remember-password-core</artifactId>
-			<version>2.0.0</version>
+			<groupId>com.soffid.iam.addon.recover-password</groupId>
+			<artifactId>recover-password-core</artifactId>
+			<version>3.0.1</version>
 			<scope>provided</scope>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+					<groupId>org.opensaml</groupId>
+					<artifactId>opensaml-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.opensaml</groupId>
+					<artifactId>opensaml-saml-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.opensaml</groupId>
+					<artifactId>opensaml-saml-impl</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>

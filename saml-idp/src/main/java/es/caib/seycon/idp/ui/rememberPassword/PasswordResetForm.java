@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.soffid.iam.addons.rememberPassword.common.RememberPasswordChallenge;
+import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
 
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -37,7 +37,7 @@ public class PasswordResetForm extends BaseForm {
             super.doGet(req, resp);
             HttpSession session = req.getSession();
             
-            RememberPasswordChallenge challenge = (RememberPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
+            RecoverPasswordChallenge challenge = (RecoverPasswordChallenge) session.getAttribute("rememberPasswordChallenge");
 
             if (challenge == null) {
                 throw new ServletException(Messages.getString("PasswordChangeRequiredForm.expired.session")); //$NON-NLS-1$
