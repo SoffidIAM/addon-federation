@@ -20,7 +20,6 @@ import java.util.Set;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
-import javax.servlet.ServletException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 

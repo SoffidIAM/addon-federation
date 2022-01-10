@@ -30,7 +30,10 @@ public class OauthToken {
 	String authorizationCode;
 	
 	@Nullable
-	String token;
+	String tokenId;
+	
+	@Nullable
+	String fullToken;
 	
 	@Nullable
 	String refreshToken;

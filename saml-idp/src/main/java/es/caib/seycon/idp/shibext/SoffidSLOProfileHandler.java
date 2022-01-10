@@ -2,10 +2,13 @@ package es.caib.seycon.idp.shibext;
 
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import javax.crypto.SecretKey;
 import javax.net.ssl.X509TrustManager;
 import javax.servlet.http.HttpServletResponse;
 
@@ -15,8 +18,11 @@ import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
+import org.opensaml.common.impl.AbstractSAMLObject;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.common.xml.SAMLConstants;
+import org.opensaml.saml2.core.Attribute;
+import org.opensaml.saml2.core.EncryptedID;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.LogoutResponse;
@@ -26,6 +32,9 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.impl.IssuerBuilder;
 import org.opensaml.saml2.core.impl.LogoutRequestBuilder;
 import org.opensaml.saml2.core.impl.NameIDBuilder;
+import org.opensaml.saml2.encryption.Decrypter;
+import org.opensaml.saml2.encryption.Encrypter;
+import org.opensaml.saml2.encryption.Encrypter.KeyPlacement;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
@@ -41,11 +50,19 @@ import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.XMLObjectBuilderFactory;
+import org.opensaml.xml.encryption.DecryptionException;
+import org.opensaml.xml.encryption.EncryptedKeyResolver;
+import org.opensaml.xml.encryption.EncryptionParameters;
+import org.opensaml.xml.encryption.InlineEncryptedKeyResolver;
+import org.opensaml.xml.encryption.KeyEncryptionParameters;
 import org.opensaml.xml.io.Marshaller;
 import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.xml.security.SecurityConfiguration;
 import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
+import org.opensaml.xml.security.keyinfo.KeyInfoCredentialResolver;
+import org.opensaml.xml.security.keyinfo.StaticKeyInfoCredentialResolver;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.SignatureConstants;
 import org.opensaml.xml.signature.SignatureException;
@@ -58,8 +75,10 @@ import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration;
 import edu.internet2.middleware.shibboleth.common.session.SessionManager;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.BaseSAML2ProfileRequestContext;
 import edu.internet2.middleware.shibboleth.idp.profile.saml2.SLOProfileHandler;
 import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
 import edu.internet2.middleware.shibboleth.idp.session.Session;
@@ -219,6 +238,7 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
                 } else {
                     localLogout(indexedSession, inTransport, outTransport);
                 }
+        		LogRecorder.getInstance().closeSession(indexedSession);
                 writeAuditLogEntry(requestContext);
                 return;
             }
@@ -226,6 +246,7 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
             if (status.getStatusCode().getValue().equals(StatusCode.SUCCESS_URI)) {
             	if (indexedSession != null)
             	{
+            		LogRecorder.getInstance().closeSession(indexedSession);
 	                log.info("Invalidating session identified by LogoutRequest: {}", indexedSession.getSessionID());
 	                destroySession(indexedSession);
             	}
@@ -498,6 +519,49 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
         public void setAsynchronous(boolean flag) {
             async = flag;
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext)
+            throws ProfileException {
+        if (requestContext.getInboundSAMLMessage() instanceof LogoutRequest) {
+            LogoutRequest request = (LogoutRequest) requestContext.getInboundSAMLMessage();
+            requestContext.setPeerEntityId(request.getIssuer().getValue());
+            requestContext.setInboundSAMLMessageId(request.getID());
+            if (request.getNameID() != null) {
+                requestContext.setSubjectNameIdentifier(request.getNameID());
+            } else if (request.getEncryptedID() != null) {
+                try {
+					requestContext.setSubjectNameIdentifier(decrypt(requestContext, request.getEncryptedID()));
+				} catch (Exception e) {
+					throw new ProfileException("Unable to decrypt EncryptedID.", e);
+				}
+            } else {
+                throw new ProfileException("Incoming LogoutRequest did not contain SAML2 NameID.");
+            }
+        }
+    }
+    
+	private SAMLObject decrypt(BaseSAMLProfileRequestContext requestContext, EncryptedID encryptedID) throws Exception {		
+        Decrypter decrypter = getDecrypter(requestContext);
+        SAMLObject result = decrypter.decrypt(encryptedID);
+        if (! (result instanceof NameID)) {
+            throw new DecryptionException("Decrypted SAMLObject was not an instance of NameID");
+        }
+        return (NameID) result;
+	}
+
+    protected Decrypter getDecrypter(BaseSAMLProfileRequestContext requestContext) throws SecurityException {
+        SecurityConfiguration securityConfiguration = Configuration.getGlobalSecurityConfiguration();
+
+        Credential credential = requestContext.getRelyingPartyConfiguration().getDefaultSigningCredential();
+
+		KeyInfoCredentialResolver credentialResolver = new StaticKeyInfoCredentialResolver(credential);
+		EncryptedKeyResolver encryptedKeyResolver = new InlineEncryptedKeyResolver();
+		//        dataDecParams.setBlacklistedAlgorithms(keyEncParams.getb);
+		Decrypter decrypter = new Decrypter(credentialResolver, credentialResolver, encryptedKeyResolver );
+        return decrypter;
     }
 
 }

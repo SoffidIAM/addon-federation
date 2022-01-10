@@ -147,50 +147,9 @@ public class AuthenticationContext {
 	public static String getClientRequest (HttpServletRequest req)
 	{
 		String ip = req.getRemoteAddr();
-		String trustedProxies;
-		try {
-			if ( Config.getConfig().isAgent()) 
-				trustedProxies = System.getProperty("soffid.proxy.trustedIps");
-			else 
-				trustedProxies = ConfigurationCache.getMasterProperty("soffid.proxy.trustedIps");
-		} catch (IOException e1) {
-			trustedProxies = null;
-		}
-		String forwardedFor = req.getHeader("x-forwarded-for");
-		if (trustedProxies != null)
-		{
-			String[] tp = trustedProxies.split("[, ]+");
-			if ( isTrusted (ip, tp) )
-			{
-				if (forwardedFor != null && !forwardedFor.trim().isEmpty())
-				{
-					String[] ff = forwardedFor.split("[ ,]+");
-					for (int i = ff.length - 1; i >= 0; i--)
-					{
-						ip = ff[i];
-						if ( ! isTrusted(ip, tp))
-							break;
-					}
-				}
-			}
-		}
-		return (ip);
+		return ip;
 	}
 
-	private static boolean isTrusted(String ip, String[] tp) {
-		for (String t: tp)
-			if (ip.equalsIgnoreCase(t))
-				return true;
-			else if (t.contains("*"))
-			{
-				String t2 = t.replaceAll("\\*", "[0-9]*");
-				if ( Pattern.matches("^"+t2+"$", ip))
-					return true;
-			}
-		return false;
-	}
-
-	
 	public boolean isPreviousAuthenticationMethodAllowed (HttpServletRequest request) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
 		HttpSession session = request.getSession(true);

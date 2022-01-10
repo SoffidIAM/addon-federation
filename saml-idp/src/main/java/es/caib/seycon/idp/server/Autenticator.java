@@ -91,7 +91,7 @@ public class Autenticator {
         		LanguageFilter.getRemoteIp(),
         		url, type);
 
-        SessionListener.registerSession(session, sessio.getId().toString());
+        SessionListener.registerSession(session, sessio);
         
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(new FileInputStream(SeyconKeyStore.getKeyStoreFile()),
@@ -331,12 +331,17 @@ public class Autenticator {
 			}
 		}
 		
+		final String soffidSession = generateSession2(req, resp, user, type, externalAuth);
+		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
+				(edu.internet2.middleware.shibboleth.idp.session.Session) 
+				req.getAttribute(
+						edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
+        	LogRecorder.getInstance().addSuccessLogEntry("SAML", user, actualType, entityId, req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	
-	        Principal principal = new SessionPrincipal(user, 
-	        		generateSession2(req, resp, user, type, externalAuth));
+			Principal principal = new SessionPrincipal(user, soffidSession);
 	        
 	        req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
 	        req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, toSamlAuthenticationMethod(type));
@@ -348,10 +353,6 @@ public class Autenticator {
 	        Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
 	        req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
 	        
-	        edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
-	        		(edu.internet2.middleware.shibboleth.idp.session.Session) 
-	        			req.getAttribute(
-	        					edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
 	        if (shibbolethSession != null)
 	        {
 	        	shibbolethSession.setSubject(userSubject);
@@ -361,9 +362,6 @@ public class Autenticator {
 			Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
 			if (saml2LoginContext != null)
 				saml2LoginContext.setAuthenticationMethodInformation(null); 
-			
-			LogRecorder.getInstance().addSuccessLogEntry(user, actualType, entityId, req.getRemoteAddr(), req.getSession());
-	        			
 			
 	        if (returnPath == null) 
 	        {
@@ -540,7 +538,7 @@ public class Autenticator {
         		LanguageFilter.getRemoteIp(),
         		url, authenticationType);
 
-        SessionListener.registerSession(httpSession, sessio.getId().toString());
+        SessionListener.registerSession(httpSession, sessio);
         
         return sessio;
 	}

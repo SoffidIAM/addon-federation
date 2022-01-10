@@ -16,6 +16,7 @@ public class TokenInfo {
 	private String authenticationMethod;
 	Long sessionId;
 	String sessionKey;
+	String jwtId;
 	
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
@@ -125,5 +126,13 @@ public class TokenInfo {
 
 	public boolean isNotUsed() {
 		return System.currentTimeMillis() > lastUse + 900_000; // 15 minutes
+	}
+
+	public String getJwtId() {
+		return jwtId;
+	}
+
+	public void setJwtId(String jwtId) {
+		this.jwtId = jwtId;
 	}
 }

@@ -37,9 +37,13 @@ public class OauthTokenEntity {
 	String authorizationCode;
 	
 	@Nullable
-	@Column (name="TOK_TOKEN", length = 1024)
-	String token;
+	@Column (name="TOK_TOKEN", length = 255)
+	String tokenId;
 	
+	@Nullable
+	@Column (name="TOK_FULL", length = 1024)
+	String fullToken;
+
 	@Column (name="TOK_REFTOK")
 	@Nullable
 	String refreshToken;
@@ -71,7 +75,7 @@ public class OauthTokenEntity {
 	
 	OauthTokenEntity findByAuthorizationCode(String authorizationCode) { return null;}
 
-	OauthTokenEntity findByToken(String token) { return null;}
+	OauthTokenEntity findByTokenId(String tokenId) { return null;}
 
 	OauthTokenEntity findByRefreshToken(String refreshToken) { return null;}
 }

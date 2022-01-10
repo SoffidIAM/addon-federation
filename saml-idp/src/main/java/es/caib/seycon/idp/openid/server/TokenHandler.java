@@ -21,12 +21,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.impl.PublicClaims;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
@@ -39,6 +44,7 @@ import com.soffid.iam.service.UserService;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
@@ -104,6 +110,7 @@ public class TokenHandler {
 						refreshTokens.remove(t.getRefreshToken());
 					getFederationService().deleteOauthToken(generateOauthToken(t));
 					it.remove();
+					LogRecorder.getInstance().flushLogoutEntry("OPENID_"+t.getJwtId());
 				}
 				else if (t.isNotUsed()) {
 					if (t.getRefreshToken() != null)
@@ -153,7 +160,8 @@ public class TokenHandler {
 			return ti;
 	}
 
-	public synchronized void generateToken(TokenInfo t, Map<String, Object> att) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+	public synchronized void generateToken(TokenInfo t, Map<String, Object> att,
+			HttpServletRequest req, String authType) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		IdpConfig c = IdpConfig.getConfig();
 		if (t.getAuthorizationCode() != null)
 		{
@@ -179,11 +187,23 @@ public class TokenHandler {
 		else
 			t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
 		String random = generateRandomString(129);
+		t.setJwtId(random);
+		String signedToken = generateJWTToken(c, t, att);
+		t.token = signedToken;
+		
+		tokens.put(t.getToken(), t);
+		activeTokens.addLast(t);
+		getFederationService().createOauthToken(generateOauthToken(t));
+    	LogRecorder.getInstance().addSuccessLogEntry("OPENID", t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
+    			req.getRemoteAddr(), null, null, "OPENID_"+t.jwtId);
+	}
+
+	public String generateJWTToken(IdpConfig c, TokenInfo t, Map<String, Object> att) {
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
 				.withExpiresAt( new Date (t.getExpires()))
 				.withIssuedAt(new Date(t.getCreated()))
 				.withClaim("client_id", t.getRequest().getClientId() )
-				.withJWTId(random)
+				.withJWTId(t.getJwtId())
 				.withIssuer("https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
 		if (t.getRequest().getScope() != null)
 			builder.withClaim("scope", t.getRequest().getScope());
@@ -193,16 +213,13 @@ public class TokenHandler {
 		KeyPair keyPair = c.getKeyPair();
 		
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
-		String signedToken = builder.sign(algorithmRS);
 		completeJWTBuilder(att, builder, false);
-		t.token = signedToken;
-		
-		tokens.put(t.getToken(), t);
-		activeTokens.addLast(t);
-		getFederationService().createOauthToken(generateOauthToken(t));
+		String signedToken = builder.sign(algorithmRS);
+		return signedToken;
 	}
 
-	public synchronized void renewToken(TokenInfo t) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+	public synchronized void renewToken(TokenInfo t,  Map<String, Object> att,
+			HttpServletRequest req) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		if (t.getAuthorizationCode() != null)
 		{
 			authorizationCodes.remove(t.getAuthorizationCode());
@@ -217,7 +234,8 @@ public class TokenHandler {
 		getFederationService().deleteOauthToken(generateOauthToken(t));
 
 		t.authorizationCode = null;
-		t.token = generateRandomString(129);		
+		t.jwtId = generateRandomString(129);		
+		t.token = generateJWTToken(IdpConfig.getConfig(), t, att);
 		t.refreshToken = generateRandomString(129);		
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
@@ -227,6 +245,8 @@ public class TokenHandler {
 		activeTokens.addLast(t);
 
 		getFederationService().createOauthToken(generateOauthToken(t));
+    	LogRecorder.getInstance().addSuccessLogEntry("OPENID", t.getUser(), "Refresh-token", t.getRequest().getFederationMember().getPublicId(), 
+    			req.getRemoteAddr(), null, null, "OPENID_"+t.jwtId);
 	}
 
 	private void checkUserIsEnabled(TokenInfo t) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
@@ -349,14 +369,34 @@ public class TokenHandler {
 	public TokenInfo getToken(String token) throws InternalErrorException {
 		TokenInfo ti = tokens.get(token);
 		if (ti == null) {
-			OauthToken o = getFederationService().findOauthTokenByToken(getIdentityProvider(), token);
-			if (o != null)
-				ti = parseOauthToken(o);
+			String jwtid = null;
+			try {
+				jwtid = parseJWTTokenId(token);
+			} catch (Exception e) {}
+			if (jwtid != null) {
+				OauthToken o = getFederationService().findOauthTokenByToken(getIdentityProvider(), jwtid);
+				if (o != null)
+					ti = parseOauthToken(o);
+			}
 		}
 		if (ti == null || ti.isExpired())
 			return null;
 		else
 			return ti;
+	}
+
+	private String parseJWTTokenId(String token) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+		IdpConfig c = IdpConfig.getConfig();
+		KeyPair keyPair = c.getKeyPair();
+		
+		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
+		DecodedJWT jwt = JWT.decode(token);
+		JWT.require(algorithmRS).build().verify(jwt);
+		Claim tokenId = jwt.getClaim(PublicClaims.JWT_ID);
+		if (tokenId == null)
+			return null;
+		else
+			return tokenId.asString();
 	}
 
 	private String getIdentityProvider()  {
@@ -386,7 +426,15 @@ public class TokenHandler {
 		o.setIdentityProvider(getIdentityProvider());
 		o.setRefreshToken(t.getRefreshToken());
 		o.setServiceProvider(t.getRequest().getFederationMember().getPublicId());
-		o.setToken(t.getToken());
+		if (t.getToken() == null) {
+			o.setTokenId(null);
+			o.setFullToken(null);
+		}
+		else
+		{
+			o.setFullToken(t.getToken());
+			o.setTokenId(t.getJwtId());
+		}
 		o.setUser(t.getUser());
 		o.setSessionId(t.getSessionId());
 		o.setSessionKey(t.getSessionKey());
@@ -405,7 +453,8 @@ public class TokenHandler {
 		t.setRequest(new OpenIdRequest());
 		t.getRequest().setFederationMember(getFederationService().findFederationMemberByPublicId(o.getServiceProvider()));
 		t.getRequest().setClientId(t.getRequest().getFederationMember().getOpenidClientId());
-		t.setToken(o.getToken());
+		t.setToken(o.getFullToken());
+		t.setJwtId(o.getTokenId());
 		t.setUser(o.getUser());
 		t.setSessionId(o.getSessionId());
 		t.setSessionKey(o.getSessionKey());

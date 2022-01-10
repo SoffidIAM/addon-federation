@@ -204,7 +204,7 @@ public class TokenEndpoint extends HttpServlet {
 				return;
 			}
 			try {
-				h.generateToken(t, att);
+				h.generateToken(t, att, req, "P");
 			} catch (Exception e) {
 				log.info("Error generating token", e);
 				buildError(resp, "server_error", "Internal error " + e.toString());
@@ -269,7 +269,7 @@ public class TokenEndpoint extends HttpServlet {
 				buildError(resp, "Error generating response", t);
 				return;
 			}
-			h.generateToken(t, att);
+			h.generateToken(t, att, req, "Authorization-code");
 			generatTokenResponse(resp, att, h, t);
 		} catch (Exception e) {
 			log.info("Error generating token", e);
@@ -306,7 +306,27 @@ public class TokenEndpoint extends HttpServlet {
 				return;
 			}
 
-			h.renewToken(t);
+			Map<String, Object> att;
+			try {
+				att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
+			} catch (AttributeResolutionException e) {
+				log.warn("Error resolving attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (AttributeFilteringException e) {
+				log.warn("Error filtering attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (InternalErrorException e) {
+				log.warn("Error evaluating claims", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (Exception e) {
+				log.warn("Error generating response", e);
+				buildError(resp, "Error generating response", t);
+				return;
+			}
+			h.renewToken(t, att, req);
 		} catch (Exception e) {
 			log.info("Error generating token", e);
 			buildError(resp, "Internal error " + e.toString(), t);

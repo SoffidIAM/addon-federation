@@ -77,7 +77,7 @@ public class AuthorizationResponse  {
 			return;
 		}
 
-		h.generateToken (token, att);
+		h.generateToken (token, att, request, "Authorization-code");
 		
 		try {
 			String openidToken = h.generateIdToken (token, att);

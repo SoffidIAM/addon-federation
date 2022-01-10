@@ -1957,8 +1957,8 @@ public class FederationServiceImpl
 				}
 			}			
 		}
-		if (token.getToken() != null) {
-			e = getOauthTokenEntityDao().findByToken(token.getToken());
+		if (token.getTokenId() != null) {
+			e = getOauthTokenEntityDao().findByTokenId(token.getTokenId());
 			if (e != null) {
 				if (e.getExpires().after(new Date())) {
 					getOauthTokenEntityDao().remove(e);
@@ -1994,7 +1994,7 @@ public class FederationServiceImpl
 
 	@Override
 	protected OauthToken handleFindOauthTokenByToken(String idp, String token) throws Exception {
-		OauthTokenEntity entity = getOauthTokenEntityDao().findByToken(token);
+		OauthTokenEntity entity = getOauthTokenEntityDao().findByTokenId(token);
 		if (entity == null)
 			return null;
 		else
@@ -2004,8 +2004,8 @@ public class FederationServiceImpl
 	@Override
 	protected void handleDeleteOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
-		if (token.getToken() != null) {
-			e = getOauthTokenEntityDao().findByToken(token.getToken());
+		if (token.getTokenId() != null) {
+			e = getOauthTokenEntityDao().findByTokenId(token.getTokenId());
 			if (e != null)
 				getOauthTokenEntityDao().remove(e);
 		}
@@ -2024,8 +2024,8 @@ public class FederationServiceImpl
 	@Override
 	protected void handleUpdateOauthToken(OauthToken token) throws Exception {
 		OauthTokenEntity e = null;
-		if (token.getToken() != null)
-			e = getOauthTokenEntityDao().findByToken(token.getToken());
+		if (token.getTokenId() != null)
+			e = getOauthTokenEntityDao().findByTokenId(token.getTokenId());
 		else if (token.getRefreshToken() != null)
 			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
 		else if (token.getAuthorizationCode() != null)

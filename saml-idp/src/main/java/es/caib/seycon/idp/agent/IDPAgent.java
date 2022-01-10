@@ -10,10 +10,9 @@ import com.soffid.iam.federation.idp.Main;
 import com.soffid.iam.sync.agent.Agent;
 import com.soffid.iam.sync.intf.AccessLogMgr;
 
-import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.sync.intf.LogEntry;
-import es.caib.seycon.ng.utils.Security;
 
 public class IDPAgent extends Agent implements AccessLogMgr {
 
