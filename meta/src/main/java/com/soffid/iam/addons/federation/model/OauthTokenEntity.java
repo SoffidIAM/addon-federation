@@ -41,7 +41,7 @@ public class OauthTokenEntity {
 	String tokenId;
 	
 	@Nullable
-	@Column (name="TOK_FULL", length = 1024)
+	@Column (name="TOK_FULL", length = 64000)
 	String fullToken;
 
 	@Column (name="TOK_REFTOK")
