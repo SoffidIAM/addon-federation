@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.mortbay.util.ajax.JSON;
+import org.json.JSONObject;
 
 import com.github.scribejava.apis.GoogleApi20;
 import com.github.scribejava.apis.LinkedInApi20;
@@ -60,13 +60,13 @@ public class LinkedinConsumer extends OAuth2Consumer
 	    service.signRequest(accessToken, request);
 	    Response response = service.execute(request);
 	    
-	    Map<String,String> m =  (Map<String, String>) JSON.parse(response.getBody());
+	    JSONObject m = new JSONObject(response.getBody());
 	    
-	    principal = m.get("emailAddress");
-	    if (principal == null)
-	    	principal = m.get("id");
+	    principal = m.optString("emailAddress", null);
+	    if (principal == null || principal.trim().isEmpty())
+	    	principal = m.optString("id");
 	    
-	    attributes.putAll(m);
+	    attributes.putAll(m.toMap());
 	    attributes.put("EMAIL", m.get("emailAddress"));
 	    attributes.remove("emailAddress");
 	    attributes.put("givenName",  m.get("firstName"));

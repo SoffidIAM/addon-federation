@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import org.mortbay.util.ajax.JSON;
+import org.json.JSONObject;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -29,7 +29,7 @@ import es.caib.seycon.util.Base64;
 public class OpenidConnectConsumer extends OAuth2Consumer 
 {
 
-	HashMap<String, Object> cfg = null;
+	JSONObject cfg = null;
 	public String accessTokenEndpoint;
 	public String authorizationBaseUrl;
 	private String userInfoEndpoint;
@@ -40,7 +40,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		super(sp, idp);
 
-		cfg = (HashMap<String, Object>) JSON.parse(idp.getMetadades(), true);
+		cfg = new JSONObject(idp.getMetadades());
 
 		ServiceBuilder serviceBuilder = new ServiceBuilder(idp.getOauthKey())
 				.apiSecret(idp.getOauthSecret().getPassword());
@@ -93,9 +93,9 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	public boolean verifyResponse(Map<String,String> httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {
 		OAuth2AccessToken accessToken = parseResponse(httpReq);
 
-		Map<String,String> r = (Map<String, String>) JSON.parse(accessToken.getRawResponse());
-		String idToken = r.get("id_token");
-		Map<String,String> m = new HashMap<String, String>();
+		JSONObject r = new JSONObject(accessToken.getRawResponse());
+		String idToken = r.optString("id_token");
+		JSONObject m = new JSONObject();
 		if (idToken != null)
 		{
 			String[] split = idToken.split("\\.");
@@ -104,14 +104,14 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			while (openIdB64.length() % 4 != 0)
 				openIdB64 += "=";
 			String openIdToken = new String(Base64.decode(openIdB64));
-			m = (Map<String, String>) JSON.parse( openIdToken);
+			m = new JSONObject(openIdToken);
 			if (userInfoEndpoint != null && ! userInfoEndpoint.isEmpty())
 			{
 			    OAuthRequest request = new OAuthRequest(Verb.GET, userInfoEndpoint);
 			    service.signRequest(accessToken, request);
 			    Response response =  service.execute(request);
 			    
-			    Map<String, String> m2 = (Map<String, String>) JSON.parse(response.getBody());
+			    JSONObject m2 = new JSONObject(response.getBody());
 			    for (String k: m2.keySet())
 			    	m.put(k, m2.get(k));
 			}
@@ -125,13 +125,13 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		    service.signRequest(accessToken, request);
 		    Response response =  service.execute(request);
 		    
-		    m =  (Map<String, String>) JSON.parse(response.getBody());
+		    m =  new JSONObject(response.getBody());
 
 		}
 		
 	    
 	    attributes = new HashMap<String, Object>();
-	    attributes.putAll(m);
+	    attributes.putAll(m.toMap());
 	    attributes.put("givenName", m.get("given_name"));
 	    attributes.remove("given_name");
 	    attributes.put("sn", m.get("family_name"));
@@ -139,13 +139,13 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	    attributes.put("EMAIL", m.get("email"));
 	    attributes.remove("email");
 	    	
-	    if (m.containsKey("email") && "true".equals (m.get("email_verified")) || Boolean.TRUE.equals(m.get("email_verified")))
+	    if (m.has("email") && "true".equals (m.get("email_verified")) || Boolean.TRUE.equals(m.get("email_verified")))
 	    {
-	    	principal = m.get("email");
+	    	principal = m.optString("email");
 	    }
 	    else
 	    {
-	    	principal = m.get("sub");
+	    	principal = m.optString("sub");
 	    }
 	    return true;
 	    

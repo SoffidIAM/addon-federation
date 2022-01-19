@@ -61,7 +61,7 @@ public class CancelAction extends HttpServlet {
     	if (r != null )
     	{
     		LogoutServlet.expireSession(req);
-    		resp.sendRedirect(r.getRedirectUrl()+"?error=access_denied&error_description="+
+    		resp.sendRedirect(r.getRedirectUrl() + (r.getRedirectUrl().contains("?") ? "&": "?") +"error=access_denied&error_description="+
     				URLEncoder.encode("Access denied by user" , "UTF-8")+
     				(r.getState() != null ? "&state="+r.getState(): ""));
     	}

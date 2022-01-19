@@ -40,8 +40,10 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setState(req.getParameter("state"));
 	    	r.setNonce(req.getParameter("nonce"));
 	    	r.setFederationMember( config.getFederationService().findFederationMemberByClientID(r.getClientId()) );
-	    	if (r.getFederationMember() != null)
+	    	r.setRedirectUrl(req.getParameter("redirect_uri"));
+	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl());
+	    	}
 	    	HttpSession session = req.getSession(true);
 	    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
         	session.setAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM, null);
@@ -83,7 +85,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 
 
 	private void generateError(OpenIdRequest r, String error, String description, HttpServletResponse resp) throws IOException {
-		resp.sendRedirect(r.getRedirectUrl()+"?error="+error+"&error_description="+
+		resp.sendRedirect(r.getRedirectUrl()+ (r.getRedirectUrl().contains("?") ? "&": "?") + "error="+error+"&error_description="+
 				URLEncoder.encode(description, "UTF-8")+
 				(r.getState() != null ? "&state="+r.getState(): ""));
 	}
@@ -128,7 +130,19 @@ public class AuthorizationEndpoint extends HttpServlet {
             return false;
     	}
 
-    	
+
+    	if (r.getRedirectUrl() == null)
+    	{
+            generateError(r, "invalid_request", "Missing redirect_uri", resp);
+            return false;
+    	}
+    	if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().trim().isEmpty()) {
+    		if (! r.getRedirectUrl().equals(r.getFederationMember().getOpenidUrl()) &&
+    			! r.getRedirectUrl().startsWith(r.getFederationMember().getOpenidUrl()+"?")) {
+                generateError(r, "invalid_request", "The requested return URL is not accepted "+r.getRedirectUrl(), resp);
+                return false;
+    		}
+    	}
     	Set<String> mechs = r.getFederationMember().getOpenidMechanism();
     	if (! mechs.contains("IM") && ! mechs.contains("AC"))
     	{

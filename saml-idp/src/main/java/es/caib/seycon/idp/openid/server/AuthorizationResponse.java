@@ -104,7 +104,7 @@ public class AuthorizationResponse  {
 				sb.append(url);
 				for ( String arg: args)
 				{
-					if (first) sb.append('?');
+					if (first && !url.contains("?")) sb.append('?');
 					else sb.append('&');
 					sb.append(arg);
 					first = false;

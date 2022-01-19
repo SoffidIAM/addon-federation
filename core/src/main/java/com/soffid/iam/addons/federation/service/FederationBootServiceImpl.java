@@ -18,7 +18,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.w3c.dom.Element;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.Attribute;
@@ -37,8 +36,13 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 	private ApplicationContext applicationContext;
  	@Override
 	protected void handleSyncServerBoot() throws Exception {
-		SoffidApplication.getJetty().
-			bindAdministrationServlet("/SAML/metadata.xml", null, MetadataGenerator.class);
+ 		try {
+			SoffidApplication.getJetty().
+				bindEssoServlet("/SAML/metadata.xml", null, MetadataGenerator.class);
+ 		} catch (Error e) {
+			SoffidApplication.getJetty().
+				bindAdministrationServlet("/SAML/metadata.xml", null, MetadataGenerator.class);
+ 		}
 
 		SoffidApplication.getJetty(). 
 			publish(getFederationService(), FederationService.REMOTE_PATH, "agent");

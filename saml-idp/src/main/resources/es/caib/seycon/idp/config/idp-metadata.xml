@@ -84,9 +84,9 @@ ${publicCertX509}
     </AttributeAuthorityDescriptor>
     
 	<Organization>
-		<OrganizationName xml:lang="es">${organization}</OrganizationName>
-		<OrganizationDisplayName xml:lang="es">${organization}</OrganizationDisplayName>
-		<OrganizationURL xml:lang="es">http://www.soffid.com</OrganizationURL>
+		<OrganizationName>${organization}</OrganizationName>
+		<OrganizationDisplayName>${organization}</OrganizationDisplayName>
+		<OrganizationURL>https://www.soffid.com</OrganizationURL>
 	</Organization>
 	<ContactPerson contactType="technical">
 		<Company>${organization}</Company>

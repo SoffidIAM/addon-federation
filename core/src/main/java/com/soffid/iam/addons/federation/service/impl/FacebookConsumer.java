@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.mortbay.util.ajax.JSON;
+import org.json.JSONObject;
 
 import com.github.scribejava.apis.FacebookApi;
 import com.github.scribejava.apis.GoogleApi20;
@@ -60,7 +60,7 @@ public class FacebookConsumer extends OAuth2Consumer
 	    service.signRequest(accessToken, request);
 	    Response response =  service.execute(request);
 	    
-	    Map<String,String> m =  (Map<String, String>) JSON.parse(response.getBody());
+	    Map<String,Object> m =  (Map<String, Object>) new JSONObject(response.getBody()).toMap();
 	    
 	    System.out.println("NAME = "+m.get("name"));
 	    System.out.println("EMAIL = "+m.get("email"));
@@ -77,11 +77,11 @@ public class FacebookConsumer extends OAuth2Consumer
 	    	
 	    if (m.containsKey("email") && "true".equals (m.get("verified")) || Boolean.TRUE.equals(m.get("verified")))
 	    {
-	    	principal = m.get("email");
+	    	principal = (String) m.get("email");
 	    }
 	    else
 	    {
-	    	principal = m.get("sub");
+	    	principal = (String) m.get("sub");
 	    }
 	    return true;
 	    
