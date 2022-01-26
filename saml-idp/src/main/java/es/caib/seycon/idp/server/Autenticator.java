@@ -98,7 +98,7 @@ public class Autenticator {
         		SeyconKeyStore.getKeyStorePassword().getPassword().toCharArray());
 
         Certificate cert = ks.getCertificate(SeyconKeyStore.ROOT_CERT);
-        String certString = Base64.encodeBytes(cert.getEncoded());
+        String certString = cert == null ? "": Base64.encodeBytes(cert.getEncoded());
         
         Config serverConfig = Config.getConfig();
 
