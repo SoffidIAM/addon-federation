@@ -446,7 +446,7 @@
 					com.soffid.iam.addons.federation.service.ejb.FederacioService federacioService = 
 							context.lookup(com.soffid.iam.addons.federation.service.ejb.FederacioServiceHome.JNDI_NAME);
 					
-					String res = ssl? federacioService.generatePKCS10(fm):  federacioService.generateSSLPKCS10(fm) ;
+					String res = ssl? federacioService.generateSSLPKCS10(fm):  federacioService.generatePKCS10(fm) ;
 					String nom = fm.getName();
 					if (nom==null || "".equals(nom.trim())) nom = "pkcs10"; else nom = nom+".pkcs10"; 
 					org.zkoss.util.media.AMedia pkcs = new org.zkoss.util.media.AMedia(nom,"txt","binary/octet-stream",res);
@@ -1587,13 +1587,13 @@
 										<divVisible bind="/federationMember/publicKey" valorVisible="null">
 											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 											<separator/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain);generateMetadata()" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, sp_certificatechain);generateMetadata()" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain, false);generateMetadata()" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="openPkcs12(self.parent.parent, sp_certificatechain,false);generateMetadata()" width="200px"/>
 										</divVisible>
 										<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain);generateMetadata()" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, sp_certificatechain);generateMetadata()" width="200px"/>
-											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10();generateMetadata()" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, sp_certificatechain, false);generateMetadata()" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, sp_certificatechain, false);generateMetadata()" width="200px"/>
+											<button disabled="${!canModifyFI}" image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10(false);generateMetadata()" width="200px"/>
 										</divVisible>
 									</vbox>
 								</row>
@@ -1704,13 +1704,13 @@
 										<divVisible bind="/federationMember/publicKey" valorVisible="null">
 											<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 											<separator/>
-											<button disabled="${!canModifyFI}" image="img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain, false)" width="200px"/>
 										</divVisible>
 										
 										<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
-											<button disabled="${!canModifyFI}" image="img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain)" style="margin-right:10px" width="200px"/>
-											<button disabled="${!canModifyFI}" image="img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, vip_certificateChain)" width="200px"/>
-											<button disabled="${!canModifyFI}" image="img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10()" width="200px"/>
+											<button disabled="${!canModifyFI}" image="img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="generaClaus(self.parent.parent, vip_certificateChain,false)" style="margin-right:10px" width="200px"/>
+											<button disabled="${!canModifyFI}" image="img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" onClick="esborraClaus(self.parent.parent, vip_certificateChain, false)" width="200px"/>
+											<button disabled="${!canModifyFI}" image="img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="generaPKCS10(false)" width="200px"/>
 										</divVisible>										
 									</vbox>
 								</row>

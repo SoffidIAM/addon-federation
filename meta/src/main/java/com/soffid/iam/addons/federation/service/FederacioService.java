@@ -378,6 +378,14 @@ public abstract class FederacioService {
 	 return null;
 	}
 	
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public java.lang.String generateSSLPKCS10(
+		com.soffid.iam.addons.federation.common.FederationMember federationMember)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+	
 	@Operation(grantees={federation_update.class})
 	public String[] parsePkcs12(
 		byte pkcs12[],

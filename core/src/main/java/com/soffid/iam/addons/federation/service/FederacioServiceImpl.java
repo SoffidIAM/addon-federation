@@ -1385,6 +1385,51 @@ public class FederacioServiceImpl
 	}
 
 	@Override
+	protected String handleGenerateSSLPKCS10(FederationMember federationMember) throws Exception {
+		FederationMember fm = federationMember;
+		if (fm.getSslPrivateKey() == null || "".equals(fm.getSslPrivateKey().trim()) || fm.getSslPublicKey() == null //$NON-NLS-1$
+				|| "".equals(fm.getSslPublicKey().trim())) { //$NON-NLS-1$
+			throw new Exception(Messages.getString("FederacioServiceImpl.MakePKCS10Message"));  //$NON-NLS-1$
+		}
+
+		java.security.PrivateKey _privateKey = null;
+		java.security.PublicKey _publicKey = null;
+
+		try {
+			java.security.Security.addProvider(new BouncyCastleProvider());
+		} catch (Throwable th) {
+			
+		}
+
+		PEMParser pemParser = new PEMParser(new StringReader(fm.getSslPrivateKey()));
+		Object object = pemParser.readObject();
+		if (object instanceof PEMKeyPair) {
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+		    KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
+			_privateKey = kp.getPrivate();
+		} else if (object instanceof PrivateKey) {
+			_privateKey = (PrivateKey) object;
+		}
+		pemParser.close();
+
+		pemParser = new PEMParser(new StringReader(fm.getPublicKey()));
+		object = pemParser.readObject();
+		if (object instanceof SubjectPublicKeyInfo) {
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+			_publicKey = converter.getPublicKey((SubjectPublicKeyInfo) object);
+		} else if (object instanceof PublicKey) {
+			_publicKey = (PublicKey) object;
+		}
+		pemParser.close();
+
+		org.bouncycastle.jce.PKCS10CertificationRequest pkcs10 = new org.bouncycastle.jce.PKCS10CertificationRequest("SHA256withRSA", //$NON-NLS-1$
+				new javax.security.auth.x500.X500Principal("CN=" + fm.getPublicId() + ",OU=" + fm.getEntityGroup().getName()), //$NON-NLS-1$ //$NON-NLS-2$
+				_publicKey, null, _privateKey, "SunRsaSign"); //$NON-NLS-1$
+		return new String(es.caib.seycon.util.Base64.encodeBytes(pkcs10.getEncoded()));
+	}
+
+
+	@Override
 	protected String handleGetPolicyDescriptionForAccount(String account,
 			String dispatcher) throws Exception {
 		if (dispatcher == null)
