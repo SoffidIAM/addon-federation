@@ -8,6 +8,8 @@ package com.soffid.iam.addons.federation.model;
 import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
+import es.caib.seycon.ng.model.DispatcherEntity;
+
 @Entity (table="SC_FEDERA" ,
 		discriminatorValue="FM" ,
 		discriminatorColumn="FED_CLASSE" )
@@ -19,7 +21,8 @@ import com.soffid.mda.annotation.*;
 	com.soffid.iam.addons.federation.model.SamlProfileEntity.class,
 	com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity.class,
 	AuthenticationMethodEntity.class,
-	KerberosKeytabEntity.class})
+	KerberosKeytabEntity.class, 
+	ServiceProviderRoleEntity.class, DispatcherEntity.class})
 public abstract class FederationMemberEntity {
 
 	@Column (name="FED_ID")

@@ -98,6 +98,7 @@ import com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity;
 import com.soffid.iam.addons.federation.model.ProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
+import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
@@ -111,6 +112,7 @@ import com.soffid.iam.api.MailDomain;
 import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PolicyCheckResult;
+import com.soffid.iam.api.Role;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
@@ -118,6 +120,7 @@ import com.soffid.iam.model.AuditEntity;
 import com.soffid.iam.model.Parameter;
 import com.soffid.iam.model.PasswordDomainEntity;
 import com.soffid.iam.model.PasswordPolicyEntity;
+import com.soffid.iam.model.RoleEntity;
 import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
@@ -211,8 +214,10 @@ public class FederationServiceImpl
 				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) entity, federationMember);
 			}
-			if (entity instanceof ServiceProviderEntity)
+			if (entity instanceof ServiceProviderEntity) {
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
+				updateRoles((ServiceProviderEntity) entity, federationMember);
+			}
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
@@ -241,6 +246,31 @@ public class FederationServiceImpl
 			}
 		}
 	}
+
+	private void updateRoles(ServiceProviderEntity entity, FederationMember federationMember) {
+		LinkedList<String> l = new LinkedList<String>(federationMember.getRoles());
+		for (Iterator<ServiceProviderRoleEntity> iterator = entity.getRoles().iterator(); iterator.hasNext();) {
+			ServiceProviderRoleEntity imp = iterator.next();
+			final String roleTag = imp.getRole().getName()+"@"+imp.getRole().getSystem().getName();
+			if (l.contains(roleTag))
+				l.remove(roleTag);
+			else {
+				getServiceProviderRoleEntityDao().remove(imp);
+				iterator.remove();
+			}
+		}
+		for (String name: l) {
+			RoleEntity role = getRoleEntityDao().findByShortName(name);
+			if (role != null) {
+				ServiceProviderRoleEntity r = getServiceProviderRoleEntityDao().newServiceProviderRoleEntity();
+				r.setServiceProvider(entity);
+				r.setRole(role);
+				getServiceProviderRoleEntityDao().create(r);
+				entity.getRoles().add(r);
+			}
+		}
+	}
+
 
 	/**
 	 * @see es.caib.seycon.ng.servei.FederationService#update(com.soffid.iam.addons.federation.common.FederationMember)
@@ -354,6 +384,7 @@ public class FederationServiceImpl
 				ServiceProviderEntity sp = (ServiceProviderEntity) entity;
 				getVirtualIdentityProviderEntityDao().update(sp);
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
+				updateRoles((ServiceProviderEntity) entity, federationMember);
 				String desc = sp.getPublicId() + (sp.getName() != null ? " - " + sp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
 				return getFederationMemberEntityDao().toFederationMember(sp);

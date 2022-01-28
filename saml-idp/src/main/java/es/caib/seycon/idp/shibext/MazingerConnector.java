@@ -2,7 +2,6 @@ package es.caib.seycon.idp.shibext;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

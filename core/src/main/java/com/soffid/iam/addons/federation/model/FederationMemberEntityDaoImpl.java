@@ -210,8 +210,16 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				}
 				target.setVirtualIdentityProvider(spv);
 			}
+			if (sp.getSystem() == null)
+				target.setSystem(null);
+			else
+				target.setSystem(sp.getSystem().getName());
 			for (ImpersonationEntity fip: sp.getImpersonations()) {
 				target.getImpersonations().add(fip.getUrl());
+			}
+			target.setRoles(new LinkedList<String>());
+			for (ServiceProviderRoleEntity ra: sp.getRoles()) {
+				target.getRoles().add(ra.getRole().getName()+"@"+ra.getRole().getSystem().getName());
 			}
 		}
 		
@@ -521,6 +529,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			sp.setOpenidSecret(source.getOpenidSecret());
 			sp.setOpenidUrl(source.getOpenidUrl());
 			
+			if (source.getSystem() == null)
+				sp.setSystem(null);
+			else 
+				sp.setSystem(getSystemEntityDao().findByName(source.getSystem()) );
 			// Aquí no guardem la relació SP-VIP (ServiceProviderVirtualIdentityProviderEntity)
 			
 			target = sp;

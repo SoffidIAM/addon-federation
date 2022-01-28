@@ -69,9 +69,21 @@
 			selectIcon="/img/pencil.svg"
 			javascript='{"loginHint":"java.lang.String", "serviceLocator":"com.soffid.iam.ServiceLocator"}' />
 		<customfield3
-			label="${c:l('federacio.consent')}"
+			label="${c:l('federacio.zul.consent')}"
 			bind="/federationMember/consent"
 			dataType='BOOLEAN'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3
+			label="${c:l('federacio.roles')}"
+			bind="/federationMember/roles"
+			multiValue="true"
+			dataType='ROLE'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3
+			label="${c:l('federacio.system')}"
+			bind="/federationMember/system"
+			dataType='STRING'
+			uiHandler="com.soffid.iam.addons.federation.web.SystemFieldHandler"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 	</div>
 	<div sclass="section" id="networkSection" >

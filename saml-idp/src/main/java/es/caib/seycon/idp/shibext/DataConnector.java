@@ -29,6 +29,7 @@ import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
+import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.sso.Secret;
 import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
@@ -108,6 +109,8 @@ public class DataConnector extends BaseDataConnector {
             addStringValue (ctx, m, "uid", uid); //$NON-NLS-1$
 
             return m;
+//        } catch (SecurityException e) {
+//        	throw e;
         } catch (Exception e) {
             throw new AttributeResolutionException(e);
 		}
@@ -115,11 +118,27 @@ public class DataConnector extends BaseDataConnector {
 
 	private Collection<Attribute> attributes;
     
-    private String evaluateUid(ServerService server, String rpid, String principal, User ui) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+    private String evaluateUid(ServerService server, String rpid, String principal, User ui) throws Exception {
     	String uid = ui == null ? principal : ui.getUserName();
     	FederationService fs = new RemoteServiceLocator().getFederacioService();
     	for (FederationMember member: fs.findFederationMemberByEntityGroupAndPublicIdAndTipus("%", rpid, "S"))
     	{
+    		if (member.getSystem() != null) {
+    			Collection<UserAccount> accounts = new RemoteServiceLocator().getServerService().getUserAccounts(ui.getId(), member.getSystem());
+    			if (accounts == null || accounts.isEmpty())
+    				throw new SecurityException("Access denied");
+    		}
+    		if (member.getRoles() != null && !member.getRoles().isEmpty()) {
+    			boolean found = false;
+    			for (RoleGrant role: new RemoteServiceLocator().getServerService().getUserRoles(ui.getId(), null)) {
+    				if (member.getRoles().contains(role.getRoleName()+"@"+role.getSystem())) {
+    					found = true;
+    					break;
+    				}
+    			}
+    			if (!found)
+    				throw new SecurityException("Access denied");
+    		}
     		if (member.getUidExpression() != null && ! member.getUidExpression().trim().isEmpty())
     		{
     			ValueObjectMapper mapper = new ValueObjectMapper();
