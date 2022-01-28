@@ -109,8 +109,8 @@ public class DataConnector extends BaseDataConnector {
             addStringValue (ctx, m, "uid", uid); //$NON-NLS-1$
 
             return m;
-//        } catch (SecurityException e) {
-//        	throw e;
+        } catch (SecurityException e) {
+        	throw e;
         } catch (Exception e) {
             throw new AttributeResolutionException(e);
 		}

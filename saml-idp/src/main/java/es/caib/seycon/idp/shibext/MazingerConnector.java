@@ -2,6 +2,13 @@ package es.caib.seycon.idp.shibext;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +18,7 @@ import javax.security.auth.Subject;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.sso.Secret;
@@ -59,8 +67,9 @@ public class MazingerConnector extends BaseDataConnector {
             }
             
             try {
+            	String rpid = ctx.getInboundMessageIssuer();
 	            User user = server.getUserInfo(ctx.getPrincipalName(), config.getSystem().getName ());
-	            addStringValue(m, "mazingerSecrets2", generateSecrets(user));
+	            addStringValue(m, "mazingerSecrets2", generateSecrets(user, rpid));
             } catch (UnknownUserException e) {
             }
 
@@ -81,8 +90,12 @@ public class MazingerConnector extends BaseDataConnector {
     public void validate() throws AttributeResolutionException {
     }
 
-	public String generateSecrets(User user) throws IOException, InternalErrorException 
+	public String generateSecrets(User user, String rpid) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException 
 	{
+		String system = null;
+		FederationMember fm = IdpConfig.getConfig().getFederationService().findFederationMemberByPublicId(rpid);
+		if (fm != null)
+			system = fm.getSystem();
         StringBuffer result = new StringBuffer();
         SecretStoreService sss = new RemoteServiceLocator().getSecretStoreService();
         for (Secret secret : sss.getAllSecrets(user)) {
@@ -91,11 +104,18 @@ public class MazingerConnector extends BaseDataConnector {
         			secret.getValue().getPassword() != null &&
         			secret.getValue().getPassword().length() > 0 )
         	{
-        		if (result.length() > 0)
+        		if (system == null || (
+        				secret.getName().startsWith("sso."+system+".") || 
+        				secret.getName().startsWith("account."+system+".") || 
+        				secret.getName().startsWith("accdesc."+system+".") || 
+        				secret.getName().startsWith("pass."+system+".") || 
+        				secret.getName().startsWith("user") ))  {
+        			if (result.length() > 0)
+        				result.append('|');
+        			result.append( encodeSecret(secret.getName()));
         			result.append('|');
-               	result.append( encodeSecret(secret.getName()));
-                result.append('|');
-                result.append( encodeSecret(secret.getValue().getPassword()));
+        			result.append( encodeSecret(secret.getValue().getPassword()));
+        		}
         	}
         }
         result.append ("|sessionKey|");
