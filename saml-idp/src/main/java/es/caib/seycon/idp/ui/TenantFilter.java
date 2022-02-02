@@ -16,6 +16,9 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;
 
+import es.caib.seycon.idp.ui.broker.SAMLSSOPostServlet;
+import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
+
 public class TenantFilter implements Filter {
 	Log log = LogFactory.getLog(getClass());
 	
@@ -28,11 +31,19 @@ public class TenantFilter implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 		final HttpServletRequest req = (HttpServletRequest) request;
-		log.info( "TRUSTED - IPS: "+System.getProperty("soffid.proxy.trustedIps") );
-		log.info( "X-Forwaded-for:"+req.getHeader("x-forwarded-for"));
-		log.info( "Source        :"+req.getRemoteAddr());
 		Security.setClientRequest(req);
-		log.info( "Result        :"+Security.getClientIp());
+		String uri = req.getContextPath()+req.getServletPath();
+		if (req.getPathInfo() != null)
+			uri += req.getPathInfo();
+		if (uri.equals("/SAML2/POST/SSO") ||
+				uri.equals("/SAML2/POST-SimpleSign/SSO") ||
+				uri.equals("/SAML2/Redirect/SSO") ||
+				uri.equals("/authorization") ) {
+			log.info( "TRUSTED - IPS: "+System.getProperty("soffid.proxy.trustedIps") );
+			log.info( "X-Forwaded-for:"+req.getHeader("x-forwarded-for"));
+			log.info( "Source        :"+req.getRemoteAddr());
+			log.info( "Result        :"+Security.getClientIp());
+		}
 		request = new HttpServletRequestSourceIpWrapper(req, Security.getClientIp());
 		String tenant = filterConfig.getInitParameter("tenant");
 		if (tenant != null)
