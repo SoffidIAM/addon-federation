@@ -116,6 +116,9 @@ public class FederationMember {
 	@Nullable 
 	String authenticationMethods;
 	
+	@Nullable 
+	Boolean alwaysAskForCredentials;
+
 	@Nullable
 	public String kerberosDomain;
 	
@@ -210,4 +213,13 @@ public class FederationMember {
 	@Nullable
 	@Attribute(defaultValue="new java.util.LinkedList()")
 	public List<String> impersonations;
+
+	@Nullable
+	@Description("List of roles to get access to this service provider")
+	@Attribute(defaultValue="new java.util.LinkedList()")
+	public List<String> roles;
+
+	@Nullable
+	@Description("The service provider requires account in the system")
+	public String system;
 }

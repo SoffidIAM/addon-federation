@@ -11,4 +11,7 @@ public class AuthenticationMethod {
 	String description;
 
 	String authenticationMethods;
+
+	@Nullable 
+	Boolean alwaysAskForCredentials;
 }

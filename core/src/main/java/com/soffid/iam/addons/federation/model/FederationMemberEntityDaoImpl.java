@@ -101,6 +101,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setAuthenticationMethods(s.toString().trim());
 				
 			}
+			target.setAlwaysAskForCredentials(idp.getAlwaysAskForCredentials());
 			// SSL Certs
 			target.setSslPrivateKey(idp.getSslPrivateKey());
 			target.setSslPublicKey(idp.getSslPublicKey());
@@ -150,6 +151,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setAuthenticationMethods(s.toString().trim());
 				
 			}
+			target.setAlwaysAskForCredentials(vip.getAlwaysAskForCredentials());
 			target.setKerberosDomain(vip.getKerberosDomain());
 			target.setSsoCookieDomain(vip.getSsoCookieDomain());
 			target.setSsoCookieName(vip.getSsoCookieName());
@@ -210,8 +212,16 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				}
 				target.setVirtualIdentityProvider(spv);
 			}
+			if (sp.getSystem() == null)
+				target.setSystem(null);
+			else
+				target.setSystem(sp.getSystem().getName());
 			for (ImpersonationEntity fip: sp.getImpersonations()) {
 				target.getImpersonations().add(fip.getUrl());
+			}
+			target.setRoles(new LinkedList<String>());
+			for (ServiceProviderRoleEntity ra: sp.getRoles()) {
+				target.getRoles().add(ra.getRole().getName()+"@"+ra.getRole().getSystem().getName());
 			}
 		}
 		
@@ -252,6 +262,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setAuthenticationMethods(s.toString().trim());
 			
 		}
+		target.setAlwaysAskForCredentials(vip.getAlwaysAskForCredentials());
 		target.setAllowRecover(vip.isAllowRecover());
 		target.setAllowRegister(vip.isAllowRegister());
 		target.setRegisterWorkflow(vip.getRegisterWorkflow());
@@ -387,6 +398,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			
 			idp.setKerberosDomain(source.getKerberosDomain());
 			idp.setAuthenticationMethods(source.getAuthenticationMethods());
+			idp.setAlwaysAskForCredentials(source.getAlwaysAskForCredentials());
 			idp.setSsoCookieDomain(source.getSsoCookieDomain());
 			idp.setSsoCookieName(source.getSsoCookieName());
 			idp.setSessionTimeout(source.getSessionTimeout());
@@ -445,6 +457,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 
 			vip.setKerberosDomain(source.getKerberosDomain());
 			vip.setAuthenticationMethods(source.getAuthenticationMethods());
+			vip.setAlwaysAskForCredentials(source.getAlwaysAskForCredentials());
 			vip.setSsoCookieDomain(source.getSsoCookieDomain());
 			vip.setSsoCookieName(source.getSsoCookieName());
 			vip.setLoginHintScript(source.getLoginHintScript());
@@ -521,6 +534,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			sp.setOpenidSecret(source.getOpenidSecret());
 			sp.setOpenidUrl(source.getOpenidUrl());
 			
+			if (source.getSystem() == null)
+				sp.setSystem(null);
+			else 
+				sp.setSystem(getSystemEntityDao().findByName(source.getSystem()) );
 			// Aquí no guardem la relació SP-VIP (ServiceProviderVirtualIdentityProviderEntity)
 			
 			target = sp;
@@ -532,6 +549,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			com.soffid.iam.addons.federation.common.FederationMember source,
 			VirtualIdentityProviderEntity vip)  {
 		vip.setAuthenticationMethods(source.getAuthenticationMethods());
+		vip.setAlwaysAskForCredentials(source.getAlwaysAskForCredentials());
 		vip.setAllowRecover(source.isAllowRecover());
 		vip.setAllowRegister(source.isAllowRegister());
 		vip.setMailHost(source.getMailHost());

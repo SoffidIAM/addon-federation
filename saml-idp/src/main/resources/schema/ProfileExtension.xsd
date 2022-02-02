@@ -19,4 +19,15 @@
         </complexContent>
     </complexType>
 
+    <complexType name="SAML2SSO">
+        <annotation>
+            <documentation>
+               Single Sign on enhancer
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="profilehandler:SAML2SSO">
+            </extension>
+        </complexContent>
+    </complexType>
 </schema>

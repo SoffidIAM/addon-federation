@@ -32,4 +32,8 @@ public class AuthenticationMethodEntity {
 	
 	@Column(name = "AAU_AUTHE")
 	String authenticationMethods;
+	
+	@Column(name = "AAU_ASKCRE")
+	@Nullable 
+	Boolean alwaysAskForCredentials;
 }

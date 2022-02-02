@@ -226,7 +226,7 @@ public class Main {
             IllegalStateException, NoSuchProviderException, SignatureException,
             SAXException, ParserConfigurationException, TransformerException {
 //        c.extractConfigFile("attribute-resolver.xml"); //$NON-NLS-1$
-        c.extractConfigFile("handler.xml"); //$NON-NLS-1$
+//        c.extractConfigFile("handler.xml"); //$NON-NLS-1$
         c.generateFederationConfiguration();
     }
 

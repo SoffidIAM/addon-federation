@@ -66,6 +66,10 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public String authenticationMethods;
 
+	@Column(name="FED_ASKCRE")
+	@Nullable 
+	Boolean alwaysAskForCredentials;
+
 	@Column (name="ALLOW_CERTIFICATE")
 	@Nullable
 	public boolean allowCertificate;

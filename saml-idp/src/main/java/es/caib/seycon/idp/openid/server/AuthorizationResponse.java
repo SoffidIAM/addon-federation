@@ -10,6 +10,7 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -25,25 +26,79 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.api.Account;
+import com.soffid.iam.api.RoleGrant;
+import com.soffid.iam.api.User;
+import com.soffid.iam.api.UserAccount;
+import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
+import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
+import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
+import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
+import com.soffid.iam.sync.intf.ExtensibleObject;
+import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
+import com.soffid.iam.sync.service.ServerService;
+
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
+import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationResponse  {
 	static Log log = LogFactory.getLog(AuthorizationResponse.class);
 	
-	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException
+	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException
 	{
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
+		if (!checkAuthorization(user, r))
+			unauthorized(request, response, r);
 		if ( r.getResponseTypeSet().contains("code"))
 			authorizationFlow (request, response, authType);
 		else
 			implicitFLow (ctx, request, response, authType);
+	}
+
+	private static void unauthorized(HttpServletRequest request, HttpServletResponse response, OpenIdRequest r) throws UnsupportedEncodingException, IOException {
+   		response.sendRedirect(r.getRedirectUrl() + (r.getRedirectUrl().contains("?") ? "&": "?") +"error=access_denied&error_description="+
+    				URLEncoder.encode("Access denied by user" , "UTF-8")+
+    				(r.getState() != null ? "&state="+r.getState(): ""));
+	}
+
+	private static boolean checkAuthorization(String user, OpenIdRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+    	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+    	User ui = server.getUserInfo(user, IdpConfig.getConfig().getSystem().getName());
+
+    	FederationService fs = new RemoteServiceLocator().getFederacioService();
+    	FederationMember member = fs.findFederationMemberByClientID(r.getClientId());
+    	if (member != null)
+    	{
+    		if (member.getSystem() != null) {
+    			Collection<UserAccount> accounts = new RemoteServiceLocator().getServerService().getUserAccounts(ui.getId(), member.getSystem());
+    			if (accounts == null || accounts.isEmpty())
+    				throw new SecurityException("Access denied");
+    		}
+    		if (member.getRoles() != null && !member.getRoles().isEmpty()) {
+    			boolean found = false;
+    			for (RoleGrant role: new RemoteServiceLocator().getServerService().getUserRoles(ui.getId(), null)) {
+    				if (member.getRoles().contains(role.getRoleName()+"@"+role.getSystem())) {
+    					found = true;
+    					break;
+    				}
+    			}
+    			if (!found)
+    				return false;
+    		}
+    	}
+    	return true;
 	}
 
 	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {

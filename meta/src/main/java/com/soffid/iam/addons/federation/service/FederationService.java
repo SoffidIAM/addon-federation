@@ -12,6 +12,7 @@ import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
+import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
@@ -22,6 +23,8 @@ import com.soffid.mda.annotation.*;
 
 import es.caib.bpm.servei.BpmEngine;
 import es.caib.seycon.ng.comu.Usuari;
+import es.caib.seycon.ng.model.RolEntity;
+import es.caib.seycon.ng.servei.AplicacioService;
 import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.DispatcherService;
 import es.caib.seycon.ng.servei.DominiService;
@@ -96,7 +99,9 @@ import org.springframework.transaction.annotation.Transactional;
 	MailService.class,
 	BpmEngine.class,
 	UserConsentEntity.class,
-	ImpersonationEntity.class
+	ImpersonationEntity.class,
+	ServiceProviderRoleEntity.class,
+	RolEntity.class
 })
 public abstract class FederationService {
 

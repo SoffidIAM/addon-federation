@@ -176,9 +176,15 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		serviceProviderSelect(null);
 	}	
 
+	public void onChangePublicId(Event event) {
+    onChangeName(event);
+	}
+	
 	public void onChangeName(Event event) {
-		XPathUtils.setValue(this, "description",  XPathUtils.eval(this, "federationMember/publicId") + " - "+
+    try {
+      XPathUtils.setValue(this, "description",  XPathUtils.eval(this, "federationMember/publicId") + " - "+
 				XPathUtils.eval(this, "federationmember/name"));
+    } catch (Exception e) {}
 	}
 	
 	public void changeMetadata(Event event) throws ParserConfigurationException, SAXException, IOException {

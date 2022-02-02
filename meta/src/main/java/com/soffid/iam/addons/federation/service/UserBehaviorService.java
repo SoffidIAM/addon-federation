@@ -3,6 +3,7 @@ package com.soffid.iam.addons.federation.service;
 import java.util.Date;
 
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
+import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.model.UserBehaviorEntity;
 import com.soffid.mda.annotation.Depends;
@@ -32,7 +33,7 @@ public class UserBehaviorService {
 	public void registerLogon (Long userId, String hostIp, @Nullable String hostId) {}
 	public String registerHost (String hostIp) {return null;}
 	
-	public String getAuthenticationMethod ( FederationMember fm, AdaptiveEnvironment env) {return null;}
+	public AuthenticationMethod getAuthenticationMethod ( FederationMember fm, AdaptiveEnvironment env) {return null;}
 	
 	public boolean isLocked(Long userId) {return false;}
 }

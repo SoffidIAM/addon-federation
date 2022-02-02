@@ -90,6 +90,10 @@ public class UserPasswordFormServlet extends BaseForm {
             
         	log.info("Displaying login page");
         	log.info("Current user "+ctx.getUser());
+        	if (ctx.getUser() != null) {
+        		userReadonly = "readonly";
+        		requestedUser = ctx.getUser();
+        	}
         	log.info("Allowed authentication method "+ctx.getAllowedAuthenticationMethods());
         	log.info("Requested authentication method "+ctx.getAllowedAuthenticationMethods());
         	log.info("Authentication method "+ctx.getAllowedAuthenticationMethods());

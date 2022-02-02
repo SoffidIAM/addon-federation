@@ -49,7 +49,7 @@
     <srv:Service id="shibboleth.HandlerManager"
              depends-on="shibboleth.RelyingPartyConfigurationManager"
              xsi:type="profile:IdPProfileHandlerManager">
-        <srv:ConfigurationResource file="${conf}/handler.xml" xsi:type="resource:FilesystemResource" />
+        <srv:ConfigurationResource file="/es/caib/seycon/idp/config/handler.xml" xsi:type="resource:ClasspathResource" />
     </srv:Service>
     
     <!-- 

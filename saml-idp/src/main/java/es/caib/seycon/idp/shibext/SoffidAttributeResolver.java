@@ -268,7 +268,8 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
         	} else if ("urn:oid:1.3.6.1.4.1.5923.1.5.1.1".equals(attribute.getOid())) {
                	m.put("memberOf",  new RolesDelayedAttribute("memberOf", attribute, server, ui, account));
         	} else if ("urn:oid:1.3.6.1.4.1.22896.3.1.6".equals(attribute.getOid())) {
-               	m.put("Secrets",  new SecretsDelayedAttribute("Secrets", ui, attribute));
+            	String rpid = ctx.getInboundMessageIssuer();
+               	m.put("Secrets",  new SecretsDelayedAttribute("Secrets", ui, attribute, rpid));
 
         	}
         }

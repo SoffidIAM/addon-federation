@@ -8,6 +8,8 @@ package com.soffid.iam.addons.federation.model;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.mda.annotation.*;
 
+import es.caib.seycon.ng.model.DispatcherEntity;
+
 @Entity (table="" ,
 		discriminatorValue="S" )
 @Depends ({com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity.class})
@@ -48,6 +50,10 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	public String openidMechanism;
 
+	@Description("Allow users with accounts on the system")
+	@Nullable
+	@Column (name="FED_DIS_ID")
+	DispatcherEntity system;
 	
 	@Description("Ask consent to share information with this service provider")
 	@Column (name="FED_CONSEN")

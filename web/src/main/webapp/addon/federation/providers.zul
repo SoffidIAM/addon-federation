@@ -38,11 +38,11 @@
       type == "IDP"?  "/addon/federation/img/document-i.png" : 
       null}  
   value: /description
-  leaf: #{type != "SP_ROOT" && type != "IDP_ROOT" && type != "ARREL" && type != "EG"  && (type != "IDP" || federationMember.idpType != "soffid")}
+  leaf: #{type != "SP_ROOT" && type != "IDP_ROOT" && type != "ARREL" && type != "EG"  && (type != "IDP" || federationMember.idpType != "soffid-cloud") && (type != "IDP" || federationMember.idpType != "soffid")}
   ${soffid:isUserInRole('federation:create') ? "tail":"no-tail"}: >-
-      #{type=="SP_ROOT" || type =="IDP_ROOT" || (type == "IDP" && federationMember.idpType == "soffid") || type == "ARREL" ? "<button class='small-button' onclick='zkDatatree2.sendClientAction(this, &quot;onAddChild&quot)'>" : ""}
+      #{type=="SP_ROOT" || type =="IDP_ROOT" || (type == "IDP" && federationMember.idpType == "soffid-cloud") || (type == "IDP" && federationMember.idpType == "soffid") || type == "ARREL" ? "<button class='small-button' onclick='zkDatatree2.sendClientAction(this, &quot;onAddChild&quot)'>" : ""}
       #{type=="SP_ROOT" ? "${c:l('federacio.zul.AfegeixServiceProvid')}" :  type =="IDP_ROOT"? "${c:l('federacio.zul.addidp')}" : type == "ARREL"? "${c:l('federacio.zul.addeg') }":type == "IDP"? "${c:l('federacio.zul.addvip') }": ""}
-      #{type=="SP_ROOT" || type =="IDP_ROOT" || type == "ARREL" ||(type == "IDP" && federationMember.idpType == "soffid") ? "</button>" : ""}
+      #{type=="SP_ROOT" || type =="IDP_ROOT" || type == "ARREL" ||(type == "IDP" && federationMember.idpType == "soffid-cloud") ||(type == "IDP" && federationMember.idpType == "soffid") ? "</button>" : ""}
 				  ]]>
   				</attribute>
   			</datatree2>

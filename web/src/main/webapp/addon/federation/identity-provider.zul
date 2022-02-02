@@ -29,7 +29,7 @@
 		<customfield3 label="${c:l('federacio.zul.publicId')}"
 			dataType="STRING"
 			bind="/federationMember/publicId" maxlength="255"
-			onChange="ref:handler.onChangeName"
+			onChange="ref:handler.onChangePublicId"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			id="idpPublicId" />
 		<customfield3 label="${c:l('federacio.zul.Name')}"
@@ -202,6 +202,10 @@
 	<div sclass="section" id="authenticationSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.authentication') }" />
 		<div sclass="databox">
+			<customfield3 label="${c:l('federacio.zul.alwaysAskForCredentials')}"
+				dataType="BOOLEAN"
+				bind="/federationMember/alwaysAskForCredentials"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 			<label sclass="label" value="${c:l('federacio.zul.allowedAuthenticationMethods')}"/>
 			<div sclass="container" >
 				<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/federationMember/authenticationMethods"
@@ -514,6 +518,10 @@
 										"sourceCountry": "java.lang.String",
 										"user": "com.soffid.iam.api.User"}'/>
 							
+							<customfield3 label="${c:l('federacio.zul.alwaysAskForCredentials')}"
+								dataType="BOOLEAN"
+								bind="/alwaysAskForCredentials"
+								readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 							<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/authenticationMethods"
 								style="margin-left: 192px" align="center">
 								<columns>

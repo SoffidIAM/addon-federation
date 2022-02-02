@@ -40,49 +40,41 @@ public class LoginServlet extends LangSupportServlet {
         else
         	entityId = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM); 
 
-        Autenticator auth = new Autenticator();
-        boolean previousAuth = false;
-		try {
-			previousAuth = auth.validateCookie(getServletContext(), req, resp);
-		} catch (Exception e1) {
-			LogFactory.getLog(getClass()).warn("Error decoding authentication cookie", e1);
-		}
-		
-        if (!previousAuth)
-        {
-        	try {
+       	try {
+       		Autenticator auth = new Autenticator();
         	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
         	if (authCtx == null )
-	        	{
-        			authCtx = new AuthenticationContext();
-        			authCtx.setPublicId(entityId);
-//        			if (method != null)
-//        			{
-//        				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
-//        			}
-        			authCtx.initialize(req);
-        			authCtx.store(req);
-	        	}
-	        	else
-	        	{
-        			authCtx.setPublicId(entityId);
-        			if (method != null)
-        				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
-        			else
-        				authCtx.setSamlRequestedAuthenticationMethod(null);
-        				
-					if (authCtx.isPreviousAuthenticationMethodAllowed(req))
-					{
-						auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false);
-						return;
-					}
-	        	}
-	   			resp.sendRedirect(UserPasswordFormServlet.URI);
-        	} catch (Exception e) {
-        		log.warn ("Error authenticating user", e);
-        		throw new ServletException("Error authenticating user", e);
+        	{
+    			authCtx = new AuthenticationContext();
+    			authCtx.setPublicId(entityId);
+    			authCtx.initialize(req);
+    			authCtx.store(req);
         	}
-        }
+        	else
+        	{
+    			authCtx.setPublicId(entityId);
+    			authCtx.updateAllowedAuthenticationMethods();
+    			if (method != null)
+    				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
+    			else
+    				authCtx.setSamlRequestedAuthenticationMethod(null);
+    				
+				if (!authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req))
+				{
+					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false);
+					return;
+				}
+        	}
+        	if (!authCtx.isAlwaysAskForCredentials() && auth.validateCookie(getServletContext(), req, resp))
+        		return;
+        	else {
+        		authCtx.initialize(req);
+        		resp.sendRedirect(UserPasswordFormServlet.URI);
+        	}
+    	} catch (Exception e) {
+    		log.warn ("Error authenticating user", e);
+    		throw new ServletException("Error authenticating user", e);
+    	}
     }
 
     @Override
