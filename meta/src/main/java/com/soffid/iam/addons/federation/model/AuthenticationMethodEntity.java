@@ -27,7 +27,7 @@ public class AuthenticationMethodEntity {
 	@Nullable
 	String description;
 
-	@Column(name = "AAU_EXPR")
+	@Column(name = "AAU_EXPR", length = 16000)
 	String expression;
 	
 	@Column(name = "AAU_AUTHE")
