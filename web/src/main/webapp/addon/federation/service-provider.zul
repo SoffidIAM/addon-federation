@@ -54,7 +54,8 @@
 	</div>
 	<div sclass="section" id="provisionSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.provisioning') }" />
-		<customfield3 label="${c:l('federacio.zul.impersonationUrl')}"
+		<customfield3 
+			label="${c:l('federacio.zul.impersonationUrl')}"
 			bind="/federationMember/impersonations" id="impersonations"
 			dataType='STRING' maxlength="255" multiValue="true"
 			placeholder="Target application URL"
@@ -68,7 +69,7 @@
 			bind="/federationMember/uidExpression"
 			selectIcon="/img/pencil.svg"
 			javascript='{"loginHint":"java.lang.String", "serviceLocator":"com.soffid.iam.ServiceLocator"}' />
-		<customfield3
+		<customfield3 id="consent"
 			label="${c:l('federacio.zul.consent')}"
 			bind="/federationMember/consent"
 			dataType='BOOLEAN'
@@ -186,6 +187,21 @@
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.refreshTimeout')}"/>
 
+	</div>
+	<div sclass="section" id="radiusSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.radius') }" />
+
+		<customfield3 dataType="STRING" 
+			bind="/federationMember/sourceIps"
+			maxLength="150"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.sourceIps')}"/>
+
+		<customfield3 dataType="PASSWORD" 
+			bind="/federationMember/radiusSecret"
+			maxLength="20"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.radiusSecret')}"/>
 	</div>
 	<div style="text-align: right; width: 100%">
 		<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">

@@ -68,4 +68,25 @@ public class SAMLProfile {
 
 	@Nullable
 	String revokeEndpoint;
+	
+	// Radius servicos
+	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "1812")
+	Integer authPort;
+	
+	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "1813")
+	Integer acctPort;
+	
+	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "false")
+	Boolean pap;
+
+	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
+	Boolean chap;
+
+	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
+	Boolean msChap;
 }

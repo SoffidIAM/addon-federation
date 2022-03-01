@@ -37,6 +37,10 @@ public abstract class AttributeEntity {
 	@Nullable
 	public java.lang.String name;
 	
+	@Column (name="ATT_RADID")
+	@Nullable
+	public java.lang.String radiusIdentifier;
+
 
 	@Column (name="ATT_EXPR", length=2000)
 	@Nullable

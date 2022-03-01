@@ -200,7 +200,16 @@ public class FederationMember {
 	@Attribute(defaultValue="new java.util.HashSet()")
 	@Nullable
 	public Set<String> openidMechanism;
-	
+
+	// Radius attributes
+	@Description("Source IPs or IP ranges, for Radius clients")
+	@Nullable
+	public String sourceIps;
+
+	@Description("Radius secret")
+	@Nullable
+	public Password radiusSecret;
+
 	@Description("Kerberos keytabs")
 	@Attribute(defaultValue="new java.util.LinkedList()")
 	@Nullable

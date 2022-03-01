@@ -25,6 +25,8 @@ public class Attribute {
 	@Nullable
 	public java.lang.String openidName;
 	
+	@Nullable
+	public java.lang.String radiusIdentifier;
 
 	@Nullable
 	public java.lang.String value;
