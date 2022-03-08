@@ -195,7 +195,7 @@ public class PolicyConditionEntityDaoImpl extends com.soffid.iam.addons.federati
 		// tot Ok: falta el childrenCondition i l'atribut
 		if (source.getCondition() != null) {
 			target.setChildrenCondition(new LinkedList<PolicyCondition>());
-			target.getChildrenCondition().addAll(toAttributePolicyConditionList((Collection) source.getCondition()));
+			target.getChildrenCondition().addAll(toPolicyConditionList((Collection) source.getCondition()));
 		}
 
 		// Atribut
@@ -258,18 +258,18 @@ public class PolicyConditionEntityDaoImpl extends com.soffid.iam.addons.federati
 
 		// tot Ok: falta el childrenCondition
 		if (source.getChildrenCondition() != null) {
-			Collection condicionsFilles = attributePolicyConditionToEntityList(
+			Collection condicionsFilles = policyConditionToEntityList(
 					(Collection) source.getChildrenCondition());
 			// Establim qui és el seu pare..
-			for (Iterator<AttributeConditionEntity> it = condicionsFilles.iterator(); it.hasNext();) {
-				AttributeConditionEntity pc = it.next();
+			for (Iterator<PolicyConditionEntity> it = condicionsFilles.iterator(); it.hasNext();) {
+				PolicyConditionEntity pc = it.next();
 				// ens establim com el seu pare..
 				pc.setAttributeCondition(target);
 			}
 			target.getCondition().clear();
-			for (PolicyCondition condition : source.getChildrenCondition()) {
-				target.getCondition().add(attributePolicyConditionToEntity((AttributePolicyCondition) condition));
-			}
+//			for (PolicyCondition condition : source.getChildrenCondition()) {
+//				target.getCondition().add(policyConditionToEntity(condition));
+//			}
 			target.getCondition().addAll(condicionsFilles);
 		}
 		// I el atribut

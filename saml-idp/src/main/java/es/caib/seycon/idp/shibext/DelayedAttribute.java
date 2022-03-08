@@ -33,6 +33,7 @@ public class DelayedAttribute extends BasicAttribute<String> {
 	private ExtensibleObject eo;
 	private Attribute attribute;
 	boolean resolved = false;
+	boolean array = false;
 
 	public DelayedAttribute(String name, ObjectTranslator translator, ExtensibleObject eo, Attribute att) {
 		super(name);
@@ -73,8 +74,16 @@ public class DelayedAttribute extends BasicAttribute<String> {
 
 		if (r == null)
         	return new LinkedList<String>();
-        else if (r instanceof Collection)
+        else if (r instanceof Collection) {
+        	array = true;
         	return (Collection<String>) r;
+        }
+        else if (r instanceof String[]) {
+        	array = true;
+        	LinkedList<String> l = new LinkedList<String>();
+        	for (String rr: (String[])r) l.add(rr);
+        	return l;
+        }
         else if (r instanceof byte[]) {
          	LinkedList<String> l = new LinkedList<String>();
          	l.add(Base64.encodeBytes((byte[]) r, Base64.DONT_BREAK_LINES) );
@@ -122,6 +131,11 @@ public class DelayedAttribute extends BasicAttribute<String> {
 			i++;
 		}
 		return super.getValues();
+	}
+
+
+	public boolean isArray() {
+		return array;
 	}
 
 }

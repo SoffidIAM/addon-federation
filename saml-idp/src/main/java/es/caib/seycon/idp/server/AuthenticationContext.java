@@ -2,6 +2,7 @@ package es.caib.seycon.idp.server;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.HttpCookie;
 import java.net.InetAddress;
@@ -10,6 +11,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
@@ -19,6 +21,8 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -36,6 +40,8 @@ import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.idp.radius.attribute.RadiusAttribute;
+import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.api.Account;
@@ -48,6 +54,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.util.Base64;
 
 public class AuthenticationContext {
 	String publicId;
@@ -69,6 +76,9 @@ public class AuthenticationContext {
 	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
 	private boolean alwaysAskForCredentials;
+	private String radiusState;
+	private long created; 
+	
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
 		if (r == null)
@@ -93,6 +103,7 @@ public class AuthenticationContext {
 	
 	public AuthenticationContext ()
 	{
+		created = System.currentTimeMillis();
 	}
 	
 	
@@ -342,7 +353,7 @@ public class AuthenticationContext {
     			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
     			long f = ubh.getUserFailures(currentUser.getId());
     			ubh.setUserFailures(currentUser.getId(), 0);
-    			if (hostId == null)
+    			if (hostId == null && resp != null)
     			{
     				hostId = ubh.registerHost(remoteIp);
     				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
@@ -556,6 +567,95 @@ public class AuthenticationContext {
   
 	public boolean isAlwaysAskForCredentials() {
 		return alwaysAskForCredentials;
+	}
+
+
+	static Map<String, AuthenticationContext> auths = new Hashtable<>();
+	static long lastPurge = 0;
+	public static AuthenticationContext fromRequest(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		expireOldContexts();
+		
+		if (accessRequest == null)
+			return null;
+		RadiusAttribute state = accessRequest.getAttribute(24); // State
+		AuthenticationContext auth = null;
+		if (state != null) {
+			
+		}
+		if (state != null) {
+			auth = auths.get(new String( state.getAttributeData(), "UTF-8"));
+		}
+		if (auth == null) {
+			auth = new AuthenticationContext();
+			byte[] random = new byte[24];
+			new SecureRandom().nextBytes(random);
+			String s = Base64.encodeBytes(random, Base64.DONT_BREAK_LINES);
+			auth.radiusState = s;
+			auth.initialize(accessRequest, sourceAddress, publicId);
+			auths.put(auth.getRadiusState(), auth);
+		}
+		return auth;
+	}
+
+
+	private void initialize(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		IdpConfig config = IdpConfig.getConfig();
+    	remoteIp = accessRequest.getAttributeValue("Framed-IP-Address");
+    	if (remoteIp == null)
+    		remoteIp = sourceAddress.getHostAddress();
+    	hostId = null;
+    	currentUser = null;
+    	this.publicId = publicId;
+    	user = accessRequest.getUserName();
+    	getUserData(accessRequest.getUserName());
+
+    	updateAllowedAuthenticationMethods();
+        if (requestedAuthenticationMethod != null)
+        {
+        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
+        }
+        
+        if (allowedAuthenticationMethods.isEmpty())
+        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+        
+        nextFactor = new HashSet<String>();
+        firstFactor = null;
+        secondFactor = null;
+        step = 0;
+        timestamp = System.currentTimeMillis();
+        
+        if (nextFactor.isEmpty())
+        {
+            for ( String allowedMethod: allowedAuthenticationMethods)
+            {
+           		nextFactor.add( allowedMethod.substring(0,1));
+            }
+        }
+	}
+
+
+	private static void expireOldContexts() {
+		synchronized (auths) {
+			if (lastPurge < System.currentTimeMillis() - 5 * 60 * 1000) { // Purge every five minutes
+				long last = System.currentTimeMillis() - 20 * 60 * 1000; // Expire after twenty minutes
+				for (Iterator<Entry<String, AuthenticationContext>> it = auths.entrySet().iterator(); it.hasNext();) {
+					Entry<String, AuthenticationContext> entry = it.next();
+					if (entry.getValue().created < last || entry.getValue().isFinished())
+						it.remove();
+				}
+				lastPurge = System.currentTimeMillis();
+			}
+		}
+	}
+
+
+	public String getRadiusState() {
+		return radiusState;
+	}
+
+
+	public void setRadiusState(String radiusState) {
+		this.radiusState = radiusState;
 	}
 
 }

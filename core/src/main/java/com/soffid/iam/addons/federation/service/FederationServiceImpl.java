@@ -569,6 +569,8 @@ public class FederationServiceImpl
 				getSaml2AttributeQueryProfileEntityDao().update((Saml2AttributeQueryProfileEntity) entity);
 			} else if (SamlProfileEnumeration.SAML1_AQ.equals(samlProfile.getClasse())) {
 				getSaml1AttributeQueryProfileEntityDao().update((Saml1AttributeQueryProfileEntity) entity);
+			} else if (SamlProfileEnumeration.RADIUS.equals(samlProfile.getClasse())) {
+				getRadiusProfileEntityDao().update((Saml1AttributeQueryProfileEntity) entity);
 			} else {
 				getProfileEntityDao().update(entity);
 			}
@@ -632,10 +634,7 @@ public class FederationServiceImpl
 
 		if (collection != null) {
 			for (Iterator it = collection.iterator(); it.hasNext();) {
-				AttributeConditionEntity item = (AttributeConditionEntity) it.next();
-				// heretem el valor da allowed de la condició pare
-				if (condicioPare != null)
-					item.setAllow(condicioPare.isAllow());
+				PolicyConditionEntity item = (PolicyConditionEntity) it.next();
 				allCondition.add(item);
 
 				Collection tchs = item.getCondition();
@@ -827,7 +826,7 @@ public class FederationServiceImpl
 					{
 						getAttributePolicyEntityDao().remove(ape);
 						// I les seves condicions d'atribut
-						getAttributeConditionEntityDao().remove(allConditionAtt);
+//						getAttributeConditionEntityDao().remove(allConditionAtt);
 					}
 					it.remove();
 				}
@@ -1321,9 +1320,9 @@ public class FederationServiceImpl
 			Collection children = original.getChildrenCondition();
 			Collection childrenNous = new ArrayList();
 			if (children != null)
-				for (Iterator<AttributePolicyCondition> it = children.iterator(); it.hasNext();) {
-					AttributePolicyCondition f = it.next();
-					childrenNous.add(clonaAC(f, comNova));
+				for (Iterator<PolicyCondition> it = children.iterator(); it.hasNext();) {
+					PolicyCondition f = it.next();
+					childrenNous.add(clonaPC(f, comNova));
 				}
 			pc.setChildrenCondition(childrenNous);
 		}

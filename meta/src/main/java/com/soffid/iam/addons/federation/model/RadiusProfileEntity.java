@@ -14,11 +14,11 @@ import com.soffid.mda.annotation.*;
 public abstract class RadiusProfileEntity extends ProfileEntity {
 	@Column (name="PRO_AUTPOR")
 	@Nullable
-	Long authPort;
+	Integer authPort;
 	
 	@Column (name="PRO_ACCPOR")
 	@Nullable
-	Long acctPort;
+	Integer acctPort;
 	
 	@Column (name="PRO_PAP")
 	@Nullable

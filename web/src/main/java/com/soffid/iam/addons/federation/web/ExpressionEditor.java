@@ -344,12 +344,12 @@ public class ExpressionEditor extends Div implements XPathSubscriber, AfterCompo
 			type.setVisible(true);
 			not.setValue( Boolean.TRUE.equals( activeCondition.getNegativeCondition()));
 			attribute.setValue(activeCondition.getAttribute() == null ? null: activeCondition.getAttribute().getName());
-			attributeNameFormat.setValue(activeCondition.getAttributeNameFormat());
-			groupId.setValue(activeCondition.getGroupId());
-			nameId.setValue(activeCondition.getNameId());
+			attributeNameFormat.setValue(toString(activeCondition.getAttributeNameFormat()));
+			groupId.setValue(toString(activeCondition.getGroupId()));
+			nameId.setValue(toString(activeCondition.getNameId()));
 			ignoreCase.setValue(activeCondition.getIgnoreCase());
-			regex.setValue(activeCondition.getRegex());
-			value.setValue(activeCondition.getValue());
+			regex.setValue(toString(activeCondition.getRegex()));
+			value.setValue(toString(activeCondition.getValue()));
 			if (t == ConditionType.AND || t == ConditionType.ANY || t == ConditionType.OR) {
 				// Nothing to show
 			}
@@ -407,6 +407,10 @@ public class ExpressionEditor extends Div implements XPathSubscriber, AfterCompo
 		} else {
 			removeIcon.setVisible(false);
 		}
+	}
+
+	private String toString(String value2) {
+		return value2 == null ? "": value2;
 	}
 
 	void refreshActiveTree() throws JSONException, IOException {

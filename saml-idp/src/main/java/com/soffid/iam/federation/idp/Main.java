@@ -20,6 +20,7 @@ import java.util.Set;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
+import javax.servlet.ServletContext;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
@@ -54,6 +55,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+import com.soffid.iam.addons.federation.idp.radius.server.RadiusServer;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.ssl.SeyconKeyStore;
@@ -196,7 +198,7 @@ public class Main {
             installClientCertConnector(host, port2);
     
             // Deploy war
-            deployWar(plainSocket);
+            ServletContextHandler ctx = deployWar(plainSocket);
     
             // Start
             server.setSendServerVersion(false);
@@ -212,6 +214,11 @@ public class Main {
             		throw new InternalErrorException("Unknown error starting IdP service");
             	
             }
+            
+            SAMLProfile radius = useRadiusProfile();
+            if (radius != null && Boolean.TRUE.equals(radius.getEnabled())) {
+            	createRadiusServer (radius, ctx.getServletContext() );
+            }
         } finally {
             if (oldClassLoader != null)
                 Thread.currentThread().setContextClassLoader(oldClassLoader);
@@ -219,7 +226,17 @@ public class Main {
     
     }
 
-    private void createConfigurationFiles(IdpConfig c)
+    private void createRadiusServer(SAMLProfile radius, ServletContext ctx ) {
+    	RadiusServer rs = new RadiusServer();
+    	if (radius.getAcctPort() != null)
+    		rs.setAcctPort(radius.getAcctPort());
+    	if (radius.getAuthPort() != null)
+    		rs.setAuthPort(radius.getAuthPort());
+    	rs.setServletContext(ctx);
+    	rs.start(true, true);
+	}
+
+	private void createConfigurationFiles(IdpConfig c)
             throws UnrecoverableKeyException, FileNotFoundException,
             KeyStoreException, NoSuchAlgorithmException, CertificateException,
             IOException, InternalErrorException, InvalidKeyException,
@@ -331,7 +348,7 @@ public class Main {
         installConnector(host, port, true);
     }
 
-    private void deployWar(boolean plainSocket) throws FileNotFoundException, IOException,
+    private ServletContextHandler deployWar(boolean plainSocket) throws FileNotFoundException, IOException,
             UnrecoverableKeyException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException,
             InternalErrorException, InvalidKeyException, IllegalStateException,
@@ -576,6 +593,7 @@ public class Main {
         sessionManager.addEventListener(new SessionListener());
         ctx.getSessionHandler().setSessionManager(sessionManager);
         
+        return ctx;
 
     }
 
@@ -603,6 +621,23 @@ public class Main {
             SAMLProfile profile = (SAMLProfile) it.next();
             SamlProfileEnumeration type = profile.getClasse();
             if (type.equals(SamlProfileEnumeration.OPENID)) {
+            	return profile;
+            }
+        }
+        return null;
+	}
+
+	private SAMLProfile useRadiusProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederationService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.RADIUS)) {
             	return profile;
             }
         }
