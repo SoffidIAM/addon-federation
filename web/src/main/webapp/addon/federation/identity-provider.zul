@@ -468,6 +468,26 @@
 				dataType="STRING"
 				bind="userInfoEndpoint"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_authPort" label="${c:l('federa_profile.zul.authPort')}"
+				dataType="NUMBER"
+				bind="authPort"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_acctPort" label="${c:l('federa_profile.zul.acctPort')}"
+				dataType="NUMBER"
+				bind="acctPort"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_pap" label="${c:l('federa_profile.zul.pap')}"
+				dataType="BOOLEAN"
+				bind="pap"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_chap" label="${c:l('federa_profile.zul.chap')}"
+				dataType="BOOLEAN"
+				bind="chap"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_mschap" label="${c:l('federa_profile.zul.mschap')}"
+				dataType="BOOLEAN"
+				bind="msChap"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
 			<div style="text-align: right; width: 100%">
 				<button image="/img/save-r.svg" label="${c:l('common.apply') }" onClick="ref:handler.applyProfile"/>
 			</div>

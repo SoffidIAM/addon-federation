@@ -30,6 +30,8 @@
 		  value: oid
 		- name: ${c:l('federa_atribut.zul.openidName')}
 		  value: openidName
+		- name: ${c:l('federacio.zul.radiusId') }
+		  value: radiusIdentifier
 		- name: ${c:l('federacio.zul.value') }
 		  value: value
 					]]>
@@ -68,6 +70,10 @@
 					<customfield3 dataType="STRING" maxlength="100"
 						bind="openidName"
 						label="${c:l('federa_atribut.zul.openidName')}"/>
+					<customfield3 dataType="STRING" maxlength="100"
+						bind="radiusIdentifier"
+						uiHandler="com.soffid.iam.addons.federation.web.RadiusIdentifierHandler"
+						label="${c:l('federa_atribut.zul.radiusId')}"/>
 					<customfield3 id="script"
 						label="${c:l('federacio.zul.value')}"
 						multiline='true'

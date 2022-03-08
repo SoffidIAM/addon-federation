@@ -36,6 +36,7 @@ public class RolesDelayedAttribute extends DelayedAttribute
 	            v += "@"+role.getSystem(); //$NON-NLS-1$
 	            l.add(v);
 	        }
+	        array = true;
 	        return l;
 		} catch (Exception e) {
 			throw new RuntimeException("Error fitching memberOf", e);

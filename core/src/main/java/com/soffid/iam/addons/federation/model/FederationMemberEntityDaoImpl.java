@@ -197,6 +197,9 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setOpenidClientId(sp.getOpenidClientId());
 			target.setOpenidSecret(sp.getOpenidSecret());
 			target.setOpenidUrl(sp.getOpenidUrl());
+			// Radius attributes
+			target.setSourceIps(sp.getSourceIps());
+			target.setRadiusSecret(sp.getRadiusSecret() == null ? null: Password.decode(sp.getRadiusSecret()));
 			// Virtual Identity Provider (informatiu)
 			// Service providers
 			if (sp.getServiceProviderVirtualIdentityProvider() != null) {
@@ -538,6 +541,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				sp.setSystem(null);
 			else 
 				sp.setSystem(getSystemEntityDao().findByName(source.getSystem()) );
+			// Radius attributes
+			sp.setSourceIps(source.getSourceIps());
+			sp.setRadiusSecret(source.getRadiusSecret() == null ? null: source.getRadiusSecret().toString());
+
 			// Aquí no guardem la relació SP-VIP (ServiceProviderVirtualIdentityProviderEntity)
 			
 			target = sp;

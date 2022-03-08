@@ -54,6 +54,17 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	@Column (name="FED_DIS_ID")
 	DispatcherEntity system;
+
+	// Radius attributes
+	@Column(name="FED_SRCIP", length=150)
+	@Description("Source IPs or IP ranges, for Radius clients")
+	@Nullable
+	public String sourceIps;
+
+	@Column(name="FED_RADSEC", length=50)
+	@Description("Radius secret")
+	@Nullable
+	public String radiusSecret;
 	
 	@Description("Ask consent to share information with this service provider")
 	@Column (name="FED_CONSEN")

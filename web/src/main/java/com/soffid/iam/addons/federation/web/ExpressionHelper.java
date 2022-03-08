@@ -132,6 +132,8 @@ public class ExpressionHelper {
 		if (condition.getType() == ConditionType.AND || condition.getType() == ConditionType.OR) {
 			if (Boolean.TRUE.equals(condition.getNegativeCondition()))
 				desc = "NOT (";
+			else
+				desc = "";
 			boolean first = true;
 			for (PolicyCondition child: condition.getChildrenCondition()) {
 				if (first) first = false;

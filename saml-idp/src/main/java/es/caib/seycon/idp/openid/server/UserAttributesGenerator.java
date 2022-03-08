@@ -22,10 +22,14 @@ import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeRe
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolver;
 import edu.internet2.middleware.shibboleth.common.profile.provider.SAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
+import es.caib.seycon.idp.shibext.DelayedAttribute;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserAttributesGenerator {
 	public Map<String, Object> generateAttributes(ServletContext ctx, TokenInfo t) throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
+		return generateAttributes(ctx, t, true);
+	}
+	public Map<String, Object> generateAttributes(ServletContext ctx, TokenInfo t, boolean openid) throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
 		AttributeResolver<SAMLProfileRequestContext> resolver = (AttributeResolver<SAMLProfileRequestContext>)
 				HttpServletHelper.getAttributeResolver(ctx);
 		
@@ -42,16 +46,24 @@ public class UserAttributesGenerator {
 		
 		for ( Attribute attribute: new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null) )
 		{
-			String openIdName = attribute.getOpenidName();
-			if (openIdName == null || openIdName.isEmpty())
-				openIdName = attribute.getShortName();
+			String name;
+			if (openid) {
+				name = attribute.getOpenidName();
+				if (name == null || name.isEmpty())
+					name = attribute.getShortName();
+			} else {
+				name = attribute.getRadiusIdentifier();
+			}
 			
 			BaseAttribute samlAttribute = att.get(attribute.getShortName());
-			if (samlAttribute != null && !samlAttribute.getValues().isEmpty())
-				if (samlAttribute.getValues().size() == 1)
-					result.put(openIdName, samlAttribute.getValues().iterator().next());
+			if (name != null && !name.trim().isEmpty() &&
+					samlAttribute != null && !samlAttribute.getValues().isEmpty())
+				if (samlAttribute instanceof DelayedAttribute && ((DelayedAttribute) samlAttribute).isArray())
+					result.put(name, new LinkedList( samlAttribute.getValues()));
+				else if (samlAttribute.getValues().size() == 1)
+					result.put(name, samlAttribute.getValues().iterator().next());
 				else
-					result.put(openIdName, new LinkedList( samlAttribute.getValues()));
+					result.put(name, new LinkedList( samlAttribute.getValues()));
 		}
 	
 		return result;

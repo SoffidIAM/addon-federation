@@ -112,6 +112,16 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setTokenEndpoint(entity.getTokenEndpoint());
 			target.setRevokeEndpoint(entity.getRevokeEndpoint());
 			target.setUserInfoEndpoint(entity.getUserInfoEndpoint());
+		} else if (source instanceof RadiusProfileEntity) {
+			// heretats
+			target.setClasse(SamlProfileEnumeration.RADIUS);
+			RadiusProfileEntity entity = (RadiusProfileEntity) source;
+			target.setAcctPort(entity.getAcctPort());
+			target.setAuthPort(entity.getAuthPort());
+			target.setPap(entity.getPap());
+			target.setChap(entity.getChap());
+			target.setMsChap(entity.getMsChap());
+			target.setEnabled(entity.isEnabled());
 		} else if (source instanceof SamlProfileEntity) {
 			// En teoria aquesta és abstracta
 			target.setClasse(SamlProfileEnumeration.SAML_PRO);
@@ -162,6 +172,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 				samlProfileEntity = newSaml1AttributeQueryProfileEntity();
 			} else if (SamlProfileEnumeration.OPENID.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newOpenidProfileEntity();
+			} else if (SamlProfileEnumeration.RADIUS.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newRadiusProfileEntity();
 			} else {
 				samlProfileEntity = newSamlProfileEntity();
 			}
@@ -308,6 +320,16 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			entity.setTokenEndpoint(source.getTokenEndpoint());
 			entity.setUserInfoEndpoint(source.getUserInfoEndpoint());
 			entity.setRevokeEndpoint(source.getRevokeEndpoint());
+			target = entity;
+		} else if (SamlProfileEnumeration.RADIUS.equals(source.getClasse())) {
+			// heretats
+			RadiusProfileEntity entity = (RadiusProfileEntity) target;
+			entity.setAcctPort(source.getAcctPort());
+			entity.setAuthPort(source.getAuthPort());
+			entity.setChap(source.getChap());
+			entity.setPap(source.getPap());
+			entity.setMsChap(source.getMsChap());
+			entity.setEnabled(source.getEnabled());
 			target = entity;
 		} else {
 			// Res més... per als SAMLProfile
