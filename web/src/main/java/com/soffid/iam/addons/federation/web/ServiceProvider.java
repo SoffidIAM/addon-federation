@@ -10,12 +10,9 @@ import javax.naming.NamingException;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 import org.zkoss.util.media.Media;
-import org.zkoss.zhtml.impl.AbstractTag;
-import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zk.ui.ext.AfterCompose;
@@ -23,26 +20,18 @@ import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Window;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.common.IdentityProviderType;
-import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.web.component.CustomField3;
-import com.soffid.iam.web.component.InputField3;
-import com.soffid.iam.web.component.ObjectAttributesDiv;
-import com.soffid.iam.web.popup.FileUpload2;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.zkib.binder.BindContext;
-import es.caib.zkib.component.DataTable;
 import es.caib.zkib.component.Form2;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.datamodel.DataNode;
 import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathEvent;
-import es.caib.zkib.events.XPathRerunEvent;
 import es.caib.zkib.events.XPathSubscriber;
 import es.caib.zkib.zkiblaf.Missatgebox;
 
@@ -87,7 +76,8 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 	}	
 
 	public void onChangeName(Event event) {
-		XPathUtils.setValue(this, "description",  XPathUtils.eval(this, "federationMember/publicId"));
+		XPathUtils.setValue(this, "description",  
+				XPathUtils.eval(this, "federationMember/publicId") +  " - " + XPathUtils.eval(this, "federationMember/name"));
 		generateMetadata();
 	}
 	
