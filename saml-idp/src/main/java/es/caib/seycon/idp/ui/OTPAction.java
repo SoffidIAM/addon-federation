@@ -93,8 +93,18 @@ public class OTPAction extends HttpServlet {
 	                }
             	}
             } catch (UnknownUserException e) {
+            	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
             } catch (Exception e) {
                 error = Messages.getString("UserPasswordAction.internal.error");
+                String s = "";
+                while (e != null) {
+                	s = e.getClass().getSimpleName()+": "+e.getMessage();
+                	if (e.getCause() == null || e.getCause() == e ||
+                			! (e instanceof Exception))
+                		break;
+                	e = (Exception) e.getCause();
+                }
+                error += ": "+ s;
                 LogFactory.getLog(getClass()).info("Error validating certificate ", e);
             }
         }

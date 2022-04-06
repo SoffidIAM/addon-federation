@@ -131,7 +131,7 @@ public class WebCredentialParser {
 		String fmt = (String) attestation.get("fmt");
 		if ("android-safetynet".equals(fmt))
 			parseAndroidSafenetResponse();
-		else if ("packed".equals(fmt))
+		else if ("packed".equals(fmt) || "fido-u2f".equals(fmt))
 			parsePackedResponse();
 //		else
 //			throw new ValidationException("Unsupported attestation format "+fmt);

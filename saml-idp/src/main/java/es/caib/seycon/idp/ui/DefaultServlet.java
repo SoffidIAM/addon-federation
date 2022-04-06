@@ -17,7 +17,7 @@ public class DefaultServlet extends HttpServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static final String [] mimes = { ".css", "text/css", ".png", "image/png"}; //$NON-NLS-1$ //$NON-NLS-2$
+	private static final String [] mimes = { ".css", "text/css", ".png", "image/png", ".svg", "image/svg+xml"}; //$NON-NLS-1$ //$NON-NLS-2$
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

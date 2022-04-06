@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.addons.federation.service.UserCredentialService;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 
@@ -19,4 +20,8 @@ public class RemoteServiceLocator extends com.soffid.iam.remote.RemoteServiceLoc
 		return (UserBehaviorService) getRemoteService(UserBehaviorService.REMOTE_PATH);
 	}
 
+	public UserCredentialService getUserCredentialService () throws IOException, InternalErrorException 
+	{
+		return (UserCredentialService) getRemoteService(UserCredentialService.REMOTE_PATH);
+	}
 }

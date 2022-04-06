@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<zkib-model>
+	<datanode name="root">
+		<finder name="token" type="token" refreshAfterCommit="true">
+			<ejb-finder jndi="java:/module/UserCredentialService-v2"
+				method="findMyCredentials">
+			</ejb-finder>
+		</finder>
+	</datanode>
+	
+	
+	<datanode name="token">
+		<ejb-handler jndi="java:/module/UserCredentialService-v2">
+			<delete-method method="remove">
+				<parameter value="${instance}" />
+			</delete-method>
+		</ejb-handler>
+	</datanode>
+</zkib-model>

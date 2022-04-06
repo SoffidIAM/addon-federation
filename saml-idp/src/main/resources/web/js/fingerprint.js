@@ -61,7 +61,7 @@ function arrayToBase64(array)
 
 async function registerCredential (cred) 
 {
-    const response = await fetch("./registerCredential", {
+    const response = await fetch(fingerprintRegister ? "/validateRegisteredCredential" : "./registerCredential", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -78,7 +78,8 @@ async function registerCredential (cred)
     	localStorage.setItem("soffid.credential.serial", serial);
   	  	$("#fingerprintregister").fadeOut("slow");
   	  	$("#fingerprintinprogress").fadeIn("slow");
-    	document.getElementById("").style.display="none";
+		if (fingerprintRegister)
+			window.close();
     }
     else
     {
@@ -124,6 +125,7 @@ function fingerprintCreate() {
 	    })
 	    .catch((err) => {
 	        alert ("ERROR"+ err);
+			window.close();
 	    });
 }
 
@@ -159,13 +161,16 @@ function activateFingerprint ()
     	localStorage.removeItem("soffid.credential.serial");
     	serial = false;
     }
-    if (demo || rawId && serial)
+    if (fingerprintRegister) {
+		fingerprintCreate();
+	}
+    else if (demo || rawId && serial)
     {
     	if (e1)
     		e1.style.display="block";
 //		e2.style.display="block";
     }
-    else if (window.PublicKeyCredential)
+	else if (window.PublicKeyCredential)
     {
     	if (e2)
     		e2.style.display="block";

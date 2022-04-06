@@ -171,7 +171,7 @@ public abstract class FederationMemberEntity {
 			+ "where (:tipusFM='V') and  "
 			+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  "
 			+ "and (:publicId is null or fm.publicId like :publicId) and "
-			+ "fm.tenant.id=:tenantId"
+			+ "fm.tenant.id=:tenantId "
 			+ "union "
 			+ "select fm "
 			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm "
