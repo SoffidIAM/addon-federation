@@ -38,9 +38,7 @@ import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.remote.RemoteServiceLocator;
-import com.soffid.iam.service.AccountService;
 import com.soffid.iam.service.SessionService;
-import com.soffid.iam.service.UserService;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
@@ -75,6 +73,7 @@ public class TokenHandler {
 		t.expires = t.created + 120000; // 2 Minutes to get token
 		t.authentication = t.created;
 		t.setAuthenticationMethod(authType);
+		t.setScope(request.getScope());
 		t.updateLastUse();
 		authorizationCodes.put(t.getAuthorizationCode(), t);
 		pendingTokens.addLast(t);
@@ -206,7 +205,7 @@ public class TokenHandler {
 				.withJWTId(t.getJwtId())
 				.withIssuer("https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
 		if (t.getRequest().getScope() != null)
-			builder.withClaim("scope", t.getRequest().getScope());
+			builder.withClaim("scope", t.getScope());
 		else
 			builder.withClaim("scope", "openid");
 
@@ -280,6 +279,7 @@ public class TokenHandler {
 				.withExpiresAt( new Date (t.getExpires()))
 				.withIssuedAt(new Date(t.getCreated()))
 				.withClaim("auth_time", t.getAuthentication())
+				.withClaim("scope", t.getScope() )
 				.withClaim("nonce", t.request.getNonce())
 				.withKeyId(c.getHostName())
 				.withIssuer("https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
@@ -426,6 +426,7 @@ public class TokenHandler {
 		o.setIdentityProvider(getIdentityProvider());
 		o.setRefreshToken(t.getRefreshToken());
 		o.setServiceProvider(t.getRequest().getFederationMember().getPublicId());
+		o.setScope(t.getToken());
 		if (t.getToken() == null) {
 			o.setTokenId(null);
 			o.setFullToken(null);
@@ -453,6 +454,8 @@ public class TokenHandler {
 		t.setRequest(new OpenIdRequest());
 		t.getRequest().setFederationMember(getFederationService().findFederationMemberByPublicId(o.getServiceProvider()));
 		t.getRequest().setClientId(t.getRequest().getFederationMember().getOpenidClientId());
+		t.getRequest().setScope(o.getScope());
+		t.setScope(o.getScope());
 		t.setToken(o.getFullToken());
 		t.setJwtId(o.getTokenId());
 		t.setUser(o.getUser());

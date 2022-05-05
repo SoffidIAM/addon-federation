@@ -30,6 +30,9 @@ public class OauthToken {
 	String authorizationCode;
 	
 	@Nullable
+	String scope;
+	
+	@Nullable
 	String tokenId;
 	
 	@Nullable

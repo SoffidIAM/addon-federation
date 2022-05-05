@@ -231,4 +231,9 @@ public class FederationMember {
 	@Nullable
 	@Description("The service provider requires account in the system")
 	public String system;
+
+	@Nullable
+	@Description("List of oauth scopes for this service provider")
+	@Attribute(defaultValue="new java.util.LinkedList()")
+	public List<AllowedScope> allowedScopes;
 }

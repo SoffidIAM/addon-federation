@@ -8,6 +8,8 @@ package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.UserConsent;
+import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
+import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
@@ -103,7 +105,10 @@ import org.springframework.transaction.annotation.Transactional;
 	UserConsentEntity.class,
 	ImpersonationEntity.class,
 	ServiceProviderRoleEntity.class,
-	RolEntity.class
+	RolEntity.class,
+	AllowedScopeEntity.class,
+	AllowedScopeRoleEntity.class,
+	AplicacioService.class
 })
 public abstract class FederationService {
 
@@ -529,6 +534,7 @@ public abstract class FederationService {
 	OauthToken findOauthTokenByAuthorizationCode(String idp, String authorizationCode) {return null;}
 	OauthToken findOauthTokenByToken(String idp, String token) {return null;}
 	OauthToken findOauthTokenByRefreshToken(String idp, String token) {return null;}
+	String filterScopes(@Nullable String requestedScopes, String user, String system, String serviceProvider) {return null;}
 	
 	/* Consent */
 	boolean hasConsent(String userName, String serviceProvider) {return false;}

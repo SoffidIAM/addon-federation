@@ -2,9 +2,11 @@ package com.soffid.iam.addons.federation.web;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import javax.ejb.CreateException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -13,23 +15,37 @@ import org.json.JSONException;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 import org.zkoss.util.media.Media;
+import org.zkoss.util.resource.Labels;
+import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.HtmlBasedComponent;
+import org.zkoss.zk.ui.Path;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zk.ui.ext.AfterCompose;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Window;
 
+import com.soffid.iam.EJBLocator;
+import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
+import com.soffid.iam.api.Group;
+import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.web.component.CustomField3;
+import com.soffid.iam.web.component.InputField3;
+import com.soffid.iam.web.component.ObjectAttributesDiv;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.zkib.component.DataTable;
 import es.caib.zkib.component.Form2;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.datamodel.DataNode;
+import es.caib.zkib.datamodel.DataNodeCollection;
+import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathSubscriber;
@@ -41,6 +57,7 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 	private String publicKeyPath;
 	private String keyPath;
 	private byte[] data;
+	private boolean newScope;
 
 	ProviderHandler getFrame() {
 		return (ProviderHandler) getPage().getFellow("frame");
@@ -56,7 +73,8 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		getFellow("networkSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		getFellow("certificateSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		getFellow("openidSection").setVisible(spType == ServiceProviderType.OPENID_CONNECT);
-		getFellow("configurationSection").setVisible(spType != ServiceProviderType.RADIUS);
+		getFellow("configurationSection").setVisible( spType != ServiceProviderType.OPENID_CONNECT &&
+					spType != ServiceProviderType.RADIUS);
 		getFellow("radiusSection").setVisible(spType == ServiceProviderType.RADIUS);
 		
 //		((CustomField3)getFellow("organization")).setVisible(ServiceProviderType.OPENID_CONNECT != spType);
@@ -67,8 +85,8 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		((CustomField3)getFellow("metadades")).setVisible(spType != ServiceProviderType.OPENID_CONNECT &&
 				spType != ServiceProviderType.RADIUS);
 		((CustomField3)getFellow("metadades")).setDisabled(spType != ServiceProviderType.SAML);
-		((CustomField3)getFellow("oauthKey")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
-		((CustomField3)getFellow("oauthSecret")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
+//		((CustomField3)getFellow("oauthKey")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
+//		((CustomField3)getFellow("oauthSecret")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
 		((CustomField3)getFellow("contact")).setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		((CustomField3)getFellow("organization")).setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		((CustomField3)getFellow("impersonations")).setVisible(spType != ServiceProviderType.RADIUS);
@@ -454,4 +472,83 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		}
 	}
 
+	public void displayRemoveButton(Component lb, boolean display) {
+		HtmlBasedComponent d = (HtmlBasedComponent) lb.getNextSibling();
+		if (d != null && d instanceof Div) {
+			d =  (HtmlBasedComponent) d.getFirstChild();
+			if (d != null && "deleteButton".equals(d.getSclass())) {
+				d.setVisible(display);
+			}
+		}
+	}
+
+	// Scopes
+	public void addScope (Event event) throws Exception {
+		Window w = getScopeWindow();
+		w.doHighlighted();
+		final AllowedScope scope = new AllowedScope();
+		scope.setRoles(new LinkedList<>());
+		XPathUtils.createPath(getDataSource(), "/federationMember/allowedScopes", scope);
+		
+		final DataTable scopesListbox = getScopesListbox();
+		scopesListbox.setSelectedIndex( scopesListbox.getModel().getSize()-1);
+		displayRemoveButton(scopesListbox, false);
+		newScope = true;
+	}
+	
+	public DataTable getScopesListbox() {
+		return (DataTable) getFellow("scopesgrid");
+	}
+
+	public void onSelectScope(Event event) {
+		Window w = getScopeWindow();
+		w.doHighlighted();
+		displayRemoveButton(getScopesListbox(), false);
+		newScope = false;
+	}
+	
+	public void closeScope(Event event) {
+		if (newScope)
+			getScopesListbox().delete();
+		Window w = getScopeWindow();
+		w.setVisible(false);
+		getScopesListbox().setSelectedIndex(-1);
+		if (event != null)
+			event.stopPropagation();
+	}
+	
+	public void deleteScope(Event event) {
+		Missatgebox.confirmaOK_CANCEL(Labels.getLabel("common.delete"), 
+				(event2) -> {
+					if (event2.getName().equals("onOK")) {
+						DataTable dt = getScopesListbox();
+						dt.delete();
+						closeScope(null);
+						
+					}
+				});
+	}
+	
+	public void onMultiSelectScope(Event event) {
+		DataTable lb = (DataTable) event.getTarget();
+		displayRemoveButton( lb, lb.getSelectedIndexes() != null && lb.getSelectedIndexes().length > 0);
+	}
+
+	public void applyScope() throws Exception {
+		Window w = getScopeWindow();
+		CustomField3 cf = (CustomField3) w.getFellow("scope");
+		if (cf.attributeValidateAll()) {
+			DataTable dt = getScopesListbox();
+			dt.updateClientRow(dt.getSelectedIndex());
+			dt.commit();
+			closeScope(null);
+			w.setVisible(false);
+			dt.setSelectedIndex(-1);
+		}
+	}
+
+	public Window getScopeWindow() {
+		return (Window) getFellow("scope-window");
+	}
+	
 }

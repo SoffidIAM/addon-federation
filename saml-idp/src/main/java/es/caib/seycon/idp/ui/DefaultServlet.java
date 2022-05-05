@@ -52,5 +52,12 @@ public class DefaultServlet extends HttpServlet {
             in.close();
         }
     }
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		resp.addHeader("Access-Control-Allow-Origin", "*");
+		resp.addHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+		resp.addHeader("Access-Control-Max-Age", "1728000");
+		super.service(req, resp);
+	}
 
 }
