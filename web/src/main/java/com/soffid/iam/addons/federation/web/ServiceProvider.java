@@ -541,7 +541,6 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 			DataTable dt = getScopesListbox();
 			dt.updateClientRow(dt.getSelectedIndex());
 			dt.commit();
-			closeScope(null);
 			w.setVisible(false);
 			dt.setSelectedIndex(-1);
 		}
