@@ -1,24 +1,32 @@
 package com.soffid.iam.addons.federation.service;
 
+import java.net.URI;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.model.FederationMemberEntity;
+import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
+import com.soffid.iam.addons.federation.model.UserCredentialRequestEntity;
 import com.soffid.iam.api.User;
 import com.soffid.iam.model.ConfigEntity;
 import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
+import com.soffid.iam.utils.Security;
+
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 
 	@Override
 	protected UserCredential handleCheck(String challenge, Map<String, Object> response) throws Exception {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -69,13 +77,19 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 
 	@Override
 	protected void handleRemove(UserCredential credential) throws Exception {
+		UserCredentialEntity entity = getUserCredentialEntityDao().load(credential.getId());
+		if (canRemove(entity))
+			getUserCredentialEntityDao().remove(entity);
+
+	}
+
+	private boolean canRemove(UserCredentialEntity entity) throws InternalErrorException {
+		if (Security.isUserInRole("federation-credential:remove"))
+			return true;
 		User u = AutoritzacionsUsuari.getCurrentUsuari();
 		if (u == null)
-			return;
-
-		UserCredentialEntity entity = getUserCredentialEntityDao().load(credential.getId());
-		if (entity.getUserId().equals(u.getId()))
-			getUserCredentialEntityDao().remove(entity);
+			return false;
+		return entity.getUserId().equals(u.getId()); 
 	}
 
 	@Override
@@ -94,6 +108,70 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		data.setValue(next.toString());
 		getConfigEntityDao().update(data);
 		return String.format("%012d", current);
+	}
+
+	@Override
+	protected User handleFindUserForNewCredentialURI(String hash) throws Exception {
+		UserCredentialRequestEntity r = getUserCredentialRequestEntityDao().findByHash(hash);
+		if (r == null || r.getExpiration().before(new Date()))
+			return null;
+		else {
+			UserEntity u = getUserEntityDao().load(r.getUserId());
+			if (u == null)
+				return null;
+			else
+				return getUserEntityDao().toUser(u);
+		}
+	}
+
+	@Override
+	protected URI handleGenerateNewCredential() throws Exception {
+		return handleGenerateNewCredential(Security.getCurrentUser());
+	}
+
+	@Override
+	protected URI handleGenerateNewCredential(String userName) throws Exception {
+		getUserCredentialRequestEntityDao().deleteExpired();
+		UserCredentialRequestEntity c = getUserCredentialRequestEntityDao().newUserCredentialRequestEntity();
+		byte b[] = new byte[66];
+		String hash;
+		do {
+			new SecureRandom().nextBytes(b);
+			hash = Base64.getUrlEncoder().encodeToString(b);
+		} while ( getUserCredentialRequestEntityDao().findByHash(hash) != null);
+		c.setExpiration(new Date(System.currentTimeMillis() + 8 * 60 * 60 * 1000L)); // Valid for eight hours
+		c.setHash(hash);
+		
+		if (userName == null) throw new InternalErrorException("Tokens can only be bound to identities, not shared accounts");
+		UserEntity u = getUserEntityDao().findByUserName(userName);
+		if (u == null) throw new InternalErrorException("Cannot locate user "+userName);
+		c.setUserId(u.getId());
+		getUserCredentialRequestEntityDao().create(c);
+		
+		for (FederationMemberEntity fm: getFederationMemberEntityDao().findFMByEntityGroupAndPublicIdAndTipus("%", "%", "I")) {
+			if (fm instanceof IdentityProviderEntity) {
+				final IdentityProviderEntity idp = (IdentityProviderEntity) fm;
+				if (idp.getIdpType() == IdentityProviderType.SOFFID) {
+					return new URI(
+							Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
+							null, // User
+							idp.getHostName(),
+							Integer.parseInt(idp.getStandardPort()),
+							"/registerRequestedCredential/"+c.getHash(),
+							null, // Query
+							null  // Hash
+							);
+				}
+			}
+		}
+		throw new InternalErrorException("Cannot find a valid identity provider to register the user");
+	}
+
+	@Override
+	protected void handleCancelNewCredentialURI(String hash) throws Exception {
+		UserCredentialRequestEntity r = getUserCredentialRequestEntityDao().findByHash(hash);
+		if (r != null)
+			getUserCredentialRequestEntityDao().remove(r);
 	}
 
 }

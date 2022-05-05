@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.Password;
 
@@ -93,7 +94,34 @@ public class TokenEndpoint extends HttpServlet {
 				buildError(resp, "unauthorized_client", "Wrong client id");
 				return;
 			}
+			
+			// Check scope
+			boolean found = false;
+			request.setScope(req.getParameter("scope"));
+	    	if (request.getScope() != null) {
+		    	for (String s: request.getScope().split(" +"))
+		    	{
+		    		if (s.equalsIgnoreCase("openid")) found = true;
+	        		for (AllowedScope scope: request.getFederationMember().getAllowedScopes()) {
+	        			if (scope.getScope().equals("*") || scope.getScope().equals(s)) {
+	        				found = true;
+	        				break;
+	        			}
+	        		}
+	        		if (!found) {
+	        			buildError(resp, "invalid_scope", "The requested scope "+s+" is not allowed due to system policies");
+	        			return;
+	        		}
+		    	}
+	    	} else {
+	    		found = true;
+	    	}
+	    	if (! found)
+	    	{
+	            buildError(resp, "invalid_scope", "The requested scope does not contain the scope openid: "+request.getScope());
+	    	}
 
+	    	// Check authentication mechanism
 			if (request.getFederationMember().getOpenidMechanism().contains("PA")) {
 				// Accept request
 				log.info("Accepted mechanism PA for " + request.getFederationMember().getPublicId());
@@ -163,7 +191,8 @@ public class TokenEndpoint extends HttpServlet {
 							authCtx.authenticated(username, "P", resp);
 							t.setUser(username);
 							t.setAuthenticationMethod("P");
-
+							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId());
+							t.setScope(scopes);
 						} else {
 							authCtx.authenticationFailure(username);
 							logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
@@ -416,6 +445,14 @@ public class TokenEndpoint extends HttpServlet {
 		ServletOutputStream out = resp.getOutputStream();
 		out.print(o.toString());
 		out.close();
+	}
+
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		resp.addHeader("Access-Control-Allow-Origin", "*");
+		resp.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+		resp.addHeader("Access-Control-Max-Age", "1728000");
+		super.service(req, resp);
 	}
 
 }

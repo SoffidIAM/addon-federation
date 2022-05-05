@@ -1,3 +1,8 @@
+- name: federation.mytokens
+  img: /addon/federation/menu/fido.svg
+  permissions: ["selfservice:federation-credentials:show"]
+  url: addon/federation/tokens.zul
+  position: 5
 - name: soffid.admin
   img: /img/menu/laboratory.svg
   options:

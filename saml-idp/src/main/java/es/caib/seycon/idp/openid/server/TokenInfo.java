@@ -17,11 +17,12 @@ public class TokenInfo {
 	Long sessionId;
 	String sessionKey;
 	String jwtId;
+	String scope;
 	
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
 				+", User: "+user+", AuthenticationMethod: "+authentication+", SessionId: "+sessionId
-				+", SessionKey: "+sessionKey+", Request: "+request.toString()+"]";
+				+", SessionKey: "+sessionKey+", Request: "+request.toString()+", Scope: "+request.getScope()+"]";
 	}
 	
 	public String getUser() {
@@ -134,5 +135,13 @@ public class TokenInfo {
 
 	public void setJwtId(String jwtId) {
 		this.jwtId = jwtId;
+	}
+
+	public String getScope() {
+		return scope;
+	}
+
+	public void setScope(String scope) {
+		this.scope = scope;
 	}
 }

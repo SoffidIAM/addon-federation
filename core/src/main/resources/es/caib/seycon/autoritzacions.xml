@@ -43,6 +43,12 @@
 			federation-policiess:query
 		</hereta>
 	</autoritzacio>
+	<autoritzacio>
+		<codi>selfservice:federation-credentials:show</codi>
+		<descripcio>Access to FIDO device inventory
+		</descripcio>
+		<ambit>SelfService</ambit>
+	</autoritzacio>
 
 	<autoritzacio>
 		<codi>federation:create</codi>
@@ -119,6 +125,24 @@
 	<autoritzacio>
 		<codi>federation:serviceProvider</codi>
 		<descripcio>Act as a service provider</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-credential:query</codi>
+		<descripcio>Query FIDO tokens for any user</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-credential:remove</codi>
+		<descripcio>Cancels FIDO tokens for any user</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation-credential:create</codi>
+		<descripcio>Register FIDO tokens for any user</descripcio>
 		<ambit>Identify Federation</ambit>
 	</autoritzacio>
 </autoritzacions>

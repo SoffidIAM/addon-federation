@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.soffid.iam.addons.federation.common.AllowedScope;
+
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.LoginServlet;
@@ -97,6 +99,8 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	{
 	    		if (s.equalsIgnoreCase("openid")) found = true;
 	    	}
+    	} else {
+    		found = true;
     	}
 
     	if (! found)
@@ -111,6 +115,21 @@ public class AuthorizationEndpoint extends HttpServlet {
             return false;
     	}
     	
+    	if (r.getScope() != null) {
+	    	for (String s: r.getScope().split(" +")) {
+	    		found = false;
+	    		for (AllowedScope scope: r.getFederationMember().getAllowedScopes()) {
+	    			if (scope.getScope().equals("*") || scope.getScope().equals(s)) {
+	    				found = true; 
+	    				break;
+	    			}
+	    		}
+		    	if (!found) {
+		    		generateError(r, "invalid_scope", "The requested scope "+s+" is not allowed due to system policies", resp);
+		    		return false;
+		    	}
+	    	}
+    	}
     	if (r.getResponseType() == null)
     	{
             generateError(r, "unsupported_response_type", "Wrong value for response_type: "+r.getResponseType(), resp);

@@ -120,7 +120,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
-
+        	g.addArgument("fingerprintRegister", "false");
             boolean otpAllowed = ctx.getNextFactor().contains("O") || ctx.getNextFactor().contains("S") || ctx.getNextFactor().contains("I") || ctx.getNextFactor().contains("M");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {

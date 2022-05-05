@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -226,6 +227,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			for (ServiceProviderRoleEntity ra: sp.getRoles()) {
 				target.getRoles().add(ra.getRole().getName()+"@"+ra.getRole().getSystem().getName());
 			}
+			loadScopes(sp, target);
 		}
 		
 		target.getKeytabs().clear();
@@ -236,6 +238,20 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 							((VirtualIdentityProviderEntity) source).getKeytabs()));
 		}
 
+	}
+
+	private void loadScopes(ServiceProviderEntity sp, FederationMember target) {
+		target.setAllowedScopes( getAllowedScopeEntityDao().toAllowedScopeList(sp.getAllowedScopes()));
+		if (target.getAllowedScopes().isEmpty()) {
+			target.getAllowedScopes().add(new AllowedScope(null, "*", new LinkedList<String>()));
+		}
+		for (AllowedScope scope: target.getAllowedScopes()) {
+			if (scope.getScope().equals("openid"))
+			{
+				return;
+			}
+		}
+		target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>()));
 	}
 
 	private void loadAuthenticatioMethods(VirtualIdentityProviderEntity source, FederationMember target) {

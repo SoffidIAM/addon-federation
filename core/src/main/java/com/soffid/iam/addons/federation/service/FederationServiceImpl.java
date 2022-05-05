@@ -26,6 +26,7 @@ import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -54,6 +55,7 @@ import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.jbpm.JbpmContext;
 import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.exe.ExecutionContext;
@@ -61,6 +63,7 @@ import org.jbpm.graph.exe.ProcessInstance;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
+import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
 import com.soffid.iam.addons.federation.common.AttributePolicyCondition;
@@ -77,6 +80,8 @@ import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.UserConsent;
+import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
+import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
 import com.soffid.iam.addons.federation.model.AttributeConditionEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntityDao;
@@ -104,6 +109,7 @@ import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.service.impl.FederationServiceInternal;
 import com.soffid.iam.addons.federation.service.impl.WorkflowInitiator;
+import com.soffid.iam.api.Account;
 import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Configuration;
@@ -113,8 +119,10 @@ import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PolicyCheckResult;
 import com.soffid.iam.api.Role;
+import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
+import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.model.AuditEntity;
 import com.soffid.iam.model.Parameter;
@@ -218,6 +226,7 @@ public class FederationServiceImpl
 			if (entity instanceof ServiceProviderEntity) {
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 				updateRoles((ServiceProviderEntity) entity, federationMember);
+				updateScopes((ServiceProviderEntity) entity, federationMember);
 			}
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
@@ -272,6 +281,64 @@ public class FederationServiceImpl
 		}
 	}
 
+	private void updateScopes(ServiceProviderEntity entity, FederationMember federationMember) {
+		LinkedList<AllowedScope> l = new LinkedList<AllowedScope>(federationMember.getAllowedScopes());
+		for (Iterator<AllowedScopeEntity> iterator = entity.getAllowedScopes().iterator(); iterator.hasNext();) {
+			AllowedScopeEntity imp = iterator.next();
+			boolean found = false;
+			for ( Iterator<AllowedScope> iterator2 = l.iterator(); iterator2.hasNext();) {
+				AllowedScope scope = iterator2.next();
+				if (scope.getScope().equals(imp.getScope())) {
+					updateScope(imp, scope);
+					found = true;
+					iterator2.remove();
+					break;
+				}
+			}
+			if (!found) {
+				iterator.remove();
+				getAllowedScopeRoleEntityDao().remove(imp.getRoles());
+				getAllowedScopeEntityDao().remove(imp);
+			}
+		}
+		for (AllowedScope scope: l) {
+			AllowedScopeEntity scopeEntity = getAllowedScopeEntityDao().newAllowedScopeEntity();
+			scopeEntity.setServiceProvider(entity);
+			scopeEntity.setScope(scope.getScope());
+			getAllowedScopeEntityDao().create(scopeEntity);
+			updateScope(scopeEntity, scope);
+			entity.getAllowedScopes().add(scopeEntity);
+			
+		}
+	}
+
+	private void updateScope(AllowedScopeEntity entity, AllowedScope scope) {
+		LinkedList<String> l = new LinkedList<String>(scope.getRoles());
+		for (Iterator<AllowedScopeRoleEntity> iterator = entity.getRoles().iterator(); iterator.hasNext();) {
+			AllowedScopeRoleEntity imp = iterator.next();
+			boolean found = false;
+			RoleEntity r = getRoleEntityDao().load(imp.getRoleId());
+			if (r == null || ! l.contains(r.getName()+"@"+r.getSystem().getName())) {
+				getAllowedScopeRoleEntityDao().remove(imp);
+				iterator.remove();
+			}
+			else {
+				l.remove(r.getName()+"@"+r.getSystem().getName());
+			}
+		}
+		for (String roleName: l) {
+			if (roleName != null && !roleName.trim().isEmpty() ) {
+				RoleEntity role = getRoleEntityDao().findByShortName(roleName);
+				if (role != null) {
+					AllowedScopeRoleEntity scopeRoleEntity = getAllowedScopeRoleEntityDao().newAllowedScopeRoleEntity();
+					scopeRoleEntity.setRoleId(role.getId());
+					scopeRoleEntity.setScope(entity);
+					getAllowedScopeRoleEntityDao().create(scopeRoleEntity);
+					entity.getRoles().add(scopeRoleEntity);
+				}
+			}
+		}
+	}
 
 	/**
 	 * @see es.caib.seycon.ng.servei.FederationService#update(com.soffid.iam.addons.federation.common.FederationMember)
@@ -388,6 +455,7 @@ public class FederationServiceImpl
 				getVirtualIdentityProviderEntityDao().update(sp);
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 				updateRoles((ServiceProviderEntity) entity, federationMember);
+				updateScopes((ServiceProviderEntity) entity, federationMember);
 				String desc = sp.getPublicId() + (sp.getName() != null ? " - " + sp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
 				return getFederationMemberEntityDao().toFederationMember(sp);
@@ -2171,6 +2239,70 @@ public class FederationServiceImpl
 			}
 		}
 		return loginHint;
+	}
+
+	@Override
+	protected String handleFilterScopes(String requestedScopes, String user, String system, String serviceProvider)
+			throws Exception {
+		if (requestedScopes == null)
+			return null;
+		Account account = getAccountService().findAccount(user, system);
+		if (account == null)
+			return null;
+		Collection<RoleGrant> grants = null;
+		
+		HashSet<String> requested = new HashSet<String>( Arrays.asList(requestedScopes.split(" +")) );
+		HashSet<String> scopes = new HashSet<String>();
+		StringBuffer sb = new StringBuffer();
+		final List<FederationMemberEntity> federationMembers = getServiceProviderEntityDao().findFMByPublicId(serviceProvider);
+		for (String requestedScope: requested) {
+			boolean allowed = false;
+			for (FederationMemberEntity fm: federationMembers) {
+				if (fm instanceof ServiceProviderEntity) {
+					if (((ServiceProviderEntity)fm).getAllowedScopes().isEmpty()) // Compatibility check
+						allowed = true;
+					else {
+						for (AllowedScopeEntity scope: ((ServiceProviderEntity)fm).getAllowedScopes()) {
+							if (scope.getScope().equals("*") || scope.getScope().equals(requestedScope)) {
+								if (scope.getRoles().isEmpty()) {
+									allowed = true;
+									break;
+								}
+								else {
+									if (grants == null) {
+										if (account instanceof UserAccount) {
+											UserEntity userEntity = getUserEntityDao().findByUserName(((UserAccount) account).getUser());
+											grants = getApplicationService().findEffectiveRoleGrantByUser(userEntity.getId());
+										} else {
+											grants = getApplicationService().findEffectiveRoleGrantByAccount(account.getId());
+										}
+									}
+									boolean found = false;
+									for (RoleGrant grant: grants) {
+										for ( AllowedScopeRoleEntity r: scope.getRoles()) {
+											if (r.getRoleId().equals(grant.getRoleId())) {
+												found = true;
+												break;
+											}
+										}
+										if (found) break;
+									}
+									if (found) {
+										allowed = true;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (allowed) {
+				if (sb.length() > 0) sb.append(" ");
+				sb.append(requestedScope);
+			}
+		}
+		return sb.toString();
 	}
 
 }

@@ -44,14 +44,6 @@
 			bind= "/federationMember/metadades" id="metadades"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
 			onChange="ref:handler.changeMetadata"/>
-		<customfield3 id="oauthKey"  label="${c:l('federacio.zul.oAuthKey')}"
-			dataType="STRING"
-			bind="/federationMember/oauthKey" 
-			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
-		<customfield3 id="oauthSecret"
-			label="${c:l('federacio.zul.oAuthSecret')}"
-			dataType='PASSWORD'
-			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 	</div>
 	<div sclass="section" id="provisionSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.provisioning') }" />
@@ -188,6 +180,47 @@
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.refreshTimeout')}"/>
 
+		<div sclass="databox">
+			<label sclass="label" value="${c:l('federacio.zul.allowedScopes') }"/>
+			<div sclass="container">
+				<datatable dataPath="/federationMember/allowedScopes" id="scopesgrid"
+					sortColumn="0"	
+					multiselect="true"
+					onMultiSelect="ref:handler.onMultiSelectScope"
+					onSelect="ref:handler.onSelectScope">
+				<attribute name="columns" ><![CDATA[
+- name: "${c:l('federacio.zul.scope')}"
+  value: scope
+- name: "${c:l('federacio.zul.roles')}"
+  value: roles
+				]]></attribute>
+				</datatable>
+				<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('user:printer:create')}" >
+					<div class="deleteButton" onClick="ref:handler.deleteScope" visible="false" if="${soffid:isUserInRole('federation:update')}">-</div>
+					<div class="addButton" onClick="ref:handler.addScope"  if="${soffid:isUserInRole('federation:update')}">+</div>
+				</div>
+				<label value="${c:l('federacio.zul.scopeNote') }" multiline="true" style="white-space: normal;word-break: break-word;"/>
+				<window 
+				    closable="false"
+					id="scope-window"
+					position="center, center" sizable="true"
+					title="${c:l('federacio.zul.allowedScopes')}" visible="false"
+					style="width: 80%; max-width: 800px" onClose="ref:handler.closeScope()">
+			
+					<form id="form" width="100%" dataPath="../scopesgrid:/">
+						<customfield3 label="${c:l('federacio.zul.scope') }" dataType="STRING_TYPE" bind="scope" required="true" id="scope"/>
+						<customfield3 label="${c:l('federacio.zul.roles') }" dataType="ROLE_TYPE" bind="roles" multiValue="true"/>
+					</form>
+					<div style="text-align: right; width: 100%">
+						<button image="/img/undo-r.svg" label="${c:l('common.undo')}" 
+							onClick="ref:handler.closeScope">
+						</button>
+						<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" 
+							onClick="ref:handler.applyScope"/>
+					</div>
+				</window>
+			</div>
+		</div>
 	</div>
 	<div sclass="section" id="radiusSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.radius') }" />

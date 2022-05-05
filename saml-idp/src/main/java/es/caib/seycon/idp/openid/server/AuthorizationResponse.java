@@ -12,6 +12,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
@@ -60,16 +61,16 @@ public class AuthorizationResponse  {
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		if (!checkAuthorization(user, r))
-			unauthorized(request, response, r);
+			unauthorized(request, response, r, user);
 		if ( r.getResponseTypeSet().contains("code"))
 			authorizationFlow (request, response, authType);
 		else
 			implicitFLow (ctx, request, response, authType);
 	}
 
-	private static void unauthorized(HttpServletRequest request, HttpServletResponse response, OpenIdRequest r) throws UnsupportedEncodingException, IOException {
+	private static void unauthorized(HttpServletRequest request, HttpServletResponse response, OpenIdRequest r, String user) throws UnsupportedEncodingException, IOException {
    		response.sendRedirect(r.getRedirectUrl() + (r.getRedirectUrl().contains("?") ? "&": "?") +"error=access_denied&error_description="+
-    				URLEncoder.encode("Access denied by user" , "UTF-8")+
+    				URLEncoder.encode("Access denied for user "+user , "UTF-8")+
     				(r.getState() != null ? "&state="+r.getState(): ""));
 	}
 
@@ -108,9 +109,11 @@ public class AuthorizationResponse  {
 
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
+		final IdpConfig config = IdpConfig.getConfig();
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
+		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
-		
 		Map<String, Object> att;
 		try {
 			att = new UserAttributesGenerator().generateAttributes(ctx, token);
@@ -204,13 +207,16 @@ public class AuthorizationResponse  {
 		resp.sendRedirect(sb.toString());
 	}
 
-	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, InternalErrorException {
+	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
+		final IdpConfig config = IdpConfig.getConfig();
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
+		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
 		

@@ -33,8 +33,13 @@ public class ErrorServlet extends HttpServlet {
         if (error == null)
         {
 			Object e = req.getAttribute("javax.servlet.error.exception");
-			if (e != null)
-				error = e.toString();
+			error = e.toString();
+			while (e != null && e instanceof Exception) {
+				Exception ex = (Exception) e;
+				error = e.getClass().getSimpleName()+": "+ ex.getMessage();
+				if (ex.getCause() == null || ex.getCause() == ex) break;
+				e = ex.getCause();
+			}
         }
         
         if (error == null)
@@ -42,10 +47,6 @@ public class ErrorServlet extends HttpServlet {
         	error = (String) req.getAttribute("ERROR");
         }
         
-        if (error == null)
-        {
-        	error = "Uknown error";
-        }
 
         try {
             resp.reset();
@@ -55,9 +56,13 @@ public class ErrorServlet extends HttpServlet {
         Integer code = (Integer) req.getAttribute("javax.servlet.error.status_code");
         if (code == null)
         	code = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+        if (error == null)
+        {
+        	error = "HTTP/"+code;
+        }
         resp.setStatus(code.intValue());
         HtmlGenerator g = new HtmlGenerator(getServletContext(), req);
-        g.addArgument("ERROR", "HTTP/"+code);
+        g.addArgument("ERROR", error);
         try {
 			g.generate(resp, "errorPage.html");
 		} catch (TextFormatException e) {

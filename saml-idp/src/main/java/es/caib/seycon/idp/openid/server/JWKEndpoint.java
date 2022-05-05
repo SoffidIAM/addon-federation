@@ -151,4 +151,13 @@ public class JWKEndpoint extends HttpServlet {
 			string = string.substring(0, string.length()-1);
 		return string;
 	}
+	
+	@Override
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		resp.addHeader("Access-Control-Allow-Origin", "*");
+		resp.addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+		resp.addHeader("Access-Control-Max-Age", "1728000");
+		super.service(req, resp);
+	}
+
 }

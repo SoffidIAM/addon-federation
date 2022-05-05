@@ -9,6 +9,7 @@ import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.*;
 
 import es.caib.seycon.ng.model.DispatcherEntity;
+import es.caib.seycon.ng.model.RolEntity;
 
 @Entity (table="SC_FEDERA" ,
 		discriminatorValue="FM" ,
@@ -22,7 +23,10 @@ import es.caib.seycon.ng.model.DispatcherEntity;
 	com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity.class,
 	AuthenticationMethodEntity.class,
 	KerberosKeytabEntity.class, 
-	ServiceProviderRoleEntity.class, DispatcherEntity.class})
+	ServiceProviderRoleEntity.class, DispatcherEntity.class,
+	AllowedScopeEntity.class,
+	AllowedScopeRoleEntity.class,
+	RolEntity.class})
 public abstract class FederationMemberEntity {
 
 	@Column (name="FED_ID")
@@ -171,7 +175,7 @@ public abstract class FederationMemberEntity {
 			+ "where (:tipusFM='V') and  "
 			+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName)  "
 			+ "and (:publicId is null or fm.publicId like :publicId) and "
-			+ "fm.tenant.id=:tenantId"
+			+ "fm.tenant.id=:tenantId "
 			+ "union "
 			+ "select fm "
 			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm "
