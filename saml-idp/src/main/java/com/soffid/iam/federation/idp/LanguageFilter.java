@@ -36,6 +36,11 @@ public class LanguageFilter implements Filter {
 			String lang = (String) s.getAttribute("lang"); //$NON-NLS-1$ //$NON-NLS-2$
 			if (lang != null)
 				localeToUse = new Locale (lang);
+			if (req.getParameter("lang") != null) {
+				try {
+					localeToUse = new Locale (req.getParameter("lang"));
+				} catch(Exception e) {} // Wrong language
+			}
 			
 			LogRecorder.getInstance().keepAliveLogSession(s);
 		}
@@ -43,7 +48,7 @@ public class LanguageFilter implements Filter {
 		Locale currentLocale =  MessageFactory.getThreadLocale();
 		try {
 			MessageFactory.setThreadLocale(localeToUse);
-			
+			com.soffid.iam.lang.MessageFactory.setThreadLocale(localeToUse);
 			
 			chain.doFilter(request, response);
 		} finally {
