@@ -288,7 +288,7 @@ public class FederationServiceImpl
 			boolean found = false;
 			for ( Iterator<AllowedScope> iterator2 = l.iterator(); iterator2.hasNext();) {
 				AllowedScope scope = iterator2.next();
-				if (scope.getScope().endsWith(imp.getScope())) {
+				if (scope.getScope().equals(imp.getScope())) {
 					updateScope(imp, scope);
 					found = true;
 					iterator2.remove();
@@ -296,9 +296,9 @@ public class FederationServiceImpl
 				}
 			}
 			if (!found) {
+				iterator.remove();
 				getAllowedScopeRoleEntityDao().remove(imp.getRoles());
 				getAllowedScopeEntityDao().remove(imp);
-				iterator.remove();
 			}
 		}
 		for (AllowedScope scope: l) {
