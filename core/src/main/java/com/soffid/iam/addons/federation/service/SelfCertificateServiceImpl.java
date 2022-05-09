@@ -272,7 +272,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		} else {
 	        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "BC");
 	
-	        keyGen.initialize(1024, random);
+	        keyGen.initialize(2048, random);
 	
 	        // Generar clave raiz
 	        KeyPair pair = keyGen.generateKeyPair();
