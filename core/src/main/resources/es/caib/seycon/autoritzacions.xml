@@ -49,6 +49,12 @@
 		</descripcio>
 		<ambit>SelfService</ambit>
 	</autoritzacio>
+	<autoritzacio>
+		<codi>selfservice:federation-certificates:show</codi>
+		<descripcio>Access to certificates inventory
+		</descripcio>
+		<ambit>SelfService</ambit>
+	</autoritzacio>
 
 	<autoritzacio>
 		<codi>federation:create</codi>
@@ -143,6 +149,37 @@
 	<autoritzacio>
 		<codi>federation-credential:create</codi>
 		<descripcio>Register FIDO tokens for any user</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>selfservice:federation-credentials:show</codi>
+		<descripcio>Access to FIDO device inventory
+		</descripcio>
+		<ambit>SelfService</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation:certificate:user</codi>
+		<descripcio>Create a new certificate for himself</descripcio>
+		<ambit>Self service</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation:token:user</codi>
+		<descripcio>Register a new fido token for himself</descripcio>
+		<ambit>Self service</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>selfcertificate:create</codi>
+		<descripcio>Register certificates for any user</descripcio>
+		<ambit>Identify Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>selfcertificate:manage</codi>
+		<descripcio>Manage digital certificate authorities</descripcio>
 		<ambit>Identify Federation</ambit>
 	</autoritzacio>
 </autoritzacions>

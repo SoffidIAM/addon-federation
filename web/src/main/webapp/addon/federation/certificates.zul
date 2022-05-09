@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+<frame xmlns:h="http://www.w3.org/1999/xhtml" mold="div" style="position: relative" 
+	use="com.soffid.iam.addons.federation.web.RootCertificateHandler" id="frame">
+
+	<datamodel id="model" rootNode="root" src="addon/federation/descriptorCertificates.xml" />
+
+	<div sclass="card" id="card">
+		<div sclass="card__face card__face--front">
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame">
+				<menu2>
+					<menu2item image="/img/add.svg" label="${c:l('agents.zul.Afegeixnou') }" if="${soffid:isUserInRole('selfcertificate:manage')}"  onClick="ref:frame.addNew"/>
+					<menu2item image="/img/download.svg" label="${c:l('zkdb.download') }" onClick="ref:frame.downloadCsv"/>
+				</menu2>
+			</div>
+			<datatable id="listbox" autocommit="true" dataPath="/model:/certificate"
+			    maxheight="70vh"
+				multiselect="true"
+				onMultiSelect="ref:frame.multiSelect"
+				sortColumn="0" onSelect="ref:frame.showDetails">
+				<attribute name="columns"><![CDATA[
+- name: ${c:l('selfCertificate.organizationName')}
+  value: organizationName
+- name: ${c:l('selfCertificate.creationnDate')}
+  value: creationDate
+  template: #{creationDate_date}
+- name: ${c:l('selfCertificate.expirationDate')}
+  value: expirationDate
+  template: #{expirationDate_date}
+  className: datetimeColumn
+- name: ${c:l('selfcertificate.external')}
+  template: #{external ? "${c:l('mesg:org.zkoss.zul.mesg.MZul:YES')}" : "${c:l('mesg:org.zkoss.zul.mesg.MZul:NO')}" }
+  value: external
+]]></attribute>
+			</datatable>
+			<div width="100%" style="text-align: right"   >
+				<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false" if="${soffid:isUserInRole('selfcertificate:manage')}">-</div>
+				<div class="addButton" onClick="ref:frame.addNew" if="${soffid:isUserInRole('selfcertificate:manage')}">+</div>
+			</div>
+		</div>
+		
+		<div sclass="card__face card__face--back">
+			<div id="dades">
+				<div use="com.soffid.iam.web.component.NavigationBar" frame="frame" lastAction="ref:frame.hideDetails">
+					<pager datatable="listbox"/>
+					
+					<menu2>
+						<menu2item if="${soffid:isUserInRole('federation-attribute:delete')}" image="/img/trash.svg" label="${c:l('plugins.zul.Delete') }" onClick="ref:frame.delete"/>
+					</menu2>
+					
+					<databutton image="/img/save.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.applyNoClose" onlyIcon="true"/>
+				</div>
+				<form2 id="form" onChangeXPath="ref:frame.onChangeForm"
+					dataPath="/listbox:/." width="100%">
+					<customfield3 dataType="STRING" maxlength="100"
+						readonly="true" 
+						id="organizationName"
+						bind="organizationName"
+						label="${c:l('selfCertificate.organizationName')}"/>
+					<customfield3 dataType="DATE" 
+						bind="creationDate"
+						readonly="true"
+						id="creationDate"
+						label="${c:l('selfCertificate.creationnDate')}"/>
+					<customfield3 dataType="DATE"
+						readonly="true"
+						bind="expirationDate" id="expirationDate"
+						label="${c:l('selfCertificate.expirationDate')}"/>
+					<customfield3 dataType="BOOLEAN" id="external"
+						bind="external"
+						readonly="true"
+						label="${c:l('selfcertificate.external')}"/>
+					<customfield3 
+						id="userCertificateMonths"
+						label="${c:l('selfCertificate.userCertificateMonts')}"
+						dataType="NUMBER"
+						bind="userCertificateMonths" />
+					<customfield3 dataType="STRING" maxlength="16000" multiline="true"
+						bind="guessUserScript" id="guessUserScript"
+						javascript="{certificate:'java.security.cert.X509Certificate',subject:'javax.naming.ldap.LdapName'}"
+						selectIcon="/img/pencil.svg" 
+						placeholder="Script to compute the user name. Can use the certificate and subject variables. Should return a valid user name"
+						label="${c:l('selfcertificate.guessUserScript')}"/>
+						
+					<div sclass="databox">
+						<label sclass="label" value="${c:l('selfcertificate.certificate')}"/>
+						<div sclass="container">
+							<button label="${c:l('contenidoTarea.btnDescargar') }" onClick="ref:frame.downloadCert"/>
+						</div>
+					</div>
+						
+					<div style="text-align: right; width: 100%">
+						<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">
+						</databutton>
+						<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.apply"/>
+					</div>
+				</form2>
+			</div>
+		</div>
+	</div>
+	<window closable="false"
+		xmlns:h="http://www.w3.org/1999/xhtml"
+		id="add-window"
+		position="top, center" sizable="true"
+		title="${c:l('otp.newToken')}" visible="false"
+		style="width: 80%; max-width: 800px">
+	
+		<wizard id="wizard">
+			<attribute name="steps">
+	- ${c:l("selfcertificate.selectType")}
+	- ${c:l("selfcertificate.generate")}
+	- ${c:l("user-account-new.Finish")}
+			</attribute>
+			<div id="step1">
+
+				<customfield3 dataType="STRING"
+					id="type"
+					label="${c:l('selfcertificate.type') }"
+					listOfValues="internal: ${c:l('selfcertificate.internal')}, external: ${c:l('selfcertificate.external') }"
+					required="true" >
+				</customfield3>		
+			
+				<div style="text-align: right; width: 100%">
+					<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:frame.addUndo" />
+					<button image="/img/next-r.svg" label="${c:l('aplicaIntranet_autoritzacio.Next')}" onClick="ref:frame.addStep2"/>
+				</div>
+						
+			</div>
+			<div>
+				<div id="upload">
+					<div>
+						<label value="${c:l('selfcertificate.certificate') }:" sclass="label"></label>
+						<fileupload style="width: 400px; height: 60px; display: inline-block"
+							id="${c:l('csvimport.upload') }" 
+							onUpload="ref:frame.onUpload"
+							mold="short"/>					
+					</div>
+					<customfield3 dataType="STRING" maxlength="100"
+						readonly="true" 
+						id="organizationName2"
+						label="${c:l('selfCertificate.organizationName')}"/>
+					<customfield3 dataType="STRING" maxlength="16000" multiline="true"
+						id="guessScript"
+						javascript='{"certificate":"java.security.cert.X509Certificat","subject":"javax.naming.ldap.LdapName"}'
+						selectIcon="/img/pencil.svg" 
+						placeholder="Script to compute the user name. Can use the certificate and subject variables. Should return a valid user name"
+						label="${c:l('selfcertificate.guessUserScript')}"/>
+				</div>				
+				<div id="generate">
+					<customfield3 dataType="STRING" maxlength="100"
+						required="true" 
+						id="organizationName"
+						label="${c:l('selfCertificate.organizationName')}"/>
+					<customfield3 dataType="DATE"
+						id="expirationDate"
+						required="true"
+						label="${c:l('selfCertificate.expirationDate')}"/>
+					<customfield3 id="userCertificateMonths"
+						required="true"
+						label="${c:l('selfCertificate.userCertificateMonts')}"
+						dataType="NUMBER"/>
+				</div>
+				<div style="text-align: right; width: 100%">
+					<button image="/img/undo-r.svg" label="${c:l('task.filter.lblVolver')}" 
+						onClick="ref:frame.addStep1" />
+					<button image="/img/save-r.svg" label="${c:l('common.apply') }"
+						onClick="ref:frame.addApply"/>
+				</div>
+			</div>
+		</wizard>
+	</window>
+</frame>

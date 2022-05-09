@@ -18,6 +18,8 @@ import es.caib.seycon.ng.model.ConfiguracioEntity;
 import es.caib.seycon.ng.model.UsuariEntity;
 import es.caib.seycon.ng.servei.UsuariService;
 import roles.Tothom;
+import roles.federation_create_token;
+import roles.selfcertificate_user;
 import roles.user_query;
 
 import java.net.URI;
@@ -39,18 +41,18 @@ public class UserCredentialService
 	public java.util.List<UserCredential> findUserCredentials( String user ) 
 		{ return null; }
 
-	@Operation ( grantees={Tothom.class})
+	@Operation ( grantees={federation_create_token.class, selfcertificate_user.class})
 	public java.util.List<UserCredential> findMyCredentials( ) 
 		{ return null; }
 	
 	public UserCredential findBySerial(String serial) {  return null; 	}
 	
-	@Operation ( grantees={Tothom.class})
+	@Operation ( grantees={federation_create_token.class})
 	public UserCredential create(UserCredential credential) 
 		{ return null; }
 	
 	
-	@Operation ( grantees={Tothom.class})
+	@Operation ( grantees={federation_create_token.class, selfcertificate_user.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void remove(UserCredential credential)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
@@ -63,7 +65,7 @@ public class UserCredentialService
 	public UserCredential check ( String challenge, Map<String,Object> response) {return null;}
 
 	
-	@Operation(grantees= {Tothom.class})
+	@Operation(grantees= {federation_create_token.class})
 	public URI generateNewCredential () { return null;}
 		
 	@Operation(grantees= {federation_credential_create.class})

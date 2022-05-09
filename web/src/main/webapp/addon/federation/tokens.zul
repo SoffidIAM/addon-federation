@@ -13,32 +13,45 @@
 
 	<timer delay="10000" repeats="true" running="true" onTimer="ref:frame.refresh"/>
 
+	<style>
+		div.datatable table.tbody tr td.typeColumn {
+			width: 150px;
+			text-align: left;
+		}
+	</style>
+	
 	<div sclass="single-face-card" id="card">
 		<div sclass="card__face card__face--front">
-	
+	 
 			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame">
 				<menu2>
 					<menu2item image="/img/add.svg" label="${c:l('agents.zul.Afegeixnou') }" if="${soffid:isUserInRole('otp:user')}"  onClick="ref:frame.addNew"/>
 					<menu2item image="/img/download.svg" label="${c:l('zkdb.download') }" onClick="ref:frame.downloadCsv"/>
 				</menu2>
 			</div>
-	
 			<datatable enablefilter="true" id="listbox"
 				autocommit="true"
 				multiselect="true"
 				onMultiSelect="ref:frame.multiSelect" 
+				onSelect="ref:frame.multiSelect" 
 				sortColumn="2"
 				sortDirection="-1"
 			    dataPath="/model:/token" >
 			<attribute name="columns"><![CDATA[
+- name: ${c:l('selfcertificate.type')}
+  filter: false
+  value: type
+  className: typeColumn
+  template: <img class='small-icon' src='${execution.contextPath }/addon/federation/img/#{type.value}.svg' />#{type.value == 'cert'? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT')}' : type.value == 'fido' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO')}' : ''}
 - name: ${c:l('federation.token.serial')}
   value: serialNumber
+  className: datetimeColumn
 - name: ${c:l('federation.token.description')}
   value: description
 - name: ${c:l('federation.token.lastUse')}
   value: lastUse
   template: #{lastUse_datetime}
-  $class: datetimeColumn
+  className: datetimeColumn
 			]]></attribute>
 			</datatable>
 			<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('otp:user')}" >
@@ -47,6 +60,7 @@
 			</div>
 		</div>
 	</div>
+
 
 	<window closable="false"
 		xmlns:h="http://www.w3.org/1999/xhtml"
@@ -57,76 +71,46 @@
 	
 		<wizard id="wizard">
 			<attribute name="steps">
-	- ${c:l("otp.selectType")}
-	- ${c:l("otp.verifyToken")}
+	- ${c:l("selfcertificate.selectType")}
 	- ${c:l("user-account-new.Finish")}
 			</attribute>
 			<div id="step1">
 
 				<customfield3 dataType="STRING"
 					id="type"
-					label="${c:l('otp.selectType') }"
-					onChange="ref:frame.changeDeviceType"
+					onChange="ref:frame.changeType"
+					label="${c:l('selfcertificate.selectType') }"
 					required="true" >
 				</customfield3>		
 			
-				<customfield3 dataType="EMAIL"
-					id="email"
-					label="${c:l('otp.emailAddress') }"
+				<customfield3 dataType="STRING"
+					id="description"
+					label="${c:l('selfCertificate.description') }"
 					required="true" >
 				</customfield3>		
 
-				<customfield3 dataType="PASSWORD"
-					id="pin0"
-					label="${c:l('otp.pin') }"
-					required="true" >
-				</customfield3>		
-
-				<customfield3
-					id="phone" 
-					dataType="STRING"
-					label="${c:l('otp.phoneNumber') }"
-					required="true" >
-				</customfield3>		
 
 				<div style="text-align: right; width: 100%">
 					<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:frame.addUndo" />
-					<button image="/img/next-r.svg" label="${c:l('otp.verifyToken')}" onClick="ref:frame.addStep2"/>
+					<button image="/img/next-r.svg" label="${c:l('aplicaIntranet_autoritzacio.Next')}" onClick="ref:frame.addApply"/>
 				</div>
 						
 			</div>
 			<div>
-				<div style="display: block; width: 100%; text-align: center" id="imageblock">
-					<label value="${c:l('otp.instructionsa') }" style="display:block; word-break: break-word"/>
-					<image id="image" style="width: 250px height: 250px"/>
-					<label value="${c:l('otp.instructionsa2') }" style="display:block"/>
-				</div>
+				<label value="${c:l('federation.certificate.instructions') } :" style="display:block;word-break: break-word;overflow-wrap: anywhere;"/>
 				
-				<div style="display: block; width: 100%; text-align: center" id="smsblock">
-					<label value="${c:l('otp.instructionsb') }" style="display:block"/>
+				<div style="display: block; width: 100%; text-align: center; margin: 24px;" id="pinblock">
+					<label value="" id="password" style='font-weight: bold; '/>
+					<imageclic src="/img/copy.svg"
+						action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
+						style="vertical-align: middle"
+						title="${c:l('vault.account.copy')}"/>
+					<textbox readonly="true" style="display:none;" 
+						id="qpassword"/>
 				</div>
-				
-				<div style="display: block; width: 100%; text-align: center" id="pinblock">
-					<label value="${c:l('otp.instructionsc') }" style="display:block"/>
-				</div>
-
-				<div style="display: block; width: 100%; text-align: center">
-					<div style="width: 300px; display: inline-block">
-						<customfield3 
-							maxlength="16"
-							label="${c:l('otp.pin') }"
-							dataType="PASSWORD"
-							required="true"
-							onOK="ref:frame.addApply"
-							id="pin"/>
-					</div>
-				</div>				
 
 				<div style="text-align: right; width: 100%">
-					<button image="/img/undo-r.svg" label="${c:l('task.filter.lblVolver')}" 
-						onClick="ref:frame.addStep1" />
-					<button image="/img/save-r.svg" label="${c:l('common.apply') }"
-						onClick="ref:frame.addApply"/>
+					<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar')}" onClick="ref:frame.addUndo" />
 				</div>
 			</div>
 		</wizard>

@@ -5,13 +5,16 @@
 //
 
 package com.soffid.iam.addons.federation.service;
+import com.soffid.iam.service.CertificateValidationService;
 import com.soffid.mda.annotation.*;
 
 import org.springframework.transaction.annotation.Transactional;
 
 @Service ( translatedName="FederationBootService",
 	 translatedPackage="com.soffid.iam.addons.federation.service")
-@Depends ({com.soffid.iam.addons.federation.service.FederationService.class, UserBehaviorService.class, UserCredentialService.class})
+@Depends ({com.soffid.iam.addons.federation.service.FederationService.class, UserBehaviorService.class, UserCredentialService.class,
+	CertificateValidationService.class, 
+	SelfCertificateValidationService.class})
 public abstract class FederationBootService extends es.caib.seycon.ng.servei.ApplicationBootService {
 
 }

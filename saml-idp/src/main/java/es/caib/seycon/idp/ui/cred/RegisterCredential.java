@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.dataformat.cbor.CBORParser;
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
@@ -70,6 +71,7 @@ public class RegisterCredential extends HttpServlet {
 				credential.setDescription(p.getTokenSigner());
 				credential.setSerialNumber( IdpConfig.getConfig().getUserCredentialService().generateNextSerial() );
 				credential.setRawid(rawId);
+				credential.setType(UserCredentialType.FIDO);
 				credential.setKey(p.getPublicKey());
         		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
         		ctx.setNewCredential(credential);

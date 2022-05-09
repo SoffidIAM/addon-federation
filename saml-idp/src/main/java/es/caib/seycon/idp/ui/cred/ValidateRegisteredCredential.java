@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.User;
@@ -81,6 +82,7 @@ public class ValidateRegisteredCredential extends HttpServlet {
 				credential.setDescription(p.getTokenSigner());
 				credential.setSerialNumber( IdpConfig.getConfig().getUserCredentialService().generateNextSerial() );
 				credential.setRawid(rawId);
+				credential.setType(UserCredentialType.FIDO);
 				credential.setKey(p.getPublicKey());
 				credential.setUserId(user.getId());
 				userCredentialService.create(credential);

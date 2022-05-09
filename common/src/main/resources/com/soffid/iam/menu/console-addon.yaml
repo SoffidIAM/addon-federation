@@ -1,13 +1,22 @@
-- name: federation.mytokens
-  img: /addon/federation/menu/fido.svg
-  permissions: ["selfservice:federation-credentials:show"]
-  url: addon/federation/tokens.zul
+- name: menu.multifactor
+  img: /img/menu/authentication.svg
   position: 5
+  options:
+  - name: federation.mytokens
+    img: /addon/federation/menu/fido.svg
+    permissions: ["selfservice:federation-credentials:show"]
+    url: addon/federation/tokens.zul
 - name: soffid.admin
   img: /img/menu/laboratory.svg
   options:
   - name: seu.configuration
     options:
+    - name: seu.security
+      options:
+      - name: selfcertificate.menu
+        img: /addon/federation/menu/certificates.svg
+        url: addon/federation/certificates.zul
+        permissions: ["seu:federation-attributes:show"]
     - name: federacio.zul.websso
       img: /addon/federation/img/federation.svg
       options:

@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
@@ -40,11 +41,11 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 
 	@Override
 	protected UserCredential handleFindBySerial(String credential) throws Exception {
-		UserCredentialEntity entity = getUserCredentialEntityDao().findBySerialNumber(credential);
-		if ( entity == null )
-			return null;
-		else
-			return getUserCredentialEntityDao().toUserCredential(entity);
+		for (UserCredentialEntity entity: getUserCredentialEntityDao().findBySerialNumber(credential)) {
+			if (entity.getType() == UserCredentialType.FIDO)
+				return getUserCredentialEntityDao().toUserCredential(entity);
+		}
+		return null;
 	}
 
 	@Override
