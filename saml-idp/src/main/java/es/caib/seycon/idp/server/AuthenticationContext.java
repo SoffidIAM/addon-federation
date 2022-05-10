@@ -152,7 +152,8 @@ public class AuthenticationContext {
         {
             for ( String allowedMethod: allowedAuthenticationMethods)
             {
-           		nextFactor.add( allowedMethod.substring(0,1));
+            	if (!allowedMethod.isEmpty())
+            		nextFactor.add( allowedMethod.substring(0,1));
             }
         }
 	}
