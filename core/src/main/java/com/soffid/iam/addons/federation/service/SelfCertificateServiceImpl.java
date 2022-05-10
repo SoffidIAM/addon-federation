@@ -269,6 +269,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		if (root.isExternal()) {
 			rootEntity = getRootCertificateEntityDao().rootCertificateToEntity(root);
 			rootEntity.setCertificate(root.getCertificate().getEncoded());
+	        getRootCertificateEntityDao().create(rootEntity);
 		} else {
 	        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "BC");
 	
@@ -309,7 +310,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 	        encryptorBuilder.setRandom( new SecureRandom());
 	        encryptorBuilder.setPasssword(password);
 	        OutputEncryptor oe = encryptorBuilder.build();
-	        JcaPKCS8Generator gen = new JcaPKCS8Generator( pair.getPrivate(),oe);
+	        JcaPKCS8Generator gen = new JcaPKCS8Generator( pair.getPrivate(), oe);
 	        PemObject obj = gen.generate();
 	        
 	        PemWriter pemWriter = new PemWriter(writer);
@@ -317,8 +318,8 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 	        pemWriter.close();
 	        
 	        rootEntity.setPrivateKey(writer.getBuffer().toString().getBytes("UTF-8"));
+	        getRootCertificateEntityDao().update(rootEntity);
 		} 
-        getRootCertificateEntityDao().create(rootEntity);
         
         return getRootCertificateEntityDao().toRootCertificate(rootEntity);
 	}
