@@ -281,7 +281,7 @@ public class RadiusServer {
 	}
 
 	private String getUserPassword(String userName) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
-		String system = IdpConfig.getConfig().getTenantConfig().getAgentName();
+		String system = IdpConfig.getConfig().getSystem().getName();
 		Password pass = new RemoteServiceLocator().getServerService().getAccountPassword(userName, system);
 		if (pass == null)
 			return null;

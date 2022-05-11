@@ -81,7 +81,7 @@ public class AuthorizationResponse  {
 
 	private static boolean checkAuthorization(String user, OpenIdRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
     	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
-    	final String systemName = IdpConfig.getConfig().getTenantConfig().getAgentName();
+    	final String systemName = IdpConfig.getConfig().getSystem().getName();
     	log.info("Getting information of "+user+" at "+systemName);
 		User ui = server.getUserInfo(user, systemName);
 
@@ -117,7 +117,7 @@ public class AuthorizationResponse  {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getTenantConfig().getAgentName(), r.getFederationMember().getPublicId());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
@@ -222,7 +222,7 @@ public class AuthorizationResponse  {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getTenantConfig().getAgentName(), r.getFederationMember().getPublicId());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);

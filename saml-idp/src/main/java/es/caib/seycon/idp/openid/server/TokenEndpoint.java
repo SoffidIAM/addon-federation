@@ -191,7 +191,7 @@ public class TokenEndpoint extends HttpServlet {
 							authCtx.authenticated(username, "P", resp);
 							t.setUser(username);
 							t.setAuthenticationMethod("P");
-							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getTenantConfig().getAgentName(), request.getFederationMember().getPublicId());
+							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId());
 							t.setScope(scopes);
 						} else {
 							authCtx.authenticationFailure(username);
@@ -312,8 +312,8 @@ public class TokenEndpoint extends HttpServlet {
 			throws IOException, ServletException, UnsupportedEncodingException {
 		String refreshToken = req.getParameter("refresh_token");
 
-		String clientId = req.getParameter("client_id");
-		String clientSecret = req.getParameter("client_secret");
+//		String clientId = req.getParameter("client_id");
+//		String clientSecret = req.getParameter("client_secret");
 
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo t = null;
@@ -327,20 +327,12 @@ public class TokenEndpoint extends HttpServlet {
 			FederationMember federationMember = t.getRequest().getFederationMember();
 			Password pass = Password.decode(federationMember.getOpenidSecret());
 
-			if (clientId != null && clientSecret != null) {
-				if (! federationMember.getOpenidClientId().equals(clientId) ||
-						! pass.getPassword().equals(clientSecret)) {
-					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
-					return;
-				}
-			} else {
-				String expectedAuth = federationMember.getOpenidClientId() + ":" + pass.getPassword();
-	
-				expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-				if (!expectedAuth.equals(authentication)) {
-					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
-					return;
-				}
+			String expectedAuth = federationMember.getOpenidClientId() + ":" + pass.getPassword();
+
+			expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			if (!expectedAuth.equals(authentication)) {
+				buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+				return;
 			}
 
 			Map<String, Object> att;
