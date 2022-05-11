@@ -60,12 +60,17 @@ public class AuthorizationResponse  {
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
-		if (!checkAuthorization(user, r))
+		log.info("Generating openid response");
+		if (!checkAuthorization(user, r)) {
+			log.info("Not authorized to login");
 			unauthorized(request, response, r, user);
-		if ( r.getResponseTypeSet().contains("code"))
-			authorizationFlow (request, response, authType);
-		else
+		} else if ( r.getResponseTypeSet().contains("code")) {
+			log.info("Returnig authorization flow");
+			authorizationFlow (request, response, authType);			
+		} else {
+			log.info("Returnig implicit flow");
 			implicitFLow (ctx, request, response, authType);
+		}
 	}
 
 	private static void unauthorized(HttpServletRequest request, HttpServletResponse response, OpenIdRequest r, String user) throws UnsupportedEncodingException, IOException {
@@ -76,7 +81,9 @@ public class AuthorizationResponse  {
 
 	private static boolean checkAuthorization(String user, OpenIdRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
     	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
-    	User ui = server.getUserInfo(user, IdpConfig.getConfig().getSystem().getName());
+    	final String systemName = IdpConfig.getConfig().getTenantConfig().getAgentName();
+    	log.info("Getting information of "+user+" at "+systemName);
+		User ui = server.getUserInfo(user, systemName);
 
     	FederationService fs = new RemoteServiceLocator().getFederacioService();
     	FederationMember member = fs.findFederationMemberByClientID(r.getClientId());
@@ -110,7 +117,7 @@ public class AuthorizationResponse  {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getTenantConfig().getAgentName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
@@ -215,7 +222,7 @@ public class AuthorizationResponse  {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getTenantConfig().getAgentName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);

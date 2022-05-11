@@ -344,7 +344,7 @@ public class Autenticator {
     
     public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, ServletException {
 
-        LOG.info("Remote user identified as "+user+". returning control back to authentication engine"); //$NON-NLS-1$ //$NON-NLS-2$
+        LOG.info("Remote user identified as "+user+". returning control back to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
 
         HttpSession session = req.getSession();
         
@@ -378,6 +378,7 @@ public class Autenticator {
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
 				req.getAttribute(
 						edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
+        LOG.info("Session type " + session.getAttribute("soffid-session-type")); //$NON-NLS-1$ //$NON-NLS-2$
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
         	LogRecorder.getInstance().addSuccessLogEntry("SAML", user, actualType, entityId, req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
@@ -416,6 +417,7 @@ public class Autenticator {
         } 
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
+        	LOG.info("Generating openid response");
         	AuthorizationResponse.generateResponse(ctx, req, resp, type);
         }
         else
