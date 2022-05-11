@@ -66,13 +66,17 @@ public class SessionCookieEndpoint extends HttpServlet {
 					t.getAuthenticationMethod() == null ? "P": t.getAuthenticationMethod(),
 					false);
 			Cookie cookie = autenticator.getSessionCookie(t, session);
-			h.setSession(t, session);
-			JSONObject o = new JSONObject();
-			o.put ("user", t.getUser());
-			o.put("cookie_name", cookie.getName());
-			o.put("cookie_value", cookie.getValue());
-			o.put("cookie_domain", cookie.getDomain());
-			buildResponse(resp, o);
+			if (cookie == null) {
+				buildError(resp, "No cookie name", "Missing sso cookie configuration setting", t);
+			} else {
+				h.setSession(t, session);
+				JSONObject o = new JSONObject();
+				o.put ("user", t.getUser());
+				o.put("cookie_name", cookie.getName());
+				o.put("cookie_value", cookie.getValue());
+				o.put("cookie_domain", cookie.getDomain());
+				buildResponse(resp, o);
+			}
 		} catch (Exception e) {
 			log.info("Error generating session cookie", e);
 			buildError(resp, e.getClass().getSimpleName(), e.getMessage(), t);
