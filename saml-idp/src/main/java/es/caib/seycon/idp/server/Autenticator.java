@@ -599,7 +599,7 @@ public class Autenticator {
         {
         	byte digest[] = MessageDigest.getInstance("SHA-256").digest(session.getKey().getBytes("UTF-8"));
         	String digestString = Base64.encodeBytes(digest);
-        	User user = ServiceLocator.instance().getServerService().getUserInfo(session.getUserName(), null);
+        	User user = new RemoteServiceLocator().getServerService().getUserInfo(session.getUserName(), null);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
        		cookie.setMaxAge ( -1 );
