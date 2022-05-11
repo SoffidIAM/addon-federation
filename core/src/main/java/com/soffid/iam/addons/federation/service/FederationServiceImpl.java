@@ -93,6 +93,7 @@ import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
+import com.soffid.iam.addons.federation.model.OauthTokenScopeEntity;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
 import com.soffid.iam.addons.federation.model.PolicyEntity;
 import com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity;
@@ -2081,6 +2082,14 @@ public class FederationServiceImpl
 		
 		e = getOauthTokenEntityDao().oauthTokenToEntity(token);
 		getOauthTokenEntityDao().create(e);
+		if (token.getScope() != null && ! token.getScope().trim().isEmpty()) {
+			for (String scope: token.getScope().trim().split(" +")) {
+				OauthTokenScopeEntity se = getOauthTokenScopeEntityDao().newOauthTokenScopeEntity();
+				se.setToken(e);
+				se.setScope(scope);
+				getOauthTokenScopeEntityDao().create(se);
+			}
+		}
 		return getOauthTokenEntityDao().toOauthToken(e);
 	}
 
@@ -2107,18 +2116,24 @@ public class FederationServiceImpl
 		OauthTokenEntity e = null;
 		if (token.getTokenId() != null) {
 			e = getOauthTokenEntityDao().findByTokenId(token.getTokenId());
-			if (e != null)
+			if (e != null) {
+				getOauthTokenScopeEntityDao().remove(e.getScopes());
 				getOauthTokenEntityDao().remove(e);
+			}
 		}
 		if (token.getRefreshToken() != null) {
 			e = getOauthTokenEntityDao().findByRefreshToken(token.getRefreshToken());
-			if (e != null)
+			if (e != null) {
+				getOauthTokenScopeEntityDao().remove(e.getScopes());
 				getOauthTokenEntityDao().remove(e);
+			}
 		}
 		if (token.getAuthorizationCode() != null) {
 			e = getOauthTokenEntityDao().findByAuthorizationCode(token.getAuthorizationCode());
-			if (e != null)
+			if (e != null) {
+				getOauthTokenScopeEntityDao().remove(e.getScopes());
 				getOauthTokenEntityDao().remove(e);
+			}
 		}
 	}
 
@@ -2135,6 +2150,17 @@ public class FederationServiceImpl
 		if (e != null) {
 			getOauthTokenEntityDao().oauthTokenToEntity(token, e, true);
 			getOauthTokenEntityDao().update(e);
+			getOauthTokenScopeEntityDao().remove(e.getScopes());
+			e.getScopes().clear();
+			if (token.getScope() != null && ! token.getScope().trim().isEmpty()) {
+				for (String scope: token.getScope().trim().split(" +")) {
+					OauthTokenScopeEntity se = getOauthTokenScopeEntityDao().newOauthTokenScopeEntity();
+					se.setToken(e);
+					se.setScope(scope);
+					getOauthTokenScopeEntityDao().create(se);
+					e.getScopes().add(se);
+				}
+			}
 		}
 	}
 
@@ -2257,39 +2283,43 @@ public class FederationServiceImpl
 		final List<FederationMemberEntity> federationMembers = getServiceProviderEntityDao().findFMByPublicId(serviceProvider);
 		for (String requestedScope: requested) {
 			boolean allowed = false;
-			for (FederationMemberEntity fm: federationMembers) {
-				if (fm instanceof ServiceProviderEntity) {
-					if (((ServiceProviderEntity)fm).getAllowedScopes().isEmpty()) // Compatibility check
-						allowed = true;
-					else {
-						for (AllowedScopeEntity scope: ((ServiceProviderEntity)fm).getAllowedScopes()) {
-							if (scope.getScope().equals("*") || scope.getScope().equals(requestedScope)) {
-								if (scope.getRoles().isEmpty()) {
-									allowed = true;
-									break;
-								}
-								else {
-									if (grants == null) {
-										if (account instanceof UserAccount) {
-											UserEntity userEntity = getUserEntityDao().findByUserName(((UserAccount) account).getUser());
-											grants = getApplicationService().findEffectiveRoleGrantByUser(userEntity.getId());
-										} else {
-											grants = getApplicationService().findEffectiveRoleGrantByAccount(account.getId());
-										}
-									}
-									boolean found = false;
-									for (RoleGrant grant: grants) {
-										for ( AllowedScopeRoleEntity r: scope.getRoles()) {
-											if (r.getRoleId().equals(grant.getRoleId())) {
-												found = true;
-												break;
-											}
-										}
-										if (found) break;
-									}
-									if (found) {
+			if (requestedScope.equals("openid"))
+				allowed = true;
+			else {
+				for (FederationMemberEntity fm: federationMembers) {
+					if (fm instanceof ServiceProviderEntity) {
+						if (((ServiceProviderEntity)fm).getAllowedScopes().isEmpty()) // Compatibility check
+							allowed = true;
+						else {
+							for (AllowedScopeEntity scope: ((ServiceProviderEntity)fm).getAllowedScopes()) {
+								if (scope.getScope().equals("*") || scope.getScope().equals(requestedScope)) {
+									if (scope.getRoles().isEmpty()) {
 										allowed = true;
 										break;
+									}
+									else {
+										if (grants == null) {
+											if (account instanceof UserAccount) {
+												UserEntity userEntity = getUserEntityDao().findByUserName(((UserAccount) account).getUser());
+												grants = getApplicationService().findEffectiveRoleGrantByUser(userEntity.getId());
+											} else {
+												grants = getApplicationService().findEffectiveRoleGrantByAccount(account.getId());
+											}
+										}
+										boolean found = false;
+										for (RoleGrant grant: grants) {
+											for ( AllowedScopeRoleEntity r: scope.getRoles()) {
+												if (r.getRoleId().equals(grant.getRoleId())) {
+													found = true;
+													break;
+												}
+											}
+											if (found) break;
+										}
+										if (found) {
+											allowed = true;
+											break;
+										}
 									}
 								}
 							}

@@ -14,6 +14,7 @@ import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
+import com.soffid.iam.addons.federation.model.OauthTokenScopeEntity;
 import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
@@ -100,6 +101,7 @@ import org.springframework.transaction.annotation.Transactional;
 	AuthenticationMethodEntity.class,
 	UserBehaviorService.class,
 	OauthTokenEntity.class,
+	OauthTokenScopeEntity.class,
 	MailService.class,
 	BpmEngine.class,
 	UserConsentEntity.class,

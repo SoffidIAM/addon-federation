@@ -70,10 +70,6 @@ public class OauthTokenEntity {
 	@Nullable
 	String sessionKey;
 	
-	@Column (name="TOK_SCOPE", length=1024)
-	@Nullable
-	String scope;
-	
 	@Column (name="TOK_TEN_ID")
 	TenantEntity tenant;
 	

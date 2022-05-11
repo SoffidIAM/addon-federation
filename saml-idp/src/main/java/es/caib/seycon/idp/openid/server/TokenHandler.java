@@ -426,7 +426,7 @@ public class TokenHandler {
 		o.setIdentityProvider(getIdentityProvider());
 		o.setRefreshToken(t.getRefreshToken());
 		o.setServiceProvider(t.getRequest().getFederationMember().getPublicId());
-		o.setScope(t.getToken());
+		o.setScope(t.getScope());
 		if (t.getToken() == null) {
 			o.setTokenId(null);
 			o.setFullToken(null);
