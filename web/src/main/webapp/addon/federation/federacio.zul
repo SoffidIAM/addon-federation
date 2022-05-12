@@ -329,7 +329,8 @@
 				ins = obj.value.instance;
 				if (ins instanceof EntityGroupMember) {
 					FederationMember fm = ins.getFederationMember();
-					boolean teclau = fm.getPublicKey()!=null && !"".equals(fm.getPublicKey()); 
+					clau = ssl ? fm.getSslPublicKey(): fm.getPublicKey();
+					boolean teclau = clau!=null && !"".equals(clau); 
 					if (!teclau || es.caib.zkib.zkiblaf.Missatgebox.confirmaYES_NO(org.zkoss.util.resource.Labels.getLabel("federacio.SegurCanvi"),
 																					org.zkoss.util.resource.Labels.getLabel("federacio.Confirmacio"))) {
 					
@@ -375,7 +376,7 @@
 								if (c instanceof Div) {
 									divv = (Div) c;
 									// Lo rebindeamos i voilà...
-									divv.setBind("/federationMember/publicKey");
+									divv.setBind( ssl? "/federationMember/sslPublicKey": "/federationMember/publicKey");
 								}
 							}
 						}
@@ -398,16 +399,13 @@
 
 					ds = form.getDataSource();
 					ctx = ds.getJXPathContext();
-					fm.setPublicKey(null);
-					fm.setPrivateKey(null);
-					fm.setCertificateChain(null);
 					if (ssl) {
-						ctx.setValue("/federationMember/sslPrivateKey",fm.getPrivateKey());
-						ctx.setValue("/federationMember/sslPublicKey",fm.getPublicKey());
-						ctx.setValue("/federationMember/sslCertificate",fm.getCertificateChain());
+						ctx.setValue("/federationMember/sslPrivateKey", null);
+						ctx.setValue("/federationMember/sslPublicKey", null);
+						ctx.setValue("/federationMember/sslCertificate",null);
 					} else {
-						ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
-						ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
+						ctx.setValue("/federationMember/publicKey", null);
+						ctx.setValue("/federationMember/privateKey", null);
 						ctx.setValue("/federationMember/certificateChain",null);
 					}
 					try {
@@ -423,7 +421,7 @@
 							if (c instanceof Div) {
 								divv = (Div) c;
 								// Lo rebindeamos i voilà...
-								divv.setBind("/federationMember/publicKey");
+//								divv.setBind("/federationMember/publicKey");
 							}
 						}
 					}
