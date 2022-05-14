@@ -352,13 +352,13 @@
 						//registre = ctx.getValue("/");
 						// 0 = publica, 1 = privada
 						if (ssl) {
-							ctx.setValue("/federationMember/sslPrivateKey",fm.getPrivateKey());
-							ctx.setValue("/federationMember/sslPublicKey",fm.getPublicKey());
-							ctx.setValue("/federationMember/sslCertificate",fm.getCertificateChain());
+							ctx.setValue("/federationMember/sslPrivateKey",res[0]);
+							ctx.setValue("/federationMember/sslPublicKey",res[1]);
+							ctx.setValue("/federationMember/sslCertificate",res[2]);
 						} else {
-							ctx.setValue("/federationMember/publicKey",fm.getPublicKey());
-							ctx.setValue("/federationMember/privateKey",fm.getPrivateKey());
-							ctx.setValue("/federationMember/certificateChain",fm.getCertificateChain());
+							ctx.setValue("/federationMember/privateKey",res[0]);
+							ctx.setValue("/federationMember/publicKey",res[1]);
+							ctx.setValue("/federationMember/certificateChain",res[2]);
 						}
 						try {
 							campCertificateChain.getFellow("dada").setValue(res[2]);
