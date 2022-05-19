@@ -104,15 +104,10 @@ release:
       first="true" ;
       mvn -q -Dexec.executable='echo' -Dexec.args='${project.groupId} ${project.version} ${project.artifactId} ${project.packaging}' exec:exec | 
       while read a b c d ;
-      do
-        if [[ "$first" == "false" ]] ;
-        then 
-          echo ,  ;
-        fi ;
-        first=false ;
-        echo '{"name":"'$c'","url":"https://download.soffid.com/maven/'$(echo $a|sed 's/\./\//g' )/$c/$b/$c-$b.$d'","link_type":"other"}'; 
+      do if [[ "$first" == "false" ]] ; then  echo ,  ;  fi ;  first=false ;
+      echo '{"name":"'$c'","url":"https://download.soffid.com/maven/'$(echo $a|sed 's/\./\//g' )/$c/$b/$c-$b.$d'","link_type":"other"}'; 
       done ;
-      echo ']}, "description": "Automatically created '$EXTRA_DESCRIPTION'"}
+      echo ']}, "description": "Automatically created '$EXTRA_DESCRIPTION'"}'
       ) > target/release.json'
     - cat target/release.json
     - "wget -O - --header \"JOB-TOKEN: $CI_JOB_TOKEN\" --header \"Content-Type: application/json\" --content-on-error https://gitlab.internal.soffid.com/api/v4/projects/$CI_PROJECT_ID/releases --method POST --body-file=target/release.json" 
