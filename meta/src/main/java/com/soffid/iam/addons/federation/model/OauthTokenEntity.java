@@ -70,6 +70,14 @@ public class OauthTokenEntity {
 	@Nullable
 	String sessionKey;
 	
+	@Column (name="TOK_CHALLE", length = 256)
+	@Nullable
+	String pkceChallenge;
+	
+	@Column (name="TOK_CHAALG", length = 16)
+	@Nullable
+	String pkceAlgorithm;
+	
 	@Column (name="TOK_TEN_ID")
 	TenantEntity tenant;
 	

@@ -43,6 +43,8 @@ public class RevokeEndpoint extends HttpServlet {
 		String token_type_hint = req.getParameter("token_type_hint");
 		String token = req.getParameter("token");
 		String authentication = req.getHeader("Authorization");
+		String clientId = req.getParameter("client_id");
+		String clientSecret = req.getParameter("client_secret");
 		
 		TokenHandler th = TokenHandler.instance();
 		try {
@@ -56,15 +58,31 @@ public class RevokeEndpoint extends HttpServlet {
 			if ( t != null) {
 				FederationMember sp = t.getRequest().getFederationMember();
 				Password pass = Password.decode(sp.getOpenidSecret());
-				String expectedAuth = sp.getOpenidClientId()+":"+pass.getPassword();
-
-				expectedAuth = "Basic "+Base64.encodeBytes( expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES );
-				if (! expectedAuth.equals(authentication))
-				{
-					buildError (resp, "unauthorized_client", "Wrong client credentials", t);
-					return;
-				}
 				
+				if (pass == null || pass.getPassword().isEmpty()) {
+					if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())) {
+						buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+						return;
+					}
+				} 
+				else if (clientId != null && clientSecret != null) {
+					if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())
+							|| !clientSecret.equals(pass.getPassword())) {
+						buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+						return;
+					}
+				} else {
+					String expectedAuth = t.getRequest().getFederationMember().getOpenidClientId() + ":"
+							+ pass.getPassword();
+
+					expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+					if (!expectedAuth.equals(authentication)) {
+						buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+						return;
+					}
+
+				}
+
 				th.revoke(t);
 			}			
 			resp.getOutputStream().close();

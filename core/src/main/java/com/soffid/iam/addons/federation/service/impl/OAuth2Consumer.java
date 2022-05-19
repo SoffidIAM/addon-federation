@@ -106,7 +106,7 @@ public abstract class OAuth2Consumer implements Serializable {
 		this.idp = idp;
 		this.sp = sp;
 
-		returnToUrl = sp.getOpenidUrl();
+		returnToUrl = sp.getOpenidUrl().iterator().next();
 
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
         Hex encoder = new Hex();

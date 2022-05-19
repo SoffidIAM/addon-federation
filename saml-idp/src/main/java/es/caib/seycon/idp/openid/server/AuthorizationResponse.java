@@ -147,9 +147,9 @@ public class AuthorizationResponse  {
 		try {
 			String openidToken = h.generateIdToken (token, att);
 			StringBuffer sb = new StringBuffer();
-			String url = r.getFederationMember().getOpenidUrl();
-			if (url == null || url.isEmpty())
-				url = r.getRedirectUrl();
+			String url = r.getRedirectUrl();
+			if ((url == null || url.isEmpty()) && ! r.getFederationMember().getOpenidUrl().isEmpty())
+				url = r.getFederationMember().getOpenidUrl().iterator().next();
 			if (url != null && ! url.isEmpty())
 			{
 				LinkedList<String> args = new LinkedList<String> ();
@@ -228,9 +228,9 @@ public class AuthorizationResponse  {
 		token.setAuthenticationMethod(authenticationMethod);
 		
 		StringBuffer sb = new StringBuffer();
-		String url = r.getFederationMember().getOpenidUrl();
-		if (url == null || url.isEmpty())
-			url = r.getRedirectUrl();
+		String url = r.getRedirectUrl();
+		if ((url == null || url.isEmpty()) && ! r.getFederationMember().getOpenidUrl().isEmpty())
+			url = r.getFederationMember().getOpenidUrl().iterator().next();
 		if (url != null && ! url.isEmpty())
 		{
 			sb.append(url);

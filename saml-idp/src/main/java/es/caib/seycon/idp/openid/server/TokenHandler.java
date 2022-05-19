@@ -74,6 +74,8 @@ public class TokenHandler {
 		t.authentication = t.created;
 		t.setAuthenticationMethod(authType);
 		t.setScope(request.getScope());
+		t.setPkceAlgorithm(request.getPkceAlgorithm());
+		t.setPkceChallenge(request.getPkceChallenge());
 		t.updateLastUse();
 		authorizationCodes.put(t.getAuthorizationCode(), t);
 		pendingTokens.addLast(t);
@@ -273,7 +275,8 @@ public class TokenHandler {
 		IdpConfig c = IdpConfig.getConfig();
 		JSONObject o = new JSONObject();
 		o.put("auth_time", t.getAuthentication());
-		o.put("nonce", t.request.getNonce());
+		if (t.request.getNonce() != null) // Refresh token does not have a nonce
+			o.put("nonce", t.request.getNonce());
 
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
 				.withExpiresAt( new Date (t.getExpires()))
@@ -439,6 +442,8 @@ public class TokenHandler {
 		o.setUser(t.getUser());
 		o.setSessionId(t.getSessionId());
 		o.setSessionKey(t.getSessionKey());
+		o.setPkceAlgorithm(t.getPkceAlgorithm());
+		o.setPkceChallenge(t.getPkceChallenge());
 		return o;
 	}
 	

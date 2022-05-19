@@ -18,13 +18,16 @@ public class OpenIdRequest {
 	String idTokenHint;
 	String loginHint;
 	String acrValues;
+	String pkceChallenge;
+	String pkceAlgorithm;
 	FederationMember federationMember;
 	private HashSet<String> responseTypeSet;
 	
 	public String toString() {
 		return "[Scope: "+scope+", ClientId: "+clientId+", ResponseType: "+responseType+", RedirectURL: "+redirectUrl+
 				", State: "+state+", Nonce: "+nonce+", Display: "+display+", Prompt: "+prompt+", MaxAge: "+maxAge
-				+", uiLocales: "+uiLocales+", IdTokenHint: "+idTokenHint+", LoginHint: "+loginHint+", acrValues:"+acrValues+"]" ;
+				+", uiLocales: "+uiLocales+", IdTokenHint: "+idTokenHint+", LoginHint: "+loginHint+", acrValues:"+acrValues+
+				", PkceChallenge: "+pkceChallenge+", PkceAlgorithm: "+pkceAlgorithm+"]";
 	}
 	
 
@@ -122,5 +125,25 @@ public class OpenIdRequest {
 	}
 	public void setResponseTypeSet(HashSet<String> responseTypeSet) {
 		this.responseTypeSet = responseTypeSet;
+	}
+
+
+	public String getPkceChallenge() {
+		return pkceChallenge;
+	}
+
+
+	public void setPkceChallenge(String pkceChallenge) {
+		this.pkceChallenge = pkceChallenge;
+	}
+
+
+	public String getPkceAlgorithm() {
+		return pkceAlgorithm;
+	}
+
+
+	public void setPkceAlgorithm(String pkceAlgorithm) {
+		this.pkceAlgorithm = pkceAlgorithm;
 	}
 }

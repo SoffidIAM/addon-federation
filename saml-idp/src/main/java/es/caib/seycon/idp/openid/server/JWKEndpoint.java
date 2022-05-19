@@ -12,6 +12,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -133,8 +134,8 @@ public class JWKEndpoint extends HttpServlet {
 		o_keys_0.put("use", "sig");
 		o_keys_0.put("kty", "RSA");
 		o_keys_0.put("alg", "RS256");
-		o_keys_0.put("n", java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(n.toByteArray()));
-		o_keys_0.put("e", java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(e.toByteArray()));
+		o_keys_0.put("n", java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(removeLeadingZeroes(n)));
+		o_keys_0.put("e", java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(removeLeadingZeroes(e)));
 		o_keys_0.put("kid", c.getHostName() );
 		JSONArray o_keys_0_x5c = new JSONArray(); 
 		o_keys_0.put("x5c", o_keys_0_x5c);
@@ -145,6 +146,13 @@ public class JWKEndpoint extends HttpServlet {
 		}
 		return o;
  	}
+
+	public byte[] removeLeadingZeroes(BigInteger n) {
+		byte[] ba = n.toByteArray();
+		while (ba.length > 1 && ba[0] == 0)
+			ba = Arrays.copyOfRange(ba, 1, ba.length);
+		return ba;
+	}
 
 	private String unpad(String string) {
 		while (string.endsWith("="))

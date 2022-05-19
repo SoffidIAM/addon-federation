@@ -43,8 +43,11 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setNonce(req.getParameter("nonce"));
 	    	r.setFederationMember( config.getFederationService().findFederationMemberByClientID(r.getClientId()) );
 	    	r.setRedirectUrl(req.getParameter("redirect_uri"));
+	    	r.setPkceAlgorithm(req.getParameter("code_challenge_method"));
+	    	r.setPkceChallenge(req.getParameter("code_challenge"));
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
-	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl());
+	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
+	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
 	    	}
 	    	HttpSession session = req.getSession(true);
 	    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
@@ -155,13 +158,18 @@ public class AuthorizationEndpoint extends HttpServlet {
             generateError(r, "invalid_request", "Missing redirect_uri", resp);
             return false;
     	}
-    	if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().trim().isEmpty()) {
-    		if (! r.getRedirectUrl().equals(r.getFederationMember().getOpenidUrl()) &&
-    			! r.getRedirectUrl().startsWith(r.getFederationMember().getOpenidUrl()+"?")) {
-                generateError(r, "invalid_request", "The requested return URL is not accepted "+r.getRedirectUrl(), resp);
-                return false;
+    	boolean ok = false;
+    	for (String url: r.getFederationMember().getOpenidUrl()) {
+    		if (r.getRedirectUrl().equals(url) ||
+    			r.getRedirectUrl().startsWith(url+"?")) {
+    			ok = true;
     		}
     	}
+    	if (!ok) {
+    		generateError(r, "invalid_request", "The requested return URL is not accepted "+r.getRedirectUrl(), resp);
+    		return false;
+    	}
+    	
     	Set<String> mechs = r.getFederationMember().getOpenidMechanism();
     	if (! mechs.contains("IM") && ! mechs.contains("AC"))
     	{

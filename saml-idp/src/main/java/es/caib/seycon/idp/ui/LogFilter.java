@@ -59,7 +59,7 @@ public class LogFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest req = (HttpServletRequest) request;
 		HttpServletResponseWrapper resp = new HttpServletResponseWrapper((HttpServletResponse) response);
-		if (! "GET".equals(req.getMethod()) && ! "POST".equals(req.getMethod()))
+		if (! "GET".equals(req.getMethod()) && ! "POST".equals(req.getMethod())  && ! "OPTIONS".equals(req.getMethod()))
 		{
 			resp.sendError(HttpServletResponse.SC_FORBIDDEN);
 		} else {

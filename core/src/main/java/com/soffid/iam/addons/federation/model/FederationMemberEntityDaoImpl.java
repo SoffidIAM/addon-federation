@@ -197,7 +197,12 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setOpenidMechanism( new HashSet<String> ( Arrays.asList( sp.getOpenidMechanism().split(",") )) );
 			target.setOpenidClientId(sp.getOpenidClientId());
 			target.setOpenidSecret(sp.getOpenidSecret());
-			target.setOpenidUrl(sp.getOpenidUrl());
+			List<String> l = new LinkedList<>();
+			if (sp.getOpenidUrl() != null && ! sp.getOpenidUrl().trim().isEmpty())
+				l.add(sp.getOpenidUrl());
+			for (ServiceProviderReturnUrlEntity url: sp.getReturnUrls())
+				l.add(url.getUrl());
+			target.setOpenidUrl(l);
 			// Radius attributes
 			target.setSourceIps(sp.getSourceIps());
 			target.setRadiusSecret(sp.getRadiusSecret() == null ? null: Password.decode(sp.getRadiusSecret()));
@@ -551,7 +556,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			sp.setOpenidMechanism(sb.toString());
 			sp.setOpenidClientId(source.getOpenidClientId());
 			sp.setOpenidSecret(source.getOpenidSecret());
-			sp.setOpenidUrl(source.getOpenidUrl());
+			sp.setOpenidUrl(null);
 			
 			if (source.getSystem() == null)
 				sp.setSystem(null);

@@ -66,6 +66,8 @@ public class ConfigurationEndpoint extends HttpServlet {
 			att.put("introspection_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/token_info");
 			att.put("introspection_endpoint_auth_methods_supported", new String[] { "client_secret_basic"});
 			att.put("token_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());
+			att.put("revocation_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+
+					(openIdProfile.getRevokeEndpoint() == null ? "/revoke": openIdProfile.getRevokeEndpoint()));
 			att.put("userinfo_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getUserInfoEndpoint());
 			if (openIdProfile.getRevokeEndpoint() != null)
 				att.put("revoke_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getRevokeEndpoint());

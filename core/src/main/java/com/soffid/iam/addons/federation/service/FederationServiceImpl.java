@@ -104,6 +104,7 @@ import com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity;
 import com.soffid.iam.addons.federation.model.ProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
+import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
@@ -228,6 +229,7 @@ public class FederationServiceImpl
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 				updateRoles((ServiceProviderEntity) entity, federationMember);
 				updateScopes((ServiceProviderEntity) entity, federationMember);
+				updateReturnUrls((ServiceProviderEntity) entity, federationMember);
 			}
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
@@ -279,6 +281,26 @@ public class FederationServiceImpl
 				getServiceProviderRoleEntityDao().create(r);
 				entity.getRoles().add(r);
 			}
+		}
+	}
+
+	private void updateReturnUrls(ServiceProviderEntity entity, FederationMember federationMember) {
+		LinkedList<String> l = new LinkedList<String>(federationMember.getOpenidUrl());
+		for (Iterator<ServiceProviderReturnUrlEntity> iterator = entity.getReturnUrls().iterator(); iterator.hasNext();) {
+			ServiceProviderReturnUrlEntity imp = iterator.next();
+			if (l.contains(imp.getUrl()))
+				l.remove(imp.getUrl());
+			else {
+				getServiceProviderReturnUrlEntityDao().remove(imp);
+				iterator.remove();
+			}
+		}
+		for (String name: l) {
+			ServiceProviderReturnUrlEntity r = getServiceProviderReturnUrlEntityDao().newServiceProviderReturnUrlEntity();
+			r.setFederationMember(entity);
+			r.setUrl(name);
+			getServiceProviderReturnUrlEntityDao().create(r);
+			entity.getReturnUrls().add(r);
 		}
 	}
 
@@ -457,6 +479,7 @@ public class FederationServiceImpl
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 				updateRoles((ServiceProviderEntity) entity, federationMember);
 				updateScopes((ServiceProviderEntity) entity, federationMember);
+				updateReturnUrls((ServiceProviderEntity) entity, federationMember);
 				String desc = sp.getPublicId() + (sp.getName() != null ? " - " + sp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
 				return getFederationMemberEntityDao().toFederationMember(sp);

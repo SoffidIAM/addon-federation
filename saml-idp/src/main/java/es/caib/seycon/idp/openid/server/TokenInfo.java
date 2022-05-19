@@ -18,11 +18,14 @@ public class TokenInfo {
 	String sessionKey;
 	String jwtId;
 	String scope;
+	String pkceChallenge;
+	String pkceAlgorithm;
 	
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
 				+", User: "+user+", AuthenticationMethod: "+authentication+", SessionId: "+sessionId
-				+", SessionKey: "+sessionKey+", Request: "+request.toString()+", Scope: "+request.getScope()+"]";
+				+", SessionKey: "+sessionKey+", Request: "+request.toString()+", Scope: "+request.getScope()+
+				", PkceChallenge: "+pkceChallenge+", PkceAlgorithm: "+pkceAlgorithm+"]";
 	}
 	
 	public String getUser() {
@@ -143,5 +146,21 @@ public class TokenInfo {
 
 	public void setScope(String scope) {
 		this.scope = scope;
+	}
+
+	public String getPkceChallenge() {
+		return pkceChallenge;
+	}
+
+	public void setPkceChallenge(String pkceChallenge) {
+		this.pkceChallenge = pkceChallenge;
+	}
+
+	public String getPkceAlgorithm() {
+		return pkceAlgorithm;
+	}
+
+	public void setPkceAlgorithm(String pkceAlgorithm) {
+		this.pkceAlgorithm = pkceAlgorithm;
 	}
 }

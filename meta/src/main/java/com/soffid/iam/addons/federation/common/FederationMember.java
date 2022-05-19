@@ -189,7 +189,7 @@ public class FederationMember {
 
 	@Description("Open ID URL")
 	@Nullable
-	public String openidUrl;
+	public List<String> openidUrl;
 
 	@Description("Login hint script")
 	@Attribute(defaultValue = "\"loginHint\"")

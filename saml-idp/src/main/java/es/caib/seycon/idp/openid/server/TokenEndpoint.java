@@ -2,6 +2,9 @@ package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -260,8 +263,14 @@ public class TokenEndpoint extends HttpServlet {
 				return;
 			}
 			Password pass = Password.decode(t.getRequest().getFederationMember().getOpenidSecret());
-
-			if (clientId != null && clientSecret != null) {
+			
+			if (pass == null || pass.getPassword().isEmpty()) {
+				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())) {
+					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+					return;
+				}
+			} 
+			else if (clientId != null && clientSecret != null) {
 				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())
 						|| !clientSecret.equals(pass.getPassword())) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
@@ -278,6 +287,10 @@ public class TokenEndpoint extends HttpServlet {
 				}
 
 			}
+			if (! checkPkceCode(t, req.getParameter("code_verifier"))) {
+				buildError(resp, "unauthorized_client", "Wrong PKCE challenge", t);
+				return;
+			} 
 			Map<String, Object> att;
 			try {
 				att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
@@ -308,12 +321,28 @@ public class TokenEndpoint extends HttpServlet {
 
 	}
 
+	private boolean checkPkceCode(TokenInfo t, String parameter) throws NoSuchAlgorithmException {
+		if (t.getPkceChallenge() == null)
+			return true;
+		
+		if (parameter == null)
+			return false;
+		
+		if ("S256".equals(t.getPkceAlgorithm())) {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] encodedhash = digest.digest(parameter.getBytes(StandardCharsets.UTF_8));
+			parameter = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(encodedhash);
+		}
+		
+		return (parameter.equals(t.getPkceChallenge()));
+	}
+
 	private void refreshToken(HttpServletRequest req, HttpServletResponse resp, String authentication)
 			throws IOException, ServletException, UnsupportedEncodingException {
 		String refreshToken = req.getParameter("refresh_token");
 
-//		String clientId = req.getParameter("client_id");
-//		String clientSecret = req.getParameter("client_secret");
+		String clientId = req.getParameter("client_id");
+		String clientSecret = req.getParameter("client_secret");
 
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo t = null;
@@ -329,10 +358,24 @@ public class TokenEndpoint extends HttpServlet {
 
 			String expectedAuth = federationMember.getOpenidClientId() + ":" + pass.getPassword();
 
-			expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-			if (!expectedAuth.equals(authentication)) {
-				buildError(resp, "unauthorized_client", "Wrong client credentials", t);
-				return;
+			if (pass == null || pass.getPassword().isEmpty()) {
+				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())) {
+					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+					return;
+				}
+			} 
+			else if (clientId != null && clientSecret != null) {
+				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())
+						|| !clientSecret.equals(pass.getPassword())) {
+					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+					return;
+				}
+			} else {
+				expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+				if (!expectedAuth.equals(authentication)) {
+					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
+					return;
+				}
 			}
 
 			Map<String, Object> att;
@@ -382,6 +425,7 @@ public class TokenEndpoint extends HttpServlet {
 			buildError(resp, "Error generating response", t);
 			return;
 		}
+		t.request.setNonce(null);
 		generatTokenResponse(resp, att, h, t);
 	}
 
@@ -451,6 +495,7 @@ public class TokenEndpoint extends HttpServlet {
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		resp.addHeader("Access-Control-Allow-Origin", "*");
 		resp.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+		resp.addHeader("Access-Control-Allow-Headers", "Authorization");
 		resp.addHeader("Access-Control-Max-Age", "1728000");
 		super.service(req, resp);
 	}
