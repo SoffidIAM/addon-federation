@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.soffid</groupId>
@@ -12,7 +10,7 @@
 	<artifactId>root</artifactId>
 	<packaging>pom</packaging>
 	<name>SAML Federation</name>
-	<version>3.3.5-SNAPSHOT</version>
+	<version>3.3.7-SNAPSHOT</version>
 	<description>SOFFID IAM Federation addon</description>
 	<prerequisites>
 		<maven>2.0.1</maven>
