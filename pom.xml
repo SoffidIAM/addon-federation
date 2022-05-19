@@ -50,6 +50,10 @@
 					<configuration>
 						<source>1.8</source>
 						<target>1.8</target>
+						<compilerArgs>
+							<arg>--add-exports</arg>
+							<arg>java.security.jgss/sun.security.krb5=ALL-UNNAMED</arg>
+						</compilerArgs>
 					</configuration>
 				</plugin>
 				<plugin>
