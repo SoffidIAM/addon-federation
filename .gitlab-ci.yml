@@ -96,6 +96,7 @@ maven_release:
 release:
   stage: release
   script:
+    - mkdir -p target
     - > 
       (
       echo '{"tag_name": "'$CI_COMMIT_TAG'", ' ;
