@@ -165,6 +165,7 @@ public class AuthorizationResponse  {
 					args.add("id_token=" + URLEncoder.encode(openidToken , "UTF-8"));
 				if ( r.getState() != null)
 					args.add("state=" + URLEncoder.encode(r.getState() , "UTF-8"));
+				sb.append("&session_state=active");
 				boolean first = true;
 				sb.append(url);
 				for ( String arg: args)
@@ -242,6 +243,7 @@ public class AuthorizationResponse  {
 			if ( r.getState() != null)
 				sb.append("&state=")
 				.append( URLEncoder.encode(r.getState() , "UTF-8"));
+			sb.append("&session_state=active");
 			response.sendRedirect(sb.toString());
 		} else {
 			ServletOutputStream out = response.getOutputStream();

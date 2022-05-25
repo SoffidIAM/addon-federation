@@ -69,6 +69,7 @@ import es.caib.seycon.idp.openid.server.AuthorizationEndpoint;
 import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
 import es.caib.seycon.idp.openid.server.ImpersonationEndpoint;
 import es.caib.seycon.idp.openid.server.JWKEndpoint;
+import es.caib.seycon.idp.openid.server.LogoutEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
 import es.caib.seycon.idp.openid.server.TokenEndpoint;
@@ -85,6 +86,8 @@ import es.caib.seycon.idp.ui.ConsentAction;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.DefaultServlet;
 import es.caib.seycon.idp.ui.ErrorServlet;
+import es.caib.seycon.idp.ui.IframeSession;
+import es.caib.seycon.idp.ui.KeepAliveServlet;
 import es.caib.seycon.idp.ui.LogFilter;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
@@ -482,6 +485,15 @@ public class Main {
 	        				"/revoke": 
 	        				openIdProfile.getRevokeEndpoint()); //$NON-NLS-1$
 
+	        servlet = new ServletHolder(
+	                LogoutEndpoint.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("LogoutEndpoint"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, 
+	        		openIdProfile.getLogoutEndpoint() == null ? 
+	        				"/logout": 
+	        				openIdProfile.getLogoutEndpoint()); //$NON-NLS-1$
+
         	servlet = new ServletHolder(
 	                UserInfoEndpoint.class);
 	        servlet.setInitOrder(2);
@@ -517,6 +529,18 @@ public class Main {
 	        servlet.setInitOrder(2);
 	        servlet.setName("JWKSEndpoint"); //$NON-NLS-1$
 	        ctx.addServlet(servlet, "/.well-known/jwks.json"); //$NON-NLS-1$
+
+	        servlet = new ServletHolder(
+	                IframeSession.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("IframeSession"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, IframeSession.URI); //$NON-NLS-1$
+
+	        servlet = new ServletHolder(
+	                KeepAliveServlet.class);
+	        servlet.setInitOrder(2);
+	        servlet.setName("Keepalivesession"); //$NON-NLS-1$
+	        ctx.addServlet(servlet, KeepAliveServlet.URI); //$NON-NLS-1$
         }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
         ctx.addServlet(ConsentAction.class, ConsentAction.URI);
@@ -587,7 +611,7 @@ public class Main {
         	
         ctx.setSessionHandler(new SessionHandler());
         int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
-        				:c.getFederationMember().getSessionTimeout().intValue();
+        				: 60 + c.getFederationMember().getSessionTimeout().intValue();
         HashSessionManager sessionManager = new HashSessionManager();
         if (!plainSocket) {
         	sessionManager.setHttpOnly(true);

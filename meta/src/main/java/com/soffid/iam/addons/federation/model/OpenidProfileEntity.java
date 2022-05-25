@@ -28,4 +28,8 @@ public abstract class OpenidProfileEntity extends ProfileEntity {
 	@Nullable
 	String revokeEndpoint;
 
+	@Column (name="PRO_LOGEPO")
+	@Nullable
+	String logoutEndpoint;
+
 }

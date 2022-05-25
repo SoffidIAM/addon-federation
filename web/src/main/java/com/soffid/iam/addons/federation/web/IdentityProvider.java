@@ -504,15 +504,22 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 			w.getFellow("r_authorizationEndpoint").setVisible(true);
 			w.getFellow("r_tokenEndpoint").setVisible(true);
 			w.getFellow("r_revokeEndpoint").setVisible(true);
+			w.getFellow("r_logoutEndpoint").setVisible(true);
 			w.getFellow("r_userinfoEndpoint").setVisible(true);
 			w.getFellow("r_signRequests").setVisible(false);
 			w.getFellow("r_signAssertions").setVisible(false);
 			w.getFellow("r_signResponses").setVisible(false);
+			Component form = w.getFellow("form");
+			if (XPathUtils.eval(form, "logoutEndpoint") == null) 
+				XPathUtils.setValue(form, "logoutEndpoint", "/logout");
+			if (XPathUtils.eval(form, "revokeEndpoint") == null) 
+				XPathUtils.setValue(form, "revokeEndpoint", "/revoke");
 		} else {
 			w.getFellow("r_discoveryEndpoint").setVisible(false);
 			w.getFellow("r_authorizationEndpoint").setVisible(false);
 			w.getFellow("r_tokenEndpoint").setVisible(false);
 			w.getFellow("r_revokeEndpoint").setVisible(false);
+			w.getFellow("r_logoutEndpoint").setVisible(false);
 			w.getFellow("r_userinfoEndpoint").setVisible(false);
 			w.getFellow("r_signRequests").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe));
 			w.getFellow("r_signAssertions").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe));

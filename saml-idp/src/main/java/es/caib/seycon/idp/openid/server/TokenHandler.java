@@ -177,7 +177,7 @@ public class TokenHandler {
 		t.authorizationCode = null;
 		t.refreshToken = generateRandomString(129);		
 		refreshTokens.put(t.refreshToken, t);
-		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
+		Long timeOut = IdpConfig.getConfig().getFederationMember().getOauthSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		t.updateLastUse();
 		Long refreshTimeout = t.request.getFederationMember().getOauthSessionTimeout();

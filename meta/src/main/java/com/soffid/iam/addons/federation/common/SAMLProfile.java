@@ -69,6 +69,9 @@ public class SAMLProfile {
 	@Nullable
 	String revokeEndpoint;
 	
+	@Nullable
+	String logoutEndpoint;
+	
 	// Radius servicos
 	@Nullable
 	@com.soffid.mda.annotation.Attribute(defaultValue = "1812")

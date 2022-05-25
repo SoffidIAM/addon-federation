@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<script>
+window.addEventListener("message", receiveMessage, false);
+var state = null;
+var xmlhttp = new XMLHttpRequest();
+xmlhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+        state = JSON.parse(this.responseText); 
+    }
+};
+xmlhttp.open("GET", "/keepalive", true);
+xmlhttp.send();
+
+function receiveMessage(e){ // e.data has client_id and session_state
+
+    var client_id = e.data.substr(0, e.data.lastIndexOf(' '));
+    var session_state = e.data.substr(e.data.lastIndexOf(' ') + 1);
+    var salt = session_state.split('.')[1];
+
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var newState = JSON.parse(this.responseText);
+            var result;
+            if (state == newState) {
+            	result = "unchanged";
+            	state = newState;
+            } else {
+            	result = "changed";
+            }
+            e.source.postMessage(stat, e.origin);
+        }
+    };
+    xmlhttp.open("GET", "/keepalive", true);
+    xmlhttp.send();
+
+};
+		</script>
+	</head>
+	<body></body>
+</html>

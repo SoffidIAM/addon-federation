@@ -191,6 +191,10 @@ public class FederationMember {
 	@Nullable
 	public List<String> openidUrl;
 
+	@Description("Open ID Logout URL")
+	@Nullable
+	public List<String> openidLogoutUrl;
+
 	@Description("Login hint script")
 	@Attribute(defaultValue = "\"loginHint\"")
 	@Nullable

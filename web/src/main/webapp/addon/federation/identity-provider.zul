@@ -464,6 +464,10 @@
 				dataType="STRING"
 				bind="revokeEndpoint"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_logoutEndpoint" label="${c:l('federa_profile.zul.logoutEndpoint')}"
+				dataType="STRING"
+				bind="logoutEndpoint"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
 			<customfield3 id="r_userinfoEndpoint" label="${c:l('federa_profile.zul.userinfoEndpoint')}"
 				dataType="STRING"
 				bind="userInfoEndpoint"

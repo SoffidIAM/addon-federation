@@ -17,4 +17,7 @@ public class ServiceProviderReturnUrlEntity {
 	
 	@Column(name="FEU_URL", length = 255)
 	String url;
+
+	@Nullable @Column(name="FEU_TYPE", length = 16)
+	String type;
 }

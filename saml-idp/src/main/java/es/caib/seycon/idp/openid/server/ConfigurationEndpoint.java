@@ -32,6 +32,7 @@ import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.ui.IframeSession;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class ConfigurationEndpoint extends HttpServlet {
@@ -63,6 +64,9 @@ public class ConfigurationEndpoint extends HttpServlet {
 			Map<String, Object> att = new HashMap<String, Object>();
 			att.put("issuer", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
 			att.put("authorization_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getAuthorizationEndpoint());
+			att.put("check_session_iframe", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+IframeSession.URI);
+			att.put("end_session_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+
+					(openIdProfile.getLogoutEndpoint() == null ? "/logout": openIdProfile.getLogoutEndpoint()));
 			att.put("introspection_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/token_info");
 			att.put("introspection_endpoint_auth_methods_supported", new String[] { "client_secret_basic"});
 			att.put("token_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());

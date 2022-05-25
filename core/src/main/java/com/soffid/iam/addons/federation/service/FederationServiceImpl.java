@@ -286,10 +286,13 @@ public class FederationServiceImpl
 
 	private void updateReturnUrls(ServiceProviderEntity entity, FederationMember federationMember) {
 		LinkedList<String> l = new LinkedList<String>(federationMember.getOpenidUrl());
+		LinkedList<String> l2 = new LinkedList<String>(federationMember.getOpenidLogoutUrl());
 		for (Iterator<ServiceProviderReturnUrlEntity> iterator = entity.getReturnUrls().iterator(); iterator.hasNext();) {
 			ServiceProviderReturnUrlEntity imp = iterator.next();
-			if (l.contains(imp.getUrl()))
+			if (l.contains(imp.getUrl()) && ! "logout".equals(imp.getType()))
 				l.remove(imp.getUrl());
+			else if (l2.contains(imp.getUrl()) && "logout".equals(imp.getType()))
+				l2.remove(imp.getUrl());
 			else {
 				getServiceProviderReturnUrlEntityDao().remove(imp);
 				iterator.remove();
@@ -298,6 +301,15 @@ public class FederationServiceImpl
 		for (String name: l) {
 			ServiceProviderReturnUrlEntity r = getServiceProviderReturnUrlEntityDao().newServiceProviderReturnUrlEntity();
 			r.setFederationMember(entity);
+			r.setType("authentication");
+			r.setUrl(name);
+			getServiceProviderReturnUrlEntityDao().create(r);
+			entity.getReturnUrls().add(r);
+		}
+		for (String name: l2) {
+			ServiceProviderReturnUrlEntity r = getServiceProviderReturnUrlEntityDao().newServiceProviderReturnUrlEntity();
+			r.setFederationMember(entity);
+			r.setType("logout");
 			r.setUrl(name);
 			getServiceProviderReturnUrlEntityDao().create(r);
 			entity.getReturnUrls().add(r);

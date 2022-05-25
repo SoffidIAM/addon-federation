@@ -198,11 +198,16 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setOpenidClientId(sp.getOpenidClientId());
 			target.setOpenidSecret(sp.getOpenidSecret());
 			List<String> l = new LinkedList<>();
+			List<String> l2 = new LinkedList<>();
 			if (sp.getOpenidUrl() != null && ! sp.getOpenidUrl().trim().isEmpty())
 				l.add(sp.getOpenidUrl());
 			for (ServiceProviderReturnUrlEntity url: sp.getReturnUrls())
-				l.add(url.getUrl());
+				if ("logout".equals(url.getType()))
+					l2.add(url.getUrl());
+				else
+					l.add(url.getUrl());
 			target.setOpenidUrl(l);
+			target.setOpenidLogoutUrl(l2);
 			// Radius attributes
 			target.setSourceIps(sp.getSourceIps());
 			target.setRadiusSecret(sp.getRadiusSecret() == null ? null: Password.decode(sp.getRadiusSecret()));

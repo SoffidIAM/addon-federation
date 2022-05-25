@@ -2,6 +2,13 @@ package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -15,8 +22,11 @@ import com.soffid.iam.addons.federation.common.AllowedScope;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
+import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationEndpoint extends HttpServlet {
 
@@ -50,9 +60,10 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
 	    	}
 	    	HttpSession session = req.getSession(true);
-	    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
-        	session.setAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM, null);
-	    	
+	    	if (r.getFederationMember() != null) {
+		    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
+	        	session.setAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM, null);
+	    	}	    	
 		} catch (Exception e) {
 			throw new ServletException("Error parsing request paramenters", e);
 		}
@@ -83,7 +94,12 @@ public class AuthorizationEndpoint extends HttpServlet {
 	}
 
 	private void clientCredentialsGrantType(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+			throws ServletException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
+		String user = (String) req.getSession().getAttribute(SessionConstants.SEU_USER);
+		if ("none".equals(req.getParameter("prompt")) && user != null) {
+			AuthorizationResponse.generateResponse(getServletContext(), req, resp, "P");
+			return;
+		} 
 		RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);
 		dispatcher.forward(req, resp);
 	}
