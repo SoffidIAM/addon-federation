@@ -177,7 +177,7 @@ public class TokenHandler {
 		t.authorizationCode = null;
 		t.refreshToken = generateRandomString(129);		
 		refreshTokens.put(t.refreshToken, t);
-		Long timeOut = IdpConfig.getConfig().getFederationMember().getOauthSessionTimeout();
+		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		t.updateLastUse();
 		Long refreshTimeout = t.request.getFederationMember().getOauthSessionTimeout();
@@ -280,7 +280,7 @@ public class TokenHandler {
 
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
 				.withExpiresAt( new Date (t.getExpires()))
-				.withIssuedAt(new Date(t.getCreated()))
+				.withIssuedAt(new Date())
 				.withClaim("auth_time", t.getAuthentication())
 				.withClaim("scope", t.getScope() )
 				.withClaim("nonce", t.request.getNonce())
