@@ -520,6 +520,8 @@ public class AuthenticationContext {
 	}
 	
 	public boolean hasConsent() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		if (currentUser == null)
+			getUserData(user);
 		String userName = currentUser.getUserName();
 		return IdpConfig.getConfig().getFederationService().hasConsent(userName, publicId);
 	}
