@@ -13,6 +13,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -62,8 +63,8 @@ public class LogoutServlet extends HttpServlet {
 			        	{
 			        		if (c.getName().equals(ip.getSsoCookieName()))
 			        		{
-			        			new es.caib.seycon.ng.addons.federation.remote.RemoteServiceLocator()
-			        				.getFederationService()
+			        			new RemoteServiceLocator()
+			        				.getFederacioService()
 			        				.expireSessionCookie(c.getValue());
 			        		}
 			        	}

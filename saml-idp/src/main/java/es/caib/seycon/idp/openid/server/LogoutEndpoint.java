@@ -99,8 +99,8 @@ public class LogoutEndpoint extends HttpServlet {
 			        	{
 			        		if (c.getName().equals(ip.getSsoCookieName()))
 			        		{
-			        			new es.caib.seycon.ng.addons.federation.remote.RemoteServiceLocator()
-			        				.getFederationService()
+			        			new RemoteServiceLocator()
+			        				.getFederacioService()
 			        				.expireSessionCookie(c.getValue());
 			        		}
 			        	}
