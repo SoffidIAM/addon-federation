@@ -127,7 +127,7 @@ public class TokenHandler {
 		SecureRandom r = new SecureRandom();
 		byte[] b = new byte[length];
 		r.nextBytes(b);
-		return Base64.encodeBytes(b,Base64.DONT_BREAK_LINES);
+		return java.util.Base64.getUrlEncoder().encodeToString(b);
 			
 	}
 
