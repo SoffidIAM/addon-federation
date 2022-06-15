@@ -52,6 +52,8 @@
 	var fingerprintChallenge = "${fingerprintChallenge}";
 	var fingerprintToRemove = '${fingerprintToRemove}';
 	var fingerprintRegister = ${fingerprintRegister};
+	var fingerprintRawIds = [${raw:fingerprintRawIds}];
+	var fingerprintRegisterUrl = "${fingerprintRegisterUrl}"
 	</script>
 
 	<script src="/js/jquery-3.6.0.slim.min.js"></script>
@@ -72,51 +74,20 @@
 		<p class="loginheader"><img src="/img/logo.png" alt="Soffid logo" /> </p> 
 		<div class="loginbox"> 
 			<p class="header">${title}</p>
-			{if passwordAllowed} 
+			{if userAllowed} 
 			<div class="logintype"  id ="passlogin">
-				<form method="post" action="${passwordLoginUrl}" id="form-pass">
+				<form method="post" action="${userUrl}" id="form-pass">
 					<div class="upinput">
 						<span class="labeltextbox">
 							<span class="label">
 								${Username}: 
 							</span>
-							<input name="j_username" id="j_username" ${userReadonly}="readonly"
-									type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
-						</span>
-						<span class="labeltextbox">
-							<span class="label">
-								${Password}:
-							</span>
-							<input name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
+							<input autofocus name="j_username" id="j_username" ${userReadonly}="readonly"
+									type="text" autocomplete="off" value="${requestedUser}" style="width: 8em"/>
 						</span>
 					</div>
 					<div class="upbutton">
 						<input id="loginpassbutton" name="formUCboton" type="submit" value="${Login}" />
-					</div>
-				</form>
-			</div>
-			<p/>
-			{endif}
-			{if otpAllowed} 
-			<div class="logintype"  id ="otplogin">
-				<form method="post" action="${otpLoginUrl}" id="form-otp">
-					<div class="otpinput">
-						<span class="labeltextbox">
-							<span class="label">
-								${Username}:
-							</span> 
-							<input name="j_username" id="j_usernameotp" ${userReadonly}="readonly"
-									type="text" autocomplete="off" value="${requestedUser}" onChange="onChangeUser()" style="width: 8em"/>
-						</span>
-						<span class="labeltextbox">
-							<span class="label">
-								${OTPPin} ${otpToken}:
-							</span>
-							<input name="j_password" id="j_passwordotp" type="password" autocomplete="off" style="width: 8em")/>
-						</span>
-					</div>
-					<div class="upbutton">
-						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
 					</div>
 				</form>
 			</div>
@@ -128,39 +99,7 @@
 			</div>
 			<p/>
 			{endif}
-			{if fingerprintAllowed} 
-			<div class="logintype"  id ="fingerprintlogin" style="display: none">
-				<form method="post" action="${fingerprintLoginUrl}" id="form-fingerprint">
-					<input name="clientJSON"  id="fp-clientJSON" type="hidden" />
-					<input name="authenticatorData"  id="fp-authenticatorData" type="hidden" />
-					<input name="signature"  id="fp-signature" type="hidden" />
-					<input name="rawId"  id="fp-rawId" type="hidden" />
-					<input name="serial"  id="fp-serial" type="hidden" />
-					<div class="otpinput">
-					</div>
-					<div class="upbutton">
-						<input id="loginfingerprintbutton" name="formUCboton" type="button" value="${FingerprintLogin}" 
-			              onClick="fingerprintSign()"/>
-					</div>
-				</form>
-			</div>
-			<div class="logintype"  id ="fingerprintregister" style="display: none">
-				<div class="upbutton">
-					<input type="button" value="${FingerprintRegister}" 
-             					onClick="fingerprintCreate()"/>
-				</div>
-			</div>
-			<div class="logintype"  id ="fingerprintinprogress" style="display: none">
-				<div class="upbutton">
-					${fingerprintinprogress.message}
-				</div>
-			</div>
-			<p/>
-			{endif}
 			${raw:externalLogin}
-			{if ERROR}
-			<p id="errormsg" style="color:red;">${ERROR}</p>
-			{endif}
 			<p/>
 			{if certAllowed}
 			<div class="logintype"  id ="certlogin">
@@ -175,6 +114,9 @@
 				</form>
 			</div>
 			<p/>
+			{endif}
+			{if ERROR}
+			<p id="errormsg" style="color:red;">${ERROR}</p>
 			{endif}
 			{if registerAllowed}
 			<div class="nologintype"  id ="registerlogin">

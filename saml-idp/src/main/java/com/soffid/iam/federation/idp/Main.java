@@ -62,6 +62,7 @@ import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.utils.Security;
 
+import es.caib.seycon.idp.cert.DelegateToApplicationSslContextFactory;
 import es.caib.seycon.idp.config.CustomSpnegoLoginService;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.https.ApacheSslSocketFactory;
@@ -108,11 +109,14 @@ import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
 import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
+import es.caib.seycon.idp.ui.UserAction;
 import es.caib.seycon.idp.ui.UserPasswordAction;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.idp.ui.broker.QueryUserIdPServlet;
 import es.caib.seycon.idp.ui.broker.SAMLSSOPostServlet;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
+import es.caib.seycon.idp.ui.cred.ProtectedUserCredentialRegisterServlet;
+import es.caib.seycon.idp.ui.cred.ProtectedValidateRegisteredCredential;
 import es.caib.seycon.idp.ui.cred.RegisterCredential;
 import es.caib.seycon.idp.ui.cred.UserCredentialRegisterServlet;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
@@ -124,7 +128,6 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import net.shibboleth.utilities.jetty7.DelegateToApplicationSslContextFactory;
 
 public class Main {
 
@@ -549,10 +552,13 @@ public class Main {
         ctx.addServlet(ValidateCredential.class, ValidateCredential.URI);
         ctx.addServlet(UserCredentialRegisterServlet.class, UserCredentialRegisterServlet.URI);
         ctx.addServlet(ValidateRegisteredCredential.class, ValidateRegisteredCredential.URI);
+        ctx.addServlet(ProtectedUserCredentialRegisterServlet.class, ProtectedUserCredentialRegisterServlet.URI);
+        ctx.addServlet(ProtectedValidateRegisteredCredential.class, ProtectedValidateRegisteredCredential.URI);
         ctx.addServlet(CancelAction.class, CancelAction.URI);
         ctx.addServlet(UserPasswordFormServlet.class,
                 UserPasswordFormServlet.URI);
         ctx.addServlet(UserPasswordAction.class, UserPasswordAction.URI);
+        ctx.addServlet(UserAction.class, UserAction.URI);
         ctx.addServlet(OTPAction.class, OTPAction.URI);
         ctx.addServlet(PasswordChangeRequiredForm.class,
                 PasswordChangeRequiredForm.URI);

@@ -20,20 +20,22 @@ import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.CancelAction;
 import es.caib.seycon.idp.ui.CertificateAction;
 import es.caib.seycon.idp.ui.HtmlGenerator;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.idp.ui.NtlmAction;
 import es.caib.seycon.idp.ui.OTPAction;
 import es.caib.seycon.idp.ui.PasswordRecoveryAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
+import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.idp.ui.UserPasswordAction;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 
-public class UserCredentialRegisterServlet extends BaseForm {
-	static Log log = LogFactory.getLog(UserCredentialRegisterServlet.class);
+public class ProtectedUserCredentialRegisterServlet extends BaseForm {
+	static Log log = LogFactory.getLog(ProtectedUserCredentialRegisterServlet.class);
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public static final String URI = "/registerRequestedCredential/*"; //$NON-NLS-1$
+	public static final String URI = "/protected/registerCredential"; //$NON-NLS-1$
     private ServletContext context;
 
     public void init(ServletConfig config) throws ServletException {
@@ -49,16 +51,14 @@ public class UserCredentialRegisterServlet extends BaseForm {
 
 
         try {
-        	String hash = req.getPathInfo().substring(1);
-        	
-        	User user = new RemoteServiceLocator().getUserCredentialService().findUserForNewCredentialURI(hash);
-        	
-        	if (user == null) {
-        		throw new ServletException("Wrong URL");
-        	}
-        	
-        	req.getSession().setAttribute("$soffid$fido_request", hash);
             HttpSession session = req.getSession();
+            
+            String user = (String) session.getAttribute(SessionConstants.SEU_USER); //$NON-NLS-1$
+            if (user == null) {
+                throw new ServletException(Messages.getString("PasswordChangeForm.expired.session")); //$NON-NLS-1$
+            }
+
+            req.getSession().setAttribute("$soffid$fido_request", null);
             IdpConfig config = IdpConfig.getConfig();
             
             HtmlGenerator g = new HtmlGenerator(context, req);
@@ -74,7 +74,7 @@ public class UserCredentialRegisterServlet extends BaseForm {
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userReadonly", "readonly"); //$NON-NLS-1$
-            g.addArgument("requestedUser", user.getUserName());
+            g.addArgument("requestedUser", user);
             g.addArgument("kerberosAllowed", "false"); 
             g.addArgument("kerberosDomain", null);
             g.addArgument("certAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -92,11 +92,11 @@ public class UserCredentialRegisterServlet extends BaseForm {
         		session.setAttribute("fingerprintChallenge", random);
         	}
         	g.addArgument("fingerprintRegister", "true");
-        	g.addArgument("fingerprintRegisterUrl", ValidateRegisteredCredential.URI);
+        	g.addArgument("fingerprintRegisterUrl", ProtectedValidateRegisteredCredential.URI);
         	g.addArgument("fingerprintEnforced", "false");
         	g.addArgument("kerberosEnforced", "false");
         	g.addArgument("fingerprintChallenge", random);
-            g.addArgument("fingerprintLoginUrl", ValidateRegisteredCredential.URI);
+            g.addArgument("fingerprintLoginUrl", ProtectedValidateRegisteredCredential.URI);
             g.addArgument("registerAllowed", "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("externalLogin", "");

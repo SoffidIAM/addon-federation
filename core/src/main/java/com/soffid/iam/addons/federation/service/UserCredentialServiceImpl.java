@@ -119,7 +119,7 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		else {
 			UserEntity u = getUserEntityDao().load(r.getUserId());
 			if (u == null)
-				return null;
+				return null; 
 			else
 				return getUserEntityDao().toUser(u);
 		}
@@ -127,21 +127,26 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 
 	@Override
 	protected URI handleGenerateNewCredential() throws Exception {
-		return handleGenerateNewCredential(Security.getCurrentUser());
+		return handleGenerateNewCredential(Security.getCurrentUser(), false, null, null);
 	}
 
 	@Override
-	protected URI handleGenerateNewCredential(String userName) throws Exception {
+	protected URI handleGenerateNewCredential(String userName, boolean unsecure, Date activateBefore, String identityProvider) throws Exception {
 		getUserCredentialRequestEntityDao().deleteExpired();
 		UserCredentialRequestEntity c = getUserCredentialRequestEntityDao().newUserCredentialRequestEntity();
 		byte b[] = new byte[66];
-		String hash;
-		do {
-			new SecureRandom().nextBytes(b);
-			hash = Base64.getUrlEncoder().encodeToString(b);
-		} while ( getUserCredentialRequestEntityDao().findByHash(hash) != null);
-		c.setExpiration(new Date(System.currentTimeMillis() + 8 * 60 * 60 * 1000L)); // Valid for eight hours
-		c.setHash(hash);
+		if (! unsecure) {
+			String hash;
+			do {
+				new SecureRandom().nextBytes(b);
+				hash = Base64.getUrlEncoder().encodeToString(b);
+			} while ( getUserCredentialRequestEntityDao().findByHash(hash) != null);
+			c.setHash(hash);
+		}
+		if (activateBefore == null)
+			c.setExpiration(new Date(System.currentTimeMillis() + 8 * 60 * 60 * 1000L)); // Valid for eight hours
+		else
+			c.setExpiration(activateBefore);
 		
 		if (userName == null) throw new InternalErrorException("Tokens can only be bound to identities, not shared accounts");
 		UserEntity u = getUserEntityDao().findByUserName(userName);
@@ -152,16 +157,28 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		for (FederationMemberEntity fm: getFederationMemberEntityDao().findFMByEntityGroupAndPublicIdAndTipus("%", "%", "I")) {
 			if (fm instanceof IdentityProviderEntity) {
 				final IdentityProviderEntity idp = (IdentityProviderEntity) fm;
-				if (idp.getIdpType() == IdentityProviderType.SOFFID) {
-					return new URI(
-							Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
-							null, // User
-							idp.getHostName(),
-							Integer.parseInt(idp.getStandardPort()),
-							"/registerRequestedCredential/"+c.getHash(),
-							null, // Query
-							null  // Hash
-							);
+				if (idp.getIdpType() == IdentityProviderType.SOFFID && 
+						(identityProvider == null || identityProvider.trim().isEmpty() || identityProvider.equals(idp.getPublicId()))) {
+					if (!unsecure)
+						return new URI(
+								Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
+								null, // User
+								idp.getHostName(),
+								Integer.parseInt(idp.getStandardPort()),
+								"/registerRequestedCredential/"+c.getHash(),
+								null, // Query
+								null  // Hash
+								);
+					else
+						return new URI(
+								Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
+								null, // User
+								idp.getHostName(),
+								Integer.parseInt(idp.getStandardPort()),
+								"/protected/registerCredential",
+								null, // Query
+								null  // Hash
+								);
 				}
 			}
 		}
@@ -173,6 +190,32 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		UserCredentialRequestEntity r = getUserCredentialRequestEntityDao().findByHash(hash);
 		if (r != null)
 			getUserCredentialRequestEntityDao().remove(r);
+	}
+
+	@Override
+	protected boolean handleCheckUserForNewCredential(String user) throws Exception {
+		UserEntity u = getUserEntityDao().findByUserName(user);
+		if (!u.getActive().equals("S"))
+			return false;
+		
+		for (UserCredentialRequestEntity r: getUserCredentialRequestEntityDao().findByUser(u.getId())) {
+			if (r.getHash() == null && r.getExpiration().getTime() > System.currentTimeMillis())
+				return true;
+		}
+		return false;
+	}
+
+	@Override
+	protected void handleCancelNewCredentialURIForUser(String user) throws Exception {
+		UserEntity u = getUserEntityDao().findByUserName(user);
+		
+		for (UserCredentialRequestEntity r: getUserCredentialRequestEntityDao().findByUser(u.getId())) {
+			if (r.getHash() == null && r.getExpiration().getTime() > System.currentTimeMillis())
+			{
+				getUserCredentialRequestEntityDao().remove(r);
+				break;
+			}
+		}
 	}
 
 }

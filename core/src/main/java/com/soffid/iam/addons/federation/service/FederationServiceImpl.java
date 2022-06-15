@@ -1436,29 +1436,27 @@ public class FederationServiceImpl
 	@Override
 	protected Collection<FederationMember> handleFindFederationMemberByEntityGroupAndPublicIdAndTipus(String entityGroupName,
 			String publicId, String tipus) throws Exception {
-		String selectI = "select fm from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm where (:tipusFM='I') and"
+		String selectI = "select fm from com.soffid.iam.addons.federation.model.IdentityProviderEntity fm where (:tipusFM='I') and "
 				+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and "
-				+ "(:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
+				+ "(:publicId is null or fm.publicId like :publicId) and "
+				+ "fm.tenant.id=:tenantId"; //$NON-NLS-1$
 		String selectV = "select fm from com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity fm where (:tipusFM='V') and "
 				+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and "
-				+ "(:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
+				+ "(:publicId is null or fm.publicId like :publicId) and "
+				+ "fm.tenant.id=:tenantId"; //$NON-NLS-1$
 		String selectS = "select fm from com.soffid.iam.addons.federation.model.ServiceProviderEntity fm where (:tipusFM='S') and "
 				+ "(:entityGroupName is null or fm.entityGroup.name like :entityGroupName) and "
-				+ "(:publicId is null or fm.publicId like :publicId)"; //$NON-NLS-1$
+				+ "(:publicId is null or fm.publicId like :publicId) and "
+				+ "fm.tenant.id=:tenantId"; //$NON-NLS-1$
 		String select = "I".equals(tipus) ? selectI : "S".equals(tipus) ? selectS : selectV; //$NON-NLS-1$ //$NON-NLS-2$
 		Collection fms = getFederationMemberEntityDao().query(select,
 				new Parameter[] {
 			new Parameter ("tipusFM", tipus), //$NON-NLS-1$
 			new Parameter ("entityGroupName", entityGroupName), //$NON-NLS-1$
 			new Parameter ("publicId", publicId), //$NON-NLS-1$
+			new Parameter("tenantId", Security.getCurrentTenantId())
 		});
 		List<FederationMember> fmvos = getFederationMemberEntityDao().toFederationMemberList(fms);
-		if (fms != null)
-			for (Iterator<FederationMember> it = fmvos.iterator(); it.hasNext();) {
-				FederationMember fm = it.next();
-				fm.setClasse("I".equals(fm.getClasse()) ? "Identity Provider" : "S".equals(fm.getClasse()) ? "Service Provider" : "V" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-						.equals(fm.getClasse()) ? "Virtual Identity Provider" : "Federation Member"); //$NON-NLS-1$ //$NON-NLS-2$
-			}
 		return fmvos;
 	}
 

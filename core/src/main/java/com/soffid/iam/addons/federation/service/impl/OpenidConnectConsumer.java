@@ -70,18 +70,18 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 
 		for (String param: new String[] {"prompt", "display", "max_age", "ui_locales", "ui_hint"}) {
 			if (cfg.get(param) != null) 
-				params.put(param, (String) cfg.get(param));
+				params.put(param, (String) cfg.optString(param, null));
 		}
 
-		accessTokenEndpoint = (String) cfg.get("token_endpoint");
+		accessTokenEndpoint = (String) cfg.optString("token_endpoint", null);
 		if (accessTokenEndpoint == null)
 			throw new InternalErrorException("Missing token_endpoint member in "+idp.getName()+" metadata");
 		
-		authorizationBaseUrl = (String) cfg.get("authorization_endpoint");
+		authorizationBaseUrl = (String) cfg.optString("authorization_endpoint", null);
 		if (authorizationBaseUrl == null)
 			throw new InternalErrorException("Missing authorization_endpoint member in "+idp.getName()+" metadata");
 
-		userInfoEndpoint = (String) cfg.get("userinfo_endpoint");
+		userInfoEndpoint = (String) cfg.optString("userinfo_endpoint", null);
 		
 		returnToUrl = sp.getOpenidUrl().get(0);
 		

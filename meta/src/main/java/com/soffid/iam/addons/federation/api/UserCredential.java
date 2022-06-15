@@ -40,6 +40,9 @@ public class UserCredential {
 	Date lastUse;
 
 	@Nullable
+	Date registerBefore;
+
+	@Nullable
 	public java.util.Calendar expirationDate;
 
 }

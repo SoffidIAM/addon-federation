@@ -2,6 +2,8 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -13,8 +15,10 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
@@ -29,6 +33,7 @@ import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class UserPasswordFormServlet extends BaseForm {
 	static Log log = LogFactory.getLog(UserPasswordFormServlet.class);
@@ -105,6 +110,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
             g.addArgument("kerberosUrl", NtlmAction.URI); //$NON-NLS-1$
             g.addArgument("passwordLoginUrl", UserPasswordAction.URI); //$NON-NLS-1$
+            g.addArgument("userUrl", UserAction.URI); //$NON-NLS-1$
             g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
             g.addArgument("cancelUrl", CancelAction.URI); //$NON-NLS-1$
             g.addArgument("otpLoginUrl", OTPAction.URI); //$NON-NLS-1$
@@ -112,66 +118,99 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("recoverUrl", PasswordRecoveryAction.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$
             g.addArgument("requestedUser", requestedUser);
             g.addArgument("kerberosAllowed", ctx.getNextFactor().contains("K") && session.getAttribute("disableKerberos") == null ? "true" : "false"); 
             g.addArgument("kerberosDomain", ip.getKerberosDomain());
             g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("userAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
         	g.addArgument("fingerprintRegister", "false");
+        	g.addArgument("fingerprintEnforced", "false");
+        	
+        	
             boolean otpAllowed = ctx.getNextFactor().contains("O") || ctx.getNextFactor().contains("S") || ctx.getNextFactor().contains("I") || ctx.getNextFactor().contains("M");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {
-            	User user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
-            	OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
-            	
-            	Challenge ch = new Challenge();
-            	ch.setUser(user);
-            	StringBuffer otpType = new StringBuffer();
-            	if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
-            	if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
-            	if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
-            	if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
-            	ch.setOtpHandler(otpType.toString());
-	        	ch = v.selectToken(ch);
-	        	ctx.setChallenge(ch);
-	        	if (ch.getCardNumber() == null)
-	        	{
-	        		if ( ctx.getNextFactor().size() == 1)
-	        		{
-	        			g.addArgument("ERROR", Messages.getString("OTPAction.notoken")); //$NON-NLS-1$
-	        		}
+            	User user;
+				try {
+					user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
+					OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
+					
+					Challenge ch = new Challenge();
+					ch.setUser(user);
+					StringBuffer otpType = new StringBuffer();
+					if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
+					if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
+					if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
+					if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
+					ch.setOtpHandler(otpType.toString());
+					ch = v.selectToken(ch);
+					ctx.setChallenge(ch);
+					if (ch.getCardNumber() == null)
+					{
+						if ( ctx.getNextFactor().size() == 1)
+						{
+							g.addArgument("ERROR", Messages.getString("OTPAction.notoken")); //$NON-NLS-1$
+						}
+						g.addArgument("otpAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
+					}
+					else 
+					{
+						g.addArgument("otpAllowed",  "true"); //$NON-NLS-1$ //$NON-NLS-2$
+						g.addArgument("userAllowed", "true");
+						g.addArgument("otpToken",  ch.getCardNumber()+" "+ch.getCell()); //$NON-NLS-1$ //$NON-NLS-2$
+					}
+				} catch (UnknownUserException e) {
 	            	g.addArgument("otpAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
-	        	}
-	        	else 
-	        	{
-	            	g.addArgument("otpAllowed",  "true"); //$NON-NLS-1$ //$NON-NLS-2$
-	            	
-	            	g.addArgument("otpToken",  ch.getCardNumber()+" "+ch.getCell()); //$NON-NLS-1$ //$NON-NLS-2$
-
-	        	}
+				}
             }
             else
             {
             	g.addArgument("otpAllowed",  otpAllowed ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             }
             
-            if (ctx.getNextFactor().contains("F"))
+            if (ctx.getNextFactor().contains("F") && !requestedUser.trim().isEmpty())
             {
-            	
-            	g.addArgument("fingerprintAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            	String random = (String) session.getAttribute("fingerprintChallenge");
-            	if (random == null)
-            	{
-            		random = IdpConfig.getConfig().getUserCredentialService().generateChallenge();
-            		session.setAttribute("fingerprintChallenge", random);
-            	}
-            	g.addArgument("fingerprintChallenge", random);
+            	try {
+	            	User user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
+	            	StringBuffer sb = new StringBuffer();
+	            	for (UserCredential cred: new RemoteServiceLocator().getUserCredentialService().findUserCredentials(user.getUserName())) {
+	            		if (cred.getType() == UserCredentialType.FIDO &&
+	            				cred.getRawid() != null) {
+	            			if (sb.length() > 0)
+	            				sb.append(",");
+	            			sb.append("\"").append(cred.getRawid()).append("\"");
+	            		}
+	            	}
+	            	if (sb.length() > 0) {
+		            	g.addArgument("fingerprintAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+		            	String random = (String) session.getAttribute("fingerprintChallenge");
+		            	if (random == null)
+		            	{
+		            		random = IdpConfig.getConfig().getUserCredentialService().generateChallenge();
+		            		session.setAttribute("fingerprintChallenge", random);
+		            	}
+		            	g.addArgument("userAllowed", "true");
+		            	g.addArgument("fingerprintChallenge", random);
+		            	g.addArgument("fingerprintRawIds", sb.toString());
+		            	if (ctx.getNextFactor().size() == 1)
+		            		g.addArgument("fingerprintEnforced", "true");
+	            	}
+				} catch (UnknownUserException e) {
+				}
             }
             else
             	g.addArgument("fingerprintAllowed", "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            
+            if (ctx.getNextFactor().contains("K") && ctx.getNextFactor().size() == 1) {
+            	g.addArgument("kerberosEnforced", "true");
+            } else {
+            	g.addArgument("kerberosEnforced", "false");
+            }
 
             String s = (String) session.getAttribute("serialCredentialToRemove");
             if (s == null)
@@ -182,7 +221,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("externalLogin", generateExternalLogin(ip, ctx));
-        	if ( ctx.getStep() > 0 )
+        	if ( ctx.getStep() > 0 || ctx.getUser() != null)
         		g.generate(resp, "loginPage2.html"); //$NON-NLS-1$
         	else
         		g.generate(resp, "loginPage.html"); //$NON-NLS-1$
@@ -235,7 +274,8 @@ public class UserPasswordFormServlet extends BaseForm {
     	}
     	if (options.length() > 0)
     	{
-			options.insert(0, "<div class=\"logintype\"  id =\"otherlogin\"><ul>");
+    		String className = ctx.getUser() == null ? "logintype": "logintype2";
+			options.insert(0, "<div class=\""+className+"\"  id =\"otherlogin\"><ul>");
     		options.append("</ul></div>");
     	}
     	return options.toString();

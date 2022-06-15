@@ -80,8 +80,31 @@
 				</customfield3>		
 			
 				<customfield3 dataType="STRING"
+					id="idp"
+					label="${c:l('selfcertificate.selectIdentityProvider') }"
+					visible="false"
+					required="true" >
+				</customfield3>		
+
+				<customfield3 dataType="STRING"
+					id="method"
+					label="${c:l('selfcertificate.registrationMethod') }"
+					listOfValues="now: ${c:l('selfcertificate.registerNow') }, secure: ${c:l('selfcertificate.registerSecuryLink') }, insecure: ${c:l('selfcertificate.registerInsecureLink')}"
+					visible="false"
+					required="true" >
+				</customfield3>		
+
+				<customfield3 dataType="DATE"
+					id="date"
+					label="${c:l('selfcertificate.registrationLimit') }"
+					visible="false"
+					required="true" >
+				</customfield3>		
+
+				<customfield3 dataType="STRING"
 					id="description"
-					label="${c:l('selfCertificate.description') }"
+					label="${c:l('selfcertificate.description') }"
+					visible="false"
 					required="true" >
 				</customfield3>		
 

@@ -42,7 +42,9 @@ public class UserPasswordAction extends HttpServlet {
         String u = req.getParameter("j_username"); //$NON-NLS-1$
         String p = req.getParameter("j_password"); //$NON-NLS-1$
         String error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
-       
+        AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        if (u == null && ctx != null)
+        	u = ctx.getUser();
         if (u == null || u.length() == 0) {
             error = Messages.getString("UserPasswordAction.missing.user.name"); //$NON-NLS-1$
         } else if ( p == null || p.length() == 0) {
@@ -52,7 +54,6 @@ public class UserPasswordAction extends HttpServlet {
 
             try {
                 if (v.validate(u, new Password(p))) {
-                	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
                 	if (ctx == null) {
                 		error = "Session timeout"; //$NON-NLS-1$
                 		LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Session timeout");
@@ -90,7 +91,6 @@ public class UserPasswordAction extends HttpServlet {
 	            		}
                     }
                 } else {
-            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
     	    		if (ctx != null)
     	    		{
     	    			try {

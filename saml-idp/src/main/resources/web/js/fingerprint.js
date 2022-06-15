@@ -61,7 +61,7 @@ function arrayToBase64(array)
 
 async function registerCredential (cred) 
 {
-    const response = await fetch(fingerprintRegister ? "/validateRegisteredCredential" : "./registerCredential", {
+    const response = await fetch(fingerprintRegisterUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -135,8 +135,11 @@ function fingerprintSign() {
 		validateCredential( { response: {rawId: "aaa", signature:"aaa"}} );
 	else
 	{
-	    var rawId = localStorage.getItem("soffid.credential.id");
-	    publicKeyCredential.publicKey.allowCredentials[0].id = base64toArray(rawId);
+		var ac = [];
+		for (var i = 0; i < fingerprintRawIds.length; i++) {
+			ac.push({type: 'public-key', id: base64toArray(fingerprintRawIds[i])});
+		}
+	    publicKeyCredential.publicKey.allowCredentials = ac;
 		navigator.credentials.get(publicKeyCredential)	    
 	    .then((assertion) => {
 	        validateCredential ( assertion );

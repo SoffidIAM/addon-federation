@@ -28,6 +28,11 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
+import javax.security.auth.x500.X500Principal;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
@@ -147,7 +152,19 @@ public class WebCredentialParser {
 			CertificateFactory cf= CertificateFactory.getInstance("X509");
 			X509Certificate x509cert=(X509Certificate)cf.generateCertificate(
 					new ByteArrayInputStream(certs.get(0)));
-			this.tokenSigner = x509cert.getSubjectX500Principal().getName();
+			parseCertName(x509cert);
+		}
+	}
+
+	public void parseCertName(X509Certificate x509cert) {
+		X500Principal principal = x509cert.getSubjectX500Principal();
+		tokenSigner = principal.getName();
+		try {
+			for (Rdn rdn: new LdapName(principal.getName()).getRdns()) {
+				if (rdn.getType().equals("CN"))
+					tokenSigner = (String) Rdn.unescapeValue( rdn.getValue().toString() );
+			};
+		} catch (InvalidNameException e) {
 		}
 	}
 
@@ -171,13 +188,15 @@ public class WebCredentialParser {
 					new ByteArrayInputStream(
 							Base64.getDecoder().decode(cert)
 					));
-			this.tokenSigner = x509cert.getSubjectX500Principal().getName();
+			parseCertName(x509cert);
 		}
 		 
 	    for (String claim: jwt.getClaims().keySet())
 		{
 			System.out.println(claim+" = "+jwt.getClaim(claim).asString());
 		}
+	    
+	    REVISAR: https://medium.com/webauthnworks/verifying-fido2-packed-attestation-a067a9b2facd
 
 		System.out.println(jwt);
 	}

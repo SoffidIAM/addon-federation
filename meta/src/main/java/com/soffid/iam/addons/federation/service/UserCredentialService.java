@@ -23,6 +23,7 @@ import roles.selfcertificate_user;
 import roles.user_query;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.Map;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -69,11 +70,17 @@ public class UserCredentialService
 	public URI generateNewCredential () { return null;}
 		
 	@Operation(grantees= {federation_credential_create.class})
-	public URI generateNewCredential (String user) { return null;}
+	public URI generateNewCredential (String user, boolean unsecure, @Nullable Date registerBefore, @Nullable String identityProvider) { return null;}
 
-	@Description("Method used by the identity provider to bind the token to the user")
+	@Description("Method used by the identity provider to bind the token to the user. Checks fo secure hash")
 	public Usuari findUserForNewCredentialURI (String uriHash) {return null;}
 
-	@Description("Method used by the identity provider to bind the token to the user")
+	@Description("Method used by the identity provider to bind the token to the user. Checks for unsecure hashes")
+	public boolean checkUserForNewCredential (String user) {return false;}
+
+	@Description("Method used by the identity provider to bind the token to the user. Cancels an unsecure hash")
+	public void cancelNewCredentialURIForUser (String user) {}
+
+	@Description("Method used by the identity provider to bind the token to the user. Cancels a secure hash")
 	public void cancelNewCredentialURI (String uriHash) {}
 }

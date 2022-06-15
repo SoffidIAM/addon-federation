@@ -329,3 +329,20 @@ span.labeltextbox input {
 	}
 	
 }
+
+div.loginbox a {
+	text-decoration: none;	
+	color: black;
+}
+
+div.loginbox2 a {
+	text-decoration: none;	
+	color: white;
+}
+
+div.loginbox a:hover {
+	text-decoration: underline;	
+}
+
+
+

@@ -15,6 +15,8 @@ import org.apache.commons.logging.LogFactory;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class LoginServlet extends LangSupportServlet {
     
@@ -69,7 +71,8 @@ public class LoginServlet extends LangSupportServlet {
         		return;
         	else {
         		authCtx.initialize(req);
-        		resp.sendRedirect(UserPasswordFormServlet.URI);
+        		if (! certificateLogin(authCtx, req, resp))
+        			resp.sendRedirect(UserPasswordFormServlet.URI);
         	}
     	} catch (Exception e) {
     		log.warn ("Error authenticating user", e);
@@ -77,7 +80,29 @@ public class LoginServlet extends LangSupportServlet {
     	}
     }
 
-    @Override
+    private boolean certificateLogin(AuthenticationContext authCtx, HttpServletRequest req, HttpServletResponse resp) throws InternalErrorException, IOException, UnknownUserException {
+    	if (authCtx.getNextFactor().contains("C")) {
+    		CertificateValidator v = new CertificateValidator();
+    		try {
+	    		String certUser = v.validate(req);
+	    		if (certUser != null) {
+    				authCtx.authenticated(certUser, "C", resp);
+    				authCtx.store(req);
+    				if ( authCtx.isFinished())
+    				{
+    					new Autenticator().autenticate2(certUser, getServletContext(),req, resp, authCtx.getUsedMethod(), true);
+    					return true;
+    				}
+    			}
+    		} catch (Exception e) {
+    			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
+    			LogFactory.getLog(getClass()).info("Error validating certificate ", e);
+    		}
+    	}
+        return false;
+	}
+
+	@Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
     	super.doGet(req, resp);

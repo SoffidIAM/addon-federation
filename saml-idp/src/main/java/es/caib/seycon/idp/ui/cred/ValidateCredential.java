@@ -16,6 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.System;
 import com.soffid.iam.api.User;
@@ -53,6 +54,7 @@ public class ValidateCredential extends HttpServlet {
 		String rawId = req.getParameter("rawId");
 		String serial = req.getParameter("serial");
 		String error = null;
+		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 		if (clientJSON == null)
 		{
 			error = "Missing clientJSON parameter";
@@ -65,21 +67,29 @@ public class ValidateCredential extends HttpServlet {
 		{
 			error = "Missing signature parameter";
 		}
-		else if (serial == null)
-		{
-			error = "Missing serial parameter";
-		}
 		else if (rawId == null)
 		{
 			error = "Missing rawId parameter";
 		}
+		else if (ctx.getUser() == null)
+		{
+			error = "Missing user name";
+		}
 		else
 		{
 			try {
-				UserCredential uc = IdpConfig.getConfig().getUserCredentialService().findBySerial(serial);
+            	User user = new RemoteServiceLocator().getServerService().getUserInfo(ctx.getUser(), IdpConfig.getConfig().getSystem().getName());
+				UserCredential uc = null;
+				for (UserCredential uc2: IdpConfig.getConfig().getUserCredentialService().findUserCredentials(user.getUserName())) {
+					if (uc2.getType() == UserCredentialType.FIDO && 
+							uc2.getRawid().equals(rawId)) {
+						uc = uc2;
+						break;
+					}
+				}
 				if (uc == null)
 				{
-					error = "Cannot find token with serial "+serial;
+					error = "Cannot find token";
 					req.getSession().setAttribute("serialCredentialToRemove", serial);
 				}
 				else if ( ! uc.getRawid().equals(rawId))
@@ -93,16 +103,12 @@ public class ValidateCredential extends HttpServlet {
 					p.parseAuthentication(clientJSON, authData, challengeBinary, signature, true);
 					
 					System system = IdpConfig.getConfig().getSystem();
-					User user = new RemoteServiceLocator().getUserService().findUserByUserId(uc.getUserId());
-					if (user == null)
-						throw new Exception ("User unknown");
 					List<UserAccount> accounts = new RemoteServiceLocator().getAccountService().findUsersAccounts(user.getUserName(), system.getName());
 					if (accounts == null || accounts.isEmpty())
 						error = "Unauthorized";
 					else
 					{
 						UserAccount account = accounts.iterator().next();
-	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 	            		ctx.authenticated(account.getName(), "F", resp);
 	            		ctx.store(req);
 	            		if ( ctx.isFinished())

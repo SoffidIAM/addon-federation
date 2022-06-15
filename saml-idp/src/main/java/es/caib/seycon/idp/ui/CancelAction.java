@@ -2,6 +2,13 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -12,6 +19,7 @@ import javax.servlet.http.HttpSession;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class CancelAction extends HttpServlet {
     /**
@@ -36,19 +44,32 @@ public class CancelAction extends HttpServlet {
     	if (authCtx == null)
        		getServletContext().getRequestDispatcher(LogoutServlet.URI).forward(req, resp);
     	
-    	HttpSession session = req.getSession();
-    	OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
-    	
-    	if (r != null )
-    	{
-    		LogoutServlet.expireSession(req);
-    		resp.sendRedirect(r.getRedirectUrl() + (r.getRedirectUrl().contains("?") ? "&": "?") +"error=access_denied&error_description="+
-    				URLEncoder.encode("Access denied by user" , "UTF-8")+
-    				(r.getState() != null ? "&state="+r.getState(): ""));
+    	if (authCtx.getUser() != null) {
+    		authCtx.setUser(null);
+    		try {
+				authCtx.initialize(req);
+			} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
+					| CertificateException | IllegalStateException | NoSuchProviderException | SignatureException
+					| InternalErrorException | IOException e) {
+				new AuthenticationContext().store(req);
+			}
+       		getServletContext().getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);
+    		
+    	} else {
+	    	HttpSession session = req.getSession();
+	    	OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
+	    	
+	    	if (r != null )
+	    	{
+	    		LogoutServlet.expireSession(req);
+	    		resp.sendRedirect(r.getRedirectUrl() + (r.getRedirectUrl().contains("?") ? "&": "?") +"error=access_denied&error_description="+
+	    				URLEncoder.encode("Access denied by user" , "UTF-8")+
+	    				(r.getState() != null ? "&state="+r.getState(): ""));
+	    	}
+	    	else
+	       		getServletContext().getRequestDispatcher(LogoutServlet.URI).forward(req, resp);
+	
     	}
-    	else
-       		getServletContext().getRequestDispatcher(LogoutServlet.URI).forward(req, resp);
-
     }
 
 }

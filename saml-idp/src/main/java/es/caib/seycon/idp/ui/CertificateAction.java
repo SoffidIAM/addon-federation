@@ -42,11 +42,16 @@ public class CertificateAction extends HttpServlet {
 	        else
 	        {
 	            CertificateValidator v = new CertificateValidator();
-	            String certUser = v.validate(req);
+	            String certUser = null;
+	            try {
+	            	certUser = v.validate(req);
+	            } catch (Exception e) {
+	            	
+	            }
 	            if (certUser == null) {
-	        		req.setAttribute("ERROR", Messages.getString("CertificateAction.1")); //$NON-NLS-1$ //$NON-NLS-2$
+	        		req.setAttribute("ERROR", Messages.getString("SignatureAction.unrecognizedCertificate")); //$NON-NLS-1$ //$NON-NLS-2$
             		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-            		if (ctx != null)
+            		if (ctx != null && ctx.getUser() != null)
             			ctx.authenticationFailure( ctx.getUser() );
 	            } else {
 	            	try {
@@ -65,9 +70,6 @@ public class CertificateAction extends HttpServlet {
 	            }
 	        }
         } catch (InternalErrorException e) {
-			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
-            LogFactory.getLog(getClass()).info("Error validating certificate ", e);
-        } catch (UnknownUserException e) {
 			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
             LogFactory.getLog(getClass()).info("Error validating certificate ", e);
         }

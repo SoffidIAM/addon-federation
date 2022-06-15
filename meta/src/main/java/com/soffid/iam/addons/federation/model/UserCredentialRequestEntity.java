@@ -9,6 +9,7 @@ import com.soffid.mda.annotation.DaoOperation;
 import com.soffid.mda.annotation.Entity;
 import com.soffid.mda.annotation.Identifier;
 import com.soffid.mda.annotation.Index;
+import com.soffid.mda.annotation.Nullable;
 
 @Entity(table="SC_USCRRE")
 public class UserCredentialRequestEntity {
@@ -21,6 +22,7 @@ public class UserCredentialRequestEntity {
 	@Column(name="UCQ_TEN_ID")
 	TenantEntity tenant;
 
+	@Nullable
 	@Column(name="UCQ_HASH")
 	String hash;
 	
@@ -28,6 +30,8 @@ public class UserCredentialRequestEntity {
 	Date expiration;
 	
 	UserCredentialRequestEntity findByHash(String hash) {return null;}
+
+	Collection<UserCredentialRequestEntity> findByUser(Long userId) {return null;}
 	
 	@DaoOperation
 	void deleteExpired () {}
