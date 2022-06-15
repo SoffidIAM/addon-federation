@@ -63,6 +63,7 @@
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		<customfield3 id="oauthSecret"
 			label="${c:l('federacio.zul.oAuthSecret')}"
+			bind="/federationMember/oauthSecret" 
 			dataType='PASSWORD'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 	</div>

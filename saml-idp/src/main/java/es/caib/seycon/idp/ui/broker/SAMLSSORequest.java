@@ -102,6 +102,11 @@ public class SAMLSSORequest extends BaseForm {
 	private String encode(String url) {
 		return url.replaceAll("\"", "\\\\\"");
 	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		doGet(req, resp);
+	}
     
 
 }
