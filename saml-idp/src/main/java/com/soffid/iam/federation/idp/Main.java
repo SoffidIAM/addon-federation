@@ -193,17 +193,10 @@ public class Main {
 //            server.setSessionIdManager(new PersistentSessionIdManager());
             String host = c.getHostName();
             Integer port = c.getStandardPort();
-            Integer port2 = c.getClientCertPort();
-    
-            
             
             boolean plainSocket = c.getFederationMember().getDisableSSL() != null &&
             		c.getFederationMember().getDisableSSL().booleanValue();
-			if (plainSocket)
-                installPlainConnector(host, port);
-            else
-            	installSSLConnector(host, port);
-            installClientCertConnector(host, port2);
+            installClientCertConnector(host, port);
     
             // Deploy war
             ServletContextHandler ctx = deployWar(plainSocket);

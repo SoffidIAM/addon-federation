@@ -103,18 +103,6 @@
 			bind="/federationMember/standardPort"
 			dataType='NUMBER'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
-		<customfield3 
-			label="${c:l('federacio.zul.disableSSL')}"
-			id='id_disableSSL'
-			onChange="ref:handler.enableIDPComponents()"
-			bind="/federationMember/disableSSL"
-			dataType='BOOLEAN'
-			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
-		<customfield3 id="port2"
-			label="${c:l('federacio.zul.PortCertificatClient')}"
-			bind="/federationMember/clientCertificatePort"
-			dataType='NUMBER'
-			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		<div sclass="databox" id="sslKey">
 			<label sclass="label" value="${c:l('federacio.zul.publicKeySSL')}"/>
 			<div sclass="container">

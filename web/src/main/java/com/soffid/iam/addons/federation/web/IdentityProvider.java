@@ -167,10 +167,10 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 			((CustomField3)getFellow("groupToRegister")).setRequired(false);
 			((CustomField3)getFellow("userTypeToRegister")).setDisabled(true);
 		}
-		boolean showCert = marcat && ! Boolean.TRUE.equals(XPathUtils.eval(this, "federationMember/disableSSL"));
-		getFellow("port2").setVisible(showCert);
-		getFellow("sslKey").setVisible(showCert);
-		getFellow("certificatechainSsl").setVisible(showCert);
+//		boolean showCert = marcat && ! Boolean.TRUE.equals(XPathUtils.eval(this, "federationMember/disableSSL"));
+//		getFellow("port2").setVisible(showCert);
+		getFellow("sslKey").setVisible(true);
+		getFellow("certificatechainSsl").setVisible(true);
 		getFellow("profilesSection").setVisible(
 				IdentityProviderType.SOFFID.equals( idpType ) || "V".equals(clazz));
 		serviceProviderSelect(null);
