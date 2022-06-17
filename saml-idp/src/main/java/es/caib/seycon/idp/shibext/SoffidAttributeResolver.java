@@ -90,6 +90,7 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
 			encoder1.setAttributeName("urn:mace:dir:attribute-def:"+att.getShortName());
 			def.getAttributeEncoders().add(encoder1);
 			SAML2StringAttributeEncoder encoder2 = new SAML2StringAttributeEncoder();
+			encoder2.setNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified");
 			encoder2.setFriendlyName(att.getShortName());
 			encoder2.setAttributeName(att.getOid() == null || att.getOid().trim().isEmpty() ? att.getShortName(): att.getOid());
 			if (att.getShortName().equals("uid")) {

@@ -48,6 +48,7 @@ public class DelayedAttribute extends BasicAttribute<String> {
 		SAML2StringAttributeEncoder encoder2 = new SAML2StringAttributeEncoder();
 		encoder2.setFriendlyName(att.getShortName());
 		encoder2.setAttributeName(att.getOid() == null || att.getOid().trim().isEmpty() ? att.getShortName(): att.getOid());
+		encoder2.setNameFormat("urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified");
 		getEncoders().add(encoder2);
 	}
 	
