@@ -103,7 +103,7 @@
 			<p/>
 			{if certAllowed}
 			<div class="logintype"  id ="certlogin">
-				<form method="post" action="https://${config.hostname}:${config.sslport}${certificateLoginUrl}">
+				<form method="post" action="${certificateLoginUrl}">
 					<input name="j_method"  id="j_method_usu-pas" type="hidden" value="C"/>
 					<div class="upinput">
 						${You can use a valid digital certificate}
