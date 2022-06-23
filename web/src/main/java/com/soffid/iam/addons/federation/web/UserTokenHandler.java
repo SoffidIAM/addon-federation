@@ -82,13 +82,18 @@ public class UserTokenHandler extends FrameHandler {
 	
 	public void changeType(Event ev) {
 		Window w = (Window) getFellow("add-window");
-		Wizard wizard = (Wizard) w.getFellow("wizard");
 		String type = (String) ((CustomField3)w.getFellow("type")).getValue();
 		((CustomField3)w.getFellow("description")).setVisible("cert".equals(type));
 		((CustomField3)w.getFellow("idp")).setVisible(! "cert".equals(type));
 		final CustomField3 customField3 = (CustomField3)w.getFellow("method");
 		customField3.setVisible(! "cert".equals(type));
 		((CustomField3)w.getFellow("date")).setVisible(!"now".equals(customField3.getValue()) && ! "cert".equals(type));
+	}
+	
+	public void changeRegistrationMethod(Event ev) {
+		Window w = (Window) getFellow("add-window");
+		final CustomField3 customField3 = (CustomField3)w.getFellow("method");
+		((CustomField3)w.getFellow("date")).setVisible(!"now".equals(customField3.getValue()));
 	}
 	
 	@Override

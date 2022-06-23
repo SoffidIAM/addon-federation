@@ -91,6 +91,7 @@
 					label="${c:l('selfcertificate.registrationMethod') }"
 					listOfValues="now: ${c:l('selfcertificate.registerNow') }, secure: ${c:l('selfcertificate.registerSecuryLink') }, insecure: ${c:l('selfcertificate.registerInsecureLink')}"
 					visible="false"
+					onChange="ref:frame.changeRegistrationMethod"
 					required="true" >
 				</customfield3>		
 
@@ -103,7 +104,7 @@
 
 				<customfield3 dataType="STRING"
 					id="description"
-					label="${c:l('selfcertificate.description') }"
+					label="${c:l('selfCertificate.description') }"
 					visible="false"
 					required="true" >
 				</customfield3>		
