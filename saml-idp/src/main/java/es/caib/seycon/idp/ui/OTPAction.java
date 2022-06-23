@@ -43,6 +43,9 @@ public class OTPAction extends HttpServlet {
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
 
         String u = req.getParameter("j_username"); //$NON-NLS-1$
+        AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        if (u == null && ctx != null)
+        	u = ctx.getUser();
         String p = req.getParameter("j_password"); //$NON-NLS-1$
         String error = "";
         
@@ -58,7 +61,6 @@ public class OTPAction extends HttpServlet {
             	
             	User user = new RemoteServiceLocator().getServerService().getUserInfo(u, config.getSystem().getName());
             	
-            	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
             	if (ctx == null) {
             		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
                     logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$

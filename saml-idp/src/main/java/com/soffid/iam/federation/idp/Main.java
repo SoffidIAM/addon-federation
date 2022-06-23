@@ -292,8 +292,11 @@ public class Main {
 //        factory.setIncludeCipherSuites(cipherSuites);
         SslSocketConnector connector = new SslSocketConnector(factory);
 
-        connector.setPort(port == null ? 443 : port.intValue());
-        // connector.setHost(host);
+        Long actualPort = Long.getLong("soffid.idp.listen.port");
+       	connector.setPort(actualPort != null ? actualPort.intValue():  port == null ? 443 : port.intValue());
+        String actualAddress = System.getProperty("soffid.idp.listen.address");
+        if (actualAddress != null)
+        	connector.setHost(actualAddress);
         connector.setAcceptors(2);
         connector.setAcceptQueueSize(10);
         connector.setMaxIdleTime(60000);
