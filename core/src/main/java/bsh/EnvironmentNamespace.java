@@ -52,7 +52,6 @@ public class EnvironmentNamespace extends NameSpace
 			"serviceProvider",
 			"sourceCountry",
 			"user"
-			
 	};
 
     public EnvironmentNamespace( AdaptiveEnvironment env) 
