@@ -189,10 +189,12 @@ public class FederationMember {
 
 	@Description("Open ID URL")
 	@Nullable
+	@Attribute(defaultValue = "new java.util.LinkedList()")
 	public List<String> openidUrl;
 
 	@Description("Open ID Logout URL")
 	@Nullable
+	@Attribute(defaultValue = "new java.util.LinkedList()")
 	public List<String> openidLogoutUrl;
 
 	@Description("Login hint script")
