@@ -196,7 +196,10 @@ public class Main {
             
             boolean plainSocket = c.getFederationMember().getDisableSSL() != null &&
             		c.getFederationMember().getDisableSSL().booleanValue();
-            installClientCertConnector(host, port);
+            if ("false".equals(System.getProperty("soffid.idp.listen.ssl")))
+                installPlainConnector(host, port);
+            else
+            	installClientCertConnector(host, port);
     
             // Deploy war
             ServletContextHandler ctx = deployWar(plainSocket);
@@ -269,15 +272,13 @@ public class Main {
         loggerContext.getLogger(Main.class.getName()).info("Starting server"); //$NON-NLS-1$
     }
 
-    private void installSSLConnector(String host, Integer port)
-            throws IOException, FileNotFoundException {
-        installConnector(host, port, false);
-    }
-
     private void installConnector(String host, Integer port,
             boolean wantClientAuth) throws IOException, FileNotFoundException {
         System.out.println("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         Log.getLog().info("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+        Long actualPort = Long.getLong("soffid.idp.listen.port");
+        String actualAddress = System.getProperty("soffid.idp.listen.address");
 
         DelegateToApplicationSslContextFactory factory = new DelegateToApplicationSslContextFactory();
         factory.setKeyStore(SeyconKeyStore.getKeyStoreFile().getPath());
@@ -285,16 +286,14 @@ public class Main {
                 .getPassword());
         factory.setKeyStoreType(SeyconKeyStore.getKeyStoreType());
         factory.setCertAlias("idp"); //$NON-NLS-1$
-        factory.setWantClientAuth(wantClientAuth);
+        factory.setWantClientAuth(wantClientAuth && actualPort == null);
         factory.setExcludeCipherSuites(new String[] {
         		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",        		
         });
 //        factory.setIncludeCipherSuites(cipherSuites);
         SslSocketConnector connector = new SslSocketConnector(factory);
 
-        Long actualPort = Long.getLong("soffid.idp.listen.port");
-       	connector.setPort(actualPort != null ? actualPort.intValue():  port == null ? 443 : port.intValue());
-        String actualAddress = System.getProperty("soffid.idp.listen.address");
+        connector.setPort(actualPort != null ? actualPort.intValue():  port == null ? 443 : port.intValue());
         if (actualAddress != null)
         	connector.setHost(actualAddress);
         connector.setAcceptors(2);
@@ -303,7 +302,6 @@ public class Main {
         connector.setHandshakeTimeout(2000);
         connector.setLowResourcesMaxIdleTime(2000);
         connector.setSoLingerTime(10000);
-        
         connector.setHostHeader(host);
 
         connector.setRequestBufferSize( 64 * 1024);
@@ -323,6 +321,9 @@ public class Main {
         System.out.println("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         Log.getLog().info("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
+        Long actualPort = Long.getLong("soffid.idp.listen.port");
+        String actualAddress = System.getProperty("soffid.idp.listen.address");
+
         SocketConnector connector = new SocketConnector();
 
         connector.setRequestBufferSize( 64 * 1024);
@@ -335,7 +336,9 @@ public class Main {
         	}
         } catch (Throwable e) {}
         
-        connector.setPort(port == null ? 80 : port.intValue());
+        connector.setPort(actualPort != null ? actualPort.intValue():  port == null ? 443 : port.intValue());
+        if (actualAddress != null)
+        	connector.setHost(actualAddress);
         // connector.setHost(host);
         connector.setAcceptors(2);
         connector.setAcceptQueueSize(10);
