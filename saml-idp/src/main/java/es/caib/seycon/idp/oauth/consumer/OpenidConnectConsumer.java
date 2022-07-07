@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONObject;
 import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
@@ -32,7 +33,7 @@ import es.caib.seycon.util.Base64;
 public class OpenidConnectConsumer extends OAuth2Consumer 
 {
 
-	HashMap<String, Object> cfg = null;
+	JSONObject cfg = null;
 	public String accessTokenEndpoint;
 	public String authorizationBaseUrl;
 	private String userInfoEndpoint;
@@ -43,7 +44,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		super(fm);
 
-		cfg = (HashMap<String, Object>) JSON.parse(fm.getMetadades(), true);
+		cfg = (JSONObject) JSON.parse(fm.getMetadades(), true);
 
 		ServiceBuilder serviceBuilder = new ServiceBuilder(fm.getOauthKey())
 				.apiSecret(fm.getOauthSecret().getPassword());
@@ -71,7 +72,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		}
 
 		for (String param: new String[] {"prompt", "display", "max_age", "ui_locales", "ui_hint"}) {
-			if (cfg.opt(param) != null) 
+			if (cfg.has(param)) 
 				params.put(param, (String) cfg.get(param));
 		}
 
