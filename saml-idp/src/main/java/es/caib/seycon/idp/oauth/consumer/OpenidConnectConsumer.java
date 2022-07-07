@@ -71,7 +71,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		}
 
 		for (String param: new String[] {"prompt", "display", "max_age", "ui_locales", "ui_hint"}) {
-			if (cfg.get(param) != null) 
+			if (cfg.opt(param) != null) 
 				params.put(param, (String) cfg.get(param));
 		}
 
