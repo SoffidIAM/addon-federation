@@ -49,9 +49,9 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		ServiceBuilder serviceBuilder = new ServiceBuilder(fm.getOauthKey())
 				.apiSecret(fm.getOauthSecret().getPassword());
 		
-		Object scope = cfg.get("scope");
+		Object scope = cfg.optString("scope");
 		if (scope == null)
-			scope = cfg.get("supported_scopes");
+			scope = cfg.optString("supported_scopes");
 		if (scope == null)
 			scope = "openid";
 		
@@ -73,18 +73,18 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 
 		for (String param: new String[] {"prompt", "display", "max_age", "ui_locales", "ui_hint"}) {
 			if (cfg.has(param)) 
-				params.put(param, (String) cfg.get(param));
+				params.put(param, (String) cfg.optString(param));
 		}
 
-		accessTokenEndpoint = (String) cfg.get("token_endpoint");
+		accessTokenEndpoint = (String) cfg.optString("token_endpoint");
 		if (accessTokenEndpoint == null)
 			throw new InternalErrorException("Missing token_endpoint member in "+fm.getName()+" metadata");
 		
-		authorizationBaseUrl = (String) cfg.get("authorization_endpoint");
+		authorizationBaseUrl = (String) cfg.optString("authorization_endpoint");
 		if (authorizationBaseUrl == null)
 			throw new InternalErrorException("Missing authorization_endpoint member in "+fm.getName()+" metadata");
 
-		userInfoEndpoint = (String) cfg.get("userinfo_endpoint");
+		userInfoEndpoint = (String) cfg.optString("userinfo_endpoint");
 
 		service = serviceBuilder.state(secretState)
 			    .callback(returnToUrl)
@@ -96,9 +96,9 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	public boolean verifyResponse(HttpServletRequest httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {
 		OAuth2AccessToken accessToken = parseResponse(httpReq);
 
-		Map<String,String> r = (Map<String, String>) JSON.parse(accessToken.getRawResponse());
-		String idToken = r.get("id_token");
-		Map<String,String> m = new HashMap<String, String>();
+		JSONObject r = (JSONObject) JSON.parse(accessToken.getRawResponse());
+		String idToken = r.optString("id_token");
+		JSONObject m = new JSONObject();
 		if (idToken != null)
 		{
 			String[] split = idToken.split("\\.");
@@ -107,14 +107,14 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			while (openIdB64.length() % 4 != 0)
 				openIdB64 += "=";
 			String openIdToken = new String(Base64.decode(openIdB64));
-			m = (Map<String, String>) JSON.parse( openIdToken);
+			m = (JSONObject) JSON.parse( openIdToken);
 			if (userInfoEndpoint != null && ! userInfoEndpoint.isEmpty())
 			{
 			    OAuthRequest request = new OAuthRequest(Verb.GET, userInfoEndpoint);
 			    service.signRequest(accessToken, request);
 			    Response response =  service.execute(request);
 			    
-			    Map<String, String> m2 = (Map<String, String>) JSON.parse(response.getBody());
+			    JSONObject m2 = (JSONObject) JSON.parse(response.getBody());
 			    for (String k: m2.keySet())
 			    	m.put(k, m2.get(k));
 			}
@@ -128,27 +128,27 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		    service.signRequest(accessToken, request);
 		    Response response =  service.execute(request);
 		    
-		    m =  (Map<String, String>) JSON.parse(response.getBody());
+		    m =  (JSONObject) JSON.parse(response.getBody());
 
 		}
 		
 	    
 	    attributes = new HashMap<String, Object>();
-	    attributes.putAll(m);
-	    attributes.put("givenName", m.get("given_name"));
+	    attributes.putAll(m.toMap());
+	    attributes.put("givenName", m.optString("given_name"));
 	    attributes.remove("given_name");
-	    attributes.put("sn", m.get("family_name"));
+	    attributes.put("sn", m.optString("family_name"));
 	    attributes.remove("family_name");
-	    attributes.put("EMAIL", m.get("email"));
+	    attributes.put("EMAIL", m.optString("email"));
 	    attributes.remove("email");
 	    	
-	    if (m.containsKey("email") && "true".equals (m.get("email_verified")) || Boolean.TRUE.equals(m.get("email_verified")))
+	    if (m.has("email") && "true".equals (m.opt("email_verified")) || Boolean.TRUE.equals(m.opt("email_verified")))
 	    {
-	    	principal = m.get("email");
+	    	principal = m.optString("email");
 	    }
 	    else
 	    {
-	    	principal = m.get("sub");
+	    	principal = m.optString("sub");
 	    }
 	    return true;
 	    

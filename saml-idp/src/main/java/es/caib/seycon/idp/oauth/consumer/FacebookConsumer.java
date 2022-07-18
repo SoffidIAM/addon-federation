@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONObject;
 import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
@@ -56,28 +57,24 @@ public class FacebookConsumer extends OAuth2Consumer
 	    service.signRequest(accessToken, request);
 	    Response response =  service.execute(request);
 	    
-	    Map<String,String> m =  (Map<String, String>) JSON.parse(response.getBody());
-	    
-	    System.out.println("NAME = "+m.get("name"));
-	    System.out.println("EMAIL = "+m.get("email"));
-	    
+	    JSONObject m =  (JSONObject) JSON.parse(response.getBody());
 	    
 	    attributes = new HashMap<String, Object>();
-	    attributes.putAll(m);
+	    attributes.putAll(m.toMap());
 	    attributes.put("givenName", m.get("first_name"));
 	    attributes.remove("first_name");
 	    attributes.put("sn", m.get("last_name"));
 	    attributes.remove("last_name");
-	    attributes.put("EMAIL", m.get("email"));
+	    attributes.put("EMAIL", m.optString("email"));
 	    attributes.remove("email");
 	    	
-	    if (m.containsKey("email") && "true".equals (m.get("verified")) || Boolean.TRUE.equals(m.get("verified")))
+	    if (m.has("email") && "true".equals (m.opt("verified")) || Boolean.TRUE.equals(m.opt("verified")))
 	    {
-	    	principal = m.get("email");
+	    	principal = m.getString("email");
 	    }
 	    else
 	    {
-	    	principal = m.get("sub");
+	    	principal = m.getString("sub");
 	    }
 	    return true;
 	    

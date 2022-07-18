@@ -67,11 +67,11 @@ public class LinkedinConsumer extends OAuth2Consumer
 	    	principal = m.optString("id");
 	    
 	    attributes.putAll(m.toMap());
-	    attributes.put("EMAIL", m.get("emailAddress"));
+	    attributes.put("EMAIL", m.optString("emailAddress"));
 	    attributes.remove("emailAddress");
-	    attributes.put("givenName",  m.get("firstName"));
+	    attributes.put("givenName",  m.optString("firstName"));
 	    attributes.remove("firstName");
-	    attributes.put("sn", m.get("lastName"));
+	    attributes.put("sn", m.optString("lastName"));
 	    attributes.remove("lastName");
 	    
 	    

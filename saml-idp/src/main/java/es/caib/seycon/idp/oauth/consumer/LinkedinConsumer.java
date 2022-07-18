@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONObject;
 import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
@@ -63,18 +64,18 @@ public class LinkedinConsumer extends OAuth2Consumer
 	    service.signRequest(accessToken, request);
 	    Response response = service.execute(request);
 	    
-	    Map<String,String> m =  (Map<String, String>) JSON.parse(response.getBody());
+	    JSONObject m =  (JSONObject) JSON.parse(response.getBody());
 	    
-	    principal = m.get("emailAddress");
+	    principal = m.optString("emailAddress");
 	    if (principal == null)
-	    	principal = m.get("id");
+	    	principal = m.getString("id");
 	    
-	    attributes.putAll(m);
-	    attributes.put("EMAIL", m.get("emailAddress"));
+	    attributes.putAll(m.toMap());
+	    attributes.put("EMAIL", m.optString("emailAddress"));
 	    attributes.remove("emailAddress");
-	    attributes.put("givenName",  m.get("firstName"));
+	    attributes.put("givenName",  m.optString("firstName"));
 	    attributes.remove("firstName");
-	    attributes.put("sn", m.get("lastName"));
+	    attributes.put("sn", m.optString("lastName"));
 	    attributes.remove("lastName");
 	    
 	    

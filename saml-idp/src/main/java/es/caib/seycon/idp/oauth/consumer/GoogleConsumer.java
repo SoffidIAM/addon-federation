@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONObject;
 import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
@@ -67,25 +68,25 @@ public class GoogleConsumer extends OAuth2Consumer
 		while (openIdB64.length() % 4 != 0)
 			openIdB64 += "=";
 		String openIdToken = new String(Base64.decode(openIdB64));
-		Map<String,String> m = (Map<String, String>) JSON.parse( openIdToken);
+		JSONObject m = (JSONObject) JSON.parse( openIdToken);
 		
 	    
 	    attributes = new HashMap<String, Object>();
-	    attributes.putAll(m);
-	    attributes.put("givenName", m.get("given_name"));
+	    attributes.putAll(m.toMap());
+	    attributes.put("givenName", m.optString("given_name"));
 	    attributes.remove("given_name");
-	    attributes.put("sn", m.get("family_name"));
+	    attributes.put("sn", m.optString("family_name"));
 	    attributes.remove("family_name");
-	    attributes.put("EMAIL", m.get("email"));
+	    attributes.put("EMAIL", m.optString("email"));
 	    attributes.remove("email");
 	    	
-	    if (m.containsKey("email") && "true".equals (m.get("email_verified")) || Boolean.TRUE.equals(m.get("email_verified")))
+	    if (m.has("email") && "true".equals (m.opt("email_verified")) || Boolean.TRUE.equals(m.opt("email_verified")))
 	    {
-	    	principal = m.get("email");
+	    	principal = m.optString("email");
 	    }
 	    else
 	    {
-	    	principal = m.get("sub");
+	    	principal = m.optString("sub");
 	    }
 	    return true;
 	}

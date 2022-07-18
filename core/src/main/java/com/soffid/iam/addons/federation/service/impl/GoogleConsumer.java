@@ -66,11 +66,11 @@ public class GoogleConsumer extends OAuth2Consumer
 		while (openIdB64.length() % 4 != 0)
 			openIdB64 += "=";
 		String openIdToken = new String(Base64.decode(openIdB64));
-		Map<String, Object> m = new JSONObject( openIdToken).toMap();
+		JSONObject m = new JSONObject( openIdToken);
 		
 	    
 	    attributes = new HashMap<String, Object>();
-	    attributes.putAll(m);
+	    attributes.putAll(m.toMap());
 	    attributes.put("givenName", m.get("given_name"));
 	    attributes.remove("given_name");
 	    attributes.put("sn", m.get("family_name"));
@@ -78,7 +78,7 @@ public class GoogleConsumer extends OAuth2Consumer
 	    attributes.put("EMAIL", m.get("email"));
 	    attributes.remove("email");
 	    	
-	    if (m.containsKey("email") && "true".equals (m.get("email_verified")) || Boolean.TRUE.equals(m.get("email_verified")))
+	    if (m.has("email") && "true".equals (m.opt("email_verified")) || Boolean.TRUE.equals(m.opt("email_verified")))
 	    {
 	    	principal = (String) m.get("email");
 	    }

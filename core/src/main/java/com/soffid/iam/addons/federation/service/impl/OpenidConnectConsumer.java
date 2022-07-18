@@ -132,14 +132,14 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	    
 	    attributes = new HashMap<String, Object>();
 	    attributes.putAll(m.toMap());
-	    attributes.put("givenName", m.get("given_name"));
+	    attributes.put("givenName", m.optString("given_name"));
 	    attributes.remove("given_name");
-	    attributes.put("sn", m.get("family_name"));
+	    attributes.put("sn", m.optString("family_name"));
 	    attributes.remove("family_name");
-	    attributes.put("EMAIL", m.get("email"));
+	    attributes.put("EMAIL", m.optString("email"));
 	    attributes.remove("email");
 	    	
-	    if (m.has("email") && "true".equals (m.get("email_verified")) || Boolean.TRUE.equals(m.get("email_verified")))
+	    if (m.has("email") && "true".equals (m.opt("email_verified")) || Boolean.TRUE.equals(m.opt("email_verified")))
 	    {
 	    	principal = m.optString("email");
 	    }

@@ -60,28 +60,24 @@ public class FacebookConsumer extends OAuth2Consumer
 	    service.signRequest(accessToken, request);
 	    Response response =  service.execute(request);
 	    
-	    Map<String,Object> m =  (Map<String, Object>) new JSONObject(response.getBody()).toMap();
-	    
-	    System.out.println("NAME = "+m.get("name"));
-	    System.out.println("EMAIL = "+m.get("email"));
-	    
+	    JSONObject m =  (JSONObject) new JSONObject(response.getBody()).toMap();
 	    
 	    attributes = new HashMap<String, Object>();
-	    attributes.putAll(m);
-	    attributes.put("givenName", m.get("first_name"));
+	    attributes.putAll(m.toMap());
+	    attributes.put("givenName", m.getString("first_name"));
 	    attributes.remove("first_name");
 	    attributes.put("sn", m.get("last_name"));
 	    attributes.remove("last_name");
-	    attributes.put("EMAIL", m.get("email"));
+	    attributes.put("EMAIL", m.optString("email"));
 	    attributes.remove("email");
 	    	
-	    if (m.containsKey("email") && "true".equals (m.get("verified")) || Boolean.TRUE.equals(m.get("verified")))
+	    if (m.has("email") && "true".equals (m.opt("verified")) || Boolean.TRUE.equals(m.opt("verified")))
 	    {
-	    	principal = (String) m.get("email");
+	    	principal = (String) m.getString("email");
 	    }
 	    else
 	    {
-	    	principal = (String) m.get("sub");
+	    	principal = (String) m.getString("sub");
 	    }
 	    return true;
 	    
