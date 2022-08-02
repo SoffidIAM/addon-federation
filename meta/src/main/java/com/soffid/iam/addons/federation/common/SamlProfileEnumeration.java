@@ -27,4 +27,6 @@ public class SamlProfileEnumeration {
 	public java.lang.String OPENID="OpenidProfile";
 
 	public java.lang.String RADIUS="RadiusProfile";
+
+	public java.lang.String CAS="CasProfile";
 }

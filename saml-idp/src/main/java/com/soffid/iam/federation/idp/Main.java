@@ -62,6 +62,9 @@ import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.utils.Security;
 
+import es.caib.seycon.idp.cas.LoginEndpoint;
+import es.caib.seycon.idp.cas.ServiceValidateEndpoint;
+import es.caib.seycon.idp.cas.ValidateEndpoint;
 import es.caib.seycon.idp.cert.DelegateToApplicationSslContextFactory;
 import es.caib.seycon.idp.config.CustomSpnegoLoginService;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -73,7 +76,6 @@ import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.LogoutEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
-import es.caib.seycon.idp.openid.server.TokenEndpoint;
 import es.caib.seycon.idp.openid.server.TokenIntrospectionEndpoint;
 import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -426,123 +428,16 @@ public class Main {
         ServletHolder servlet;
         if (useSamldProfile())
         {
-	        // Servlets
-	        servlet = new ServletHolder(
-	                edu.internet2.middleware.shibboleth.common.profile.ProfileRequestDispatcherServlet.class);
-	        servlet.setInitOrder(1);
-	        servlet.setName("ProfileRequestDispatcher"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, "/profile/*"); //$NON-NLS-1$
-	
-	        servlet = new ServletHolder(
-	                edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("AuthenticationEngine"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, "/AuthnEngine"); //$NON-NLS-1$
-	
-	        servlet = new ServletHolder(
-	                edu.internet2.middleware.shibboleth.idp.StatusServlet.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("Status"); //$NON-NLS-1$
-	        servlet.setInitParameter("AllowedIPs", //$NON-NLS-1$
-	                "127.0.0.1/32 ::1/128"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, "/status"); //$NON-NLS-1$
-	        servlet = new ServletHolder(MetadataServlet.class);
-	        servlet.setInitOrder(1);
-	        servlet.setName("Metadata servlet"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, MetadataServlet.URI); //$NON-NLS-1$
+	        configureSamlProfile(ctx);
         }
         SAMLProfile openIdProfile = useOpenidProfile();
         if (openIdProfile != null)
         {
-        	servlet = new ServletHolder(
-	                AuthorizationEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("AuthorizationEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, 
-	        		openIdProfile.getAuthorizationEndpoint() == null ? 
-	        				"/authorization": 
-	        				openIdProfile.getAuthorizationEndpoint()); //$NON-NLS-1$
-
-        	servlet = new ServletHolder(
-	                TokenEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("TokenEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, 
-	        		openIdProfile.getTokenEndpoint() == null ? 
-	        				"/token": 
-	        				openIdProfile.getTokenEndpoint()); //$NON-NLS-1$
-
-        	servlet = new ServletHolder(
-	                TokenIntrospectionEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("TokenIntrospectionEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, "/token_info"); //$NON-NLS-1$
-
-	        servlet = new ServletHolder(
-	                RevokeEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("RevokeEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, 
-	        		openIdProfile.getRevokeEndpoint() == null ? 
-	        				"/revoke": 
-	        				openIdProfile.getRevokeEndpoint()); //$NON-NLS-1$
-
-	        servlet = new ServletHolder(
-	                LogoutEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("LogoutEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, 
-	        		openIdProfile.getLogoutEndpoint() == null ? 
-	        				"/logout": 
-	        				openIdProfile.getLogoutEndpoint()); //$NON-NLS-1$
-
-        	servlet = new ServletHolder(
-	                UserInfoEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("UserinfoEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, 
-	        		openIdProfile.getUserInfoEndpoint() == null ? 
-	        				"/userinfo": 
-	        				openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
-
-        	servlet = new ServletHolder(
-	                ImpersonationEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("ImpersonationEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, 
-	        		openIdProfile.getUserInfoEndpoint() == null ? 
-	        				"/userinfo/impersonate": 
-	        				openIdProfile.getUserInfoEndpoint()+"/impersonate"); //$NON-NLS-1$
-
-	        servlet = new ServletHolder(
-	                SessionCookieEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("SessionCookieEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, 
-        				"/session_cookie"); //$NON-NLS-1$
-
-	        servlet = new ServletHolder(
-	                ConfigurationEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("ConfigurationEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, "/.well-known/openid-configuration"); //$NON-NLS-1$
-
-        	servlet = new ServletHolder(JWKEndpoint.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("JWKSEndpoint"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, "/.well-known/jwks.json"); //$NON-NLS-1$
-
-	        servlet = new ServletHolder(
-	                IframeSession.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("IframeSession"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, IframeSession.URI); //$NON-NLS-1$
-
-	        servlet = new ServletHolder(
-	                KeepAliveServlet.class);
-	        servlet.setInitOrder(2);
-	        servlet.setName("Keepalivesession"); //$NON-NLS-1$
-	        ctx.addServlet(servlet, KeepAliveServlet.URI); //$NON-NLS-1$
+        	configureOpenidProfile(ctx, openIdProfile);
+        }
+        final SAMLProfile casProfile = useCasProfile();
+		if (casProfile != null) {
+        	configureCasProfile(ctx, casProfile);
         }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
         ctx.addServlet(ConsentAction.class, ConsentAction.URI);
@@ -630,6 +525,158 @@ public class Main {
 
     }
 
+	private void configureOpenidProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
+		ServletHolder servlet;
+		servlet = new ServletHolder(
+		        AuthorizationEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("AuthorizationEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, 
+				openIdProfile.getAuthorizationEndpoint() == null ? 
+						"/authorization": 
+						openIdProfile.getAuthorizationEndpoint()); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        ValidateEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("ValidateEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, 
+				openIdProfile.getTokenEndpoint() == null ? 
+						"/token": 
+						openIdProfile.getTokenEndpoint()); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        TokenIntrospectionEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("TokenIntrospectionEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/token_info"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        RevokeEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("RevokeEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, 
+				openIdProfile.getRevokeEndpoint() == null ? 
+						"/revoke": 
+						openIdProfile.getRevokeEndpoint()); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        LogoutEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("LogoutEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, 
+				openIdProfile.getLogoutEndpoint() == null ? 
+						"/logout": 
+						openIdProfile.getLogoutEndpoint()); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        UserInfoEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("UserinfoEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, 
+				openIdProfile.getUserInfoEndpoint() == null ? 
+						"/userinfo": 
+						openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        ImpersonationEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("ImpersonationEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, 
+				openIdProfile.getUserInfoEndpoint() == null ? 
+						"/userinfo/impersonate": 
+						openIdProfile.getUserInfoEndpoint()+"/impersonate"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        SessionCookieEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("SessionCookieEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, 
+					"/session_cookie"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        ConfigurationEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("ConfigurationEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/openid-configuration"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(JWKEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("JWKSEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/jwks.json"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        IframeSession.class);
+		servlet.setInitOrder(2);
+		servlet.setName("IframeSession"); //$NON-NLS-1$
+		ctx.addServlet(servlet, IframeSession.URI); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        KeepAliveServlet.class);
+		servlet.setInitOrder(2);
+		servlet.setName("Keepalivesession"); //$NON-NLS-1$
+		ctx.addServlet(servlet, KeepAliveServlet.URI); //$NON-NLS-1$
+	}
+
+	private void configureCasProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
+		ServletHolder servlet;
+		servlet = new ServletHolder(LoginEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("cas-loginEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/cas/login"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(es.caib.seycon.idp.cas.LogoutEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("cas-logoutEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/cas/logout"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(ValidateEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("cas-validateEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/cas/validate"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(ServiceValidateEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("cas-serviceValidateEndpoint"); //$NON-NLS-1$
+		servlet.setInitParameter("version", "2");
+		ctx.addServlet(servlet, "/cas/serviceValidate"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(ServiceValidateEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("cas-serviceValidateEndpoint.v3"); //$NON-NLS-1$
+		servlet.setInitParameter("version", "3");
+		ctx.addServlet(servlet, "/cas/p3/serviceValidate"); //$NON-NLS-1$
+	}
+
+
+	private void configureSamlProfile(ServletContextHandler ctx) {
+		ServletHolder servlet;
+		// Servlets
+		servlet = new ServletHolder(
+		        edu.internet2.middleware.shibboleth.common.profile.ProfileRequestDispatcherServlet.class);
+		servlet.setInitOrder(1);
+		servlet.setName("ProfileRequestDispatcher"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/profile/*"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine.class);
+		servlet.setInitOrder(2);
+		servlet.setName("AuthenticationEngine"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/AuthnEngine"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+		        edu.internet2.middleware.shibboleth.idp.StatusServlet.class);
+		servlet.setInitOrder(2);
+		servlet.setName("Status"); //$NON-NLS-1$
+		servlet.setInitParameter("AllowedIPs", //$NON-NLS-1$
+		        "127.0.0.1/32 ::1/128"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/status"); //$NON-NLS-1$
+		servlet = new ServletHolder(MetadataServlet.class);
+		servlet.setInitOrder(1);
+		servlet.setName("Metadata servlet"); //$NON-NLS-1$
+		ctx.addServlet(servlet, MetadataServlet.URI); //$NON-NLS-1$
+	}
+
 	private boolean needsKerberos(IdpConfig c) throws InternalErrorException {
 		if (c.getFederationMember().getAuthenticationMethods() != null &&
 				c.getFederationMember().getAuthenticationMethods().contains("K"))
@@ -653,13 +700,29 @@ public class Main {
         for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
             SAMLProfile profile = (SAMLProfile) it.next();
             SamlProfileEnumeration type = profile.getClasse();
-            if (type.equals(SamlProfileEnumeration.OPENID)) {
+            if (type.equals(SamlProfileEnumeration.OPENID) && Boolean.TRUE.equals(profile.getEnabled())) {
             	return profile;
             }
         }
         return null;
 	}
 
+	private SAMLProfile useCasProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederationService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.OPENID) && Boolean.TRUE.equals(profile.getEnabled())) {
+            	return profile;
+            }
+        }
+        return null;
+	}
 	private SAMLProfile useRadiusProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
 		FederationService federacioService = c.getFederationService();
@@ -670,7 +733,7 @@ public class Main {
         for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
             SAMLProfile profile = (SAMLProfile) it.next();
             SamlProfileEnumeration type = profile.getClasse();
-            if (type.equals(SamlProfileEnumeration.RADIUS)) {
+            if (type.equals(SamlProfileEnumeration.RADIUS)  && Boolean.TRUE.equals(profile.getEnabled())) {
             	return profile;
             }
         }

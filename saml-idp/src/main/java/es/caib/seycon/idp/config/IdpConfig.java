@@ -487,7 +487,8 @@ public class IdpConfig {
     }
     
     public int getClientCertPort() {
-        if (federationMember.getStandardPort()  == null)
+        if (federationMember.getClientCertificatePort()  == null ||
+        		federationMember.getClientCertificatePort().trim().isEmpty())
             return 1443;
         else
             return Integer.decode(federationMember.getClientCertificatePort());

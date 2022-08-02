@@ -54,6 +54,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
+import es.caib.seycon.idp.cas.LoginResponse;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.AuthorizationResponse;
@@ -138,7 +139,7 @@ public class Autenticator {
         if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials())) {
         	
         }
-        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
+        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0 && req.getCookies() != null)
         {
         	for (Cookie c: req.getCookies())
         	{
@@ -419,6 +420,11 @@ public class Autenticator {
         {
         	LOG.info("Generating openid response");
         	AuthorizationResponse.generateResponse(ctx, req, resp, type);
+        }
+        else if ("cas".equals(session.getAttribute("soffid-session-type")))
+        {
+        	LOG.info("Generating openid response");
+        	LoginResponse.generateResponse(ctx, req, resp, type);
         }
         else
         {

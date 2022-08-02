@@ -73,8 +73,9 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		getFellow("networkSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		getFellow("certificateSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		getFellow("openidSection").setVisible(spType == ServiceProviderType.OPENID_CONNECT);
+		getFellow("casSection").setVisible(spType == ServiceProviderType.CAS);
 		getFellow("configurationSection").setVisible( spType != ServiceProviderType.OPENID_CONNECT &&
-					spType != ServiceProviderType.RADIUS);
+				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS);
 		getFellow("radiusSection").setVisible(spType == ServiceProviderType.RADIUS);
 		
 //		((CustomField3)getFellow("organization")).setVisible(ServiceProviderType.OPENID_CONNECT != spType);
@@ -83,7 +84,7 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 //		((CustomField3)getFellow("contact")).setReadonly(ServiceProviderType.SOFFID_SAML != spType);
 		
 		((CustomField3)getFellow("metadades")).setVisible(spType != ServiceProviderType.OPENID_CONNECT &&
-				spType != ServiceProviderType.RADIUS);
+				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS);
 		((CustomField3)getFellow("metadades")).setDisabled(spType != ServiceProviderType.SAML);
 //		((CustomField3)getFellow("oauthKey")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
 //		((CustomField3)getFellow("oauthSecret")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);

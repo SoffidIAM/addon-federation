@@ -2,9 +2,11 @@ package es.caib.seycon.idp.openid.server;
 
 import java.util.HashSet;
 
+import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 public class OpenIdRequest {
+	TokenType type;
    	String scope ;
 	String clientId ;
 	String responseType ;
@@ -24,7 +26,7 @@ public class OpenIdRequest {
 	private HashSet<String> responseTypeSet;
 	
 	public String toString() {
-		return "[Scope: "+scope+", ClientId: "+clientId+", ResponseType: "+responseType+", RedirectURL: "+redirectUrl+
+		return "[Type: "+type+" Scope: "+scope+", ClientId: "+clientId+", ResponseType: "+responseType+", RedirectURL: "+redirectUrl+
 				", State: "+state+", Nonce: "+nonce+", Display: "+display+", Prompt: "+prompt+", MaxAge: "+maxAge
 				+", uiLocales: "+uiLocales+", IdTokenHint: "+idTokenHint+", LoginHint: "+loginHint+", acrValues:"+acrValues+
 				", PkceChallenge: "+pkceChallenge+", PkceAlgorithm: "+pkceAlgorithm+"]";
@@ -145,5 +147,16 @@ public class OpenIdRequest {
 
 	public void setPkceAlgorithm(String pkceAlgorithm) {
 		this.pkceAlgorithm = pkceAlgorithm;
+	}
+
+
+	public void setType(TokenType type) {
+		this.type = type;
+		
+	}
+
+
+	public TokenType getType() {
+		return type;
 	}
 }

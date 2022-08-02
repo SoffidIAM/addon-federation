@@ -32,6 +32,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.impl.PublicClaims;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
@@ -66,6 +67,7 @@ public class TokenHandler {
 		expireTokens();
 		
 		TokenInfo t = new TokenInfo();
+		t.setType(request.getType());
 		t.setUser(user);
 		t.setRequest(request);
 		t.setAuthorizationCode( generateRandomString(36));
@@ -180,23 +182,33 @@ public class TokenHandler {
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		t.updateLastUse();
-		Long refreshTimeout = t.request.getFederationMember().getOauthSessionTimeout();
-		if (refreshTimeout == null)
-			refreshTimeout = IdpConfig.getConfig().getFederationMember().getOauthSessionTimeout();
-		if (refreshTimeout == null)
-			t.expiresRefresh = System.currentTimeMillis() + 24L * 60 * 60 * 1000L; // 1 day
-		else
-			t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
-		String random = generateRandomString(129);
-		t.setJwtId(random);
-		String signedToken = generateJWTToken(c, t, att);
-		t.token = signedToken;
+		if (t.getType() == TokenType.TOKEN_CAS) {
+			String random = generateRandomString(48);
+			t.token = "ST-"+random.replace("_", ".");
+		} else {
+			Long refreshTimeout = t.request.getFederationMember().getOauthSessionTimeout();
+			if (refreshTimeout == null)
+				refreshTimeout = IdpConfig.getConfig().getFederationMember().getOauthSessionTimeout();
+			if (refreshTimeout == null)
+				t.expiresRefresh = System.currentTimeMillis() + 24L * 60 * 60 * 1000L; // 1 day
+			else
+				t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
+			String random = generateRandomString(129);
+			t.setJwtId(random);
+			String signedToken = generateJWTToken(c, t, att);
+			t.token = signedToken;
+		}
 		
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
 		getFederationService().createOauthToken(generateOauthToken(t));
-    	LogRecorder.getInstance().addSuccessLogEntry("OPENID", t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
+		if (t.getType() == TokenType.TOKEN_CAS) {
+			LogRecorder.getInstance().addSuccessLogEntry(t.getType().getValue(), t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
     			req.getRemoteAddr(), null, null, "OPENID_"+t.jwtId);
+		} else {
+			LogRecorder.getInstance().addSuccessLogEntry(t.getType().getValue(), t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
+	    			req.getRemoteAddr(), null, null, "CAS");
+		}
 	}
 
 	public String generateJWTToken(IdpConfig c, TokenInfo t, Map<String, Object> att) {
@@ -420,6 +432,7 @@ public class TokenHandler {
 	
 	protected OauthToken generateOauthToken (TokenInfo t)  {
 		OauthToken o = new OauthToken();
+		o.setType(t.getType());
 		o.setAuthenticated(new Date(t.authentication));
 		o.setAuthenticationMethod(t.getAuthenticationMethod());
 		o.setAuthorizationCode(t.getAuthorizationCode());
@@ -449,6 +462,7 @@ public class TokenHandler {
 	
 	protected TokenInfo parseOauthToken (OauthToken o) throws InternalErrorException  {
 		TokenInfo t = new TokenInfo();
+		t.setType(o.getType());
 		t.setAuthentication(o.getAuthenticated().getTime());
 		t.setAuthenticationMethod(o.getAuthenticationMethod());
 		t.setAuthorizationCode(o.getAuthorizationCode());

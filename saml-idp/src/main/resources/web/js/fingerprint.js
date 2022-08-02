@@ -7,7 +7,7 @@ var createCredentialDefaultArgs = {
             name: "Soffid IAM"
         },
         // User:
-        userVerification: "required",
+        userVerification: "discouraged",
         user: {
             id: new Uint8Array(16),
             name: "soffid",

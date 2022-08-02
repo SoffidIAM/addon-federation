@@ -2,6 +2,8 @@ package es.caib.seycon.idp.openid.server;
 
 import java.util.Map;
 
+import com.soffid.iam.addons.federation.api.TokenType;
+
 public class TokenInfo {
 	String token;
 	String refreshToken;
@@ -20,6 +22,7 @@ public class TokenInfo {
 	String scope;
 	String pkceChallenge;
 	String pkceAlgorithm;
+	private TokenType type;
 	
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
@@ -162,5 +165,13 @@ public class TokenInfo {
 
 	public void setPkceAlgorithm(String pkceAlgorithm) {
 		this.pkceAlgorithm = pkceAlgorithm;
+	}
+
+	public void setType(TokenType type) {
+		this.type = type;
+	}
+
+	public TokenType getType() {
+		return type;
 	}
 }

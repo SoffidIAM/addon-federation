@@ -2,6 +2,7 @@ package com.soffid.iam.addons.federation.common;
 
 import java.util.Date;
 
+import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Entity;
@@ -15,6 +16,9 @@ public class OauthToken {
 	@Nullable
 	@Identifier
 	public java.lang.Long id;
+
+	@Nullable
+	TokenType type;
 
 	String identityProvider;
 	

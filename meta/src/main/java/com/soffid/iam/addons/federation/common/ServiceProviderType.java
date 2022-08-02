@@ -9,4 +9,5 @@ public class ServiceProviderType {
 	public static String SOFFID_SAML = "soffid-saml";
 	public static String OPENID_CONNECT = "openid-connect";
 	public static String RADIUS = "radius";
+	public static String CAS = "cas";
 }

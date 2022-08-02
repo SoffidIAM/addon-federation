@@ -27,9 +27,10 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserAttributesGenerator {
 	public Map<String, Object> generateAttributes(ServletContext ctx, TokenInfo t) throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
-		return generateAttributes(ctx, t, true);
+		return generateAttributes(ctx, t, true, false, false);
 	}
-	public Map<String, Object> generateAttributes(ServletContext ctx, TokenInfo t, boolean openid) throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
+	public Map<String, Object> generateAttributes(ServletContext ctx, TokenInfo t, boolean openid, boolean radius, boolean cas) 
+			throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
 		AttributeResolver<SAMLProfileRequestContext> resolver = (AttributeResolver<SAMLProfileRequestContext>)
 				HttpServletHelper.getAttributeResolver(ctx);
 		
@@ -46,12 +47,16 @@ public class UserAttributesGenerator {
 		
 		for ( Attribute attribute: new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null) )
 		{
-			String name;
+			String name = null;
 			if (openid) {
 				name = attribute.getOpenidName();
 				if (name == null || name.isEmpty())
 					name = attribute.getShortName();
-			} else {
+			}
+			if (cas) {
+				name = attribute.getShortName();
+			}
+			if (radius) {
 				name = attribute.getRadiusIdentifier();
 			}
 			

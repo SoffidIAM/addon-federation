@@ -122,6 +122,11 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setChap(entity.getChap());
 			target.setMsChap(entity.getMsChap());
 			target.setEnabled(entity.isEnabled());
+		} else if (source instanceof CasProfileEntity) {
+			// heretats
+			target.setClasse(SamlProfileEnumeration.CAS);
+			CasProfileEntity entity = (CasProfileEntity) source;
+			target.setEnabled(entity.isEnabled());
 		} else if (source instanceof SamlProfileEntity) {
 			// En teoria aquesta és abstracta
 			target.setClasse(SamlProfileEnumeration.SAML_PRO);
@@ -174,6 +179,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 				samlProfileEntity = newOpenidProfileEntity();
 			} else if (SamlProfileEnumeration.RADIUS.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newRadiusProfileEntity();
+			} else if (SamlProfileEnumeration.CAS.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newCasProfileEntity();
 			} else {
 				samlProfileEntity = newSamlProfileEntity();
 			}
@@ -320,6 +327,11 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			entity.setTokenEndpoint(source.getTokenEndpoint());
 			entity.setUserInfoEndpoint(source.getUserInfoEndpoint());
 			entity.setRevokeEndpoint(source.getRevokeEndpoint());
+			target = entity;
+		} else if (SamlProfileEnumeration.CAS.equals(source.getClasse())) {
+			// heretats
+			CasProfileEntity entity = (CasProfileEntity) target;
+			entity.setEnabled(source.getEnabled());
 			target = entity;
 		} else if (SamlProfileEnumeration.RADIUS.equals(source.getClasse())) {
 			// heretats

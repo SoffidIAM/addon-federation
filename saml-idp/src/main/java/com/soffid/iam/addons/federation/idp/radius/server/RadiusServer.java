@@ -48,6 +48,7 @@ import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccountingRequest;
 import com.soffid.iam.addons.federation.idp.radius.packet.RadiusPacket;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.User;
@@ -62,6 +63,7 @@ import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.AuthorizationHandler;
 import es.caib.seycon.idp.ui.Messages;
 
 /**
@@ -133,11 +135,18 @@ public class RadiusServer {
 		}
 		if (ok) {
 			if (ctx.isFinished()) {
-				RadiusPacket answer = new RadiusPacket(RadiusPacket.ACCESS_ACCEPT, accessRequest.getPacketIdentifier());
-				copyProxyState(accessRequest, answer);
 				try {
-					addCustomAttributes(answer, ctx.getUser(), member);
-					return answer;
+					FederationService fs = new RemoteServiceLocator().getFederacioService();
+			    	if (new AuthorizationHandler().checkAuthorization(ctx.getUser(), member)) {
+	
+				    	RadiusPacket answer = new RadiusPacket(RadiusPacket.ACCESS_ACCEPT, accessRequest.getPacketIdentifier());
+						copyProxyState(accessRequest, answer);
+							addCustomAttributes(answer, ctx.getUser(), member);
+							return answer;
+			    	} else {
+			    		log.warn("User "+ctx.getUser()+" not authorized to login to "+member.getPublicId());
+			    		return new RadiusPacket(RadiusPacket.ACCESS_REJECT, accessRequest.getPacketIdentifier());		    		
+			    	}
 				} catch (Exception e) {
 					log.warn("Error generating radius response", e);
 					return new RadiusPacket(RadiusPacket.ACCESS_REJECT, accessRequest.getPacketIdentifier());
@@ -195,7 +204,7 @@ public class RadiusServer {
 		final OpenIdRequest request = new OpenIdRequest();
 		t.setRequest(request);
 		request.setFederationMember(member);
-		Map<String, Object> attributes = new UserAttributesGenerator().generateAttributes(servletContext, t, false);
+		Map<String, Object> attributes = new UserAttributesGenerator().generateAttributes(servletContext, t, false, true, false);
 		for (String att: attributes.keySet()) {
 			Object value = attributes.get(att);
 			try {
