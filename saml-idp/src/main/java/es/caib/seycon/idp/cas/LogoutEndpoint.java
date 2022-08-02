@@ -16,6 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -23,6 +24,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class LogoutEndpoint extends HttpServlet {
 
@@ -40,9 +42,19 @@ public class LogoutEndpoint extends HttpServlet {
 			req.getSession().invalidate();
 			
 			IdpConfig config = IdpConfig.getConfig();
-		
+
 			if (service != null) {
-				resp.sendRedirect(service);
+				for ( FederationMember fm: config.getFederationService().findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "S")) {
+					if (fm.getServiceProviderType() == ServiceProviderType.CAS) {
+						if (fm.getOpenidUrl() != null) {
+							for (String url: fm.getOpenidLogoutUrl()) {
+								if (service.startsWith(url))
+									resp.sendRedirect(service);
+							}
+						}
+					}
+				}
+				resp.sendRedirect(LogoutServlet.URI);
 			} else {
 				resp.sendRedirect(LogoutServlet.URI);
 			}

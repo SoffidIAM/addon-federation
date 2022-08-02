@@ -20,6 +20,8 @@ import javax.servlet.http.HttpSession;
 
 import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.AllowedScope;
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -51,7 +53,7 @@ public class LoginEndpoint extends HttpServlet {
 	    	final String serviceName = req.getParameter("service");
 	    	if (serviceName == null)
 	    		throw new ServletException ("Missing service parameter");
-			r.setFederationMember( config.getFederationService().findFederationMemberByPublicId(serviceName));
+			r.setFederationMember( findFederationMember(config, serviceName));
 	    	if (r.getFederationMember() == null)
 	    		throw new Exception("Unkwnown service "+serviceName);
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
@@ -88,6 +90,22 @@ public class LoginEndpoint extends HttpServlet {
     	} catch (Exception e) {
             generateError(r, "server_error", e.toString(), resp);
 		}
+	}
+
+
+	private FederationMember findFederationMember(IdpConfig config, final String serviceName)
+			throws InternalErrorException {
+		for ( FederationMember fm: config.getFederationService().findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "S")) {
+			if (fm.getServiceProviderType() == ServiceProviderType.CAS) {
+				if (fm.getOpenidUrl() != null) {
+					for (String url: fm.getOpenidUrl()) {
+						if (serviceName.startsWith(url))
+							return fm;
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 
