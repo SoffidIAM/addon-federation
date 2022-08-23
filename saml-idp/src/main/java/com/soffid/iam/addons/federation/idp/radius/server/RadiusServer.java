@@ -118,10 +118,18 @@ public class RadiusServer {
 	 */
 	public RadiusPacket accessRequestReceived(AccessRequest accessRequest, InetSocketAddress client, FederationMember member)
 	throws RadiusException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
-		AuthenticationContext ctx = AuthenticationContext.fromRequest(accessRequest, client.getAddress(), member.getPublicId());
-		
-    	log.info("Trying to login "+ctx.getUser());
-    	log.info("Authentication methods: "+ctx.getAllowedAuthenticationMethods());
+		AuthenticationContext ctx;
+		try {
+			ctx = AuthenticationContext.fromRequest(accessRequest, client.getAddress(), member.getPublicId());
+			
+	    	log.info("Trying to login "+ctx.getUser());
+	    	log.info("Authentication methods: "+ctx.getAllowedAuthenticationMethods());
+		} catch (InternalErrorException e) {
+			log.warn("Cannot authenticate user "+accessRequest.getUserName()+" for "+member.getPublicId());
+			RadiusPacket answer = new RadiusPacket(RadiusPacket.ACCESS_REJECT, accessRequest.getPacketIdentifier());
+			copyProxyState(accessRequest, answer);
+			return answer;
+		}
 
 		boolean ok;
 		Set<String> type = ctx.getNextFactor();
@@ -155,20 +163,13 @@ public class RadiusServer {
 			else {
             	OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
             	
-            	Challenge ch = new Challenge();
-            	ch.setUser(ctx.getCurrentUser());
-            	StringBuffer otpType = new StringBuffer();
-            	if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
-            	if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
-            	if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
-            	if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
-            	if (otpType.length() == 0) {
+            	Challenge ch = generateChallenge(ctx);
+            	if (ch.getOtpHandler().length() == 0) {
         			log.warn("Unable to authenticate using mechanism "+ctx.getAllowedAuthenticationMethods());
         			ok = false;
             	}
             	else
             	{
-	            	ch.setOtpHandler(otpType.toString());
 		        	ch = v.selectToken(ch);
 		        	ctx.setChallenge(ch);
 		        	RadiusPacket answer = new RadiusPacket(RadiusPacket.ACCESS_CHALLENGE, accessRequest.getPacketIdentifier());
@@ -192,6 +193,18 @@ public class RadiusServer {
 		RadiusPacket answer = new RadiusPacket(RadiusPacket.ACCESS_REJECT, accessRequest.getPacketIdentifier());
 		copyProxyState(accessRequest, answer);
 		return answer;
+	}
+
+	private Challenge generateChallenge(AuthenticationContext ctx) {
+		Challenge ch = new Challenge();
+		ch.setUser(ctx.getCurrentUser());
+		StringBuffer otpType = new StringBuffer();
+		if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
+		if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
+		if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
+		if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
+		ch.setOtpHandler(otpType.toString());
+		return ch;
 	}
 	
 	private void addCustomAttributes(RadiusPacket answer, String user, FederationMember member) throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
@@ -253,6 +266,11 @@ public class RadiusServer {
     	IdpConfig config = IdpConfig.getConfig();
     	
     	Challenge ch = ctx.getChallenge();
+    	if (ch == null) {
+    		ch = generateChallenge(ctx);
+        	ch = v.selectToken(ch);
+        	ctx.setChallenge(ch);
+    	}
     	if (ch == null ||  ch.getCardNumber() == null)
     	{
     		log.warn("Unexpected condition. Token has not been issued");
