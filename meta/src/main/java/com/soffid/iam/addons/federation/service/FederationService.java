@@ -11,6 +11,7 @@ import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
 import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
+import com.soffid.iam.addons.federation.model.CasProfileEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
@@ -89,6 +90,7 @@ import org.springframework.transaction.annotation.Transactional;
 	com.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity.class,
 	RadiusProfileEntity.class,
+	CasProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity.class,
 	es.caib.seycon.ng.servei.ConfiguracioService.class,
 	es.caib.seycon.ng.model.AuditoriaEntity.class,
