@@ -87,6 +87,7 @@ import com.soffid.iam.addons.federation.model.AttributeEntity;
 import com.soffid.iam.addons.federation.model.AttributeEntityDao;
 import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
+import com.soffid.iam.addons.federation.model.CasProfileEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
@@ -103,6 +104,7 @@ import com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity;
 import com.soffid.iam.addons.federation.model.ProfileEntity;
+import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
@@ -674,7 +676,9 @@ public class FederationServiceImpl
 			} else if (SamlProfileEnumeration.SAML1_AQ.equals(samlProfile.getClasse())) {
 				getSaml1AttributeQueryProfileEntityDao().update((Saml1AttributeQueryProfileEntity) entity);
 			} else if (SamlProfileEnumeration.RADIUS.equals(samlProfile.getClasse())) {
-				getRadiusProfileEntityDao().update((Saml1AttributeQueryProfileEntity) entity);
+				getRadiusProfileEntityDao().update((RadiusProfileEntity) entity);
+			} else if (SamlProfileEnumeration.CAS.equals(samlProfile.getClasse())) {
+				getCasProfileEntityDao().update((CasProfileEntity) entity);
 			} else {
 				getProfileEntityDao().update(entity);
 			}
