@@ -514,6 +514,16 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 				XPathUtils.setValue(form, "logoutEndpoint", "/logout");
 			if (XPathUtils.eval(form, "revokeEndpoint") == null) 
 				XPathUtils.setValue(form, "revokeEndpoint", "/revoke");
+		} else if (SamlProfileEnumeration.CAS.equals(classe)){
+			w.getFellow("r_discoveryEndpoint").setVisible(false);
+			w.getFellow("r_authorizationEndpoint").setVisible(false);
+			w.getFellow("r_tokenEndpoint").setVisible(false);
+			w.getFellow("r_revokeEndpoint").setVisible(false);
+			w.getFellow("r_logoutEndpoint").setVisible(false);
+			w.getFellow("r_userinfoEndpoint").setVisible(false);
+			w.getFellow("r_signRequests").setVisible(false);
+			w.getFellow("r_signAssertions").setVisible(false);
+			w.getFellow("r_signResponses").setVisible(false);
 		} else {
 			w.getFellow("r_discoveryEndpoint").setVisible(false);
 			w.getFellow("r_authorizationEndpoint").setVisible(false);
