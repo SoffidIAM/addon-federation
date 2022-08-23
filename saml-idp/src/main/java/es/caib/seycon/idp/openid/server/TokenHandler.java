@@ -204,10 +204,10 @@ public class TokenHandler {
 		getFederationService().createOauthToken(generateOauthToken(t));
 		if (t.getType() == TokenType.TOKEN_CAS) {
 			LogRecorder.getInstance().addSuccessLogEntry(t.getType().getValue(), t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
-    			req.getRemoteAddr(), null, null, "OPENID_"+t.jwtId);
+					req.getRemoteAddr(), null, null, "CAS");
 		} else {
-			LogRecorder.getInstance().addSuccessLogEntry(t.getType().getValue(), t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
-	    			req.getRemoteAddr(), null, null, "CAS");
+			LogRecorder.getInstance().addSuccessLogEntry("OPENID", t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
+					req.getRemoteAddr(), null, null, "OPENID_"+t.jwtId);
 		}
 	}
 
