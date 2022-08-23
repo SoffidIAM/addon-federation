@@ -76,6 +76,7 @@ import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.LogoutEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
+import es.caib.seycon.idp.openid.server.TokenEndpoint;
 import es.caib.seycon.idp.openid.server.TokenIntrospectionEndpoint;
 import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -537,9 +538,9 @@ public class Main {
 						openIdProfile.getAuthorizationEndpoint()); //$NON-NLS-1$
 
 		servlet = new ServletHolder(
-		        ValidateEndpoint.class);
+		        TokenEndpoint.class);
 		servlet.setInitOrder(2);
-		servlet.setName("ValidateEndpoint"); //$NON-NLS-1$
+		servlet.setName("TokenEndpoint"); //$NON-NLS-1$
 		ctx.addServlet(servlet, 
 				openIdProfile.getTokenEndpoint() == null ? 
 						"/token": 
