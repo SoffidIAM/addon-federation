@@ -57,7 +57,7 @@ public class FacebookConsumer extends OAuth2Consumer
 	    service.signRequest(accessToken, request);
 	    Response response =  service.execute(request);
 	    
-	    JSONObject m =  (JSONObject) JSON.parse(response.getBody());
+	    JSONObject m = new JSONObject(response.getBody());
 	    
 	    attributes = new HashMap<String, Object>();
 	    attributes.putAll(m.toMap());

@@ -96,7 +96,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 	public boolean verifyResponse(HttpServletRequest httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {
 		OAuth2AccessToken accessToken = parseResponse(httpReq);
 
-		JSONObject r = (JSONObject) JSON.parse(accessToken.getRawResponse());
+		JSONObject r = new JSONObject(accessToken.getRawResponse());
 		String idToken = r.optString("id_token");
 		JSONObject m = new JSONObject();
 		if (idToken != null)
@@ -107,14 +107,14 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			while (openIdB64.length() % 4 != 0)
 				openIdB64 += "=";
 			String openIdToken = new String(Base64.decode(openIdB64));
-			m = (JSONObject) JSON.parse( openIdToken);
+			m = new JSONObject(openIdToken);
 			if (userInfoEndpoint != null && ! userInfoEndpoint.isEmpty())
 			{
 			    OAuthRequest request = new OAuthRequest(Verb.GET, userInfoEndpoint);
 			    service.signRequest(accessToken, request);
 			    Response response =  service.execute(request);
 			    
-			    JSONObject m2 = (JSONObject) JSON.parse(response.getBody());
+			    JSONObject m2 = new JSONObject(response.getBody());
 			    for (String k: m2.keySet())
 			    	m.put(k, m2.get(k));
 			}
@@ -128,7 +128,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		    service.signRequest(accessToken, request);
 		    Response response =  service.execute(request);
 		    
-		    m =  (JSONObject) JSON.parse(response.getBody());
+		    m =  new JSONObject(response.getBody());
 
 		}
 		

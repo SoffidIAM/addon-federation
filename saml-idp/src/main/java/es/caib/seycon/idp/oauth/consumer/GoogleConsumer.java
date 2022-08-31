@@ -68,7 +68,7 @@ public class GoogleConsumer extends OAuth2Consumer
 		while (openIdB64.length() % 4 != 0)
 			openIdB64 += "=";
 		String openIdToken = new String(Base64.decode(openIdB64));
-		JSONObject m = (JSONObject) JSON.parse( openIdToken);
+		JSONObject m = new JSONObject( openIdToken);
 		
 	    
 	    attributes = new HashMap<String, Object>();

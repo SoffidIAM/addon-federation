@@ -64,7 +64,7 @@ public class LinkedinConsumer extends OAuth2Consumer
 	    service.signRequest(accessToken, request);
 	    Response response = service.execute(request);
 	    
-	    JSONObject m =  (JSONObject) JSON.parse(response.getBody());
+	    JSONObject m =  new JSONObject(response.getBody());
 	    
 	    principal = m.optString("emailAddress");
 	    if (principal == null)
