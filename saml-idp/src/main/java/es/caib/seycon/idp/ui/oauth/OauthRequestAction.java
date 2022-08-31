@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -99,6 +101,7 @@ public class OauthRequestAction extends HttpServlet {
 	        consumer.authRequest(id, req, resp);
 
 		} catch (Exception e) {
+			LogFactory.getLog(getClass()).warn("Error processing oauth request", e);
         	generateError(req, resp, String.format("Unable to contact identity provider: %s", e.toString()));
 		}
 	}

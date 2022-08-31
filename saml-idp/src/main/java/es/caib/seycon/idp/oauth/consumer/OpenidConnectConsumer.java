@@ -44,7 +44,7 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		super(fm);
 
-		cfg = (JSONObject) JSON.parse(fm.getMetadades(), true);
+		cfg = new JSONObject(fm.getMetadades());
 
 		ServiceBuilder serviceBuilder = new ServiceBuilder(fm.getOauthKey())
 				.apiSecret(fm.getOauthSecret().getPassword());
