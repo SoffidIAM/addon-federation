@@ -17,6 +17,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
@@ -98,8 +99,17 @@ public class Autenticator {
         ks.load(new FileInputStream(SeyconKeyStore.getKeyStoreFile()),
         		SeyconKeyStore.getKeyStorePassword().getPassword().toCharArray());
 
-        Certificate cert = ks.getCertificate(SeyconKeyStore.ROOT_CERT);
-        String certString = cert == null ? "": Base64.encodeBytes(cert.getEncoded());
+        StringBuffer certBuffer = new StringBuffer();
+        for (Enumeration<String> e = ks.aliases(); e.hasMoreElements();) {
+        	String alias = e.nextElement();
+        	Certificate cert = ks.getCertificate(alias);
+        	if (certBuffer.length() > 0)
+        		certBuffer
+        			.append("-----END CERTIFICATE-----\n")
+        			.append("-----BEGIN CERTIFICATE-----\n");
+        	certBuffer.append(Base64.encodeBytes(cert.getEncoded()));
+        }
+        String certString = certBuffer.toString();
         
         Config serverConfig = Config.getConfig();
 
