@@ -30,12 +30,6 @@ public class LoginServlet extends LangSupportServlet {
     void process (HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, IOException, ServletException {
         HttpSession session = req.getSession();
         
-        String method = (String) req.getAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM);
-        if (session.getAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM) == null)
-        	session.setAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM, method);
-        else
-        	method = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM);
-        
         String entityId = (String) req.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
         if (entityId != null)
         	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, entityId);
@@ -56,10 +50,7 @@ public class LoginServlet extends LangSupportServlet {
         	{
     			authCtx.setPublicId(entityId);
     			authCtx.updateAllowedAuthenticationMethods();
-    			if (method != null)
-    				authCtx.setSamlRequestedAuthenticationMethod(Collections.singleton(method));
-    			else
-    				authCtx.setSamlRequestedAuthenticationMethod(null);
+   				authCtx.setSamlRequestedAuthenticationMethod(null);
     				
 				if (!authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req))
 				{
