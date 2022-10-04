@@ -23,6 +23,7 @@ public class TokenInfo {
 	String pkceChallenge;
 	String pkceAlgorithm;
 	private TokenType type;
+	public String refreshTokenFull;
 	
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode

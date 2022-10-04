@@ -243,7 +243,7 @@ public class TokenEndpoint extends HttpServlet {
 				return;
 			}
 
-			generatTokenResponse(resp, att, h, t);
+			generatTokenResponse(req, resp, att, h, t);
 		} catch (Exception e) {
 			log.warn("Error generating token response", e);
 			buildError(resp, e.toString());
@@ -264,7 +264,7 @@ public class TokenEndpoint extends HttpServlet {
 			}
 			Password pass = Password.decode(t.getRequest().getFederationMember().getOpenidSecret());
 			
-			if (pass == null || pass.getPassword().isEmpty()) {
+			if (pass == null ||  pass.getPassword() == null || pass.getPassword().isEmpty()) {
 				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 					return;
@@ -312,7 +312,7 @@ public class TokenEndpoint extends HttpServlet {
 				return;
 			}
 			h.generateToken(t, att, req, "Authorization-code");
-			generatTokenResponse(resp, att, h, t);
+			generatTokenResponse(req, resp, att, h, t);
 		} catch (Exception e) {
 			log.info("Error generating token", e);
 			buildError(resp, "Internal error " + e.toString(), t);
@@ -426,17 +426,17 @@ public class TokenEndpoint extends HttpServlet {
 			return;
 		}
 		t.request.setNonce(null);
-		generatTokenResponse(resp, att, h, t);
+		generatTokenResponse(req, resp, att, h, t);
 	}
 
-	private void generatTokenResponse(HttpServletResponse resp, Map<String, Object> att, TokenHandler h, TokenInfo t)
+	private void generatTokenResponse(HttpServletRequest req, HttpServletResponse resp, Map<String, Object> att, TokenHandler h, TokenInfo t)
 			throws IOException, ServletException {
 		try {
-			String token = h.generateIdToken(t, att);
+			String token = h.generateIdToken(t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 			JSONObject o = new JSONObject();
 			o.put("access_token", t.token);
 			o.put("token_type", "Bearer");
-			o.put("refresh_token", t.refreshToken);
+			o.put("refresh_token", t.refreshTokenFull);
 			o.put("expires_in", (t.expires - System.currentTimeMillis()) / 1000);
 			o.put("id_token", token);
 			buildResponse(resp, o);

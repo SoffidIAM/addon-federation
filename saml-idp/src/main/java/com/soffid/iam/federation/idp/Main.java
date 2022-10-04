@@ -536,6 +536,7 @@ public class Main {
 				openIdProfile.getAuthorizationEndpoint() == null ? 
 						"/authorization": 
 						openIdProfile.getAuthorizationEndpoint()); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/protocol/openid-connect/auth"); //$NON-NLS-1$
 
 		servlet = new ServletHolder(
 		        TokenEndpoint.class);
@@ -545,6 +546,7 @@ public class Main {
 				openIdProfile.getTokenEndpoint() == null ? 
 						"/token": 
 						openIdProfile.getTokenEndpoint()); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/protocol/openid-connect/token"); //$NON-NLS-1$
 
 		servlet = new ServletHolder(
 		        TokenIntrospectionEndpoint.class);
@@ -569,6 +571,7 @@ public class Main {
 				openIdProfile.getLogoutEndpoint() == null ? 
 						"/logout": 
 						openIdProfile.getLogoutEndpoint()); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/protocol/openid-connect/logout"); //$NON-NLS-1$
 
 		servlet = new ServletHolder(
 		        UserInfoEndpoint.class);
@@ -578,6 +581,7 @@ public class Main {
 				openIdProfile.getUserInfoEndpoint() == null ? 
 						"/userinfo": 
 						openIdProfile.getUserInfoEndpoint()); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/protocol/openid-connect/userinfo"); //$NON-NLS-1$
 
 		servlet = new ServletHolder(
 		        ImpersonationEndpoint.class);
@@ -605,7 +609,8 @@ public class Main {
 		servlet.setInitOrder(2);
 		servlet.setName("JWKSEndpoint"); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/.well-known/jwks.json"); //$NON-NLS-1$
-
+		ctx.addServlet(servlet, "/auth/realms/soffid/protocol/openid-connect/certs");
+		
 		servlet = new ServletHolder(
 		        IframeSession.class);
 		servlet.setInitOrder(2);

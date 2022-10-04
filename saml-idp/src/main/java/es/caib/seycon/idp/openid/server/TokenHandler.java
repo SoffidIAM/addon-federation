@@ -27,9 +27,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.JWTCreator.Builder;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.impl.PublicClaims;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.soffid.iam.addons.federation.api.TokenType;
@@ -150,6 +150,11 @@ public class TokenHandler {
 	
 	public TokenInfo getRefreshToken(String refreshToken) throws InternalErrorException 
 	{
+		try {
+			refreshToken = JWT.decode(refreshToken).getId();
+		} catch (Exception e) {
+			
+		}
 		expireTokens();
 		TokenInfo ti = refreshTokens.get(refreshToken);
 		if (ti == null) {
@@ -177,7 +182,8 @@ public class TokenHandler {
 
 		
 		t.authorizationCode = null;
-		t.refreshToken = generateRandomString(129);		
+		t.refreshToken = generateRandomString(32);
+		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		refreshTokens.put(t.refreshToken, t);
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
@@ -195,7 +201,7 @@ public class TokenHandler {
 				t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
 			String random = generateRandomString(129);
 			t.setJwtId(random);
-			String signedToken = generateJWTToken(c, t, att);
+			String signedToken = generateJWTToken(c, t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 			t.token = signedToken;
 		}
 		
@@ -211,24 +217,89 @@ public class TokenHandler {
 		}
 	}
 
-	public String generateJWTToken(IdpConfig c, TokenInfo t, Map<String, Object> att) {
+	public String generateJWTToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) {
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
 				.withExpiresAt( new Date (t.getExpires()))
 				.withIssuedAt(new Date(t.getCreated()))
 				.withClaim("client_id", t.getRequest().getClientId() )
 				.withJWTId(t.getJwtId())
-				.withIssuer("https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
-		if (t.getRequest().getScope() != null)
+				.withKeyId(c.getHostName())
+				.withIssuer(getIssuer(c, keycloak));
+		if (keycloak) 
+			builder.withClaim("scope", "openid email profile");
+		else if (t.getRequest().getScope() != null)
 			builder.withClaim("scope", t.getScope());
 		else
 			builder.withClaim("scope", "openid");
 
+		if (keycloak) {
+			builder.withClaim("typ", "Bearer");
+			addOptionalAttribute(builder, "azp", att);
+			addOptionalAttribute(builder, "realm_access", att);
+			addOptionalAttribute(builder, "resource_access", att);
+			addOptionalAttribute(builder, "preferred_username", att);
+			addOptionalAttribute(builder, "email", att);
+			addOptionalAttribute(builder, "given_name", att);
+			addOptionalAttribute(builder, "name", att);
+			addOptionalAttribute(builder, "family_name", att);
+		}
 		KeyPair keyPair = c.getKeyPair();
 		
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
 		completeJWTBuilder(att, builder, false);
 		String signedToken = builder.sign(algorithmRS);
 		return signedToken;
+	}
+
+	private String getIssuer(IdpConfig c, boolean keycloak) {
+		if (keycloak)
+			return "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/auth/realms/soffid";
+		else
+			return "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort();
+	}
+
+	public String generateRefreshToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) {
+		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
+				.withExpiresAt( new Date (t.getExpires()))
+				.withIssuedAt(new Date(t.getCreated()))
+				.withClaim("client_id", t.getRequest().getClientId() )
+				.withJWTId(t.refreshToken)
+				.withKeyId(c.getHostName())
+				.withIssuer(getIssuer(c, keycloak));
+		if (t.getRequest().getScope() != null)
+			builder.withClaim("scope", t.getScope());
+		else
+			builder.withClaim("scope", "openid");
+		
+		if (keycloak) {
+			builder.withClaim("typ", "Refresh");
+			addOptionalAttribute(builder, "realm_access", att);
+			addOptionalAttribute(builder, "resource_access", att);
+		}
+		KeyPair keyPair = c.getKeyPair();
+		
+		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
+		completeJWTBuilder(att, builder, false);
+		String signedToken = builder.sign(algorithmRS);
+		return signedToken;
+	}
+
+	private void addOptionalAttribute(Builder builder, String claim, Map<String, Object> att) {
+		if (att.containsKey(claim)) {
+			Object o = att.get(claim);
+			if (o != null) {
+				if (o instanceof Map)
+					builder.withClaim(claim, (Map) o);
+				else if (o instanceof List)
+					builder.withClaim(claim, (List) o);
+				else if (o instanceof String)
+					builder.withClaim(claim, (String) o);
+				else if (o instanceof Number)
+					builder.withClaim(claim, ((Number) o).longValue());
+				else if (o instanceof Boolean)
+					builder.withClaim(claim, (Boolean) o);
+			}
+		}
 	}
 
 	public synchronized void renewToken(TokenInfo t,  Map<String, Object> att,
@@ -248,8 +319,9 @@ public class TokenHandler {
 
 		t.authorizationCode = null;
 		t.jwtId = generateRandomString(129);		
-		t.token = generateJWTToken(IdpConfig.getConfig(), t, att);
-		t.refreshToken = generateRandomString(129);		
+		t.token = generateJWTToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
+		t.refreshToken = generateRandomString(32);
+		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		t.updateLastUse();
@@ -282,26 +354,27 @@ public class TokenHandler {
 		}
 	}
 
-	public String generateIdToken(TokenInfo t, Map<String, Object> att) throws JSONException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+	public String generateIdToken(TokenInfo t, Map<String, Object> att, boolean keycloak) throws JSONException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		checkUserIsEnabled(t);
 		IdpConfig c = IdpConfig.getConfig();
 		JSONObject o = new JSONObject();
-		o.put("auth_time", t.getAuthentication());
+		o.put("auth_time", t.getAuthentication()/1000);
 		if (t.request.getNonce() != null) // Refresh token does not have a nonce
 			o.put("nonce", t.request.getNonce());
 
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
 				.withExpiresAt( new Date (t.getExpires()))
 				.withIssuedAt(new Date())
-				.withClaim("auth_time", t.getAuthentication())
+				.withClaim("auth_time", t.getAuthentication()/1000)
 				.withClaim("scope", t.getScope() )
 				.withClaim("nonce", t.request.getNonce())
 				.withKeyId(c.getHostName())
-				.withIssuer("https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
+				.withIssuer(getIssuer(c, keycloak));
 
 		completeJWTBuilder(att, builder, false);
 
 		KeyPair keyPair = c.getKeyPair();
+		
 		
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
 		String signedToken = builder.sign(algorithmRS);
@@ -347,6 +420,10 @@ public class TokenHandler {
 								builder.withClaim(openIdName, (Double)value);
 							else if (value instanceof Boolean)
 								builder.withClaim(openIdName, (Boolean)value);
+							else if (value instanceof Map)
+								builder.withClaim(openIdName, (Map)value);
+							else if (value instanceof List)
+								builder.withClaim(openIdName, (List)value);
 							else
 								builder.withClaim(openIdName, value.toString());
 						}
@@ -407,7 +484,7 @@ public class TokenHandler {
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
 		DecodedJWT jwt = JWT.decode(token);
 		JWT.require(algorithmRS).build().verify(jwt);
-		Claim tokenId = jwt.getClaim(PublicClaims.JWT_ID);
+		Claim tokenId = jwt.getClaim(RegisteredClaims.JWT_ID);
 		if (tokenId == null)
 			return null;
 		else
