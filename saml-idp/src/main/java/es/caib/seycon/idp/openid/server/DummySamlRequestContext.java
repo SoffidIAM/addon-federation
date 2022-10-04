@@ -12,6 +12,7 @@ import org.opensaml.saml2.metadata.Endpoint;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
+import org.opensaml.saml2.metadata.provider.MetadataProviderException;
 import org.opensaml.ws.message.handler.HandlerChainResolver;
 import org.opensaml.ws.security.SecurityPolicyResolver;
 import org.opensaml.ws.transport.InTransport;
@@ -120,7 +121,14 @@ public class DummySamlRequestContext implements
 	}
 
 	public EntityDescriptor getPeerEntityMetadata() {
-		return null;
+		MetadataProvider p = getMetadataProvider();
+		if ( p == null) return null;
+		else
+			try {
+				return p.getEntityDescriptor(getPeerEntityId());
+			} catch (MetadataProviderException e) {
+				return null;
+			}
 	}
 
 	public QName getPeerEntityRole() {
