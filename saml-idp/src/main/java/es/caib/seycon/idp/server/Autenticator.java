@@ -67,6 +67,7 @@ import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
+import es.caib.seycon.ng.comu.TipusSessio;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
@@ -247,52 +248,53 @@ public class Autenticator {
 			for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
 			{
 //				LOG.info("Checking session cookie against session "+sessio.getId());
-				byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
-				String digestString = Base64.encodeBytes(digest);
-				if (digestString.equals(hash) &&
-						(ip.getSessionTimeout() == null || 
-						sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() > System.currentTimeMillis()))
-				{
-					try {
-						
-						ServerService svc = new RemoteServiceLocator().getServerService();
-						User u = svc.getUserInfo(sessio.getUserName(), null);
-						if (u != null && u.getActive().booleanValue())
-						{
-							for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
+				if (sessio != null && sessio.getType() == TipusSessio.WSSO) {
+					byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
+					String digestString = Base64.encodeBytes(digest);
+					if (digestString.equals(hash) &&
+							(ip.getSessionTimeout() == null || 
+							sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() > System.currentTimeMillis()))
+					{
+						try {
+							
+							ServerService svc = new RemoteServiceLocator().getServerService();
+							User u = svc.getUserInfo(sessio.getUserName(), null);
+							if (u != null && u.getActive().booleanValue())
 							{
-								if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials()))
+								for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
 								{
-							        String entityId = (String) req.getSession()
-							        		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
-									AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
-									if (authCtx == null)
+									if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials()))
 									{
-										authCtx = new AuthenticationContext();
-										authCtx.setPublicId(entityId);
-										authCtx.initialize( req );
+								        String entityId = (String) req.getSession()
+								        		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+										AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
+										if (authCtx == null)
+										{
+											authCtx = new AuthenticationContext();
+											authCtx.setPublicId(entityId);
+											authCtx.initialize( req );
+										}
+										authCtx.setFirstFactor(null);
+										authCtx.setSecondFactor(null);
+										authCtx.setStep(0);
+										authCtx.setUser(account.getName());
+										authCtx.store(req);
+										return false;
 									}
-									authCtx.setFirstFactor(null);
-									authCtx.setSecondFactor(null);
-									authCtx.setStep(0);
-									authCtx.setUser(account.getName());
-									authCtx.store(req);
-									return false;
-								}
-								else
-								{
-									autenticate2(account.getName(), ctx, req, resp,  
-											sessio.getAuthenticationMethod() == null ? "E" : sessio.getAuthenticationMethod(), 
-											true);
-					        		return true;
+									else
+									{
+										autenticate2(account.getName(), ctx, req, resp,  
+												sessio.getAuthenticationMethod() == null ? "E" : sessio.getAuthenticationMethod(), 
+												true);
+						        		return true;
+									}
 								}
 							}
+						} catch (UnknownUserException e) {
+							e.printStackTrace();
 						}
-					} catch (UnknownUserException e) {
-						e.printStackTrace();
 					}
-				}
-				
+				}					
 			}
 		}
 		return false;
