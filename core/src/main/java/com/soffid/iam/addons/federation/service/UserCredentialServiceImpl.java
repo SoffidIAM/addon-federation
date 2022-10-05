@@ -218,4 +218,16 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		}
 	}
 
+	@Override
+	protected UserCredential handleUpdateLastUse(UserCredential uc) throws Exception {
+		UserCredentialEntity uce = getUserCredentialEntityDao().load(uc.getId());
+		if (uce != null) {
+			uce.setLastUse(new Date());
+			getUserCredentialEntityDao().update(uce);
+			return getUserCredentialEntityDao().toUserCredential(uce);
+		}
+		else
+			return null;
+	}
+
 }

@@ -2,6 +2,7 @@ package es.caib.seycon.idp.ui.cred;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.System;
 import com.soffid.iam.api.User;
@@ -80,7 +82,8 @@ public class ValidateCredential extends HttpServlet {
 			try {
             	User user = new RemoteServiceLocator().getServerService().getUserInfo(ctx.getUser(), IdpConfig.getConfig().getSystem().getName());
 				UserCredential uc = null;
-				for (UserCredential uc2: IdpConfig.getConfig().getUserCredentialService().findUserCredentials(user.getUserName())) {
+				final UserCredentialService userCredentialService = IdpConfig.getConfig().getUserCredentialService();
+				for (UserCredential uc2: userCredentialService.findUserCredentials(user.getUserName())) {
 					if (uc2.getType() == UserCredentialType.FIDO && 
 							uc2.getRawid().equals(rawId)) {
 						uc = uc2;
@@ -109,6 +112,7 @@ public class ValidateCredential extends HttpServlet {
 					else
 					{
 						UserAccount account = accounts.iterator().next();
+						uc = userCredentialService.updateLastUse(uc);
 	            		ctx.authenticated(account.getName(), "F", resp);
 	            		ctx.store(req);
 	            		if ( ctx.isFinished())

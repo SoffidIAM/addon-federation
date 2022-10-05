@@ -64,6 +64,8 @@ public class UserCredentialService
 	public String generateNextSerial() {return null;}
 
 	public UserCredential check ( String challenge, Map<String,Object> response) {return null;}
+	
+	public UserCredential updateLastUse (UserCredential uc) {return null;}
 
 	
 	@Operation(grantees= {federation_create_token.class})
