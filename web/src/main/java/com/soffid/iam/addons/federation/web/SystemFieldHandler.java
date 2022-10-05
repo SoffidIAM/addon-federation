@@ -1,5 +1,6 @@
 package com.soffid.iam.addons.federation.web;
 
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -34,7 +35,7 @@ public class SystemFieldHandler extends InputFieldUIHandler {
 		});
 		List<String> values = new LinkedList<>();
 		for (System s: all)
-			values.add(s.getName()+":"+s.getName()+" - "+s.getDescription());
+			values.add( URLEncoder.encode(s.getName(), "UTF-8")+":"+s.getName()+" - "+s.getDescription());
 		field.setValues(values);
 	}
 
