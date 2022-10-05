@@ -45,6 +45,7 @@ import edu.internet2.middleware.shibboleth.common.profile.provider.SAMLProfileRe
 import edu.internet2.middleware.shibboleth.common.session.Session;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.openid.server.DummySamlRequestContext;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -264,7 +265,7 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
         {
   			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
    			{
-  				DelayedAttribute b = new DelayedAttribute(attribute.getShortName(), translator, eo, attribute);
+  				DelayedAttribute b = new DelayedAttribute(attribute.getShortName(), translator, eo, attribute, ctx instanceof DummySamlRequestContext);
   				m.put(attribute.getShortName(), b);
         	} else if ("urn:oid:1.3.6.1.4.1.5923.1.5.1.1".equals(attribute.getOid())) {
                	m.put("memberOf",  new RolesDelayedAttribute("memberOf", attribute, server, ui, account));

@@ -17,18 +17,18 @@ public class RolesDelayedAttribute extends DelayedAttribute
 	private Account account;
 	private User user;
 	public RolesDelayedAttribute(String name, Attribute att, ServerService service, User user, Account account) {
-		super(name, null, null, att);
+		super(name, null, null, att, false);
 		this.serverService = service;
 		this.account = account;
 		this.user =  user;
 	}
 
-	protected Collection<String> doResolve() {
+	protected Collection<Object> doResolve() {
 		try {
 	        Collection<RoleGrant> roles = user == null ?
 	        		serverService.getAccountRoles(account.getName(), account.getSystem()) :
 	        		serverService.getUserRoles(user.getId(), null);
-	        LinkedList<String> l = new LinkedList<String>();
+	        LinkedList<Object> l = new LinkedList<Object>();
 	        for (RoleGrant role : roles) {
 	            String v = role.getRoleName();
 	            if (role.getDomainValue() != null && role.getDomainValue().length() > 0)

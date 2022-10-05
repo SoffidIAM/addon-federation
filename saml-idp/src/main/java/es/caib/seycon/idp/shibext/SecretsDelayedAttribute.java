@@ -34,14 +34,14 @@ public class SecretsDelayedAttribute extends DelayedAttribute{
 	private String serviceProvider;
 
 	public SecretsDelayedAttribute(String name, User user, Attribute att, String serviceProvider) {
-		super(name, null, null, att);
+		super(name, null, null, att, false);
 		this.user = user;
 		this.serviceProvider = serviceProvider;
 	}
 
 	@Override
-	protected Collection<String> doResolve() {
-		LinkedList<String> l = new LinkedList<>();
+	protected Collection<Object> doResolve() {
+		LinkedList<Object> l = new LinkedList<>();
 		try {
 			l.add(generateSecrets());
 		} catch (Exception e) {

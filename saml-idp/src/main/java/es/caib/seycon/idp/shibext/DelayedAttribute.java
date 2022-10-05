@@ -2,6 +2,7 @@ package es.caib.seycon.idp.shibext;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
 
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.sync.engine.extobj.AttributeReference;
@@ -28,19 +29,21 @@ import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
-public class DelayedAttribute extends BasicAttribute<String> {
+public class DelayedAttribute extends BasicAttribute<Object> {
 	private ObjectTranslator translator;
 	private ExtensibleObject eo;
 	private Attribute attribute;
 	boolean resolved = false;
 	boolean array = false;
+	boolean complexObject;
 
-	public DelayedAttribute(String name, ObjectTranslator translator, ExtensibleObject eo, Attribute att) {
+	public DelayedAttribute(String name, ObjectTranslator translator, ExtensibleObject eo, Attribute att, boolean complexObject) {
 		super(name);
 		this.translator = translator;
 		this.eo = eo;
 		this.attribute = att;
 		super.getValues().add("");
+		this.complexObject = complexObject;
 		
 		SAML1StringAttributeEncoder encoder1 = new SAML1StringAttributeEncoder();
 		encoder1.setAttributeName("urn:mace:dir:attribute-def:"+att.getShortName());
@@ -60,7 +63,7 @@ public class DelayedAttribute extends BasicAttribute<String> {
 		}
 	}
 
-	protected Collection<String> doResolve() {
+	protected Collection<Object> doResolve() {
         Object r;
 		try { 
 			AttributeReference ar = AttributeReferenceParser.parse(eo, attribute.getValue());
@@ -74,24 +77,29 @@ public class DelayedAttribute extends BasicAttribute<String> {
 		}
 
 		if (r == null)
-        	return new LinkedList<String>();
+        	return new LinkedList<Object>();
         else if (r instanceof Collection) {
         	array = true;
-        	return (Collection<String>) r;
+        	return (Collection<Object>) r;
         }
         else if (r instanceof String[]) {
         	array = true;
-        	LinkedList<String> l = new LinkedList<String>();
+        	LinkedList<Object> l = new LinkedList<Object>();
         	for (String rr: (String[])r) l.add(rr);
         	return l;
         }
         else if (r instanceof byte[]) {
-         	LinkedList<String> l = new LinkedList<String>();
+         	LinkedList<Object> l = new LinkedList<Object>();
          	l.add(Base64.encodeBytes((byte[]) r, Base64.DONT_BREAK_LINES) );
          	return l;
         }
+        else if (r instanceof Map && complexObject) {
+         	LinkedList<Object> l = new LinkedList<Object>();
+         	l.add((Object) r );
+         	return l;        	
+        }
         else  {
-         	LinkedList<String> l = new LinkedList<String>();
+         	LinkedList<Object> l = new LinkedList<Object>();
          	l.add(new ValueObjectMapper().toSingleString(r) );
          	return l;
         }
@@ -99,7 +107,7 @@ public class DelayedAttribute extends BasicAttribute<String> {
 
 
 	@Override
-	public Collection<String> getValues() {
+	public Collection<Object> getValues() {
 		StackTraceElement[] st = Thread.currentThread().getStackTrace();
 		int i = 0;
 		while (i < st.length) {
