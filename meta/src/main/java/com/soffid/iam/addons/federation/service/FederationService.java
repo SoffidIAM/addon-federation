@@ -5,6 +5,7 @@
 //
 
 package com.soffid.iam.addons.federation.service;
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.UserConsent;
@@ -548,4 +549,7 @@ public abstract class FederationService {
 	@Operation(grantees= {Tothom.class}) Collection<UserConsent> findUserConsents(){ return null;}
 	@Operation(grantees= {Tothom.class}) void deleteUserConsent(UserConsent userConsent){}
 	
+	
+	@Description("Finds soffid identity providers")
+	List<FederationMember> findSoffidIdentityProviders() { return null;}
 }
