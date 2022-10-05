@@ -107,6 +107,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setSslPrivateKey(idp.getSslPrivateKey());
 			target.setSslPublicKey(idp.getSslPublicKey());
 			target.setSslCertificate(idp.getSslCertificate());
+			target.setSslClientCertificateHeader(idp.getSslClientCertificateHeader());
 			// Other options
 			target.setKerberosDomain(idp.getKerberosDomain());
 			target.setSsoCookieDomain(idp.getSsoCookieDomain());
@@ -416,6 +417,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setSslPrivateKey(source.getSslPrivateKey());
 			idp.setSslPublicKey(source.getSslPublicKey());
 			idp.setSslCertificate(source.getSslCertificate());
+			idp.setSslClientCertificateHeader(source.getSslClientCertificateHeader());
 
 			// Propis
 			if (source.getInternal() != null)

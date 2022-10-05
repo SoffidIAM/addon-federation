@@ -125,6 +125,11 @@
 						image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="ref:handler.generateSslPKCS10()"/>
 				</divVisible>
 			</div>
+			<customfield3
+				label="${c:l('federacio.zul.ClientCertHeader')}"
+				bind="/federationMember/sslClientCertificateHeader"
+				dataType='STRING'
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		</div>
 		<customfield3 id="certificatechainSsl"
 			label="${c:l('federacio.zul.certificateChainSSL')}"
@@ -439,7 +444,7 @@
 				bind="maximumSPSessionLifetime"
 					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
 			<customfield3 id="r_discoveryEndpoint" label="${c:l('federa_profile.zul.discoveryEndpoint')}"
-				dataType="STRING"
+				dataType="STRING" readonly="true"
 				value="/.well-known/openid-configuration"/>
 			<customfield3 id="r_authorizationEndpoint" label="${c:l('federa_profile.zul.authorizationEndpoint')}"
 				dataType="STRING"
