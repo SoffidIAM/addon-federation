@@ -23,6 +23,7 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
 import com.soffid.iam.service.OTPValidationService;
+import com.soffid.iam.utils.Security;
 
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -99,9 +100,8 @@ public class UserPasswordFormServlet extends BaseForm {
         		userReadonly = "readonly";
         		requestedUser = ctx.getUser();
         	}
-        	log.info("Allowed authentication method "+ctx.getAllowedAuthenticationMethods());
-        	log.info("Requested authentication method "+ctx.getAllowedAuthenticationMethods());
-        	log.info("Authentication method "+ctx.getAllowedAuthenticationMethods());
+        	log.info("Source ip address "+Security.getClientIp());
+        	log.info("Authentication methods "+ctx.getAllowedAuthenticationMethods());
         	log.info("Authentication step "+ctx.getStep());
         	log.info("Next authentication factor "+ctx.getNextFactor());
             
