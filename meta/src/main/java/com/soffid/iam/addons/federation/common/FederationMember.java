@@ -59,6 +59,10 @@ public class FederationMember {
 	public java.lang.String sslCertificate;
 
 	@Nullable
+	@Description("HTTP Header that holds the client certificate")
+	public java.lang.String sslClientCertificateHeader;
+
+	@Nullable
 	public java.lang.String certificateChain;
 
 	@Nullable

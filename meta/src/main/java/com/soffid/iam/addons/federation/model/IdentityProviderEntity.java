@@ -66,4 +66,9 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Nullable
 	@Description("SSL certificates in PEM format")
 	public java.lang.String sslCertificate;
+
+	@Column (name="FED_SSCLHE", length=4000)
+	@Nullable
+	@Description("HTTP Header that holds the client certificate")
+	public java.lang.String sslClientCertificateHeader;
 }
