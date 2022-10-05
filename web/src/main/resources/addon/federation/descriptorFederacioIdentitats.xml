@@ -26,7 +26,7 @@
 		<finder name="entitygroupmember" type="entitygroupmember">
 			<ejb-finder
 				jndi="java:/module/FederationService-v2"
-				method="findEntityGroupByNom" if="${queryEnabled}">
+				method="findEntityGroupByNom">
 				<parameter value="-ARREL-" />
 			</ejb-finder>
 			<new-instance-bean
