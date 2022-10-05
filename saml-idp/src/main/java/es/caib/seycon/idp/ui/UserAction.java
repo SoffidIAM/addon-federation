@@ -1,6 +1,14 @@
 package es.caib.seycon.idp.ui;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -76,6 +84,16 @@ public class UserAction extends HttpServlet {
         	} else {
 	           	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 	           	ctx.setUser(u);
+	           	try {
+	           		if (ctx.isLocked(u)) {
+	           			error = "User is temporary locked";
+	           		} else {
+						ctx.updateAllowedAuthenticationMethods();
+	           		}
+				} catch (Exception e) {
+		           	error = "Cannot find suitable authentication methods";
+		           	LogFactory.getLog(getClass()).warn("Cannot find suitable authentication methods", e);
+				}
 	           	error = null;
         	}
         }
