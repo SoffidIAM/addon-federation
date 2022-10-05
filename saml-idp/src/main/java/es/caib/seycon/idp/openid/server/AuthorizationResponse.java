@@ -112,7 +112,7 @@ public class AuthorizationResponse  {
 		h.generateToken (token, att, request, "Authorization-code");
 		
 		try {
-			String openidToken = h.generateIdToken (token, att);
+			String openidToken = h.generateIdToken (token, att, request.getRequestURI().contains("/auth/realms/soffid/"));
 			StringBuffer sb = new StringBuffer();
 			String url = r.getRedirectUrl();
 			if ((url == null || url.isEmpty()) && ! r.getFederationMember().getOpenidUrl().isEmpty())
