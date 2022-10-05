@@ -222,8 +222,6 @@
 		<security:Rule xsi:type="samlsec:IssueInstant" />
 		<security:Rule xsi:type="samlsec:ProtocolWithXMLSignature"
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
-		<security:Rule xsi:type="security:ClientCertAuth"
-			trustEngineRef="shibboleth.CredentialTrustEngine" />
 		<security:Rule xsi:type="samlsec:MandatoryIssuer" />
 		<security:Rule xsi:type="security:MandatoryMessageAuthentication" />
 	</security:SecurityPolicy>
@@ -234,8 +232,6 @@
 		<security:Rule xsi:type="samlsec:IssueInstant" />
 		<security:Rule xsi:type="samlsec:ProtocolWithXMLSignature"
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
-		<security:Rule xsi:type="security:ClientCertAuth"
-			trustEngineRef="shibboleth.CredentialTrustEngine" />
 		<security:Rule xsi:type="samlsec:MandatoryIssuer" />
 		<security:Rule xsi:type="security:MandatoryMessageAuthentication" />
 	</security:SecurityPolicy>
@@ -264,8 +260,6 @@
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
 		<security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign"
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
-		<security:Rule xsi:type="security:ClientCertAuth"
-			trustEngineRef="shibboleth.CredentialTrustEngine" />
 		<security:Rule xsi:type="samlsec:MandatoryIssuer" />
 		<security:Rule xsi:type="security:MandatoryMessageAuthentication" />
 	</security:SecurityPolicy>
@@ -280,8 +274,6 @@
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
 		<security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign"
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
-		<security:Rule xsi:type="security:ClientCertAuth"
-			trustEngineRef="shibboleth.CredentialTrustEngine" />
 		<security:Rule xsi:type="samlsec:MandatoryIssuer" />
 		<security:Rule xsi:type="security:MandatoryMessageAuthentication" />
 	</security:SecurityPolicy>
@@ -296,8 +288,6 @@
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
 		<security:Rule xsi:type="samlsec:SAML2HTTPPostSimpleSign"
 			trustEngineRef="shibboleth.SignatureTrustEngine" />
-		<security:Rule xsi:type="security:ClientCertAuth"
-			trustEngineRef="shibboleth.CredentialTrustEngine" />
 		<security:Rule xsi:type="samlsec:MandatoryIssuer" />
 <!-- 		<security:Rule xsi:type="security:MandatoryMessageAuthentication" />  -->
 	</security:SecurityPolicy>
