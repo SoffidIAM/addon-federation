@@ -71,6 +71,7 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.Policy;
@@ -2370,6 +2371,17 @@ public class FederationServiceImpl
 			}
 		}
 		return sb.toString();
+	}
+
+	@Override
+	protected List<FederationMember> handleFindSoffidIdentityProviders() throws Exception {
+		List<FederationMemberEntity> l = getFederationMemberEntityDao().query("select fm "
+				+ "from com.soffid.iam.addon.federation.IdentityProviderEntityImpl as fm "
+				+ "where fm.idpType=:type",
+				new Parameter[] {
+						new Parameter("type", IdentityProviderType.SOFFID.getValue())
+				});
+		return getFederationMemberEntityDao().toFederationMemberList(l);
 	}
 
 }
