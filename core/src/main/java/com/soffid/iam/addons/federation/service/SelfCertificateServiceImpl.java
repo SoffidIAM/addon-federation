@@ -257,8 +257,11 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		String pk = Base64.encodeBytes(certificate.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES);
 		String cert = Base64.encodeBytes(certificate.getEncoded(), Base64.DONT_BREAK_LINES);
 		for (UserCredentialEntity cred: getUserCredentialEntityDao().findByPublicKey(pk)) {
-			if (cert.equals(cred.getCertificate()))
+			if (cert.equals(cred.getCertificate())) {
+				cred.setLastUse(new Date());
+				getUserCredentialEntityDao().update(cred);
 				return getUserCredentialEntityDao().toUserCredential(cred);
+			}
 		}
 		return null;
 	}

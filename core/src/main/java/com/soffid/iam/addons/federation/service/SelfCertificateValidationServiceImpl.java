@@ -74,6 +74,7 @@ public class SelfCertificateValidationServiceImpl extends
 	@Override
 	protected User handleGetCertificateUser(List<X509Certificate> certs)
 			throws Exception {
+		
 		final X509Certificate cert = certs.get(0);
 		String pk = Base64.encodeBytes(cert.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES);
 		for (UserCredentialEntity cred: getUserCredentialEntityDao().findByPublicKey(pk)) {
@@ -85,6 +86,7 @@ public class SelfCertificateValidationServiceImpl extends
 		for (RootCertificateEntity ac: getRootCertificateEntityDao().loadAll()) {
 			if (ac.isExternal()) {
 				X509Certificate cacert = getRootCertificateEntityDao().toRootCertificate(ac).getCertificate();
+				log.info("Check "+cert.getIssuerX500Principal().getName()+" with "+cacert.getSubjectX500Principal().getName());
 				if (cert.getIssuerX500Principal().equals(cacert.getSubjectX500Principal()))
 				{
 					try {
@@ -92,7 +94,9 @@ public class SelfCertificateValidationServiceImpl extends
 						User user = getCertificateUser(ac, cert);
 						if (user != null)
 							return user;
-					} catch (CertificateException e) {}
+					} catch (CertificateException e) {
+						log.info("Certificate not valid", e);
+					}
 					
 				}
 			}
@@ -103,6 +107,7 @@ public class SelfCertificateValidationServiceImpl extends
 	private User getCertificateUser(RootCertificateEntity ac, X509Certificate cert) throws InternalErrorException, IOException, Exception {
 		if (ac.getGuessUserScript() != null && !ac.getGuessUserScript().trim().isEmpty())
 		{
+			log.info("Executing script "+ac.getGuessUserScript());
 			Map<String, Object> newNs = new HashMap<>();
 			newNs.put("certificate", cert);
 			LdapName subject = new LdapName(cert.getSubjectX500Principal().getName());
