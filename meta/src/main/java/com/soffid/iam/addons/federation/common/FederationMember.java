@@ -196,10 +196,15 @@ public class FederationMember {
 	@Attribute(defaultValue = "new java.util.LinkedList()")
 	public List<String> openidUrl;
 
-	@Description("Open ID Logout URL")
+	@Description("Open ID FrontChannel Logout URL")
 	@Nullable
 	@Attribute(defaultValue = "new java.util.LinkedList()")
 	public List<String> openidLogoutUrl;
+
+	@Description("Open ID Backchannel Logout URL")
+	@Nullable
+	@Attribute(defaultValue = "new java.util.LinkedList()")
+	public List<String> openidLogoutUrlBack;
 
 	@Description("Login hint script")
 	@Attribute(defaultValue = "\"loginHint\"")

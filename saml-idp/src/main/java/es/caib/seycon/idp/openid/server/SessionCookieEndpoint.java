@@ -65,7 +65,7 @@ public class SessionCookieEndpoint extends HttpServlet {
 			session = autenticator.generateOpenidSession(req.getSession(), t.getUser(),
 					t.getAuthenticationMethod() == null ? "P": t.getAuthenticationMethod(),
 					false);
-			Cookie cookie = autenticator.getSessionCookie(t, session);
+			Cookie cookie = autenticator.generateSessionCookie(t, session);
 			if (cookie == null) {
 				buildError(resp, "No cookie name", "Missing sso cookie configuration setting", t);
 			} else {

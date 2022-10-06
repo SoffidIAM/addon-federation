@@ -71,6 +71,7 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.OauthToken;
@@ -91,6 +92,7 @@ import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.CasProfileEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
+import com.soffid.iam.addons.federation.model.FederationMemberSessionEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
@@ -290,12 +292,15 @@ public class FederationServiceImpl
 	private void updateReturnUrls(ServiceProviderEntity entity, FederationMember federationMember) {
 		LinkedList<String> l = new LinkedList<String>(federationMember.getOpenidUrl());
 		LinkedList<String> l2 = new LinkedList<String>(federationMember.getOpenidLogoutUrl());
+		LinkedList<String> l3 = new LinkedList<String>(federationMember.getOpenidLogoutUrlBack());
 		for (Iterator<ServiceProviderReturnUrlEntity> iterator = entity.getReturnUrls().iterator(); iterator.hasNext();) {
 			ServiceProviderReturnUrlEntity imp = iterator.next();
-			if (l.contains(imp.getUrl()) && ! "logout".equals(imp.getType()))
-				l.remove(imp.getUrl());
-			else if (l2.contains(imp.getUrl()) && "logout".equals(imp.getType()))
+			if (l2.contains(imp.getUrl()) && "logout".equals(imp.getType()))
 				l2.remove(imp.getUrl());
+			else if (l3.contains(imp.getUrl()) && "logout-back".equals(imp.getType()))
+				l3.remove(imp.getUrl());
+			else if (l.contains(imp.getUrl()))
+				l.remove(imp.getUrl());
 			else {
 				getServiceProviderReturnUrlEntityDao().remove(imp);
 				iterator.remove();
@@ -313,6 +318,14 @@ public class FederationServiceImpl
 			ServiceProviderReturnUrlEntity r = getServiceProviderReturnUrlEntityDao().newServiceProviderReturnUrlEntity();
 			r.setFederationMember(entity);
 			r.setType("logout");
+			r.setUrl(name);
+			getServiceProviderReturnUrlEntityDao().create(r);
+			entity.getReturnUrls().add(r);
+		}
+		for (String name: l3) {
+			ServiceProviderReturnUrlEntity r = getServiceProviderReturnUrlEntityDao().newServiceProviderReturnUrlEntity();
+			r.setFederationMember(entity);
+			r.setType("logout-back");
 			r.setUrl(name);
 			getServiceProviderReturnUrlEntityDao().create(r);
 			entity.getReturnUrls().add(r);
@@ -572,6 +585,7 @@ public class FederationServiceImpl
 	protected void handleDelete(com.soffid.iam.addons.federation.common.FederationMember federationMember) throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canDeleteAllIdentityFederation()) {
 			FederationMemberEntity entity = getFederationMemberEntityDao().federationMemberToEntity(federationMember);
+			getFederationMemberSessionEntityDao().remove(entity.getSessions());
 			if (entity instanceof IdentityProviderEntity) {
 				// IDP
 				IdentityProviderEntity idp = (IdentityProviderEntity) entity;
@@ -2382,6 +2396,32 @@ public class FederationServiceImpl
 						new Parameter("type", IdentityProviderType.SOFFID.getValue())
 				});
 		return getFederationMemberEntityDao().toFederationMemberList(l);
+	}
+
+	@Override
+	protected FederationMemberSession handleCreateFederatioMemberSession(FederationMemberSession session)
+			throws Exception {
+		FederationMemberSessionEntity entity = getFederationMemberSessionEntityDao().federationMemberSessionToEntity(session);
+		getFederationMemberSessionEntityDao().create(entity);
+		return getFederationMemberSessionEntityDao().toFederationMemberSession(entity);
+	}
+
+	@Override
+	protected List<FederationMemberSession> handleFindFederationMemberSessions(Long sessionId) throws Exception {
+		List<FederationMemberSessionEntity> l = getFederationMemberSessionEntityDao().findBySessionId(sessionId);
+		return getFederationMemberSessionEntityDao().toFederationMemberSessionList(l);
+	}
+
+	@Override
+	protected void handleDeleteFederatioMemberSession(FederationMemberSession session) throws Exception {
+		getFederationMemberSessionEntityDao().remove(session.getId());
+	}
+
+	@Override
+	protected List<FederationMemberSession> handleFindFederationMemberSessions(String publicId, String uid)
+			throws Exception {
+		List<FederationMemberSessionEntity> l = getFederationMemberSessionEntityDao().findByUid(publicId, uid);
+		return getFederationMemberSessionEntityDao().toFederationMemberSessionList(l);
 	}
 
 }

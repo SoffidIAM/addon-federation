@@ -182,6 +182,13 @@
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.openidLogoutUrl')}"/>
 
+		<customfield3 dataType="STRING" 
+			bind="/federationMember/openidLogoutUrlBack"
+			multiValue="true"
+			maxLength="100"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.openidLogoutUrlBack')}"/>
+
 		<customfield3 dataType="NUMBER" 
 			bind="/federationMember/oauthSessionTimeout"
 			maxLength="100"

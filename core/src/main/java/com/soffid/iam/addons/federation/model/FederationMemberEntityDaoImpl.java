@@ -110,8 +110,11 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setSslClientCertificateHeader(idp.getSslClientCertificateHeader());
 			// Other options
 			target.setKerberosDomain(idp.getKerberosDomain());
+			if (idp.getSsoCookieName() == null || idp.getSsoCookieName().trim().isEmpty())
+				target.setSsoCookieName("soffid_sso_session");
+			else
+				target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSsoCookieDomain(idp.getSsoCookieDomain());
-			target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSessionTimeout(idp.getSessionTimeout());
 			target.setRegisterExternalIdentities(idp.getRegisterExternalIdentities());
 			// Service providers
@@ -200,15 +203,19 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setOpenidSecret(sp.getOpenidSecret());
 			List<String> l = new LinkedList<>();
 			List<String> l2 = new LinkedList<>();
+			List<String> l3 = new LinkedList<>();
 			if (sp.getOpenidUrl() != null && ! sp.getOpenidUrl().trim().isEmpty())
 				l.add(sp.getOpenidUrl());
 			for (ServiceProviderReturnUrlEntity url: sp.getReturnUrls())
 				if ("logout".equals(url.getType()))
 					l2.add(url.getUrl());
+				else if ("logout-back".equals(url.getType()))
+					l3.add(url.getUrl());
 				else
 					l.add(url.getUrl());
 			target.setOpenidUrl(l);
 			target.setOpenidLogoutUrl(l2);
+			target.setOpenidLogoutUrlBack(l3);
 			// Radius attributes
 			target.setSourceIps(sp.getSourceIps());
 			target.setRadiusSecret(sp.getRadiusSecret() == null ? null: Password.decode(sp.getRadiusSecret()));

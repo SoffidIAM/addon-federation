@@ -340,35 +340,19 @@ public class FederationServiceInternal {
 	private User checkSamlCookie(String cookie)
 			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
 
-		log.info("checkSamlCookie()");
 		String value = URLDecoder.decode(cookie,"UTF-8");
-		log.info("checkSamlCookie() - decoded: "+value);
 		String[] split = value.split(":");
-		log.info("checkSamlCookie() - split.lenght: "+split.length);
 		if (split.length != 2)
 			return null;
 
 		SamlRequestEntity entity = samlRequestEntityDao.findByExternalId(split[0]);
 		log.info("checkSamlCookie() - entity: "+entity);
-		if (entity != null) {
-			log.info("checkSamlCookie() - entity.getExpirationDate(): "+entity.getExpirationDate());
-			log.info("checkSamlCookie() - new Date(): "+new Date());
-			log.info("checkSamlCookie() - entity.getExpirationDate().before(new Date()): "+entity.getExpirationDate().before(new Date()));
-			log.info("checkSamlCookie() - entity.getKey(): "+entity.getKey());
-		}
 		if (entity!=null && entity.getExpirationDate()!=null && !entity.getExpirationDate().before(new Date()) && entity.getKey().equals(split[1]))
 		{
-			log.info("checkSamlCookie() - entity.getUser(): "+entity.getUser());
 			User u = userService.findUserByUserName(entity.getUser());
-			log.info("checkSamlCookie() - findUserByUserName: "+u);
-			if (u != null) {
-				log.info("checkSamlCookie() - u.getActive().booleanValue(): "+u.getActive().booleanValue());
-			}
 			if (u != null && u.getActive().booleanValue()) {
-				log.info("checkSamlCookie() - user is active");
 				return u;
 			} else {
-				log.info("checkSamlCookie() - user null or not active");
 				return null;
 			}
 		} else {
@@ -380,27 +364,20 @@ public class FederationServiceInternal {
 	private User checkIdpCookie(String value) throws InternalErrorException, IOException, NoSuchAlgorithmException,
 			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
 			CertificateException, NoSuchProviderException, SignatureException {
-		log.info("checkIdpCookie()");
 		int separator = value.indexOf('_');
-		log.info("checkIdpCookie() - separator: "+separator);
 		if (separator > 0)
 		{
 			String hash = value.substring(separator+1);
 			Long id = Long.decode(value.substring(0, separator));
-			log.info("checkIdpCookie() - id: "+id);
 			for (Session sessio: sessionService.getActiveSessions(id))
 			{
 				byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
-				log.info("checkIdpCookie() - digest: "+digest);
 				String digestString = Base64.encodeBytes(digest);
-				log.info("checkIdpCookie() - digestString: "+digestString);
 				if (digestString.equals(hash))
 				{
 					User u = userService.findUserByUserName(sessio.getUserName());
-					log.info("checkIdpCookie() - u: "+u);
 					if (u != null && u.getActive().booleanValue())
 					{
-						log.info("checkIdpCookie() - return u");
 						return u;
 					}
 				}
