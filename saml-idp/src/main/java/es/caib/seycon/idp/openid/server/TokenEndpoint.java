@@ -26,6 +26,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeF
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.Messages;
@@ -157,8 +158,8 @@ public class TokenEndpoint extends HttpServlet {
 				return;
 			}
 
-			TokenInfo t = h.generateAuthenticationRequest(request, username, authentication);
 
+			TokenInfo t;
 			if (username == null || username.trim().isEmpty()) {
 				AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 				if (ctx != null) {
@@ -192,6 +193,9 @@ public class TokenEndpoint extends HttpServlet {
 							logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.7"), //$NON-NLS-1$
 									req.getRemoteAddr());
 							authCtx.authenticated(username, "P", resp);
+							Autenticator autenticator = new Autenticator();
+							autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false);
+							t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true));
 							t.setUser(username);
 							t.setAuthenticationMethod("P");
 							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId());

@@ -165,6 +165,9 @@ public class MetadataGenerator extends HttpServlet {
                     while (nl.getLength()>0) {
                         Node n = nl.item(0);
                         Node n2 = doc.adoptNode(n);
+                       	if (n2 instanceof Element) {
+                       		((Element) n2).removeAttribute("validUntil");
+                       	}
                         element.appendChild(n2);
                     }
                     generateChildEntities(eg, element);
@@ -179,6 +182,13 @@ public class MetadataGenerator extends HttpServlet {
 //                    log("Error parsing metadata for entity "+fm.getPublicId(), e);
                     return generateChildEntities(eg, element);
                 }
+            } else if (fm != null && fm.getClasse().equals("S")) 
+            {
+            	Element child = element.getOwnerDocument().createElementNS("urn:oasis:names:tc:SAML:2.0:metadata", "EntityDescriptor");
+            	child.setAttribute("entityID", fm.getPublicId());
+            	element.appendChild(child);
+                generateChildEntities(eg, element);
+                return true;
             } else {
                 return generateChildEntities(eg, element);
             }

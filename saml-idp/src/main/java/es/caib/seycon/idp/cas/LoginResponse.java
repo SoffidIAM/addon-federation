@@ -51,6 +51,7 @@ import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthorizationHandler;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
@@ -90,7 +91,7 @@ public class LoginResponse  {
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true));
 
 		Map<String, Object> att;
 		try {

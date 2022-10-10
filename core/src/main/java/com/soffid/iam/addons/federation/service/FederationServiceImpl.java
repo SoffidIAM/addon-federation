@@ -630,6 +630,10 @@ public class FederationServiceImpl
 						getServiceProviderVirtualIdentityProviderEntityDao().findBySP(sp.getId()));
 				getServiceProviderVirtualIdentityProviderEntityDao().remove(oldrps);
 				getImpersonationEntityDao().remove(sp.getImpersonations());
+				for (AllowedScopeEntity as: sp.getAllowedScopes())
+					getAllowedScopeRoleEntityDao().remove(as.getRoles());
+				getAllowedScopeEntityDao().remove(sp.getAllowedScopes());
+				getServiceProviderReturnUrlEntityDao().remove(sp.getReturnUrls());
 				sp.setServiceProviderVirtualIdentityProvider(null);
 				getServiceProviderEntityDao().remove(sp);
 
@@ -2422,6 +2426,12 @@ public class FederationServiceImpl
 			throws Exception {
 		List<FederationMemberSessionEntity> l = getFederationMemberSessionEntityDao().findByUid(publicId, uid);
 		return getFederationMemberSessionEntityDao().toFederationMemberSessionList(l);
+	}
+
+	@Override
+	protected List<OauthToken> handleFindOauthTokenBySessionId(Long sessionId) throws Exception {
+		List<OauthTokenEntity> l = getOauthTokenEntityDao().findBySessionId(sessionId);
+		return getOauthTokenEntityDao().toOauthTokenList(l);
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.soffid.iam.addons.federation.model;
 
 import java.util.Date;
+import java.util.List;
 
 import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.OauthToken;
@@ -91,6 +92,8 @@ public class OauthTokenEntity {
 	OauthTokenEntity findByTokenId(String tokenId) { return null;}
 
 	OauthTokenEntity findByRefreshToken(String refreshToken) { return null;}
+	
+	List<OauthTokenEntity> findBySessionId(Long sessionId){return null;}
 }
 
 @Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_TOK_UK", columns = {"TOK_TEN_ID", "TOK_TOKEN"})

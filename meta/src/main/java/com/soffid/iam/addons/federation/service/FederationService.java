@@ -560,4 +560,5 @@ public abstract class FederationService {
 	FederationMemberSession createFederatioMemberSession(FederationMemberSession sessiod) {return null;}
 	void deleteFederatioMemberSession(FederationMemberSession session) {}
 	List<FederationMemberSession> findFederationMemberSessions(String publicId, String uid) {return null;}
+	List<OauthToken> findOauthTokenBySessionId(Long sessionId) {return null;}
 }

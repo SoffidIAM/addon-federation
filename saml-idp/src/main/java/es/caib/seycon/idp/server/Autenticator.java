@@ -79,7 +79,7 @@ public class Autenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
     static Hashtable<String, Long> lastLogout = new Hashtable<>();
     
-    private String generateSession2 (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws Exception
+    public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws Exception
     {
         HttpSession session = req.getSession();
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
@@ -107,6 +107,8 @@ public class Autenticator {
         fms.setFederationMember(getRelyingParty(req));
         fms.setSessionId(sessio.getId());
         fms.setUserName( new UidEvaluator().evaluateUid(server, fms.getFederationMember(), principal, user));
+        if (fms.getFederationMember() != null)
+        	config.getFederationService().createFederatioMemberSession(fms);
         
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(new FileInputStream(SeyconKeyStore.getKeyStoreFile()),
@@ -376,7 +378,7 @@ public class Autenticator {
 			}
 		}
 		
-		final String soffidSession = generateSession2(req, resp, user, type, externalAuth);
+		final String soffidSession = generateSession(req, resp, user, type, externalAuth);
 
 		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
@@ -595,7 +597,7 @@ public class Autenticator {
 			return Arrays.asList(values);
 	}
 
-	public Session generateOpenidSession(HttpSession httpSession, String userName, String authenticationType, boolean externalAuth) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	public Session generateImpersonatedSession(HttpSession httpSession, String userName, String authenticationType, boolean externalAuth) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         
         IdpConfig config = IdpConfig.getConfig();

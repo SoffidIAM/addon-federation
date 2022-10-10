@@ -33,16 +33,18 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.soffid.iam.addons.federation.api.TokenType;
+import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
-import com.soffid.iam.remote.RemoteServiceLocator;
 import com.soffid.iam.service.SessionService;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.LogoutHandler;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -62,7 +64,7 @@ public class TokenHandler {
 		return instance;
 	}
 	
-	public synchronized TokenInfo generateAuthenticationRequest ( OpenIdRequest request, String user, String authType) throws InternalErrorException
+	public synchronized TokenInfo generateAuthenticationRequest ( OpenIdRequest request, String user, String authType, Session session) throws InternalErrorException
 	{
 		expireTokens();
 		
@@ -79,6 +81,8 @@ public class TokenHandler {
 		t.setPkceAlgorithm(request.getPkceAlgorithm());
 		t.setPkceChallenge(request.getPkceChallenge());
 		t.updateLastUse();
+		if (session != null)
+			t.setSessionId(session.getId());
 		authorizationCodes.put(t.getAuthorizationCode(), t);
 		pendingTokens.addLast(t);
 		
@@ -169,7 +173,9 @@ public class TokenHandler {
 	}
 
 	public synchronized void generateToken(TokenInfo t, Map<String, Object> att,
-			HttpServletRequest req, String authType) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+			HttpServletRequest req, String authType) 
+		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException 
+	{
 		IdpConfig c = IdpConfig.getConfig();
 		if (t.getAuthorizationCode() != null)
 		{
@@ -219,12 +225,15 @@ public class TokenHandler {
 
 	public String generateJWTToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) {
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
+				.withClaim("azp", (t.request.getFederationMember().getOpenidClientId()))
 				.withExpiresAt( new Date (t.getExpires()))
 				.withIssuedAt(new Date(t.getCreated()))
 				.withClaim("client_id", t.getRequest().getClientId() )
 				.withJWTId(t.getJwtId())
 				.withKeyId(c.getHostName())
 				.withIssuer(getIssuer(c, keycloak));
+		if (t.getSessionId() != null)
+			builder.withClaim("sid", t.getSessionId().toString());
 		if (keycloak) 
 			builder.withClaim("scope", "openid email profile");
 		else if (t.getRequest().getScope() != null)
@@ -234,7 +243,6 @@ public class TokenHandler {
 
 		if (keycloak) {
 			builder.withClaim("typ", "Bearer");
-			addOptionalAttribute(builder, "azp", att);
 			addOptionalAttribute(builder, "realm_access", att);
 			addOptionalAttribute(builder, "resource_access", att);
 			addOptionalAttribute(builder, "preferred_username", att);
@@ -363,6 +371,7 @@ public class TokenHandler {
 			o.put("nonce", t.request.getNonce());
 
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
+				.withClaim("azp", (t.request.getFederationMember().getOpenidClientId()))
 				.withExpiresAt( new Date (t.getExpires()))
 				.withIssuedAt(new Date())
 				.withClaim("auth_time", t.getAuthentication()/1000)
@@ -573,10 +582,13 @@ public class TokenHandler {
 		getFederationService().deleteOauthToken(generateOauthToken(t));
 
 		if (t.getSessionId() != null) {
-			SessionService sessionService = new RemoteServiceLocator().getSessionService();
-			Session session = sessionService.getSession(t.getSessionId(), t.getSessionKey());
-			if (session != null)
-				sessionService.destroySession(session);
+			List<FederationMemberSession> l = new RemoteServiceLocator().getFederacioService().findFederationMemberSessions(t.getSessionId());
+			if (l.size() == 1) { 
+				SessionService sessionService = new RemoteServiceLocator().getSessionService();
+				Session session = sessionService.getSession(t.getSessionId(), t.getSessionKey());
+				if (session != null)
+					new LogoutHandler().logout(session);
+			}
 		}
 	}
 

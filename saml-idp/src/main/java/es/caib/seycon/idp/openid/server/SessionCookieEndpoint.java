@@ -62,7 +62,7 @@ public class SessionCookieEndpoint extends HttpServlet {
 				resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
 				return;
 			}
-			session = autenticator.generateOpenidSession(req.getSession(), t.getUser(),
+			session = autenticator.generateImpersonatedSession(req.getSession(), t.getUser(),
 					t.getAuthenticationMethod() == null ? "P": t.getAuthenticationMethod(),
 					false);
 			Cookie cookie = autenticator.generateSessionCookie(t, session);

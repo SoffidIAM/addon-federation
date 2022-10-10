@@ -37,6 +37,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeF
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthorizationHandler;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -82,7 +83,7 @@ public class AuthorizationResponse  {
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true));
 		final IdpConfig config = IdpConfig.getConfig();
 		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);
@@ -188,7 +189,7 @@ public class AuthorizationResponse  {
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user, authType);
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true));
 		final IdpConfig config = IdpConfig.getConfig();
 		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);
