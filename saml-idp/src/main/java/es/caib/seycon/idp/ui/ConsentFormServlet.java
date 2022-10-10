@@ -76,13 +76,14 @@ public class ConsentFormServlet extends BaseForm {
         	IdpConfig config = IdpConfig.getConfig();
 
         	String user = authCtx.getCurrentUser().getUserName();
+        	String account = authCtx.getUser();
         	String authMethod = authCtx.getUsedMethod();
         	String serviceProvider = authCtx.getPublicId();
         	
         	StringBuffer sb = new StringBuffer();
         	
         	sb.append("<ul>");
-        	for (String attribute: new UserAttributesGenerator().generateAttributeNames(getServletContext(), user, authMethod, serviceProvider))
+        	for (String attribute: new UserAttributesGenerator().generateAttributeNames(getServletContext(), account, authMethod, serviceProvider))
         	{
         		sb.append("<li>")
         			.append(attribute.replace("&", "&amp;").replace("'", "&apos;") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
