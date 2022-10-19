@@ -15,7 +15,15 @@ public class FederationMemberSession {
 	@Nullable
 	String federationMember;
 	
-	@Column(name="FSE_USER")
+	@Nullable
+	String userNameFormat;
+	
+	@Nullable
+	String userNameQualifier;
+	
+	@Nullable
+	String sessionHash;
+
 	String userName;
 
 }

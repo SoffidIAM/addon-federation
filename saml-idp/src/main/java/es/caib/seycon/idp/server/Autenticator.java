@@ -11,6 +11,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Principal;
+import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
@@ -79,7 +80,7 @@ public class Autenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
     static Hashtable<String, Long> lastLogout = new Hashtable<>();
     
-    public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws Exception
+    public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth, String sessionId) throws Exception
     {
         HttpSession session = req.getSession();
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
@@ -105,10 +106,15 @@ public class Autenticator {
         
         FederationMemberSession fms = new FederationMemberSession();
         fms.setFederationMember(getRelyingParty(req));
-        fms.setSessionId(sessio.getId());
-        fms.setUserName( new UidEvaluator().evaluateUid(server, fms.getFederationMember(), principal, user));
-        if (fms.getFederationMember() != null)
-        	config.getFederationService().createFederatioMemberSession(fms);
+        if (fms.getFederationMember() != null) {
+	        fms.setSessionId(sessio.getId());
+	        fms.setUserName( new UidEvaluator().evaluateUid(server, fms.getFederationMember(), principal, user));
+	        fms.setSessionHash(sessionId);
+        	if (sessionId == null)
+        		req.getSession().setAttribute("$$soffid_incomplete_fms$$", fms);
+        	else
+        		config.getFederationService().createFederatioMemberSession(fms);
+        }
         
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(new FileInputStream(SeyconKeyStore.getKeyStoreFile()),
@@ -378,7 +384,6 @@ public class Autenticator {
 			}
 		}
 		
-		final String soffidSession = generateSession(req, resp, user, type, externalAuth);
 
 		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
@@ -387,6 +392,7 @@ public class Autenticator {
         LOG.info("Session type " + session.getAttribute("soffid-session-type")); //$NON-NLS-1$ //$NON-NLS-2$
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, null);
         	LogRecorder.getInstance().addSuccessLogEntry("SAML", user, actualType, entityId, req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	
@@ -424,12 +430,16 @@ public class Autenticator {
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
         	LOG.info("Generating openid response");
-        	AuthorizationResponse.generateResponse(ctx, req, resp, type);
+        	String sessionHash = generateRandomSessionId();
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash);
+        	AuthorizationResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else if ("cas".equals(session.getAttribute("soffid-session-type")))
         {
         	LOG.info("Generating openid response");
-        	LoginResponse.generateResponse(ctx, req, resp, type);
+        	String sessionHash = generateRandomSessionId();
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash);
+        	LoginResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else
         {
@@ -442,7 +452,14 @@ public class Autenticator {
         }
     }
 
-    public String getRelyingParty (HttpServletRequest request) {
+    static SecureRandom secureRandom = new SecureRandom();
+    public String generateRandomSessionId() {
+    	byte b[] = new byte[24];
+    	secureRandom.nextBytes(b);
+		return Base64.encodeBytes(b, Base64.DONT_BREAK_LINES);
+	}
+
+	public String getRelyingParty (HttpServletRequest request) {
     	HttpSession session = request.getSession();
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
@@ -505,33 +522,6 @@ public class Autenticator {
     		return false;
     }
     
-	public void notifyLogout(edu.internet2.middleware.shibboleth.idp.session.Session indexedSession) throws NumberFormatException, InternalErrorException, IOException {
-		Subject s = indexedSession.getSubject();
-		if (s != null)
-		{
-			for ( SessionPrincipal sp: s.getPrincipals(SessionPrincipal.class))
-			{
-				if (sp.getName() != null) {
-					lastLogout.put(sp.getName(), System.currentTimeMillis());
-				}
-		        if (sp.getSessionString() != null)
-		        {
-			        String[] split = sp.getSessionString().split("\\|");
-					if (split.length > 2)
-					{
-						String sessionid = split[0];
-						String sessionKey = split[1];
-						SessionService ss = new RemoteServiceLocator().getSessionService();
-						Session soffidSession = ss
-								.getSession(Long.decode(sessionid), sessionKey);
-						if (ss != null && soffidSession != null)
-							ss.destroySession(soffidSession);
-					}
-		        }
-			}
-		}
-	}
-	
 	public String toSamlAuthenticationMethod (String method)
 	{
 		if (method == null)
@@ -685,7 +675,7 @@ public class Autenticator {
 					String digestString = Base64.encodeBytes(digest);
 					if (digestString.equals(hash) &&
 							(ip.getSessionTimeout() == null || 
-							sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() > System.currentTimeMillis()))
+							sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() * 1000 > System.currentTimeMillis()))
 					{
 						return sessio;
 					}
@@ -694,5 +684,5 @@ public class Autenticator {
 		}
 		return null;
 	}
-	
+
 }

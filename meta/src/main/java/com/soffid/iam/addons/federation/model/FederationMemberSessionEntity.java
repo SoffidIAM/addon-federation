@@ -31,6 +31,18 @@ public class FederationMemberSessionEntity {
 	@Column(name="FSE_TEN_ID")
 	TenantEntity tenant;
 	
+	@Nullable
+	@Column(name="FSE_USEFOR")
+	String userNameFormat;
+	
+	@Nullable
+	@Column(name="FSE_USEQUA")
+	String userNameQualifier;
+	
+	@Nullable
+	@Column(name="FSE_SESHAS")
+	String sessionHash;
+
 	List<FederationMemberSessionEntity> findBySessionId(Long sessionId) { return null; }
 	
 	@DaoFinder("select fmse "

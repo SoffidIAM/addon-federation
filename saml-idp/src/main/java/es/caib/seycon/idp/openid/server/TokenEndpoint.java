@@ -20,7 +20,9 @@ import org.json.JSONObject;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.api.Password;
+import com.soffid.iam.api.Session;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -30,6 +32,7 @@ import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.Messages;
+import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
@@ -71,7 +74,8 @@ public class TokenEndpoint extends HttpServlet {
 
 			TokenHandler h = TokenHandler.instance();
 			OpenIdRequest request = new OpenIdRequest();
-
+			req.getSession().setAttribute(SessionConstants.OPENID_REQUEST, request);
+	    	
 			if (authentication != null && authentication.toLowerCase().startsWith("basic ")) {
 				String decoded = new String(Base64.decode(authentication.substring(6)), "UTF-8");
 				String clientId2 = decoded.substring(0, decoded.indexOf(":"));
@@ -125,7 +129,7 @@ public class TokenEndpoint extends HttpServlet {
 	            buildError(resp, "invalid_scope", "The requested scope does not contain the scope openid: "+request.getScope());
 	    	}
 
-	    	// Check authentication mechanism
+    		// Check authentication mechanism
 			if (request.getFederationMember().getOpenidMechanism().contains("PA")) {
 				// Accept request
 				log.info("Accepted mechanism PA for " + request.getFederationMember().getPublicId());
@@ -192,10 +196,14 @@ public class TokenEndpoint extends HttpServlet {
 						if (!v.mustChangePassword()) {
 							logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.7"), //$NON-NLS-1$
 									req.getRemoteAddr());
+							// 1. Mask the context as authenticated
 							authCtx.authenticated(username, "P", resp);
+							// 2. Register Soffid session
 							Autenticator autenticator = new Autenticator();
-							autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false);
-							t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true));
+							String oauthSessionId = autenticator.generateRandomSessionId();
+							autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false, oauthSessionId);
+							// Generate token
+							t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true), oauthSessionId);
 							t.setUser(username);
 							t.setAuthenticationMethod("P");
 							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId());

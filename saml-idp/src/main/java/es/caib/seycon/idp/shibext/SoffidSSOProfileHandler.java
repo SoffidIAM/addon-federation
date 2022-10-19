@@ -18,12 +18,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
 import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.util.DatatypeHelper;
+
+import com.soffid.iam.addons.federation.common.FederationMemberSession;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -35,6 +38,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.profile.saml2.BaseSAML2ProfileRequestContext;
 import edu.internet2.middleware.shibboleth.idp.profile.saml2.SSOProfileHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
@@ -44,10 +48,15 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
 	public SoffidSSOProfileHandler(String authnManagerPath) {
 		super(authnManagerPath);
 	}
+	
+	ThreadLocal<FederationMemberSession> pendingSession =  new ThreadLocal<>();
 
     /** {@inheritDoc} */
     public void processRequest(HTTPInTransport inTransport, HTTPOutTransport outTransport) throws ProfileException {
         HttpServletRequest httpRequest = ((HttpServletRequestAdapter) inTransport).getWrappedRequest();
+		FederationMemberSession fms = (FederationMemberSession) httpRequest.getSession().getAttribute("$$soffid_incomplete_fms$$");
+		pendingSession.set(fms);
+		super.processRequest(inTransport, outTransport);
 		if (httpRequest.getParameter("SAMLRequest") != null) {
 			try {
 				HttpServletResponse httpResponse = ((HttpServletResponseAdapter) outTransport).getWrappedResponse();
@@ -78,12 +87,14 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
 							}
 						}
 					}
+					if (fms != null)
+						fms.setSessionHash(loginContext.getSessionID());
 				}
 			} catch (Exception e) {
 				throw new ProfileException("Error processing request", e);
 			}
 		}
-		super.processRequest(inTransport, outTransport);
+		pendingSession.remove();
     }
 
     protected void resolveAttributes(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
@@ -107,4 +118,24 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
             
         }
     }
+    
+    protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
+    	NameID nameId = super.buildNameId(requestContext);
+    	FederationMemberSession fms = pendingSession.get();
+    	if (fms != null) {
+    		fms.setUserName(nameId.getValue());
+    		fms.setUserNameFormat(nameId.getFormat());
+    		fms.setUserNameQualifier(nameId.getNameQualifier());
+    		fms.setSessionHash(requestContext.getUserSession().getSessionID());
+    		try {
+				IdpConfig.getConfig().getFederationService().createFederatioMemberSession(fms);
+			} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
+					| CertificateException | IllegalStateException | NoSuchProviderException | SignatureException
+					| InternalErrorException | IOException e) {
+				throw new ProfileException("Error registering session", e);
+			}
+    	}
+    	return nameId;
+    }
+
 }

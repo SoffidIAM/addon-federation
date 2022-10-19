@@ -76,6 +76,10 @@ public class OauthTokenEntity {
 	@Nullable
 	String sessionKey;
 	
+	@Column (name="TOK_OAUSES")
+	@Nullable
+	String oauthSession;
+	
 	@Column (name="TOK_CHALLE", length = 256)
 	@Nullable
 	String pkceChallenge;

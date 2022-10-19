@@ -41,9 +41,20 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	public String openidClientId;
 
+	// Legacy column
 	@Column(name="FED_OIDURL", length=150)
 	@Nullable
 	public String openidUrl;
+
+	@Description("Open ID FrontChannel Logout URL")
+	@Nullable
+	@Column(name="FED_OIFRLOL", length=250)
+	public String openidLogoutUrlFront;
+
+	@Description("Open ID Backchannel Logout URL")
+	@Nullable
+	@Column(name="FED_OIBALOL", length=250)
+	public String openidLogoutUrlBack;
 
 	@Column(name="FED_OIDMEC", length=50)
 	@Description("Open ID mechanisms (comma separated list of values): Implicit, AuthorizationCode, Password, PasswordClientCredentals")

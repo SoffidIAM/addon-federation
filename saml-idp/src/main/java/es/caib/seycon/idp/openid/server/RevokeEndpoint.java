@@ -83,7 +83,7 @@ public class RevokeEndpoint extends HttpServlet {
 
 				}
 
-				th.revoke(t);
+				th.revoke(getServletContext(), req, t);
 			}			
 			resp.getOutputStream().close();
 		} catch (Exception e) {

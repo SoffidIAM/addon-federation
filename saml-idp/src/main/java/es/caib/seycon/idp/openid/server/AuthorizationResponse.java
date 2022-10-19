@@ -46,7 +46,7 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 public class AuthorizationResponse  {
 	static Log log = LogFactory.getLog(AuthorizationResponse.class);
 	
-	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException
+	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException
 	{
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
@@ -58,10 +58,10 @@ public class AuthorizationResponse  {
 			unauthorized(request, response, r, user);
 		} else if ( r.getResponseTypeSet().contains("code")) {
 			log.info("Returnig authorization flow");
-			authorizationFlow (request, response, authType);			
+			authorizationFlow (request, response, authType, sessionHash);			
 		} else {
 			log.info("Returnig implicit flow");
-			implicitFLow (ctx, request, response, authType);
+			implicitFLow (ctx, request, response, authType, sessionHash);
 		}
 	}
 
@@ -77,13 +77,13 @@ public class AuthorizationResponse  {
     	return new AuthorizationHandler().checkAuthorization(user, member);
 	}
 
-	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
+	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true));
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true), sessionHash);
 		final IdpConfig config = IdpConfig.getConfig();
 		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);
@@ -183,13 +183,13 @@ public class AuthorizationResponse  {
 		resp.sendRedirect(sb.toString());
 	}
 
-	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true));
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true), sessionHash);
 		final IdpConfig config = IdpConfig.getConfig();
 		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
 		token.setScope(scopes);

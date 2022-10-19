@@ -1,11 +1,30 @@
 package es.caib.seycon.idp.server;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.net.ssl.X509TrustManager;
+import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,8 +33,8 @@ import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
+import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
 import org.opensaml.common.xml.SAMLConstants;
-import org.opensaml.saml2.core.EncryptedID;
 import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.NameID;
@@ -24,10 +43,10 @@ import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.impl.IssuerBuilder;
 import org.opensaml.saml2.core.impl.LogoutRequestBuilder;
 import org.opensaml.saml2.core.impl.NameIDBuilder;
-import org.opensaml.saml2.encryption.Decrypter;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml2.metadata.SingleLogoutService;
+import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.ws.message.decoder.MessageDecodingException;
 import org.opensaml.ws.message.encoder.MessageEncodingException;
 import org.opensaml.ws.soap.client.BasicSOAPMessageContext;
@@ -38,20 +57,12 @@ import org.opensaml.ws.soap.soap11.Body;
 import org.opensaml.ws.soap.soap11.Envelope;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.XMLObjectBuilderFactory;
-import org.opensaml.xml.encryption.DecryptionException;
-import org.opensaml.xml.encryption.EncryptedKeyResolver;
-import org.opensaml.xml.encryption.InlineEncryptedKeyResolver;
 import org.opensaml.xml.io.Marshaller;
-import org.opensaml.xml.io.MarshallingException;
-import org.opensaml.xml.security.SecurityConfiguration;
-import org.opensaml.xml.security.SecurityException;
+import org.opensaml.xml.parse.BasicParserPool;
 import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
-import org.opensaml.xml.security.keyinfo.KeyInfoCredentialResolver;
-import org.opensaml.xml.security.keyinfo.StaticKeyInfoCredentialResolver;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.SignatureConstants;
-import org.opensaml.xml.signature.SignatureException;
 import org.opensaml.xml.signature.Signer;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
@@ -62,32 +73,37 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Session;
 
-import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
-import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfiguration;
-import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration;
-import edu.internet2.middleware.shibboleth.idp.profile.saml2.SLOProfileHandler.SLORequestContext;
-import edu.internet2.middleware.shibboleth.idp.session.ServiceInformation;
+import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
+import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
+import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.util.Base64;
 
 public class LogoutHandler {
 	private FederationService federationService;
 	Log log = LogFactory.getLog(getClass());
-
-	public LogoutResponse logout (Session s) throws InternalErrorException, IOException {
+	static BasicParserPool parserPool = new BasicParserPool();
+	
+	public LogoutResponse logout (ServletContext ctx, HttpServletRequest req, Session s, boolean userInitiated) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, java.security.SignatureException {
 		LogoutResponse l = new LogoutResponse();
 		l.setFailedLogouts(new LinkedList<>());
 		l.setFrontRequests(new LinkedList<>());
 		
 		federationService = new RemoteServiceLocator().getFederacioService();
-		for ( FederationMemberSession fms: federationService.findFederationMemberSessions(s.getId())) {
+		
+		final List<FederationMemberSession> federationMemberSessions = federationService.findFederationMemberSessions(s.getId());
+		for ( FederationMemberSession fms: federationMemberSessions) {
 			FederationMember fm = federationService.findFederationMemberByPublicId(fms.getFederationMember());
 			if (fm.getServiceProviderType() == ServiceProviderType.OPENID_CONNECT)
-				processOpenidLogout(fms, l);
+				processOpenidLogout(fms, ctx, s, l, userInitiated);
+			if (fm.getServiceProviderType() == ServiceProviderType.CAS)
+				processCasLogout(fms, ctx, s, l, userInitiated);
 			if (fm.getServiceProviderType() == ServiceProviderType.SAML || fm.getServiceProviderType() == ServiceProviderType.SOFFID_SAML)
-				processSamlLogout(fms, l);
+				processSamlLogout(fms, ctx, s, l, userInitiated);
 		}
 		
 		for (OauthToken token: federationService.findOauthTokenBySessionId(s.getId())) {
@@ -98,21 +114,182 @@ public class LogoutHandler {
 				t.setExpires(System.currentTimeMillis());
 		}
 		
-		new RemoteServiceLocator().getSessionService().destroySession(s);
+		if (! userInitiated || l.getFrontRequests().isEmpty()) {
+			if (req != null) {
+				FederationMember ip = IdpConfig.getConfig().getFederationMember();
+		    	for (Cookie c: req.getCookies())
+		    	{
+		    		if (c.getName().equals(ip.getSsoCookieName()))
+		    		{
+		    			new RemoteServiceLocator()
+		    				.getFederacioService()
+		    				.expireSessionCookie(c.getValue());
+		    		}
+		    	}
+			}
+			try {
+				for ( FederationMemberSession fms: federationMemberSessions) {
+	    			new RemoteServiceLocator()
+	    				.getFederacioService()
+	    				.deleteFederatioMemberSession(fms);
+				}
+				new RemoteServiceLocator().getSessionService().destroySession(s);
+			} catch (InternalErrorException e) {
+				// Ignore already closed session
+			}
+		}
 
 		return l;
 	}
 
-	private void processSamlLogout(FederationMemberSession fms, LogoutResponse l) {
-		// TODO Auto-generated method stub
-		
+	private void processOpenidLogout(FederationMemberSession fms, ServletContext ctx, Session s, LogoutResponse l,
+			boolean userInitiated) throws InternalErrorException, IOException {
+		FederationMember sp;
+		try {
+			sp = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(fms.getFederationMember());
+			IdpConfig c = IdpConfig.getConfig();
+			final TokenHandler tokenHandler = TokenHandler.instance();
+			String token = tokenHandler.generateLogoutToken(c, fms.getUserName(), fms.getSessionHash(), sp);
+			if (sp.getOpenidLogoutUrlBack() != null && ! sp.getOpenidLogoutUrlBack().isEmpty())
+			{
+				String url = sp.getOpenidLogoutUrlBack();
+				if (url != null && !url.isEmpty()) {
+					try {
+						HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+						conn.setRequestMethod("POST");
+						conn.setDoOutput(true);
+						conn.setDoInput(true);
+						conn.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+						OutputStream os = conn.getOutputStream();
+						String msg = "logout_token="+ URLEncoder.encode(token, "UTF-8") + "\n";
+						os.write(msg.getBytes("UTF-8"));
+						os.close();
+						
+						InputStream is = conn.getInputStream();
+						while (is.read() >= 0) ;
+						is.close();
+						federationService.deleteFederatioMemberSession(fms);
+						return;
+					} catch (Exception e) {
+						log.warn("Error closing session from "+ fms.getFederationMember(), e);
+					}
+				}
+			}
+			if (userInitiated && sp.getOpenidLogoutUrlFront() != null && !sp.getOpenidLogoutUrlFront().isEmpty()) {
+				String url = sp.getOpenidLogoutUrlFront();
+				if (! url.contains("?"))
+					url = url + "?";
+				if (! url.endsWith("?") && ! url.endsWith("&"))
+					url = url + "&";
+				
+				url = url + "iss=" + URLEncoder.encode(tokenHandler.getIssuer(c, false), "UTF-8");
+				url = url + "&sid="+ URLEncoder.encode(fms.getSessionHash(), "UTF-8");
+				final FrontLogoutRequest frontLogoutRequest = new FrontLogoutRequest();
+				frontLogoutRequest.setDescription(sp.getName());
+				frontLogoutRequest.setPublicId(sp.getPublicId());
+				frontLogoutRequest.setUrl(new URI(url));
+				l.getFrontRequests().add(frontLogoutRequest);
+				return;
+			}
+		} catch (Exception e) {
+			log.warn("Error closing session from "+ fms.getFederationMember(), e);
+		}
+		l.getFailedLogouts().add(fms.getFederationMember());
 	}
 
-	private void processOpenidLogout(FederationMemberSession fms, LogoutResponse l) {
-    	String status = StatusCode.SUCCESS_URI;
+	private void processCasLogout(FederationMemberSession fms, ServletContext ctx, Session s, LogoutResponse l,
+			boolean userInitiated) throws InternalErrorException, IOException {
+		FederationMember sp;
+		try {
+			sp = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(fms.getFederationMember());
+			IdpConfig c = IdpConfig.getConfig();
+			final TokenHandler tokenHandler = TokenHandler.instance();
+			for (OauthToken token: federationService.findOauthTokenBySessionId(s.getId())) {
+				if (fms.getFederationMember().equals( token.getServiceProvider() ) &&
+					fms.getSessionHash().equals(token.getOauthSession())) {
+					TokenInfo t = tokenHandler.getToken(token.getTokenId());
+					if (t != null) {
+						if (sp.getOpenidLogoutUrlBack() != null && ! sp.getOpenidLogoutUrlBack().isEmpty())
+						{
+							String url = sp.getOpenidLogoutUrlBack();
+							if (url != null && !url.isEmpty()) {
+								try {
+									String msg = generateMessage(t);
+									HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+									conn.setRequestMethod("POST");
+									conn.setDoOutput(true);
+									conn.setDoInput(true);
+									conn.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+									OutputStream os = conn.getOutputStream();
+									os.write(msg.getBytes("UTF-8"));
+									os.close();
+									
+									InputStream is = conn.getInputStream();
+									while (is.read() >= 0) ;
+									is.close();
+									federationService.deleteFederatioMemberSession(fms);
+									return;
+								} catch (Exception e) {
+									log.warn("Error closing session from "+ fms.getFederationMember(), e);
+								}
+							}
+						}
+						if (userInitiated && sp.getOpenidLogoutUrlFront() != null && !sp.getOpenidLogoutUrlFront().isEmpty()) {
+							String msg = generateMessage(t);
+							StringBuffer sb = new StringBuffer(sp.getOpenidLogoutUrlFront());
+							if (sb.indexOf("?") >= 0)
+								sb.append("&");
+							else
+								sb.append("?");
+							sb.append("callback=console.log&request=")
+								.append(Base64.encodeBytes(msg.getBytes(StandardCharsets.UTF_8)))
+								.append("&_=")
+								.append(System.currentTimeMillis());
+							FrontLogoutRequest req = new FrontLogoutRequest();
+							req.setDescription(sp.getName());
+							req.setPublicId(sp.getPublicId());
+							req.setUrl(new URI(sb.toString()));
+							l.getFrontRequests().add(req);
+							return;
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.warn("Error closing session from "+ fms.getFederationMember(), e);
+		}
+		l.getFailedLogouts().add(fms.getFederationMember());
+	}
+
+	private String generateMessage(TokenInfo t) throws NoSuchAlgorithmException {
+		SimpleDateFormat simpleDf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		simpleDf.setTimeZone(TimeZone.getTimeZone("GMT"));
+		String msg = "<samlp:LogoutRequest\n"
+				+ "    xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"\n"
+				+ "    xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\"\n"
+				+ "    ID=\""+new SecureRandomIdentifierGenerator().generateIdentifier()+"\"\n"
+				+ "    Version=\"2.0\"\n"
+				+ "    IssueInstant=\""+simpleDf.format(new Date())+"\">\n"
+				+ "    <saml:NameID>@NOT_USED@</saml:NameID>\n"
+				+ "    <samlp:SessionIndex>"+t.getToken()+"</samlp:SessionIndex>\n"
+				+ "</samlp:LogoutRequest>";
+		return msg;
+	}
+
+	private void processSamlLogout(FederationMemberSession fms, ServletContext ctx, Session session, LogoutResponse l, boolean userInitiated) throws InternalErrorException, IOException {
+		MetadataProvider metadataProvider;
+        RelyingPartyConfigurationManager rpConfigMngr = HttpServletHelper.getRelyingPartyConfigurationManager(ctx);
+		if (rpConfigMngr instanceof SAMLMDRelyingPartyConfigurationManager) {
+            SAMLMDRelyingPartyConfigurationManager samlRpConfigMngr = (SAMLMDRelyingPartyConfigurationManager) rpConfigMngr;
+            metadataProvider = samlRpConfigMngr.getMetadataProvider();
+        }
+		else
+			throw new InternalErrorException("Cannot get metadata provider");
+
+		String status = StatusCode.SUCCESS_URI;
     	boolean allOk = true;
     	try {
-			EntityDescriptor remoteEntity = getMetadataProvider().getEntityDescriptor(si.getEntityID());
+			EntityDescriptor remoteEntity = metadataProvider.getEntityDescriptor(fms.getFederationMember());
 			SPSSODescriptor descriptor = remoteEntity.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
 			SAMLMessageEncoder encoder;
 			if (descriptor == null)
@@ -124,44 +301,51 @@ public class LogoutHandler {
 					if ( SAMLConstants.SAML2_SOAP11_BINDING_URI.equals ( slo.getBinding()) )
 					{
 					
-						status = sendLogoutRequest(requestContext,
-								indexedSession, status, si, slo);
+						status = sendSamlLogoutRequest(session, fms, slo, (SAMLMDRelyingPartyConfigurationManager) rpConfigMngr, userInitiated);
 				        
 					}
 				}
 			}
+			federationService.deleteFederatioMemberSession(fms);
 		} catch (Exception e) {
-			throw new ProfileException(e);
+			FederationMember fm = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(fms.getFederationMember());
+			if (fm == null)
+				l.getFailedLogouts().add(fms.getFederationMember());
+			else
+				l.getFailedLogouts().add(fm.getName());
 		}
     }
 
-	protected String sendLogoutRequest(SLORequestContext requestContext,
-			Session indexedSession, String status, ServiceInformation si,
-			SingleLogoutService slo) throws SecurityException,
-			MessageEncodingException, MarshallingException, SignatureException {
+	private String sendSamlLogoutRequest(Session session, FederationMemberSession fms, 
+			SingleLogoutService slo, SAMLMDRelyingPartyConfigurationManager rpConfigMngr, boolean userInitiated) 
+		throws Exception {
+		
+		FederationMember idp = IdpConfig.getConfig().findIdentityProviderForRelyingParty(fms.getFederationMember());
 		Issuer issuer = buildSamlObject(Issuer.DEFAULT_ELEMENT_NAME, IssuerBuilder.class);
-		issuer.setValue(requestContext.getLocalEntityId());
+		issuer.setValue(idp.getPublicId());
 
 		LogoutRequest request = buildSamlObject(LogoutRequest.DEFAULT_ELEMENT_NAME, LogoutRequestBuilder.class);
 		request.setDestination(slo.getBinding());
 		request.setIssueInstant(DateTime.now());
 		request.setIssuer(issuer);
 		NameID nameid = buildSamlObject(NameID.DEFAULT_ELEMENT_NAME, NameIDBuilder.class);
-		nameid.setValue(si.getNameIdentifier());
-		nameid.setFormat(si.getNameIdentifierFormat());
-		nameid.setNameQualifier(si.getNameQualifier());
+		nameid.setValue(fms.getUserName());
+		nameid.setFormat(fms.getUserNameFormat());
+		nameid.setNameQualifier(fms.getUserNameQualifier());
 		request.setNameID(nameid);
-		String reason = requestContext.getInboundSAMLMessage().getReason();
-		if (reason == null)
+		String reason;
+		if (userInitiated)
 			reason = LogoutRequest.USER_REASON;
+		else
+			reason = LogoutRequest.ADMIN_REASON;
 		request.setReason(reason);
-//		SessionIndex sessionindex = buildSamlObject(SessionIndex.DEFAULT_ELEMENT_NAME, SessionIndexBuilder.class);
-//		sessionindex.setSessionIndex(indexedSession.getSessionID());
-//		request.getSessionIndexes().add(sessionindex);
-		request.setID( generator.generateIdentifier() );
+		request.setID( new SecureRandomIdentifierGenerator().generateIdentifier() );
 		
       
-		RelyingPartyConfiguration rpc = getRelyingPartyConfiguration(si.getEntityID());
+		RelyingPartyConfiguration rpc = rpConfigMngr.getRelyingPartyConfiguration(idp.getPublicId());
+		if (rpc == null)
+			rpc = rpConfigMngr.getDefaultRelyingPartyConfiguration();
+		
 		Credential signingCredential = rpc.getDefaultSigningCredential();
 		
 		if (signingCredential != null)
@@ -199,8 +383,9 @@ public class LogoutHandler {
 		clientBuilder.setHttpsProtocolSocketFactory(new TLSProtocolSocketFactory(null, buildNoTrustTrustManager()));
 		 
 //		HttpSOAPClient soapClient = new DebugHttpSoapClient(clientBuilder.buildClient(), getParserPool());
-		HttpSOAPClient soapClient = new HttpSOAPClient(clientBuilder.buildClient(), getParserPool());
+		HttpSOAPClient soapClient = new HttpSOAPClient(clientBuilder.buildClient(), parserPool);
 		 
+		String status = StatusCode.SUCCESS_URI;
 		// Send the message
 		try {
 		    soapClient.send(slo.getLocation(), soapContext);
@@ -218,13 +403,13 @@ public class LogoutHandler {
 
 		    XMLObject incommingMessage = soapBodyChildren.get(0);
 		    if (!(incommingMessage instanceof SAMLObject)) {
-		        log.error("Unexpected SOAP body content.  Expected a SAML request but recieved {}", incommingMessage
+		        log.warn("Unexpected SOAP body content.  Expected a SAML request but recieved "+ incommingMessage
 		                .getElementQName());
-		        throw new MessageDecodingException("Unexpected SOAP body content.  Expected a SAML request but recieved "
+		        throw new MessageDecodingException("Unexpected SOAP body content.  Expected a SAML request but received "
 		                + incommingMessage.getElementQName());
 		    }
 		    SAMLObject samlMessage = (SAMLObject) incommingMessage;
-		    LogoutResponse response = (LogoutResponse) samlMessage;
+		    org.opensaml.saml2.core.LogoutResponse response = (org.opensaml.saml2.core.LogoutResponse) samlMessage;
 		    Status responseStatus = response.getStatus();
 		    if (responseStatus != null && !responseStatus.isNil() 
 		    		&& !responseStatus.getStatusCode().getValue().equals( StatusCode.SUCCESS_URI))
@@ -251,8 +436,7 @@ public class LogoutHandler {
 		    			,slo.getLocation()));
 		    }
 		} catch (Exception e) {
-			log.info("Error logging out from {}", si.getEntityID());
-			log.warn("Exception throwwn: ", e);
+			log.warn("Error logging out from"+fms.getFederationMember(), e);
 		}
 		return status;
 	}

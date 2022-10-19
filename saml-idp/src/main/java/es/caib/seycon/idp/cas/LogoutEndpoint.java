@@ -38,64 +38,25 @@ public class LogoutEndpoint extends HttpServlet {
 	{
 		String service = req.getParameter("service");
 		try {
-			doLogout(req, resp);
-			req.getSession().invalidate();
-			
 			IdpConfig config = IdpConfig.getConfig();
 
 			if (service != null) {
 				for ( FederationMember fm: config.getFederationService().findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "S")) {
 					if (fm.getServiceProviderType() == ServiceProviderType.CAS) {
-						if (fm.getOpenidUrl() != null) {
+						if (fm.getOpenidLogoutUrl() != null) {
 							for (String url: fm.getOpenidLogoutUrl()) {
-								if (service.startsWith(url))
-									resp.sendRedirect(service);
+								if (service.startsWith(url) && !url.trim().isEmpty()) {
+									req.getSession().setAttribute("$$soffid$$-logout-redirect", service);
+								}
 							}
 						}
 					}
 				}
-				resp.sendRedirect(LogoutServlet.URI);
-			} else {
-				resp.sendRedirect(LogoutServlet.URI);
 			}
+			resp.sendRedirect(LogoutServlet.URI);
 		} catch (Exception e) {
 			throw new ServletException("Error parsing request paramenters", e);
 		}
     	
 	}
-
-	private void doLogout(HttpServletRequest req, HttpServletResponse resp) {
-		HttpSession session = req.getSession(false);
-    	if (session != null) 
-    	{
-            try 
-            {
-            	session.removeAttribute("Soffid-Authentication-Context");
-
-				IdpConfig config = IdpConfig.getConfig();
-				
-				FederationMember ip = config.getFederationMember();
-				
-			    if (ip != null) {
-			        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
-			        {
-			        	for (Cookie c: req.getCookies())
-			        	{
-			        		if (c.getName().equals(ip.getSsoCookieName()))
-			        		{
-			        			new RemoteServiceLocator()
-			        				.getFederacioService()
-			        				.expireSessionCookie(c.getValue());
-			        		}
-			        	}
-			        }
-			    }
-			} catch (Exception e) {
-				LogFactory.getLog(LogoutServlet.class).warn("Error expiring session", e);
-			}		
-        
-    		session.invalidate();
-    	}
-	}
-
 }

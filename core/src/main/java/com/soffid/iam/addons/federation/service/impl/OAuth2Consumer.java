@@ -28,6 +28,7 @@ import com.github.scribejava.core.model.Token;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.SamlRequest;
+import com.soffid.iam.model.SamlRequestEntity;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 
@@ -43,7 +44,7 @@ public abstract class OAuth2Consumer implements Serializable {
 	private static Map<String, OAuth2Consumer> consumers = new Hashtable<String, OAuth2Consumer>();
 	long created = System.currentTimeMillis();
 	
-	public static OAuth2Consumer fromRequest(Map<String,String> request) {
+	public static OAuth2Consumer fromRequest(Map<String,String> request, SamlRequestEntity requestEntity) {
 		String secret = request.get("state");
 		if (secret == null)
 			return null;
@@ -172,5 +173,13 @@ public abstract class OAuth2Consumer implements Serializable {
 
 	public void setRequestedUser(String userName) {
 		requestedUser = userName;
+	}
+
+	public String getSecretState() {
+		return secretState;
+	}
+
+	public void setSecretState(String secretState) {
+		this.secretState = secretState;
 	}
 }

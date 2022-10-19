@@ -292,13 +292,10 @@ public class FederationServiceImpl
 	private void updateReturnUrls(ServiceProviderEntity entity, FederationMember federationMember) {
 		LinkedList<String> l = new LinkedList<String>(federationMember.getOpenidUrl());
 		LinkedList<String> l2 = new LinkedList<String>(federationMember.getOpenidLogoutUrl());
-		LinkedList<String> l3 = new LinkedList<String>(federationMember.getOpenidLogoutUrlBack());
 		for (Iterator<ServiceProviderReturnUrlEntity> iterator = entity.getReturnUrls().iterator(); iterator.hasNext();) {
 			ServiceProviderReturnUrlEntity imp = iterator.next();
 			if (l2.contains(imp.getUrl()) && "logout".equals(imp.getType()))
 				l2.remove(imp.getUrl());
-			else if (l3.contains(imp.getUrl()) && "logout-back".equals(imp.getType()))
-				l3.remove(imp.getUrl());
 			else if (l.contains(imp.getUrl()))
 				l.remove(imp.getUrl());
 			else {
@@ -318,14 +315,6 @@ public class FederationServiceImpl
 			ServiceProviderReturnUrlEntity r = getServiceProviderReturnUrlEntityDao().newServiceProviderReturnUrlEntity();
 			r.setFederationMember(entity);
 			r.setType("logout");
-			r.setUrl(name);
-			getServiceProviderReturnUrlEntityDao().create(r);
-			entity.getReturnUrls().add(r);
-		}
-		for (String name: l3) {
-			ServiceProviderReturnUrlEntity r = getServiceProviderReturnUrlEntityDao().newServiceProviderReturnUrlEntity();
-			r.setFederationMember(entity);
-			r.setType("logout-back");
 			r.setUrl(name);
 			getServiceProviderReturnUrlEntityDao().create(r);
 			entity.getReturnUrls().add(r);
@@ -503,7 +492,7 @@ public class FederationServiceImpl
 				return getFederationMemberEntityDao().toFederationMember(vip);
 			} else if (entity instanceof ServiceProviderEntity) {
 				ServiceProviderEntity sp = (ServiceProviderEntity) entity;
-				getVirtualIdentityProviderEntityDao().update(sp);
+				getServiceProviderEntityDao().update(sp);
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
 				updateRoles((ServiceProviderEntity) entity, federationMember);
 				updateScopes((ServiceProviderEntity) entity, federationMember);

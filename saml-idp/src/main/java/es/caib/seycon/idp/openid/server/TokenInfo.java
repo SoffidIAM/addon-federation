@@ -24,6 +24,7 @@ public class TokenInfo {
 	String pkceAlgorithm;
 	private TokenType type;
 	public String refreshTokenFull;
+	public String oauthSessionId;
 	
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
@@ -174,5 +175,13 @@ public class TokenInfo {
 
 	public TokenType getType() {
 		return type;
+	}
+
+	public String getOauthSessionId() {
+		return oauthSessionId;
+	}
+
+	public void setOauthSessionId(String oauthSessionId) {
+		this.oauthSessionId = oauthSessionId;
 	}
 }
