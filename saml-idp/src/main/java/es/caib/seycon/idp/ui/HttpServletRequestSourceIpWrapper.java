@@ -48,7 +48,10 @@ public class HttpServletRequestSourceIpWrapper extends HttpServletRequestWrapper
 			throw new RuntimeException("Error getting client cert header name", e);
 		}
 		if (sourceAddress.equals(request.getRemoteAddr()) && clientCertHeader != null) {
-			headers.remove(clientCertHeader);
+			if (headers.get(clientCertHeader) != null) {
+				LogFactory.getLog(getClass()).warn("Received fake client certificate header from "+request.getRemoteAddr());
+				headers.remove(clientCertHeader);
+			}
 		}
 	}
 

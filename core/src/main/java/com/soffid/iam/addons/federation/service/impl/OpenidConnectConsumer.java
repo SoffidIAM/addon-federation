@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
@@ -40,14 +41,17 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		super(sp, idp);
 
-		cfg = new JSONObject(idp.getMetadades());
 
 		ServiceBuilder serviceBuilder = new ServiceBuilder(idp.getOauthKey())
 				.apiSecret(idp.getOauthSecret().getPassword());
+
+		cfg = new JSONObject(idp.getMetadades());
 		
-		Object scope = cfg.get("scope");
+		Object scope = cfg.opt("scope");
 		if (scope == null)
-			scope = cfg.get("supported_scopes");
+			scope = cfg.opt("scopes_supported");
+		if (scope == null)
+			scope = cfg.opt("supported_scopes");
 		if (scope == null)
 			scope = "openid";
 		
@@ -56,6 +60,19 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 			StringBuffer b = new StringBuffer();
 			for ( Object s: (Object[]) scope)
 			{
+				if (s != null)
+				{
+					if (b.length() > 0) b.append(' ');
+					b.append(s.toString());
+				}
+			}
+			serviceBuilder.scope(b.toString());
+		} else if (scope instanceof JSONArray){
+			JSONArray a = (JSONArray) scope;
+			StringBuffer b = new StringBuffer();
+			for ( int i = 0; i < a.length(); i++)
+			{
+				String s = a.getString(i);
 				if (s != null)
 				{
 					if (b.length() > 0) b.append(' ');

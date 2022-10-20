@@ -11,6 +11,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 import java.util.LinkedList;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +42,11 @@ public class CertificateValidator {
 				header = IdpConfig.getConfig().getFederationMember().getSslClientCertificateHeader();
 				if (header != null && !header.trim().isEmpty()) {
 					String cert = req.getHeader(header);
+					log.info("Headers: ");
+					for (Enumeration<String> e = req.getHeaderNames(); e.hasMoreElements(); ) {
+						String name = e.nextElement();
+						log.info(">> "+name+": "+req.getHeader(name));
+					}
 					if (cert != null && ! cert.trim().isEmpty()) {
 						certs = parseCerts(cert);
 					}

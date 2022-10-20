@@ -265,6 +265,7 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
         {
   			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
    			{
+  				eo.put("ctx", ctx);
   				DelayedAttribute b = new DelayedAttribute(attribute.getShortName(), translator, eo, attribute, ctx instanceof DummySamlRequestContext);
   				m.put(attribute.getShortName(), b);
         	} else if ("urn:oid:1.3.6.1.4.1.5923.1.5.1.1".equals(attribute.getOid())) {

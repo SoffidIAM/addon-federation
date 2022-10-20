@@ -3,6 +3,7 @@ package com.soffid.iam.addons.federation.service.impl;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.opensaml.core.config.InitializationException;
@@ -12,6 +13,7 @@ import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.api.SamlRequest;
@@ -32,13 +34,6 @@ public class OIDCServiceInternal extends AbstractFederationService {
 		{
 			String state = response.get("state");
 			SamlValidationResults r = new SamlValidationResults();
-			OAuth2Consumer c = OAuth2Consumer.fromRequest(response);
-			if (c == null)
-			{
-				r.setFailureReason("Received authentication response for unknown request "+state);
-				log.info(r.getFailureReason());
-				return r;
-			}
 				
 			SamlRequestEntity requestEntity = samlRequestEntityDao.findByExternalId(state);
 			log.info("authenticate() - requestEntity: "+requestEntity);
@@ -54,6 +49,46 @@ public class OIDCServiceInternal extends AbstractFederationService {
 				log.info(r.getFailureReason());
 				return r;
 			}
+			if (!requestEntity.getHostName().startsWith(serviceProvider+" "))
+			{
+				r.setFailureReason("Received authentication response for unknown request "+state);
+				log.info(r.getFailureReason());
+				return r;
+			}
+			
+
+			String identityProvider = requestEntity.getHostName().substring(serviceProvider.length()+1);
+			FederationMember sp;
+			ServiceProviderEntity spe2 = findServiceProvider(serviceProvider);
+			if (spe2 != null)
+				sp = federationMemberEntityDao.toFederationMember(spe2);
+			else {
+				IdentityProviderEntity spe = findIdentityProvider(serviceProvider);
+				if (spe != null)
+					sp = federationMemberEntityDao.toFederationMember(spe);
+				else
+					throw new InternalErrorException("Unknown service provider "+serviceProvider);
+			}
+
+			IdentityProviderEntity idpe = findIdentityProvider(identityProvider);
+			if (idpe == null)
+				throw new InternalErrorException("Unknown identity provider "+identityProvider);
+	
+			FederationMember idp = federationMemberEntityDao.toFederationMember(idpe);
+			
+			OAuth2Consumer c ;
+			if (idp.getIdpType() == IdentityProviderType.FACEBOOK)
+				c = new FacebookConsumer(sp, idp);
+			else if (idp.getIdpType() == IdentityProviderType.GOOGLE)
+				c = new GoogleConsumer(sp, idp);
+			else if (idp.getIdpType() == IdentityProviderType.LINKEDIN)
+				c = new LinkedinConsumer(sp, idp);
+			else if (idp.getIdpType() == IdentityProviderType.OPENID_CONNECT)
+				c = new OpenidConnectConsumer(sp, idp);
+			else
+				throw new InternalErrorException("Unsupported identity provider "+ idp.getIdpType().toString());
+			
+			c.setSecretState(requestEntity.getExternalId());
 
 			if (! c.verifyResponse(response))
 				throw new InternalErrorException("Unable to get openid token");
@@ -149,7 +184,7 @@ public class OIDCServiceInternal extends AbstractFederationService {
 	
 			// Record
 			SamlRequestEntity reqEntity = samlRequestEntityDao.newSamlRequestEntity();
-			reqEntity.setHostName(serviceProvider);
+			reqEntity.setHostName(serviceProvider+" "+identityProvider);
 			reqEntity.setDate(new Date());
 			reqEntity.setExpirationDate(new Date(System.currentTimeMillis()+sessionSeconds * 1000L));
 			reqEntity.setExternalId(newID);

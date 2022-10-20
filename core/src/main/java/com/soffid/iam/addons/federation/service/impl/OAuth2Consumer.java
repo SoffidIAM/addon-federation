@@ -40,29 +40,8 @@ public abstract class OAuth2Consumer implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static Map<String, OAuth2Consumer> consumers = new Hashtable<String, OAuth2Consumer>();
 	long created = System.currentTimeMillis();
 	
-	public static OAuth2Consumer fromRequest(Map<String,String> request) {
-		String secret = request.get("state");
-		if (secret == null)
-			return null;
-		
-		long timeout = System.currentTimeMillis() - 1000 * 60 * 30; // 30 minutes to get login
-		synchronized (consumers)
-		{
-			for (Iterator<Entry<String, OAuth2Consumer>> it = consumers.entrySet().iterator(); it.hasNext();)
-			{
-				Entry<String, OAuth2Consumer> entry = it.next();
-				if (entry.getValue().created < timeout)
-					it.remove();
-			}
-		}
-		OAuth2Consumer consumer = consumers.get(secret);
-		return consumer;
-	}
-
-
 	Token requestToken;
 	FederationMember idp;
 	
@@ -127,7 +106,6 @@ public abstract class OAuth2Consumer implements Serializable {
     		String s = ((OAuth20Service) service).getAuthorizationUrl(params);
     		req.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
     		req.setUrl(s);
-    		consumers.put(secretState, this);
 	    } catch (Exception e) {
 	    	System.out.println ("Error:" +e);
 	    }
@@ -172,5 +150,9 @@ public abstract class OAuth2Consumer implements Serializable {
 
 	public void setRequestedUser(String userName) {
 		requestedUser = userName;
+	}
+
+	public void setSecretState(String secretState) {
+		this.secretState = secretState;
 	}
 }
