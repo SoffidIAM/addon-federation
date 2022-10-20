@@ -62,6 +62,9 @@ public class OauthToken {
 	String sessionKey;
 
 	@Nullable
+	String oauthSession;
+
+	@Nullable
 	String pkceChallenge;
 	
 	@Nullable

@@ -7,14 +7,55 @@
 	<!-- css -->
 	<link href="/estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
 	<!-- /css -->
+	<script>
+	var logoutList=${raw:logoutList};
+	var timeoutEvent;
+	var iframe;
+	function loadNext() {
+		if (timeoutEvent)
+			clearTimeout(timeoutEvent);
+		
+		if (logoutList.length == 0) {
+			document.location.reload();			
+		} else {
+			var next = logoutList.shift();
+			document.getElementById("server").innerText = next.name;
+			timeoutEvent = setTimeout(loadNext, 10000);
+			iframe.src = next.url;
+		}
+		
+		
+	}
 	
+	function doLoad() {
+		iframe = document.getElementById("iframe");
+		if (iframe) {
+			iframe.addEventListener("load", loadNext);
+			if (logoutList.length > 0)
+				loadNext();			
+		}
+	}
+	</script>
 </head>
 
-<body>
-<div class="login"  style="width:100%;height:100%;" z.zidsp="page">
-       		<p><img src="/imgs/logo.png" alt="Soffid logo" /> </p> 
+<body onLoad="doLoad()" class="login">
+<div class="headcentrat"  style="width:100%;height:100%;" z.zidsp="page">
+       		<p><img src="/imgs/logo.png" alt="Soffid logo" width="150px"/> </p> 
+${if showClose}
 			<p>${Your_session_is_finished}</p>
-			<p><a href="" onclick="self.close()>${Close_this_window}</p>
+			<p>${Close_this_window}</p>
+${endif}
+${if showLogout}
+       		<p><b>${Logout_page_0}</b></p>
+       		<p>${Logout_page_1}</p>
+			<p>${open_sessions}</p>
+			<p><a href="logout.jsp?action=logout">${Close_n_sessions}</a></p>
+${endif}
+${if showProgress}
+			<p>${Closing_n_sessions_header}</p>
+			<p>${Closing_n_sessions} <span id="server"></span></p>
+			<iframe width="80%" height="200px" id="iframe" style="visibility: hidden; border: none"/>
+${endif}
 </div>
 
 

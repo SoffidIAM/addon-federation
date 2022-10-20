@@ -1,15 +1,6 @@
 package es.caib.seycon.idp.cas;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -19,18 +10,15 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.soffid.iam.addons.federation.api.TokenType;
-import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
-import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class LoginEndpoint extends HttpServlet {
 
@@ -81,7 +69,7 @@ public class LoginEndpoint extends HttpServlet {
 	    	
 	    	String user = (String) req.getSession().getAttribute(SessionConstants.SEU_USER);
 	    	if (req.getParameter("renew") != null && user != null) {
-	    		LoginResponse.generateResponse(getServletContext(), req, resp, "P");
+	    		LoginResponse.generateResponse(getServletContext(), req, resp, "P", null);
 	    		return;
 	    	} 
 	    	RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);
@@ -95,17 +83,21 @@ public class LoginEndpoint extends HttpServlet {
 
 	private FederationMember findFederationMember(IdpConfig config, final String serviceName)
 			throws InternalErrorException {
+		int length = -1;
+		FederationMember last= null;
 		for ( FederationMember fm: config.getFederationService().findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "S")) {
 			if (fm.getServiceProviderType() == ServiceProviderType.CAS) {
 				if (fm.getOpenidUrl() != null) {
 					for (String url: fm.getOpenidUrl()) {
-						if (serviceName.startsWith(url))
-							return fm;
+						if (serviceName.startsWith(url) && (length < 0 ||  url.length() < length)) {
+							last = fm;
+							length = url.length();
+						}
 					}
 				}
 			}
 		}
-		return null;
+		return last;
 	}
 
 

@@ -63,7 +63,7 @@ public class DataConnector extends BaseDataConnector {
             log.info("Got account: "+(System.currentTimeMillis()-t));
         	try {
         		ui = server.getUserInfo(principal, config.getSystem().getName ());
-        		uid = evaluateUid (server, rpid, principal, ui);        		
+        		uid = new UidEvaluator().evaluateUid (server, rpid, principal, ui);        		
         		if (ui.getShortName() != null && ! ui.getShortName().trim().isEmpty()) {
         			if (ui.getMailDomain() == null) 
         			{
@@ -81,7 +81,7 @@ public class DataConnector extends BaseDataConnector {
         			}
         		}
         	} catch (UnknownUserException ex) {
-        		uid = evaluateUid (server, rpid, principal, null);        		
+        		uid = new UidEvaluator().evaluateUid (server, rpid, principal, null);        		
         	}
 
         	ctx.setPrincipalName(uid);
@@ -97,43 +97,6 @@ public class DataConnector extends BaseDataConnector {
 
 	private Collection<Attribute> attributes;
     
-    private String evaluateUid(ServerService server, String rpid, String principal, User ui) throws Exception {
-    	String uid = ui == null ? principal : ui.getUserName();
-    	FederationService fs = new RemoteServiceLocator().getFederacioService();
-    	for (FederationMember member: fs.findFederationMemberByEntityGroupAndPublicIdAndTipus("%", rpid, "S"))
-    	{
-    		if (member.getSystem() != null) {
-    			Collection<UserAccount> accounts = new RemoteServiceLocator().getServerService().getUserAccounts(ui.getId(), member.getSystem());
-    			if (accounts == null || accounts.isEmpty())
-    				throw new SecurityException("Access denied");
-    		}
-    		if (member.getRoles() != null && !member.getRoles().isEmpty()) {
-    			boolean found = false;
-    			for (RoleGrant role: new RemoteServiceLocator().getServerService().getUserRoles(ui.getId(), null)) {
-    				if (member.getRoles().contains(role.getRoleName()+"@"+role.getSystem())) {
-    					found = true;
-    					break;
-    				}
-    			}
-    			if (!found)
-    				throw new SecurityException("Access denied");
-    		}
-    		if (member.getUidExpression() != null && ! member.getUidExpression().trim().isEmpty())
-    		{
-    			ValueObjectMapper mapper = new ValueObjectMapper();
-            	IdpConfig config = IdpConfig.getConfig();
-    			Account account = server.getAccountInfo(principal, config.getSystem().getName());
-    			ExtensibleObject eo = ui == null ? 
-    				new AccountExtensibleObject(account, server):
-    				new UserExtensibleObject(account, ui, server);
-   				uid = (String) new ObjectTranslator(config.getSystem(), server,
-    					new java.util.LinkedList<ExtensibleObjectMapping>())
-    						.eval(member.getUidExpression(), eo);
-    		}
-    	}
-    	return uid;
-    	
-	}
 
 	@Override
 	public void validate() throws AttributeResolutionException {

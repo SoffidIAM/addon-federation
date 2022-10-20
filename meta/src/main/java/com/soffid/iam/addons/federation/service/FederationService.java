@@ -6,6 +6,7 @@
 
 package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.UserConsent;
@@ -13,6 +14,7 @@ import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
 import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.CasProfileEntity;
+import com.soffid.iam.addons.federation.model.FederationMemberSessionEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
@@ -115,7 +117,8 @@ import org.springframework.transaction.annotation.Transactional;
 	AllowedScopeEntity.class,
 	AllowedScopeRoleEntity.class,
 	AplicacioService.class,
-	ServiceProviderReturnUrlEntity.class
+	ServiceProviderReturnUrlEntity.class,
+	FederationMemberSessionEntity.class
 })
 public abstract class FederationService {
 
@@ -552,4 +555,10 @@ public abstract class FederationService {
 	
 	@Description("Finds soffid identity providers")
 	List<FederationMember> findSoffidIdentityProviders() { return null;}
+	
+	List<FederationMemberSession> findFederationMemberSessions(Long sessionId) {return null;}
+	FederationMemberSession createFederatioMemberSession(FederationMemberSession sessiod) {return null;}
+	void deleteFederatioMemberSession(FederationMemberSession session) {}
+	List<FederationMemberSession> findFederationMemberSessions(String publicId, String uid) {return null;}
+	List<OauthToken> findOauthTokenBySessionId(Long sessionId) {return null;}
 }

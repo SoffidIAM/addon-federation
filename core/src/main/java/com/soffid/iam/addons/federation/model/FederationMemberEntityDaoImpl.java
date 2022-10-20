@@ -110,8 +110,11 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setSslClientCertificateHeader(idp.getSslClientCertificateHeader());
 			// Other options
 			target.setKerberosDomain(idp.getKerberosDomain());
+			if (idp.getSsoCookieName() == null || idp.getSsoCookieName().trim().isEmpty())
+				target.setSsoCookieName("soffid_sso_session");
+			else
+				target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSsoCookieDomain(idp.getSsoCookieDomain());
-			target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSessionTimeout(idp.getSessionTimeout());
 			target.setRegisterExternalIdentities(idp.getRegisterExternalIdentities());
 			// Service providers
@@ -209,6 +212,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 					l.add(url.getUrl());
 			target.setOpenidUrl(l);
 			target.setOpenidLogoutUrl(l2);
+			target.setOpenidLogoutUrlBack(sp.getOpenidLogoutUrlBack());
+			target.setOpenidLogoutUrlFront(sp.getOpenidLogoutUrlFront());
 			// Radius attributes
 			target.setSourceIps(sp.getSourceIps());
 			target.setRadiusSecret(sp.getRadiusSecret() == null ? null: Password.decode(sp.getRadiusSecret()));
@@ -564,6 +569,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			sp.setOpenidClientId(source.getOpenidClientId());
 			sp.setOpenidSecret(source.getOpenidSecret());
 			sp.setOpenidUrl(null);
+			sp.setOpenidLogoutUrlBack(source.getOpenidLogoutUrlBack());
+			sp.setOpenidLogoutUrlFront(source.getOpenidLogoutUrlFront());
 			
 			if (source.getSystem() == null)
 				sp.setSystem(null);

@@ -98,7 +98,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("User ID", "uid", "urn:oid:0.9.2342.19200300.100.1.1", "sub");
 		testAttribute("Full name", "Fullname", "urn:oid:2.16.840.1.113730.3.1.241", "full_name");
 		testAttribute("Given Name", "GivenName", "urn:oid:2.5.4.42", "given_name");
-		testAttribute("Surname", "Surname", "urn:oid:2.5.4.4", "surname");
+		testAttribute("Surname", "Surname", "urn:oid:2.5.4.4", "family_name");
 		testAttribute("Surnames (all)", "Surnames", "urn:oid:1.3.6.1.4.1.22896.3.1.5", "surnames");
 		testAttribute("Phone", "TelephoneNumber", "urn:oid:2.5.4.20", "phone");
 		testAttribute("Email address", "mail", "urn:oid:0.9.2342.19200300.100.1.3", "email");

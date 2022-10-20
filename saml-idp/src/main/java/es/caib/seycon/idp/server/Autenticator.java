@@ -11,6 +11,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Principal;
+import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
@@ -59,12 +61,14 @@ import es.caib.seycon.idp.cas.LoginResponse;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.AuthorizationResponse;
+import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
+import es.caib.seycon.idp.shibext.UidEvaluator;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.TipusSessio;
@@ -76,7 +80,7 @@ public class Autenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
     static Hashtable<String, Long> lastLogout = new Hashtable<>();
     
-    private String generateSession2 (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException
+    public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth, String sessionId) throws Exception
     {
         HttpSession session = req.getSession();
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
@@ -89,12 +93,28 @@ public class Autenticator {
         
         String url = "https://" + config.getHostName()+":"+config.getStandardPort()+ SessionCallbackServlet.URI;
         
-        com.soffid.iam.api.Session sessio = new RemoteServiceLocator().getSessionService().registerWebSession(
+		Session sessio = getSession(req, true);
+		if (sessio == null) {
+			sessio = new RemoteServiceLocator().getSessionService().registerWebSession(
         		user.getUserName(), config.getHostName(),
         		LanguageFilter.getRemoteIp(),
         		url, type);
+		}
+		req.getSession().setAttribute("$$soffid_session$$", sessio);
 
         SessionListener.registerSession(session, sessio);
+        
+        FederationMemberSession fms = new FederationMemberSession();
+        fms.setFederationMember(getRelyingParty(req));
+        if (fms.getFederationMember() != null) {
+	        fms.setSessionId(sessio.getId());
+	        fms.setUserName( new UidEvaluator().evaluateUid(server, fms.getFederationMember(), principal, user));
+	        fms.setSessionHash(sessionId);
+        	if (sessionId == null)
+        		req.getSession().setAttribute("$$soffid_incomplete_fms$$", fms);
+        	else
+        		config.getFederationService().createFederatioMemberSession(fms);
+        }
         
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(new FileInputStream(SeyconKeyStore.getKeyStoreFile()),
@@ -125,12 +145,12 @@ public class Autenticator {
     }
     
     public boolean validateCookie (ServletContext ctx, HttpServletRequest req, HttpServletResponse resp) 
-    		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException, ServletException
+    		throws Exception
     {
         HttpSession session = req.getSession();
         IdpConfig config = IdpConfig.getConfig();
         
-        String relyingParty = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        String relyingParty = getRelyingParty(req);
         
         FederationMember ip = config.getFederationMember();
         if (relyingParty != null) {
@@ -147,9 +167,6 @@ public class Autenticator {
         		return true;
         }
         
-        if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials())) {
-        	
-        }
         if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0 && req.getCookies() != null)
         {
         	for (Cookie c: req.getCookies())
@@ -166,7 +183,7 @@ public class Autenticator {
     }
 
 	private boolean checkToken(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config,
-			TokenInfo ti) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException, ServletException {
+			TokenInfo ti) throws Exception {
 		if (ti == null)
 			return false;
 		String user = ti.getUser();
@@ -177,7 +194,7 @@ public class Autenticator {
 	}
 
 	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip) 
-			throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException, ServletException {
+			throws Exception {
 		String value = c.getValue();
 		FederationService fs = new RemoteServiceLocator().getFederacioService();
 		SamlValidationResults check = fs.validateSessionCookie(value);
@@ -236,65 +253,46 @@ public class Autenticator {
 		return check.isValid();
 	}
 
-	private boolean checkOwnCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip) throws InternalErrorException, IOException, NoSuchAlgorithmException,
-			UnsupportedEncodingException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException,
-			CertificateException, NoSuchProviderException, SignatureException, IllegalStateException, ServletException {
-		String value = c.getValue();
-		int separator = value.indexOf('_');
-		if (separator > 0)
-		{
-			String hash = value.substring(separator+1);
-			Long id = Long.decode(value.substring(0, separator));
-			for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
-			{
-//				LOG.info("Checking session cookie against session "+sessio.getId());
-				if (sessio != null && sessio.getType() == TipusSessio.WSSO) {
-					byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
-					String digestString = Base64.encodeBytes(digest);
-					if (digestString.equals(hash) &&
-							(ip.getSessionTimeout() == null || 
-							sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() > System.currentTimeMillis()))
+	private boolean checkOwnCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip) throws Exception {
+		Session session = getSession(req, false);
+		if (session != null) {
+			try {
+				ServerService svc = new RemoteServiceLocator().getServerService();
+				User u = svc.getUserInfo(session.getUserName(), null);
+				if (u != null && u.getActive().booleanValue())
+				{
+					for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
 					{
-						try {
-							
-							ServerService svc = new RemoteServiceLocator().getServerService();
-							User u = svc.getUserInfo(sessio.getUserName(), null);
-							if (u != null && u.getActive().booleanValue())
+						if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials()))
+						{
+					        String entityId = (String) req.getSession()
+					        		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+							AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
+							if (authCtx == null)
 							{
-								for (UserAccount account: svc.getUserAccounts(u.getId(), config.getSystem().getName()))
-								{
-									if (Boolean.TRUE.equals(ip.getAlwaysAskForCredentials()))
-									{
-								        String entityId = (String) req.getSession()
-								        		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
-										AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
-										if (authCtx == null)
-										{
-											authCtx = new AuthenticationContext();
-											authCtx.setPublicId(entityId);
-											authCtx.initialize( req );
-										}
-										authCtx.setFirstFactor(null);
-										authCtx.setSecondFactor(null);
-										authCtx.setStep(0);
-										authCtx.setUser(account.getName());
-										authCtx.store(req);
-										return false;
-									}
-									else
-									{
-										autenticate2(account.getName(), ctx, req, resp,  
-												sessio.getAuthenticationMethod() == null ? "E" : sessio.getAuthenticationMethod(), 
-												true);
-						        		return true;
-									}
-								}
+								authCtx = new AuthenticationContext();
+								authCtx.setPublicId(entityId);
+								authCtx.initialize( req );
 							}
-						} catch (UnknownUserException e) {
-							e.printStackTrace();
+							authCtx.setFirstFactor(null);
+							authCtx.setSecondFactor(null);
+							authCtx.setStep(0);
+							authCtx.setUser(account.getName());
+							authCtx.store(req);
+							return false;
+						}
+						else
+						{
+					        req.getSession().setAttribute("$$soffid_session$$", session);
+							autenticate2(account.getName(), ctx, req, resp,  
+									session.getAuthenticationMethod() == null ? "E" : session.getAuthenticationMethod(), 
+									true);
+			        		return true;
 						}
 					}
-				}					
+				}
+			} catch (UnknownUserException e) {
+				e.printStackTrace();
 			}
 		}
 		return false;
@@ -351,11 +349,11 @@ public class Autenticator {
     	throw new InternalErrorException("Not authorized to log in");
     }
     
-	public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, ServletException {
+	public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws Exception {
     	autenticate2(user, ctx, req, resp, type, type, externalAuth);
     }
     
-    public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth) throws IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, ServletException {
+    public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth) throws Exception {
 
         LOG.info("Remote user identified as "+user+". returning control back to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -386,7 +384,7 @@ public class Autenticator {
 			}
 		}
 		
-		final String soffidSession = generateSession2(req, resp, user, type, externalAuth);
+
 		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
 				req.getAttribute(
@@ -394,6 +392,7 @@ public class Autenticator {
         LOG.info("Session type " + session.getAttribute("soffid-session-type")); //$NON-NLS-1$ //$NON-NLS-2$
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, null);
         	LogRecorder.getInstance().addSuccessLogEntry("SAML", user, actualType, entityId, req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	
@@ -431,12 +430,16 @@ public class Autenticator {
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
         	LOG.info("Generating openid response");
-        	AuthorizationResponse.generateResponse(ctx, req, resp, type);
+        	String sessionHash = generateRandomSessionId();
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash);
+        	AuthorizationResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else if ("cas".equals(session.getAttribute("soffid-session-type")))
         {
         	LOG.info("Generating openid response");
-        	LoginResponse.generateResponse(ctx, req, resp, type);
+        	String sessionHash = generateRandomSessionId();
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash);
+        	LoginResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else
         {
@@ -449,6 +452,33 @@ public class Autenticator {
         }
     }
 
+    static SecureRandom secureRandom = new SecureRandom();
+    public String generateRandomSessionId() {
+    	byte b[] = new byte[24];
+    	secureRandom.nextBytes(b);
+		return Base64.encodeBytes(b, Base64.DONT_BREAK_LINES);
+	}
+
+	public String getRelyingParty (HttpServletRequest request) {
+    	HttpSession session = request.getSession();
+        if ("saml".equals(session.getAttribute("soffid-session-type")))
+        {
+        	return (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        } 
+        else if ("openid".equals(session.getAttribute("soffid-session-type")))
+        {
+    		OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
+    		if (r != null)
+    			return r.getFederationMember().getPublicId();
+        }
+        else if ("cas".equals(session.getAttribute("soffid-session-type")))
+        {
+    		OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
+    		if (r != null)
+    			return r.getFederationMember().getPublicId();
+        }
+        return null;
+    }
 
     public boolean hasKerberosCookie (HttpServletRequest req) throws IOException
     {
@@ -492,33 +522,6 @@ public class Autenticator {
     		return false;
     }
     
-	public void notifyLogout(edu.internet2.middleware.shibboleth.idp.session.Session indexedSession) throws NumberFormatException, InternalErrorException, IOException {
-		Subject s = indexedSession.getSubject();
-		if (s != null)
-		{
-			for ( SessionPrincipal sp: s.getPrincipals(SessionPrincipal.class))
-			{
-				if (sp.getName() != null) {
-					lastLogout.put(sp.getName(), System.currentTimeMillis());
-				}
-		        if (sp.getSessionString() != null)
-		        {
-			        String[] split = sp.getSessionString().split("\\|");
-					if (split.length > 2)
-					{
-						String sessionid = split[0];
-						String sessionKey = split[1];
-						SessionService ss = new RemoteServiceLocator().getSessionService();
-						Session soffidSession = ss
-								.getSession(Long.decode(sessionid), sessionKey);
-						if (ss != null && soffidSession != null)
-							ss.destroySession(soffidSession);
-					}
-		        }
-			}
-		}
-	}
-	
 	public String toSamlAuthenticationMethod (String method)
 	{
 		if (method == null)
@@ -584,7 +587,7 @@ public class Autenticator {
 			return Arrays.asList(values);
 	}
 
-	public Session generateOpenidSession(HttpSession httpSession, String userName, String authenticationType, boolean externalAuth) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	public Session generateImpersonatedSession(HttpSession httpSession, String userName, String authenticationType, boolean externalAuth) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         
         IdpConfig config = IdpConfig.getConfig();
@@ -605,7 +608,9 @@ public class Autenticator {
         return sessio;
 	}
 
-	public Cookie getSessionCookie(TokenInfo token, Session session) throws InternalErrorException, UnknownUserException, NoSuchAlgorithmException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+	public Cookie generateSessionCookie(TokenInfo token, Session session) 
+			throws InternalErrorException, UnknownUserException, NoSuchAlgorithmException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException 
+	{
         IdpConfig config = IdpConfig.getConfig();
 
         FederationMember federationMember = token.getRequest().getFederationMember();
@@ -631,4 +636,53 @@ public class Autenticator {
         }
 	}
 	
+	public Session getSession (HttpServletRequest request, boolean useCache) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+        HttpSession s = request.getSession();
+        Session session = (Session) s.getAttribute("$$soffid_session$$");
+        if (useCache && session != null)
+        	return session;
+        
+        IdpConfig config = IdpConfig.getConfig();
+        FederationMember ip = config.getFederationMember();
+        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0 && request.getCookies() != null)
+        {
+        	for (Cookie c: request.getCookies())
+        	{
+        		if (c.getName().equals(ip.getSsoCookieName()))
+        		{
+        			String value = c.getValue();
+        			if (! value.contains(":")) {
+        				return fetchSessionFromIdpCookie(value);
+        			}
+        		}
+        	}
+        }
+        return null;
+	}
+
+	private Session fetchSessionFromIdpCookie(String value) throws NoSuchAlgorithmException, UnsupportedEncodingException, InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		int separator = value.indexOf('_');
+		if (separator > 0)
+		{
+			FederationMember ip = IdpConfig.getConfig().getFederationMember();
+			
+			String hash = value.substring(separator+1);
+			Long id = Long.decode(value.substring(0, separator));
+			for (Session sessio: new RemoteServiceLocator().getSessionService().getActiveSessions(id))
+			{
+				if (sessio != null && sessio.getType() == TipusSessio.WSSO) {
+					byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
+					String digestString = Base64.encodeBytes(digest);
+					if (digestString.equals(hash) &&
+							(ip.getSessionTimeout() == null || 
+							sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() * 1000 > System.currentTimeMillis()))
+					{
+						return sessio;
+					}
+				}					
+			}
+		}
+		return null;
+	}
+
 }

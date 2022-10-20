@@ -97,7 +97,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 			throws ServletException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
 		String user = (String) req.getSession().getAttribute(SessionConstants.SEU_USER);
 		if ("none".equals(req.getParameter("prompt")) && user != null) {
-			AuthorizationResponse.generateResponse(getServletContext(), req, resp, "P");
+			AuthorizationResponse.generateResponse(getServletContext(), req, resp, "P", null);
 			return;
 		} 
 		RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);
@@ -176,10 +176,10 @@ public class AuthorizationEndpoint extends HttpServlet {
     	}
     	boolean ok = false;
     	for (String url: r.getFederationMember().getOpenidUrl()) {
-    		if (r.getRedirectUrl().equals(url) ||
-    			r.getRedirectUrl().startsWith(url+"?")) {
+    		if (r.getRedirectUrl().equals(url) || r.getRedirectUrl().startsWith(url+"?")) 
     			ok = true;
-    		}
+    		if (url.endsWith("*") && r.getRedirectUrl().startsWith(url.substring(0, url.length()-1))) 
+    			ok = true;
     	}
     	if (!ok) {
     		generateError(r, "invalid_request", "The requested return URL is not accepted "+r.getRedirectUrl(), resp);

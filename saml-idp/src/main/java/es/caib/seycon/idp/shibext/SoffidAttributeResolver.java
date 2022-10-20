@@ -261,6 +261,7 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
         ObjectTranslator translator = new ObjectTranslator(c.getSystem(), server, new LinkedList<ExtensibleObjectMapping>());
         
 
+        eo.setAttribute("ctx", ctx);
 		for ( Attribute attribute: attributes)
         {
   			if (attribute.getValue() != null && !attribute.getValue().isEmpty())

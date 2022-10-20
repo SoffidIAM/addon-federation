@@ -17,9 +17,13 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.Session;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.LogoutHandler;
+import es.caib.seycon.idp.server.LogoutResponse;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
@@ -40,15 +44,26 @@ public class LogoutEndpoint extends HttpServlet {
 		String postLogoutRedirectUri = req.getParameter("post_logout_redirect_uri");
 		String state = req.getParameter("state");
 		try {
-			doLogout(req, resp);
-			req.getSession().invalidate();
-			
 			IdpConfig config = IdpConfig.getConfig();
-		
+
+			LogoutResponse response = null;
+			
+			// Identify the response URL
+			String logoutUrl = LogoutServlet.URI;
+			if (tokenHint != null) {
+				TokenHandler th = new TokenHandler();
+				TokenInfo t = th.getToken(tokenHint);
+				if (t != null) {
+					new TokenHandler().revoke(getServletContext(), req, t);
+					if (clientId == null) {
+						clientId = t.getRequest().getFederationMember().getOpenidClientId();
+					}
+				}
+			}
 			if (clientId != null && postLogoutRedirectUri != null) {
 				FederationMember fm = new RemoteServiceLocator().getFederacioService().findFederationMemberByClientID(clientId);
 				if (fm != null) {
-					if (fm.getOpenidLogoutUrl().contains(postLogoutRedirectUri)); {
+					if (validateResponseUrl(postLogoutRedirectUri, fm)) {
 						if (state != null) {
 							if (postLogoutRedirectUri.contains("?"))
 								postLogoutRedirectUri += "&state=";
@@ -56,15 +71,21 @@ public class LogoutEndpoint extends HttpServlet {
 								postLogoutRedirectUri += "?state=";
 							postLogoutRedirectUri += URLEncoder.encode(state, "UTF-8");
 						}
-						resp.sendRedirect(postLogoutRedirectUri);
-						return;
+						logoutUrl = postLogoutRedirectUri;
 					}
 				}
-			} else if (postLogoutRedirectUri != null) {
-				resp.sendRedirect(postLogoutRedirectUri);
-				return;
 			}
-			resp.sendRedirect(LogoutServlet.URI);
+			
+			Session session = new Autenticator().getSession(req, false);
+			if (session != null)
+				response = new LogoutHandler().logout(getServletContext(), req, session, true);
+			if (response != null && response.getFrontRequests().isEmpty()) {
+				resp.sendRedirect(logoutUrl);
+			} else {
+				if (! logoutUrl.equals(LogoutServlet.URI))
+					req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
+				resp.sendRedirect(LogoutServlet.URI);
+			}
 	    	
 		} catch (Exception e) {
 			throw new ServletException("Error parsing request paramenters", e);
@@ -72,46 +93,15 @@ public class LogoutEndpoint extends HttpServlet {
     	
 	}
 
-	private void doLogout(HttpServletRequest req, HttpServletResponse resp) {
-		HttpSession session = req.getSession(false);
-    	if (session != null) 
-    	{
-            try 
-            {
-            	session.removeAttribute("Soffid-Authentication-Context");
-
-				IdpConfig config = IdpConfig.getConfig();
-				
-				String relyingParty = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
-				
-				FederationMember ip = null;
-				if (relyingParty != null)
-				{
-					ip = config.findIdentityProviderForRelyingParty(relyingParty);
-				} 
-				if (ip == null)
-					ip = config.getFederationMember();
-				
-			    if (ip != null) {
-			        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0)
-			        {
-			        	for (Cookie c: req.getCookies())
-			        	{
-			        		if (c.getName().equals(ip.getSsoCookieName()))
-			        		{
-			        			new RemoteServiceLocator()
-			        				.getFederacioService()
-			        				.expireSessionCookie(c.getValue());
-			        		}
-			        	}
-			        }
-			    }
-			} catch (Exception e) {
-				LogFactory.getLog(LogoutServlet.class).warn("Error expiring session", e);
-			}		
-        
-    		session.invalidate();
-    	}
+	private boolean validateResponseUrl(String postLogoutRedirectUri, FederationMember fm) {
+		boolean ok = false;
+		for (String url: fm.getOpenidLogoutUrl()) {
+    		if (postLogoutRedirectUri.equals(url) || postLogoutRedirectUri.startsWith(url+"?")) 
+    			ok = true;
+    		if (url.endsWith("*") && postLogoutRedirectUri.startsWith(url.substring(0, url.length()-1))) 
+    			ok = true;
+		}
+		return ok;
 	}
 
 }

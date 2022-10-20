@@ -52,7 +52,8 @@ public class LoginServlet extends LangSupportServlet {
     			authCtx.updateAllowedAuthenticationMethods();
    				authCtx.setSamlRequestedAuthenticationMethod(null);
     				
-				if (!authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req))
+				if (!authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req) &&
+						auth.getSession(req, false) != null)
 				{
 					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false);
 					return;
