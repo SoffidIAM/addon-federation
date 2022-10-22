@@ -6,6 +6,7 @@
 package com.soffid.iam.addons.federation.model;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,6 +15,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.hibernate.HibernateException;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
@@ -24,6 +27,8 @@ import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.model.GroupEntity;
 import com.soffid.iam.model.UserTypeEntity;
+
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 /**
  * @see com.soffid.iam.addons.federation.model.FederationMemberEntity
@@ -59,7 +64,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			EntityGroup eg = getEntityGroupEntityDao().toEntityGroup(source.getEntityGroup());
 			target.setEntityGroup(eg);
 		}
-
+		
 		target.setPublicKey(source.getPublicKey());
 		target.setPrivateKey(source.getPrivateKey());
 		target.setCertificateChain(source.getCertificateChain());
@@ -131,6 +136,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			
 			generateRegisterValues(target, idp);
 			loadAuthenticatioMethods (idp, target);
+			
+			target.setHtmlCSS(getBlob(idp, "css"));
+			target.setHtmlFooter(getBlob(idp, "footer"));
+			target.setHtmlHeader(getBlob(idp, "header"));
 
 		} else if (source instanceof VirtualIdentityProviderEntity) {
 			target.setClasse("V"); //$NON-NLS-1$
@@ -254,6 +263,17 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 							((VirtualIdentityProviderEntity) source).getKeytabs()));
 		}
 
+	}
+
+	private String getBlob(IdentityProviderEntity idp, String tag) {
+		try {
+			byte[] data;
+			data = getConfigurationService().getBlob("federation/"+idp.getId()+"/"+tag);
+			if (data == null) return null;
+			else return new String(data, StandardCharsets.UTF_8);
+		} catch (InternalErrorException e) {
+			throw new HibernateException("Error fetching data", e);
+		}
 	}
 
 	private void loadScopes(ServiceProviderEntity sp, FederationMember target) {

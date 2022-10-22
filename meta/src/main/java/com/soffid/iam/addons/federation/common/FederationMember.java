@@ -254,4 +254,17 @@ public class FederationMember {
 	@Description("List of oauth scopes for this service provider")
 	@Attribute(defaultValue="new java.util.LinkedList()")
 	public List<AllowedScope> allowedScopes;
+	
+	@Nullable
+	@Description("HTML header for identity provider")
+	public String htmlHeader;
+	
+	@Nullable
+	@Description("HTML footer for identity provider")
+	public String htmlFooter;
+	
+	@Nullable
+	@Description("HTML CSS for identity provider")
+	public String htmlCSS;
+	
 }

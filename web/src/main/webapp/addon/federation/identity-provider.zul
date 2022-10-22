@@ -302,6 +302,28 @@
 		
 	</div>
 
+	<div sclass="section" id="uiSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.lookandfeel') }" />
+		<customfield3 
+			label="${c:l('federacio.htmlCSS')}"
+			dataType="STRING"
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/htmlCSS"/>
+		<customfield3 
+			label="${c:l('federacio.htmlHeader')}"
+			dataType="STRING"
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/htmlHeader"/>
+		<customfield3 
+			label="${c:l('federacio.htmlFooter')}"
+			dataType="STRING"
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/htmlFooter"/>
+	</div>
+
 	<div id="serviceProvidersSection" sclass="section">
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.ServiceProviders') }" />
 		<div sclass="databox">

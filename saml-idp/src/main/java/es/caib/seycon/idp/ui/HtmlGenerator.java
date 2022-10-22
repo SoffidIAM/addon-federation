@@ -91,6 +91,8 @@ public class HtmlGenerator {
                 Integer.toString(idpConfig.getClientCertPort()));
         internalParams.put("config.hostname", idpConfig.getHostName()); //$NON-NLS-1$
 
+        addCustomHtml(idpConfig);
+
         RelyingPartyConfigurationManager relyingPartyConfigurationManager = HttpServletHelper
                 .getRelyingPartyConfigurationManager(ctx);
         HttpSession session = request.getSession();
@@ -165,7 +167,35 @@ public class HtmlGenerator {
         internalParams.put("header", header); //$NON-NLS-1$
     }
 
-    private String selectLocalized(List<LocalizedString> names) {
+    private void addCustomHtml(IdpConfig idpConfig) 
+    {
+        FederationMember fm = idpConfig.getFederationMember();
+        if (fm != null && fm.getHtmlHeader() != null && ! fm.getHtmlHeader().trim().isEmpty()) {
+        	internalParams.put("htmlHeader", fm.getHtmlHeader());
+        } else {
+        	internalParams.put("htmlHeader", "	<div id=\"language\">\n"
+        			+ "		<ul class=\"qtrans_language_chooser\" id=\"qtranslate-chooser\">\n"
+        			+ "			<li class=\"lang-en ${lang.active.en}\"><a href=\"${refreshUrl}?lang=en\" hreflang=\"en\" title=\"English\"><span>English</span></a></li>\n"
+        			+ "			<li class=\"lang-es ${lang.active.es}\"><a href=\"${refreshUrl}?lang=es\" hreflang=\"es\" title=\"Español\"><span>Español</span></a></li>\n"
+        			+ "			<li class=\"lang-ca ${lang.active.ca}\"><a href=\"${refreshUrl}?lang=ca\" hreflang=\"ca\" title=\"Català\"><span>Català</span></a></li>\n"
+        			+ "		</ul>\n"
+        			+ "	</div>\n"
+        			+ "<p class='biglogo'><img src=\"/imgs/logo.png\"/></div>"
+        			+ "");
+        }
+        if (fm != null && fm.getHtmlFooter() != null && ! fm.getHtmlFooter().trim().isEmpty()) {
+        	internalParams.put("htmlFooter", fm.getHtmlFooter());
+        } else {
+        	internalParams.put("htmlFooter", "");
+        }
+        if (fm != null && fm.getHtmlCSS() != null && ! fm.getHtmlCSS().trim().isEmpty()) {
+        	internalParams.put("htmlCSS", fm.getHtmlCSS());
+        } else {
+        	internalParams.put("htmlCSS", "");
+        }
+	}
+
+	private String selectLocalized(List<LocalizedString> names) {
         String value = null;
         int priority = langs.size();
         for (LocalizedString name : names) {

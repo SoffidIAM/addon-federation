@@ -4,6 +4,8 @@
 <head>
 	
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge" >
 	<title>Soffid SAML Identity Provider</title>
 	
 	<!-- css -->
@@ -11,29 +13,22 @@
 	<style>
 		${raw:htmlCSS}
 	</style>
-	<!-- /css -->
+	<link href="https://www.soffid.com" rel="author" type="text/html" />
 	
-	<script src="/js/jquery-3.6.0.slim.min.js"></script>
-
 </head>
 
-<body>
+<body onLoad="">
 
 	${raw:htmlHeader}
 
 	<div class="login">
 		<p class="loginheader"><a href="https://www.soffid.com/"  target="_blank"><img src="/img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
 		<div class="loginbox"> 
-			<p class="header">${titlePasswordChange}</p>
-			<p/>
-			<p >${messagePasswordChanged}</p>
-			{if return}
-			<p><a href="${return}">${returnMessage}</a></p>
-			{endif}
+			<p>${Welcome} ${fullName}</p>
+			<p><a href="/logout.jsp">${Logout}</a></p>
 		</div>
 		<p/>
 	</div>
-
 	
 	${raw:htmlFooter}
 

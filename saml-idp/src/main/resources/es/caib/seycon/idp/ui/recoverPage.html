@@ -8,6 +8,9 @@
 	
 	<!-- css -->
 	<link href="estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
+	<style>
+		${raw:htmlCSS}
+	</style>
 	<!-- /css -->
 	
 	<script src="js/jquery-3.6.0.slim.min.js"></script>
@@ -15,23 +18,21 @@
 </head>
 
 <body>
-	<div id="language">
-		<ul class="qtrans_language_chooser" id="qtranslate-chooser">
-			<li class="lang-en ${lang.active.en}"><a href="${refreshUrl}?lang=en" hreflang="en" title="English"><span>English</span></a></li>
-			<li class="lang-es ${lang.active.es}"><a href="${refreshUrl}?lang=es" hreflang="es" title="Español"><span>Español</span></a></li>
-			<li class="lang-ca ${lang.active.ca}"><a href="${refreshUrl}?lang=ca" hreflang="ca" title="Català"><span>Català</span></a></li>
-		</ul>
-	</div>
-   		
+
+	${raw:htmlHeader}
+
 	<div class="login">
 		<div class="loginbox"> 
-		<p class="loginheader"><img src="img/logo.png" alt="Soffid logo" /> </p> 
+		<p class="loginheader"><a href="https://www.soffid.com/" target="_blank"><img src="img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
 			<p class="header">${titleRecover}</p>
 			<p/>
 			<p >${messageRecover}</p>
 		</div>
 		<p/>
 	</div>
+
+	
+	${raw:htmlFooter}
 
 </body>
 	

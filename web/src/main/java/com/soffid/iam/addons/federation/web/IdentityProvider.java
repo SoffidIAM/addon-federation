@@ -117,7 +117,8 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		getFellow("kerberosDiv").setVisible(marcat && !clazz.equals("V"));
 		getFellow("sessionSection").setVisible(marcat && !clazz.equals("V"));
 		getFellow("serviceProvidersSection").setVisible(clazz.equals("V"));
-
+		getFellow("uiSection").setVisible(marcat);
+		
 		if ( IdentityProviderType.FACEBOOK.equals( idpType ) )
 		{
 			getFellow("fed_ext_link").setVisible(true);

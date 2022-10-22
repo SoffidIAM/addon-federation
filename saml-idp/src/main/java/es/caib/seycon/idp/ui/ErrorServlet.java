@@ -33,12 +33,14 @@ public class ErrorServlet extends HttpServlet {
         if (error == null)
         {
 			Object e = req.getAttribute("javax.servlet.error.exception");
-			error = e.toString();
-			while (e != null && e instanceof Exception) {
-				Exception ex = (Exception) e;
-				error = e.getClass().getSimpleName()+": "+ ex.getMessage();
-				if (ex.getCause() == null || ex.getCause() == ex) break;
-				e = ex.getCause();
+			if (e != null) {
+				error = e.toString();
+				while (e != null && e instanceof Exception) {
+					Exception ex = (Exception) e;
+					error = e.getClass().getSimpleName()+": "+ ex.getMessage();
+					if (ex.getCause() == null || ex.getCause() == ex) break;
+					e = ex.getCause();
+				}
 			}
         }
         

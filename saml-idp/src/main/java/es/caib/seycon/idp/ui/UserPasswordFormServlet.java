@@ -112,6 +112,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("passwordLoginUrl", UserPasswordAction.URI); //$NON-NLS-1$
             g.addArgument("userUrl", UserAction.URI); //$NON-NLS-1$
             g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
+            g.addArgument("changeUserUrl", ChangeUserAction.URI); //$NON-NLS-1$
             g.addArgument("cancelUrl", CancelAction.URI); //$NON-NLS-1$
             g.addArgument("otpLoginUrl", OTPAction.URI); //$NON-NLS-1$
             g.addArgument("registerUrl", RegisterFormServlet.URI);

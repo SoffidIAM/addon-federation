@@ -10,6 +10,9 @@
 	
 	<!-- css -->
 	<link href="/estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
+	<style>
+		${raw:htmlCSS}
+	</style>
 	<!-- /css -->
 	
 	<script>
@@ -36,16 +39,11 @@
 
 <body onLoad="onLoad(); activateFingerprint();">
 
-	<div id="language">
-		<ul class="qtrans_language_chooser" id="qtranslate-chooser">
-			<li class="lang-en ${lang.active.en}"><a href="${refreshUrl}?lang=en" hreflang="en" title="English"><span>English</span></a></li>
-			<li class="lang-es ${lang.active.es}"><a href="${refreshUrl}?lang=es" hreflang="es" title="Español"><span>Español</span></a></li>
-			<li class="lang-ca ${lang.active.ca}"><a href="${refreshUrl}?lang=ca" hreflang="ca" title="Català"><span>Català</span></a></li>
-		</ul>
-	</div>
-   		
+
+	${raw:htmlHeader}
+
 	<div class="login">
-		<p class="loginheader"><img src="/img/logo.png" alt="Soffid logo" /> </p> 
+		<p class="loginheader"><a href="https://www.soffid.com/"  target="_blank"><img src="img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
 		<div class="loginbox"> 
 			<p class="header">${title}</p>
 			<div class="logintype2"  id ="passuser">
@@ -59,7 +57,7 @@
 					</span>
 				</div>
 				<div class="upbutton">
-					<a href="${cancelUrl}">${user.changeUser}</a>
+					<a href="${changeUserUrl}">${user.changeUser}</a>
 				</div>
 			</div>
 			<p/>
@@ -119,7 +117,7 @@
 				</div>
 			</div>
 			{if kerberosAllowed} 
-			<div class="logintype2"  id ="otplogin">
+			<div class="logintype2"  id ="kerberoslogin">
     			<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img>${Kerberos}</a>
 			</div>
 			<p/>
@@ -157,6 +155,10 @@
 		</div>
 		<p/>
 	</div>
+
+	
+	${raw:htmlFooter}
+
 
 	<div class="centered" style="visibility:hidden" id="progressdiv">
 		<img class="centeredimage" src="/img/progress.gif"/>

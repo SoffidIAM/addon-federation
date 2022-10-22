@@ -140,7 +140,7 @@ public class Autenticator {
         	append (certString).append("|").
         	append(serverConfig.getServerList());
         
-        setCookie2 (req, resp, sessio, user, type);
+        setCookie2 (req, resp, sessio, user, principal, type, externalAuth);
         return buffer.toString();
     }
     
@@ -300,7 +300,7 @@ public class Autenticator {
     
 
     private void setCookie2(HttpServletRequest req, HttpServletResponse resp,
-			Session sessio, User user, String type) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+			Session sessio, User user, String principal, String type, boolean externalAuth) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
         HttpSession session = req.getSession();
         IdpConfig config = IdpConfig.getConfig();
         
@@ -333,6 +333,16 @@ public class Autenticator {
             	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
             		cookie2.setDomain(ip.getSsoCookieDomain());
             	resp.addCookie(cookie2);
+        	}
+
+        	if (! externalAuth && ! type.startsWith("C") && ! type.startsWith("E")) {
+	        	Cookie cookieUser = new Cookie(ip.getSsoCookieName()+"_user", principal);
+	       		cookieUser.setMaxAge ( -1 );
+	        	cookieUser.setSecure(true);
+	        	cookieUser.setHttpOnly(true);
+	        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
+	        		cookieUser.setDomain(ip.getSsoCookieDomain());
+	        	resp.addCookie(cookieUser);
         	}
         }
 	}
@@ -443,6 +453,7 @@ public class Autenticator {
         }
         else
         {
+        	generateSession(req, resp, user, type, externalAuth, generateRandomSessionId());
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	        if (returnPath != null) 
 	        {

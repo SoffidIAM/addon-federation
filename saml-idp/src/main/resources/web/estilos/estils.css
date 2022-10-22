@@ -333,6 +333,7 @@ span.labeltextbox input {
 div.loginbox a {
 	text-decoration: none;	
 	color: black;
+	cursor: pointer;
 }
 
 div.loginbox2 a {
@@ -345,4 +346,16 @@ div.loginbox a:hover {
 }
 
 
+img.logo {
+	position: absolute;
+	right: 0px;
+	bottom: 0px;
+	width: 80px;
+}
 
+p.biglogo {
+	text-align:center;
+}
+p.biglogo img {
+	width: 200px; 
+}

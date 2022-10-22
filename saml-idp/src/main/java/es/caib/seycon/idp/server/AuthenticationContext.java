@@ -118,6 +118,17 @@ public class AuthenticationContext {
 		
 	}
 	
+	public String getUserCookieName () throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException 
+	{
+		IdpConfig config = IdpConfig.getConfig();
+    	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
+    	if (fm.getSsoCookieName() != null && ! fm.getSsoCookieName().trim().isEmpty())
+    		return fm.getSsoCookieName()+"_user";
+    	else
+    		return null;
+		
+	}
+
 	public void initialize (HttpServletRequest request) 
 		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
 	{
@@ -125,12 +136,17 @@ public class AuthenticationContext {
     	remoteIp = getClientRequest(request);
     	hostId = null;
     	String cookieName = getHostIdCookieName();
+    	String userCookie = getUserCookieName();
     	if (cookieName != null && request != null && request.getCookies() != null)
     	{
-			for (Cookie cookie: request.getCookies())
+			for (Cookie cookie: request.getCookies()) {
+				if (cookie.getName().equals(userCookie))
+					user = cookie.getValue();
     			if (cookie.getName().equals(cookieName))
     				hostId = cookie.getValue();
+			}
     	}
+    	
     	currentUser = null;
 
     	updateAllowedAuthenticationMethods();

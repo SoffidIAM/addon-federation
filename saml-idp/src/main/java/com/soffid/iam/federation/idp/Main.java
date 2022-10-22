@@ -86,6 +86,7 @@ import es.caib.seycon.idp.ui.ActivatedFormServlet;
 import es.caib.seycon.idp.ui.AuthenticatedFilter;
 import es.caib.seycon.idp.ui.CancelAction;
 import es.caib.seycon.idp.ui.CertificateAction;
+import es.caib.seycon.idp.ui.ChangeUserAction;
 import es.caib.seycon.idp.ui.ConsentAction;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.DefaultServlet;
@@ -110,9 +111,11 @@ import es.caib.seycon.idp.ui.PasswordRecoveryForm;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
+import es.caib.seycon.idp.ui.RootServlet;
 import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
 import es.caib.seycon.idp.ui.UserAction;
+import es.caib.seycon.idp.ui.UserInfoForm;
 import es.caib.seycon.idp.ui.UserPasswordAction;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.idp.ui.broker.QueryUserIdPServlet;
@@ -441,6 +444,7 @@ public class Main {
         	configureCasProfile(ctx, casProfile);
         }
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
+        ctx.addServlet(UserInfoForm.class, UserInfoForm.URI);
         ctx.addServlet(ConsentAction.class, ConsentAction.URI);
         ctx.addServlet(ConsentFormServlet.class, ConsentFormServlet.URI);
         ctx.addServlet(RegisterCredential.class, RegisterCredential.URI);
@@ -454,6 +458,7 @@ public class Main {
                 UserPasswordFormServlet.URI);
         ctx.addServlet(UserPasswordAction.class, UserPasswordAction.URI);
         ctx.addServlet(UserAction.class, UserAction.URI);
+        ctx.addServlet(ChangeUserAction.class, ChangeUserAction.URI);
         ctx.addServlet(OTPAction.class, OTPAction.URI);
         ctx.addServlet(PasswordChangeRequiredForm.class,
                 PasswordChangeRequiredForm.URI);

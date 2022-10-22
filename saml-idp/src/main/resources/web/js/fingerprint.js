@@ -145,7 +145,8 @@ function fingerprintSign() {
 	        validateCredential ( assertion );
 	    })
 	    .catch((err) => {
-	        alert("ERROR"+ err);
+	        alert("ERROR "+ err);
+			window.location.reload();
 	    });  
 	}
 }

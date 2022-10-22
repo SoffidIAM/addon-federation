@@ -11,6 +11,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -224,6 +225,9 @@ public class FederationServiceImpl
 			getFederationMemberEntityDao().create(entity);
 			String desc = federationMember.getPublicId()
 					+ (federationMember.getName() != null ? " - " + federationMember.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
+			if (entity instanceof IdentityProviderEntity) {
+				updateUi(entity, federationMember);
+			}
 			if (entity instanceof VirtualIdentityProviderEntity)
 			{
 				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
@@ -242,6 +246,21 @@ public class FederationServiceImpl
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToMakeFederationMember")); //$NON-NLS-1$
 	}
 
+
+	private void updateUi(FederationMemberEntity entity, FederationMember federationMember) throws InternalErrorException {
+		updateUi(entity.getId(), "css", federationMember.getHtmlCSS());
+		updateUi(entity.getId(), "header", federationMember.getHtmlHeader());
+		updateUi(entity.getId(), "footer", federationMember.getHtmlFooter());
+	}
+
+	private void updateUi(Long id, String tag, String value) throws InternalErrorException {
+		String name = "federation/"+id+"/"+tag;
+		if (value == null || value.trim().isEmpty()) {
+			getConfigurationService().deleteBlob(name);
+		} else {
+			getConfigurationService().updateBlob(name, value.getBytes(StandardCharsets.UTF_8));
+		}
+	}
 
 	private void updateImpersonations(ServiceProviderEntity entity, FederationMember federationMember) {
 		LinkedList<String> l = new LinkedList<String>(federationMember.getImpersonations());
@@ -440,6 +459,7 @@ public class FederationServiceImpl
 				updateKeytabs (idp, federationMember);
 				idp.setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) idp, federationMember);
+				updateUi(entity, federationMember);
 				getIdentityProviderEntityDao().update(idp);
 				String desc = idp.getPublicId() + (idp.getName() != null ? " - " + idp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
