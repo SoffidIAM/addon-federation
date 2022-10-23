@@ -34,6 +34,9 @@
 
 	<script src="/js/jquery-3.6.0.slim.min.js"></script>
 	<script src="/js/fingerprint.js"></script>
+	{if enableCaptcha} 
+		<script src="https://www.google.com/recaptcha/api.js?render=${captchaKey}"></script>
+	{endif}
 
 </head>
 
@@ -63,13 +66,14 @@
 			<p/>
 			{if passwordAllowed} 
 			<div class="logintype2"  id ="passlogin">
-				<form method="post" action="${passwordLoginUrl}">
+				<form class="captcha-form" method="post" action="${passwordLoginUrl}">
 					<div class="upinput">
 						<span class="labeltextbox">
 							${Password}:
 							<input autofocus name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
 						</span>
 					</div>
+					<input name="captchaToken" class="captcha-token" type="hidden" />
 					<div class="upbutton">
 						<input id="loginpassbutton" name="formUCboton" type="submit" value="${Login}" />
 					</div>
@@ -79,13 +83,14 @@
 			{endif}
 			{if otpAllowed} 
 			<div class="logintype2"  id ="otplogin">
-				<form method="post" action="${otpLoginUrl}">
+				<form class="captcha-form" method="post" action="${otpLoginUrl}">
 					<div class="otpinput">
 						<span class="labeltextbox">
 							${OTPPin} ${otpToken}:
 							<input autofocus name="j_password" id="j_password" type="password" autocomplete="off" style="width: 8em")/>
 						</span>
 					</div>
+					<input name="captchaToken" class="captcha-token" type="hidden" />
 					<div class="upbutton">
 						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
 					</div>
@@ -164,6 +169,27 @@
 		<img class="centeredimage" src="/img/progress.gif"/>
 	</div>
 			<script>
+			{if enableCaptcha}
+			$("form.captcha-form").submit(function(event) {
+				var currentForm = event.target;
+				var ok = true;
+				$("input.captcha-token").each( function(pos, el) {
+					if (el.value == null || el.value == "") ok = false;			
+				});
+				if (!ok) {
+		          event.preventDefault();
+		          grecaptcha.ready(function() {
+		            grecaptcha.execute('${captchaKey}', {action: 'submit'}).then(function(token) {
+						$("input.captcha-token").each( function(pos, el) {
+							el.value = token;			
+						});
+						currentForm.submit();
+		            });
+		          });
+					
+				}
+			});
+			{endif}
 			  $("#logincertbutton").click(function () {
 				  $("#progressdiv").css("visibility", "visible");
 				  $("#registerlogin").fadeOut("slow");

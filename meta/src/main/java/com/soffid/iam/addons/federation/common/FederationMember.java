@@ -267,4 +267,23 @@ public class FederationMember {
 	@Description("HTML CSS for identity provider")
 	public String htmlCSS;
 	
+	@Nullable
+	@Description("Enable reCaptcha v3")
+	public java.lang.Boolean enableCaptcha;
+
+	@Nullable
+	@Description("Recaptcha site key")
+	public java.lang.String captchaKey;
+
+	@Nullable
+	@Description("Recaptcha site secret")
+	public Password captchaSecret;
+
+	@Nullable
+	@Description("Recaptcha acceptance threshold")
+	public java.lang.Double captchaThreshold;
+
+	@Nullable
+	@Description("Store user name in browser cookie")
+	public java.lang.Boolean storeUser;
 }

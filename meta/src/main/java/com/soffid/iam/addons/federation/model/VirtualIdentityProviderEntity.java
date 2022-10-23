@@ -90,5 +90,9 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public String loginHintScript;
 
+	@Column (name="FED_STOUSE")
+	@Nullable
+	@Description("Store user name in browser cookie")
+	public java.lang.Boolean storeUser;
 }
 

@@ -61,6 +61,10 @@
 
 	<script src="/js/jquery-3.6.0.slim.min.js"></script>
 	<script src="/js/fingerprint.js"></script>
+	{if enableCaptcha} 
+		<script src="https://www.google.com/recaptcha/api.js?render=${captchaKey}"></script>
+	{endif}
+
 
 </head>
 

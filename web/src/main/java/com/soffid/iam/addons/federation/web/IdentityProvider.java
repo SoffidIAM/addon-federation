@@ -113,6 +113,12 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		getFellow("certificateSection").setVisible(marcat || clazz.equals("V"));
 		getFellow("provisionSection").setVisible(!marcat  && !clazz.equals("V"));
 		getFellow("advancedSection").setVisible(marcat || clazz.equals("V"));
+		{
+			getFellow("enableCaptcha").setVisible(marcat);
+			getFellow("captchaKey").setVisible(marcat);
+			getFellow("captchaSecret").setVisible(marcat);
+			getFellow("captchaThreshold").setVisible(marcat);
+		}
 		getFellow("authenticationSection").setVisible(marcat || clazz.equals("V"));
 		getFellow("kerberosDiv").setVisible(marcat && !clazz.equals("V"));
 		getFellow("sessionSection").setVisible(marcat && !clazz.equals("V"));
@@ -175,6 +181,7 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		getFellow("profilesSection").setVisible(
 				IdentityProviderType.SOFFID.equals( idpType ) || "V".equals(clazz));
 		serviceProviderSelect(null);
+		onEnableCaptcha(null);
 	}	
 
 	public void onChangePublicId(Event event) {
@@ -687,4 +694,10 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		
 	}
 
+	public void onEnableCaptcha(Event ev) {
+		boolean enable = Boolean.TRUE.equals(XPathUtils.eval(this, "/federationMember/enableCaptcha"));
+		getFellow("captchaKey").setVisible(enable);
+		getFellow("captchaSecret").setVisible(enable);
+		getFellow("captchaThreshold").setVisible(enable);
+	}
 }

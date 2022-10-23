@@ -280,6 +280,35 @@
 			id="registerExternalCheckbox" bind="/federationMember/registerExternalIdentities" 
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 
+		<customfield3 label="${c:l('federacio.zul.storeUser')}"
+			dataType="BOOLEAN"
+			id="storeUserCheckbox" bind="/federationMember/storeUser" 
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+		<customfield3 label="${c:l('federacio.zul.enableCaptcha')}"
+			dataType="BOOLEAN"
+			id="enableCaptcha" bind="/federationMember/enableCaptcha" 
+			onChange="ref:handler.onEnableCaptcha"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+		<customfield3 label="${c:l('federacio.zul.captchaKey')}"
+			dataType="STRING"
+			id="captchaKey" bind="/federationMember/captchaKey" 
+			uiHandler="com.soffid.iam.addons.federation.web.CaptchaKeyHandler"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+		<customfield3 label="${c:l('federacio.zul.captchaSecret')}"
+			dataType="PASSWORD"
+			id="captchaSecret" bind="/federationMember/captchaSecret" 
+			uiHandler="com.soffid.iam.addons.federation.web.CaptchaSecretHandler"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+		<customfield3 label="${c:l('federacio.zul.captchaThreshold')}"
+			dataType="NUMBER"
+			placeholder="${c:l('federacio.zul.captchaThresholdHint') }"
+			id="captchaThreshold" bind="/federationMember/captchaThreshold" 
+			uiHandler="com.soffid.iam.addons.federation.web.CaptchaThresholdHandler"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 
 	</div>
 
@@ -577,12 +606,11 @@
 							</grid>
 						</div>
 						<div style="text-align: right">
-							<imageclic src="/img/move-up.svg" width="24px" onClick="ref:handler.adaptativeUp">
-							</imageclic>
-							<imageclic src="/img/trash.svg"  width="24px" onClick="ref:handler.adaptativeRemove">
-							</imageclic>
-							<imageclic src="/img/move-down.svg"  width="24px" onClick="ref:handler.adaptativeDown">
-							</imageclic>
+							<div width="25px">
+								<imageclic src="/img/move-up.svg" style="width:24px; display:block" onClick="ref:handler.adaptativeUp"/>
+								<imageclic src="/img/trash.svg" style="width:24px; display:block"  onClick="ref:handler.adaptativeRemove"/>
+								<imageclic src="/img/move-down.svg" style="width:24px; display:block"  onClick="ref:handler.adaptativeDown"/>
+							</div>
 						</div>
 					</hbox>
 				</div>
