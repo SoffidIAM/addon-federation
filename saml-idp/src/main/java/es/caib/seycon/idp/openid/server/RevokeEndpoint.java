@@ -2,6 +2,7 @@ package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -15,6 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.Password;
 
@@ -57,26 +59,22 @@ public class RevokeEndpoint extends HttpServlet {
 			
 			if ( t != null) {
 				FederationMember sp = t.getRequest().getFederationMember();
-				Password pass = Password.decode(sp.getOpenidSecret());
+				Digest pass = sp.getOpenidSecret();
 				
-				if (pass == null || pass.getPassword().isEmpty()) {
+				if (pass == null) {
 					if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())) {
 						buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 						return;
 					}
 				} 
 				else if (clientId != null && clientSecret != null) {
-					if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())
-							|| !clientSecret.equals(pass.getPassword())) {
+					if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId()) ||
+						!pass.validate(clientSecret)) {
 						buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 						return;
 					}
 				} else {
-					String expectedAuth = t.getRequest().getFederationMember().getOpenidClientId() + ":"
-							+ pass.getPassword();
-
-					expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-					if (!expectedAuth.equals(authentication)) {
+					if (! validAuthentication (authentication, t.getRequest().getFederationMember())) {
 						buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 						return;
 					}
@@ -89,6 +87,20 @@ public class RevokeEndpoint extends HttpServlet {
 		} catch (Exception e) {
 			buildError (resp, e.toString());
 		}
+	}
+
+	private boolean validAuthentication(String authentication, FederationMember federationMember) {
+		if (!authentication.toLowerCase().startsWith("basic "))
+			return false;
+		
+		String rest = new String (java.util.Base64.getDecoder().decode(authentication.substring(6)), StandardCharsets.UTF_8);
+		
+		if ( ! rest.startsWith(federationMember.getOpenidClientId()+":"))
+			return false;
+		
+		rest = rest.substring(federationMember.getOpenidClientId().length()+1);
+		
+		return federationMember.getOpenidSecret().validate(rest);
 	}
 
 	private void buildError(HttpServletResponse resp, String string) throws IOException, ServletException {

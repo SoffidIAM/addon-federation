@@ -1,17 +1,29 @@
 package com.soffid.iam.addons.federation.web;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.ejb.CreateException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 import org.zkoss.util.media.Media;
@@ -27,6 +39,7 @@ import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Window;
 
 import com.soffid.iam.EJBLocator;
+import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
@@ -40,7 +53,9 @@ import com.soffid.iam.web.component.InputField3;
 import com.soffid.iam.web.component.ObjectAttributesDiv;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.signatura.utils.Base64;
 import es.caib.zkib.component.DataTable;
+import es.caib.zkib.component.Databox;
 import es.caib.zkib.component.Form2;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.datamodel.DataNode;
@@ -72,11 +87,13 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		ServiceProviderType spType = (ServiceProviderType) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember/serviceProviderType");
 		getFellow("networkSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		getFellow("certificateSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
-		getFellow("openidSection").setVisible(spType == ServiceProviderType.OPENID_CONNECT);
+		getFellow("openidSection").setVisible(spType == ServiceProviderType.OPENID_CONNECT || spType == ServiceProviderType.OPENID_REGISTER);
 		getFellow("casSection").setVisible(spType == ServiceProviderType.CAS);
 		getFellow("configurationSection").setVisible( spType != ServiceProviderType.OPENID_CONNECT &&
-				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS);
+				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS  &
+				spType != ServiceProviderType.OPENID_REGISTER);
 		getFellow("radiusSection").setVisible(spType == ServiceProviderType.RADIUS);
+		getFellow("tokenSection").setVisible(spType == ServiceProviderType.OPENID_REGISTER);
 		
 //		((CustomField3)getFellow("organization")).setVisible(ServiceProviderType.OPENID_CONNECT != spType);
 //		((CustomField3)getFellow("organization")).setReadonly(ServiceProviderType.SOFFID_SAML != spType);
@@ -84,15 +101,133 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 //		((CustomField3)getFellow("contact")).setReadonly(ServiceProviderType.SOFFID_SAML != spType);
 		
 		((CustomField3)getFellow("metadades")).setVisible(spType != ServiceProviderType.OPENID_CONNECT &&
-				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS);
+				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS &&
+				spType != ServiceProviderType.OPENID_REGISTER);
 		((CustomField3)getFellow("metadades")).setDisabled(spType != ServiceProviderType.SAML);
 //		((CustomField3)getFellow("oauthKey")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
 //		((CustomField3)getFellow("oauthSecret")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
 		((CustomField3)getFellow("contact")).setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		((CustomField3)getFellow("organization")).setVisible(spType == ServiceProviderType.SOFFID_SAML);
-		((CustomField3)getFellow("impersonations")).setVisible(spType != ServiceProviderType.RADIUS);
+		((CustomField3)getFellow("impersonations")).setVisible(spType != ServiceProviderType.RADIUS && spType != ServiceProviderType.OPENID_REGISTER);
 		((CustomField3)getFellow("consent")).setVisible(spType != ServiceProviderType.RADIUS);
+		
+		((CustomField3)getFellow("openidClientId")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		(getFellow("openidSecretDiv")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		((CustomField3)getFellow("openidUrl")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		((CustomField3)getFellow("openidLogoutUrl")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		((CustomField3)getFellow("openidLogoutUrlFront")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		((CustomField3)getFellow("openidLogoutUrlBack")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		((CustomField3)getFellow("oauthSessionTimeout")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		((CustomField3)getFellow("openidLogoutUrl")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		// Dynamic regitration
+		if ( spType == ServiceProviderType.OPENID_REGISTER) {
+			Digest p = (Digest) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember/registrationToken");
+
+			final InputField3 token = (InputField3) getFellow("registrationToken");
+			token.setValue(p == null? "": "****");
+			getFellow("registrationTokenExpiration").setVisible(p != null);
+		}
+		Digest d = (Digest) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember/openidSecret");
+		final InputField3 secret = (InputField3) getFellow("openidSecret");
+		secret.setValue(d == null ? "": "****");
 	}	
+
+	public void clearOpenidSecret(Event ev) throws NoSuchAlgorithmException {
+		Digest secret = (Digest) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember/openidSecret");
+		if (secret != null) {
+			Missatgebox.confirmaYES_NO(Labels.getLabel("federacio.zul.confirmEmptySecret"), (ev2) -> {
+				if (ev2.getName().equals("onYes")) {
+					es.caib.zkib.datasource.XPathUtils.setValue(this, "/federationMember/openidSecret", null);
+					final InputField3 token = (InputField3) getFellow("openidSecret");
+					token.setValue("");
+				}
+			});
+		}
+	}
+	
+	public void generateOpenidSecret(Event ev) throws NoSuchAlgorithmException {
+		Digest secret = (Digest) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember/openidSecret");
+		if (secret == null)
+			generateNewSecret();
+		else 
+			Missatgebox.confirmaYES_NO(Labels.getLabel("federacio.zul.confirmNewSecret"), (ev2) -> {
+				if (ev2.getName().equals("onYes")) {
+					generateNewSecret();
+				}
+			});
+	}
+	
+	private void generateNewSecret() throws NoSuchAlgorithmException {
+		byte b[] = new byte[36];
+		new SecureRandom().nextBytes(b);
+		String sb = Base64.encodeBytes(b, Base64.DONT_BREAK_LINES);
+		
+		es.caib.zkib.datasource.XPathUtils.setValue(this, 
+				"/federationMember/openidSecret",
+				new Digest(sb));
+		final InputField3 token = (InputField3) getFellow("openidSecret");
+		token.setValue(sb);
+	}
+
+	public void generateToken(Event ev) throws NoSuchAlgorithmException {
+		Long id = (Long) XPathUtils.eval(this, "federationMember/id");
+		Date expiration = (Date) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember/registrationTokenExpiration");
+		if (id == null) {
+			Missatgebox.confirmaYES_NO(Labels.getLabel("aplica_usuarisRolllista.zul.Confirm"), (ev2) -> {
+				if (ev2.getName().equals("onYes")) {
+					
+					if (getFrame().applyNoClose(ev)) {
+		 				Calendar c = Calendar.getInstance();
+						c.add(Calendar.YEAR, 1);
+						es.caib.zkib.datasource.XPathUtils.setValue(this, 
+								"/federationMember/registrationTokenExpiration",
+								c.getTime());
+						getFellow("registrationTokenExpiration").setVisible(true);
+						generateNewToken();
+					}
+				}
+			});
+		} else  if (expiration != null && expiration.after(new Date())) {
+			Missatgebox.confirmaYES_NO(Labels.getLabel("federacio.zul.confirmNewToken"), (ev2) -> {
+				if (ev2.getName().equals("onYes")) {
+	 				Calendar c = Calendar.getInstance();
+					c.add(Calendar.YEAR, 1);
+					es.caib.zkib.datasource.XPathUtils.setValue(this, 
+							"/federationMember/registrationTokenExpiration",
+							c.getTime());
+					getFellow("registrationTokenExpiration").setVisible(true);
+					generateNewToken();
+				}
+			});
+		} else {
+			generateNewToken();
+		}
+		
+	}
+	
+	private void generateNewToken() throws NoSuchAlgorithmException {
+		byte b[] = new byte[36];
+		new SecureRandom().nextBytes(b);
+	
+		Long id = (Long) XPathUtils.eval(this, "federationMember/id");
+		
+		String s = encodeId(id) +
+				"."+Base64.encodeBytes(b);
+
+		es.caib.zkib.datasource.XPathUtils.setValue(this, 
+				"/federationMember/registrationToken",
+				new Digest(s));
+		final InputField3 token = (InputField3) getFellow("registrationToken");
+		token.setVisible(true);
+		token.setValue(s);
+	}
+
+	private String encodeId(Long id) {
+		String s = java.util.Base64.getUrlEncoder().encodeToString(id.toString().getBytes(StandardCharsets.UTF_8));
+		while (s.endsWith("="))
+			s = s.substring(0, s.length()-1);
+		return s;
+	}
 
 	public void onChangeName(Event event) {
 		XPathUtils.setValue(this, "description",  
@@ -551,4 +686,26 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		return (Window) getFellow("scope-window");
 	}
 	
+	public void validateSectorIdentifier(Event ev) {
+		String uri = (String) XPathUtils.eval(this, "/federationMember/openidSectorIdentifierUrl");
+		
+		InputField3 field = (InputField3) ev.getTarget();
+		field.setWarning(0, null);
+		if (uri != null && ! uri.trim().isEmpty()) {
+			try {
+				HttpURLConnection conn = (HttpURLConnection) new URL(uri).openConnection();
+				JSONArray array = new JSONArray(new JSONTokener(conn.getInputStream()));
+				List<String> l = new LinkedList<>();
+				for (int i = 0; i < array.length(); i++)
+					l.add(array.getString(i));
+				XPathUtils.setValue(this, "/federationMember/openidUrl", l);
+			} catch (JSONException e) {
+				field.setWarning(0, "Cannot parse URL contents. Content must be a JSON array");
+				LogFactory.getLog(getClass()).warn("Error parsing URL "+uri, e);
+			} catch (Exception e) {
+				LogFactory.getLog(getClass()).warn("Error parsing URL "+uri, e);
+				field.setWarning(0, "Cannot download specified URL");
+			}
+		}
+	}
 }

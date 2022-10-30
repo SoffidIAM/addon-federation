@@ -9,6 +9,7 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -35,6 +36,8 @@ public class AuthorizationEndpoint extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	static HashMap<String, Long> lastSectorUpdate = new HashMap<>();
+	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
@@ -174,13 +177,21 @@ public class AuthorizationEndpoint extends HttpServlet {
             generateError(r, "invalid_request", "Missing redirect_uri", resp);
             return false;
     	}
-    	boolean ok = false;
-    	for (String url: r.getFederationMember().getOpenidUrl()) {
-    		if (r.getRedirectUrl().equals(url) || r.getRedirectUrl().startsWith(url+"?")) 
-    			ok = true;
-    		if (url.endsWith("*") && r.getRedirectUrl().startsWith(url.substring(0, url.length()-1))) 
-    			ok = true;
+    	if (r.getFederationMember().getOpenidSectorIdentifierUrl() != null &&
+    			! r.getFederationMember().getOpenidSectorIdentifierUrl().trim().isEmpty()) {
+    		Long last = lastSectorUpdate.get(r.getFederationMember().getPublicId());
+    		if (last == null || last.longValue() < System.currentTimeMillis() - 900_000 ||  !isReturnUrlValid(r)) { // 15 minutes
+    			try {
+					r.setFederationMember(IdpConfig.getConfig().getFederationService().updateSectorIdentifier(r.getFederationMember()));
+					lastSectorUpdate.put(r.getFederationMember().getPublicId(), System.currentTimeMillis());
+				} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
+						| CertificateException | IllegalStateException | NoSuchProviderException | SignatureException
+						| InternalErrorException | IOException e) {
+					// Ignore temporary server error
+				}
+    		}
     	}
+    	boolean ok = isReturnUrlValid(r);
     	if (!ok) {
     		generateError(r, "invalid_request", "The requested return URL is not accepted "+r.getRedirectUrl(), resp);
     		return false;
@@ -193,5 +204,16 @@ public class AuthorizationEndpoint extends HttpServlet {
             return false;
     	}
     	return true;
+	}
+
+	private boolean isReturnUrlValid(OpenIdRequest r) {
+		boolean ok = false;
+    	for (String url: r.getFederationMember().getOpenidUrl()) {
+    		if (r.getRedirectUrl().equals(url) || r.getRedirectUrl().startsWith(url+"?")) 
+    			ok = true;
+    		if (url.endsWith("*") && r.getRedirectUrl().startsWith(url.substring(0, url.length()-1))) 
+    			ok = true;
+    	}
+		return ok;
 	}
 }

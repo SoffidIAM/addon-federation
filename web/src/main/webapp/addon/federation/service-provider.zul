@@ -16,6 +16,7 @@
 			onChange='ref:handler.onChangeType' />
 		<customfield3 label="${c:l('federacio.zul.publicId')}"
 			dataType="STRING"
+			required="true"
 			bind="/federationMember/publicId" maxlength="255"
 			onChange="ref:handler.onChangeName"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
@@ -156,46 +157,62 @@
 			label="${c:l('federacio.zul.openidGrantType.password_client_credentials')}"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 
-		<customfield3 dataType="STRING" 
+		<customfield3 dataType="STRING"  id="openidClientId"
 			bind="/federationMember/openidClientId"
 			maxLength="100"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.openidKey')}"/>
 
-		<customfield3 dataType="PASSWORD" 
-			bind="/federationMember/openidSecret"
+		<div id='openidSecretDiv'>
+			<customfield3 dataType="STRING" id="openidSecret"
+				style="width: calc(100% - 64px); display: inline-block"
+				maxLength="100"
+				readonly="true"
+				label="${c:l('federacio.zul.openidSecret')}" />
+			<imageclic src="/img/refresh.svg"
+				onClick="ref:handler.generateOpenidSecret"
+				disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+			<imageclic src="/img/cancel.png"
+				onClick="ref:handler.clearOpenidSecret"
+				disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		</div>
+
+		<customfield3 dataType="STRING" id="openidSectorIdentifierUrl"
+			bind="/federationMember/openidSectorIdentifierUrl"
 			maxLength="100"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
-			label="${c:l('federacio.zul.openidSecret')}"/>
+			label="${c:l('federacio.zul.sectorIdentifierUrl')}"
+			onChange="ref:handler.validateSectorIdentifier"/>
 
-		<customfield3 dataType="STRING" 
+		<customfield3 dataType="STRING" id="openidUrl"
 			bind="/federationMember/openidUrl"
 			multiValue="true"
+			maxrows="10"
 			maxLength="100"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.openidUrl')}"/>
 
-		<customfield3 dataType="STRING" 
+		<customfield3 dataType="STRING" id="openidLogoutUrl"
 			bind="/federationMember/openidLogoutUrl"
 			multiValue="true"
 			maxLength="100"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.openidLogoutUrl')}"/>
 
-		<customfield3 dataType="STRING" 
+		<customfield3 dataType="STRING" id="openidLogoutUrlFront"
 			bind="/federationMember/openidLogoutUrlFront"
 			maxLength="100"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.openidLogoutUrlFront')}"/>
 
-		<customfield3 dataType="STRING" 
+		<customfield3 dataType="STRING" id="openidLogoutUrlBack"
 			bind="/federationMember/openidLogoutUrlBack"
 			multiValue="true"
 			maxLength="100"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.openidLogoutUrlBack')}"/>
 
-		<customfield3 dataType="NUMBER" 
+		<customfield3 dataType="NUMBER" id="oauthSessionTimeout"
 			bind="/federationMember/oauthSessionTimeout"
 			maxLength="100"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
@@ -275,6 +292,28 @@
 			maxLength="20"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.radiusSecret')}"/>
+	</div>
+	<div sclass="section" id="tokenSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.tokenSection') }" />
+		<div id='registrationTokenDiv'>
+			<customfield3 label="${c:l('federacio.zul.token')}"
+				style="width: calc(100% - 32px); display: inline-block"
+				dataType="STRING"
+				multiline='false'
+				id="registrationToken"
+				readonly="true"/>
+			<imageclic src="/img/refresh.svg"
+				onClick="ref:handler.generateToken"
+				disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		</div>
+		<customfield3 label="${c:l('federacio.zul.validUntil')}"
+			dataType="DATE"
+			bind="/federationMember/registrationTokenExpiration"
+			id="registrationTokenExpiration" />
+		<customfield3 label="${c:l('federacio.zul.maxServers')}"
+			dataType="NUMBER"
+			bind="/federationMember/maxRegistrations"
+			id="maxRegistration" />
 	</div>
 	<div style="text-align: right; width: 100%">
 		<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">

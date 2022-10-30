@@ -74,6 +74,7 @@ import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
 import es.caib.seycon.idp.openid.server.ImpersonationEndpoint;
 import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.LogoutEndpoint;
+import es.caib.seycon.idp.openid.server.RegisterEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
 import es.caib.seycon.idp.openid.server.TokenEndpoint;
@@ -543,6 +544,14 @@ public class Main {
 						openIdProfile.getAuthorizationEndpoint()); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/auth/realms/soffid/protocol/openid-connect/auth"); //$NON-NLS-1$
 
+		
+		servlet = new ServletHolder(
+		        RegisterEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("RegisterEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/register"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/clients-registrations/default"); //$NON-NLS-1$
+		
 		servlet = new ServletHolder(
 		        TokenEndpoint.class);
 		servlet.setInitOrder(2);

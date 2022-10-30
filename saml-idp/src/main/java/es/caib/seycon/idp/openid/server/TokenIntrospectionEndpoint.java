@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -41,11 +42,8 @@ public class TokenIntrospectionEndpoint extends HttpServlet {
 				String decoded = new String(Base64.decode(authentication.substring(6)), "UTF-8");
 				String clientId2 = decoded.substring(0, decoded.indexOf(":"));
 				FederationMember fm = config.getFederationService().findFederationMemberByClientID(clientId2);
-				Password pass = Password.decode(fm.getOpenidSecret());
-				String expectedAuth = fm.getOpenidClientId() + ":" + pass.getPassword();
 
-				expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-				if (!expectedAuth.equals(authentication)) {
+				if (!validAuthentication(authentication, fm)) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", null);
 					return;
 				}
@@ -71,6 +69,20 @@ public class TokenIntrospectionEndpoint extends HttpServlet {
 			buildError(resp, "Error reading access token", null);
 			return;
 		}
+	}
+
+	private boolean validAuthentication(String authentication, FederationMember federationMember) {
+		if (!authentication.toLowerCase().startsWith("basic "))
+			return false;
+		
+		String rest = new String (java.util.Base64.getDecoder().decode(authentication.substring(6)), StandardCharsets.UTF_8);
+		
+		if ( ! rest.startsWith(federationMember.getOpenidClientId()+":"))
+			return false;
+		
+		rest = rest.substring(federationMember.getOpenidClientId().length()+1);
+		
+		return federationMember.getOpenidSecret().validate(rest);
 	}
 
 	private void buildError(HttpServletResponse resp, String string, TokenInfo ti)

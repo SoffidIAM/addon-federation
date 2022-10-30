@@ -307,6 +307,12 @@
 			<version>8.0-4</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.opensaml</groupId>
+			<artifactId>xmltooling</artifactId>
+			<version>1.4.0</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 </project>
 

@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
@@ -56,7 +57,8 @@ public class SAMLSSORequest extends BaseForm {
 			FederationService federacioService = new RemoteServiceLocator().getFederacioService();
 			
 			Long timeOut = cfg.getFederationMember().getSessionTimeout();
-			SamlRequest samlRequest = federacioService.generateSamlRequest( cfg.getPublicId(),
+			SamlRequest samlRequest = federacioService.generateSamlRequest( 
+					cfg.getPublicId(),
 					idp,
 					user,
 					timeOut == null ? 30*60: timeOut.longValue());

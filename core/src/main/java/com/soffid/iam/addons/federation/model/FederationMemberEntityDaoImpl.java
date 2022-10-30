@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.hibernate.HibernateException;
 
+import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
@@ -209,7 +210,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			else
 				target.setOpenidMechanism( new HashSet<String> ( Arrays.asList( sp.getOpenidMechanism().split(",") )) );
 			target.setOpenidClientId(sp.getOpenidClientId());
-			target.setOpenidSecret(sp.getOpenidSecret());
+			target.setOpenidSecret(Digest.decode(sp.getOpenidSecret()));
 			List<String> l = new LinkedList<>();
 			List<String> l2 = new LinkedList<>();
 			if (sp.getOpenidUrl() != null && ! sp.getOpenidUrl().trim().isEmpty())
@@ -223,6 +224,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setOpenidLogoutUrl(l2);
 			target.setOpenidLogoutUrlBack(sp.getOpenidLogoutUrlBack());
 			target.setOpenidLogoutUrlFront(sp.getOpenidLogoutUrlFront());
+			target.setOpenidSectorIdentifierUrl(sp.getOpenidSectorIdentifierUrl());
 			// Radius attributes
 			target.setSourceIps(sp.getSourceIps());
 			target.setRadiusSecret(sp.getRadiusSecret() == null ? null: Password.decode(sp.getRadiusSecret()));
@@ -241,6 +243,12 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				}
 				target.setVirtualIdentityProvider(spv);
 			}
+			// Dynamic register
+			target.setRegistrationToken(Digest.decode(sp.getRegistrationToken()));
+			target.setRegistrationTokenExpiration(sp.getRegistrationTokenExpiration());
+			target.setMaxRegistrations(sp.getMaxRegistrations());
+			target.setDynamicRegistrationServer(sp.getDynamicRegistrationServer() == null ?  null : sp.getDynamicRegistrationServer().getPublicId());
+			// Access control
 			if (sp.getSystem() == null)
 				target.setSystem(null);
 			else
@@ -587,15 +595,26 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			}
 			sp.setOpenidMechanism(sb.toString());
 			sp.setOpenidClientId(source.getOpenidClientId());
-			sp.setOpenidSecret(source.getOpenidSecret());
+			sp.setOpenidSecret(source.getOpenidSecret() == null ? null : source.getOpenidSecret().toString());
 			sp.setOpenidUrl(null);
 			sp.setOpenidLogoutUrlBack(source.getOpenidLogoutUrlBack());
 			sp.setOpenidLogoutUrlFront(source.getOpenidLogoutUrlFront());
+			sp.setOpenidSectorIdentifierUrl(source.getOpenidSectorIdentifierUrl());
 			
 			if (source.getSystem() == null)
 				sp.setSystem(null);
 			else 
 				sp.setSystem(getSystemEntityDao().findByName(source.getSystem()) );
+			// Dynamic register
+			if (source.getDynamicRegistrationServer() == null || source.getDynamicRegistrationServer().trim().isEmpty())
+				sp.setDynamicRegistrationServer(null);
+			else {
+				for (FederationMemberEntity sp2: findFMByPublicId(source.getDynamicRegistrationServer()))
+					sp.setDynamicRegistrationServer((ServiceProviderEntity) sp2);
+			}
+			sp.setRegistrationToken(source.getRegistrationToken() == null ? null : source.getRegistrationToken().toString());
+			sp.setRegistrationTokenExpiration(source.getRegistrationTokenExpiration());
+			sp.setMaxRegistrations(source.getMaxRegistrations());
 			// Radius attributes
 			sp.setSourceIps(source.getSourceIps());
 			sp.setRadiusSecret(source.getRadiusSecret() == null ? null: source.getRadiusSecret().toString());

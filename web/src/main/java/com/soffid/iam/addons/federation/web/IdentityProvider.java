@@ -110,7 +110,7 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		boolean marcat = IdentityProviderType.SOFFID.equals(idpType);
 		getFellow("idpType").setVisible("I".equals(clazz));
 		getFellow("networkSection").setVisible(marcat && !clazz.equals("V"));
-		getFellow("certificateSection").setVisible(marcat || clazz.equals("V"));
+		getFellow("certificateSection").setVisible(marcat || clazz.equals("V") || idpType == IdentityProviderType.SAML);
 		getFellow("provisionSection").setVisible(!marcat  && !clazz.equals("V"));
 		getFellow("advancedSection").setVisible(marcat || clazz.equals("V"));
 		getFellow("authenticationSection").setVisible(marcat || clazz.equals("V"));

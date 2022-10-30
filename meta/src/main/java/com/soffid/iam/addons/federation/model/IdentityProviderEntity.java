@@ -71,4 +71,5 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Nullable
 	@Description("HTTP Header that holds the client certificate")
 	public java.lang.String sslClientCertificateHeader;
+
 }
