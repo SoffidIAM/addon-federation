@@ -18,7 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.NameIDPolicy;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -32,6 +34,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestExce
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
+import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
@@ -137,5 +140,26 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
     	}
     	return nameId;
     }
+
+    /** {@inheritDoc} */
+    protected String getRequiredNameIDFormat(BaseSAMLProfileRequestContext requestContext) {
+        String requiredNameFormat = super.getRequiredNameIDFormat(requestContext);
+        if (requiredNameFormat != null && ! isSupportedNameFormat(requiredNameFormat))
+        	requiredNameFormat = null;
+
+        return requiredNameFormat;
+    }
+
+	private boolean isSupportedNameFormat(String requiredNameFormat) {
+		if (NameID.UNSPECIFIED.equals(requiredNameFormat))
+			return true;
+		if (NameID.TRANSIENT.equals(requiredNameFormat))
+			return true;
+		if (NameID.PERSISTENT.equals(requiredNameFormat))
+			return true;
+		if (NameID.EMAIL.equals(requiredNameFormat))
+			return true;
+		return false;
+	}
 
 }
