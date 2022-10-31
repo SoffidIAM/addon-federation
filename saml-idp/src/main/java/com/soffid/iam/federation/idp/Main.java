@@ -74,6 +74,7 @@ import es.caib.seycon.idp.openid.server.ConfigurationEndpoint;
 import es.caib.seycon.idp.openid.server.ImpersonationEndpoint;
 import es.caib.seycon.idp.openid.server.JWKEndpoint;
 import es.caib.seycon.idp.openid.server.LogoutEndpoint;
+import es.caib.seycon.idp.openid.server.RegisterEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
 import es.caib.seycon.idp.openid.server.TokenEndpoint;
@@ -407,8 +408,7 @@ public class Main {
         f.setName("JCleanupFilter"); //$NON-NLS-1$
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
-        f = new FilterHolder(
-                edu.internet2.middleware.shibboleth.idp.session.IdPSessionFilter.class);
+        f = new FilterHolder(SoffidIdPSessionFilter.class);
         f.setName("IdPSessionFilter"); //$NON-NLS-1$
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
@@ -543,6 +543,14 @@ public class Main {
 						openIdProfile.getAuthorizationEndpoint()); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/auth/realms/soffid/protocol/openid-connect/auth"); //$NON-NLS-1$
 
+		
+		servlet = new ServletHolder(
+		        RegisterEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("RegisterEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/register"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/clients-registrations/default"); //$NON-NLS-1$
+		
 		servlet = new ServletHolder(
 		        TokenEndpoint.class);
 		servlet.setInitOrder(2);

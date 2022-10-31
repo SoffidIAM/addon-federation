@@ -6,9 +6,11 @@
 
 package com.soffid.iam.addons.federation.common;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.mda.annotation.Attribute;
 import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Description;
@@ -185,7 +187,7 @@ public class FederationMember {
 
 	@Description("Open ID Secret")
 	@Nullable
-	public String openidSecret;
+	public Digest openidSecret;
 
 	@Description("Open ID Client Id")
 	@Nullable
@@ -208,6 +210,10 @@ public class FederationMember {
 	@Description("Open ID Backchannel Logout URL")
 	@Nullable
 	public String openidLogoutUrlBack;
+
+	@Description("Open ID Sector Identifier URL")
+	@Nullable
+	public String openidSectorIdentifierUrl;
 
 	@Description("Login hint script")
 	@Attribute(defaultValue = "\"loginHint\"")
@@ -267,6 +273,23 @@ public class FederationMember {
 	@Description("HTML CSS for identity provider")
 	public String htmlCSS;
 	
+	@Description("Dynamic registration token")
+	@Nullable
+	Digest registrationToken;
+
+	@Description("Dynamic registration token expiration")
+	@Column(name="FED_REGTOK", length = 128)
+	@Nullable
+	Date registrationTokenExpiration;
+
+	@Description("Dynamic registration servers allowed")
+	@Nullable
+	Integer maxRegistrations;
+	
+	@Description("Dynamic server that registered this service provider")
+	@Nullable
+	public String dynamicRegistrationServer;
+
 	@Nullable
 	@Description("Enable reCaptcha v3")
 	public java.lang.Boolean enableCaptcha;

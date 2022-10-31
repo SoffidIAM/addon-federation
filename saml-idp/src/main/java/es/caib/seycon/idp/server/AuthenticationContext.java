@@ -356,7 +356,7 @@ public class AuthenticationContext {
 			throw new InternalErrorException( String.format("Cannot mix credentials of %s and %s", user, currentAccount.getName()));
 		}
 		
-		if (! nextFactor.contains(method))
+		if (nextFactor == null || ! nextFactor.contains(method))
 			throw new InternalErrorException("Authentication method '"+method+"' not allowed. Expected one of '"+method+"'. Allowed methods: "+allowedAuthenticationMethods);
 
 		if (step == 0) 

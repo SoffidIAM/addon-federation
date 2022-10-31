@@ -250,6 +250,14 @@ public abstract class FederationService {
 
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
+	public com.soffid.iam.addons.federation.common.FederationMember findFederationMemberById(
+		java.lang.Long id)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
 	public com.soffid.iam.addons.federation.common.FederationMember findFederationMemberByPublicId(
 		java.lang.String publicId)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
@@ -561,4 +569,19 @@ public abstract class FederationService {
 	void deleteFederatioMemberSession(FederationMemberSession session) {}
 	List<FederationMemberSession> findFederationMemberSessions(String publicId, String uid) {return null;}
 	List<OauthToken> findOauthTokenBySessionId(Long sessionId) {return null;}
+	
+	/** Dynamic service registration **/
+	List<FederationMember> findFederationByToken(String token) {return null;}
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public Collection<com.soffid.iam.addons.federation.common.FederationMember> findServiceProvidersForDynamicRegister(
+		java.lang.String publicId)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+	
+	/** Udptae openid urls for federation member **/
+	FederationMember updateSectorIdentifier(FederationMember fm) { return null;}
+	
+
 }

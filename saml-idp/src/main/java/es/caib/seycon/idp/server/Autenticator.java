@@ -344,6 +344,14 @@ public class Autenticator {
 	        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
 	        		cookieUser.setDomain(ip.getSsoCookieDomain());
 	        	resp.addCookie(cookieUser);
+        	} else {
+	        	Cookie cookieUser = new Cookie(ip.getSsoCookieName()+"_user", "");
+	       		cookieUser.setMaxAge( 0 );
+	        	cookieUser.setSecure(true);
+	        	cookieUser.setHttpOnly(true);
+	        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
+	        		cookieUser.setDomain(ip.getSsoCookieDomain());
+	        	resp.addCookie(cookieUser);
         	}
         }
 	}

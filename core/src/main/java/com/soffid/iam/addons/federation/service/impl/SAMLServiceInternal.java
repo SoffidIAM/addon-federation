@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import javax.crypto.SecretKey;
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -47,6 +48,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.xml.security.utils.EncryptionConstants;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -66,7 +68,10 @@ import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
+import org.opensaml.core.xml.schema.XSAny;
+import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.SAMLObjectBuilder;
+import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.common.assertion.ValidationContext;
 import org.opensaml.saml.common.assertion.ValidationResult;
@@ -80,14 +85,23 @@ import org.opensaml.saml.saml2.assertion.impl.AudienceRestrictionConditionValida
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
+import org.opensaml.saml.saml2.core.AuthnContextClassRef;
+import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.EncryptedAssertion;
+import org.opensaml.saml.saml2.core.Extensions;
 import org.opensaml.saml.saml2.core.Issuer;
 import org.opensaml.saml.saml2.core.LogoutRequest;
 import org.opensaml.saml.saml2.core.NameID;
+import org.opensaml.saml.saml2.core.NameIDPolicy;
+import org.opensaml.saml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.StatusCode;
 import org.opensaml.saml.saml2.core.Subject;
+import org.opensaml.saml.saml2.core.impl.AuthnContextClassRefBuilder;
+import org.opensaml.saml.saml2.core.impl.ExtensionsBuilder;
+import org.opensaml.saml.saml2.core.impl.NameIDPolicyBuilder;
+import org.opensaml.saml.saml2.core.impl.RequestedAuthnContextBuilder;
 import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -102,12 +116,17 @@ import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.credential.impl.CollectionCredentialResolver;
 import org.opensaml.security.x509.BasicX509Credential;
+import org.opensaml.xml.Configuration;
+import org.opensaml.xml.security.BasicSecurityConfiguration;
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
 import org.opensaml.xmlsec.keyinfo.impl.StaticKeyInfoCredentialResolver;
 import org.opensaml.xmlsec.signature.KeyInfo;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.X509Data;
+import org.opensaml.xmlsec.signature.impl.KeyInfoBuilder;
+import org.opensaml.xmlsec.signature.impl.X509CertificateBuilder;
+import org.opensaml.xmlsec.signature.impl.X509DataBuilder;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.opensaml.xmlsec.signature.support.SignaturePrevalidator;
 import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
@@ -115,6 +134,7 @@ import org.opensaml.xmlsec.signature.support.Signer;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -200,7 +220,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
 				log.info("authenticate() - in encryptedAssertion");
-				if (assertion.isSigned() || response.isEmpty())
+				if (assertion.isSigned() || saml2Response.isSigned())
 					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 				else
 					result.setFailureReason("Response or assertion are not signed. Signature is required");
@@ -212,7 +232,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			if (validateAssertion(identityProvider, serviceProviderName, saml2Response, assertion, result))
 			{
 				log.info("authenticate() - in assertion");
-				if (assertion.isSigned() || response.isEmpty())
+				if (assertion.isSigned() || saml2Response.isSigned())
 					return createAuthenticationRecord(identityProvider, serviceProviderName, requestEntity, assertion, autoProvision);
 				else
 					result.setFailureReason("Response or assertion are not signed. Signatue is required");
@@ -350,7 +370,14 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		try {
 			// Get the assertion builder based on the assertion element name
 			SAMLObjectBuilder<AuthnRequest> builder = (SAMLObjectBuilder<AuthnRequest>) builderFactory.getBuilder(AuthnRequest.DEFAULT_ELEMENT_NAME);
-			 
+
+			String signatureOwner = serviceProvider;
+			
+			for (FederationMemberEntity idpData: federationMemberEntityDao.findFMByPublicId(identityProvider)) {
+				if (idpData.getPrivateKey() != null && ! idpData.getPrivateKey().isEmpty())
+					signatureOwner = identityProvider;
+			}
+
 			EntityDescriptor idp = getIdpMetadata(identityProvider);
 			if (idp == null)
 				throw new InternalErrorException(String.format("Unable to find Identity Provider metadata"));
@@ -387,7 +414,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			
 			req.setIssuer( issuer );
 
-			KeyPair pk = getPrivateKey(serviceProvider);
+			KeyPair pk = getPrivateKey(signatureOwner);
 			if (pk == null)
 				throw new InternalErrorException ("Cannot find private key for "+serviceProvider);
 			
@@ -427,8 +454,10 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				req.setSubject(newSubject );
 			}
 
+			addEidasTags(req, idp);
+			
 			// Sign again
-			Element xml = sign (serviceProvider, builderFactory, req);
+			Element xml = sign (signatureOwner, builderFactory, req, idp);
 			String xmlString = generateString(xml);
 
 			// Encode base 64
@@ -454,6 +483,59 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				throw new InternalErrorException(e.getMessage(), e);
 		}
 	}
+
+	private void addEidasTags(AuthnRequest req, EntityDescriptor idp) {
+		org.opensaml.saml.saml2.metadata.Extensions extensions = idp.getExtensions();
+		if (extensions != null) {
+			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("http://eidas.europa.eu/saml-extensions", "Provider"))) {
+				String providerName = extension.getDOM().getAttribute("Name");
+				if (providerName == null)
+					req.setProviderName("S2833002E_E04975701;Demo-App");
+				else
+					req.setProviderName(providerName);
+				req.setIsPassive(false);
+				req.setConsent("urn:oasis:names:tc:SAML:2.0:consent:unspecified");
+				NameIDPolicy nip = new NameIDPolicyBuilder().buildObject();
+				nip.setAllowCreate(true);
+				nip.setFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified");
+				req.setNameIDPolicy(nip);
+				req.setIssuer(null);
+				
+				RequestedAuthnContext rac = new RequestedAuthnContextBuilder().buildObject();
+				rac.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
+				req.setRequestedAuthnContext(rac);
+				
+				AuthnContextClassRef acc = new AuthnContextClassRefBuilder().buildObject();
+				
+				String securityLevel = extension.getDOM().getAttribute("SecurityLevel");
+				if (securityLevel == null)
+					acc.setAuthnContextClassRef("http://eidas.europa.eu/LoA/low");
+				else
+					acc.setAuthnContextClassRef(securityLevel);
+				rac.getAuthnContextClassRefs().add(acc);
+				
+				Extensions exts = new ExtensionsBuilder().buildObject();
+				req.setExtensions(exts);
+				
+				XSAny requestedAttributes = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttributes", "eidas");
+				exts.getUnknownXMLObjects().add(requestedAttributes);
+				
+		//	    XSAny requestedAttribute = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttribute", "eidas");
+		//	    requestedAttributes.getUnknownXMLObjects().add(requestedAttribute);
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "FriendlyName"), "RelayState");
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "Name"), "http://es.minhafp.clave/RelayState");
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "NameFormat"), "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "isRequired"), "false");
+		//        
+		//	    XSAny attributeValue = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "eidas:AttributeValue", "eidas");
+		//	    requestedAttribute.getUnknownXMLObjects().add(attributeValue);
+		//        attributeValue.getUnknownAttributes().put(new QName("http://www.w3.org/2001/XMLSchema-instance", "xsi:type"), "eidas-natural:PersonIdentifierType");
+		//        attributeValue.setTextContent("_PewANml");
+			}
+			
+		}
+    }
+
 	
 	protected String generateString(Element xml)
 			throws TransformerConfigurationException,
@@ -518,12 +600,12 @@ public class SAMLServiceInternal extends AbstractFederationService {
 					r.setMethod(SAMLConstants.SAML2_SOAP11_BINDING_URI);
 					r.setUrl(sss.getLocation());
 
-					encodedRequest = signAndEncode(serviceProvider, req, sss);
+					encodedRequest = signAndEncode(serviceProvider, req, sss, idp);
 					break;
 				}
 				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
 						!backChannel) { // Max GET length is usually 8192
-					encodedRequest = signAndEncode(serviceProvider, req, sss);
+					encodedRequest = signAndEncode(serviceProvider, req, sss, idp);
 					if (encodedRequest.length() <= 2000)
 					{
 						r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
@@ -534,7 +616,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				if (sss.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI) && !backChannel) {
 					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
 					r.setUrl(sss.getLocation());
-					encodedRequest = signAndEncode(serviceProvider, req, sss);
+					encodedRequest = signAndEncode(serviceProvider, req, sss, idp);
 					break;
 				}
 			}
@@ -555,7 +637,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		}
 	}
 
-	private String signAndEncode(String serviceProvider, LogoutRequest req, SingleLogoutService sss)
+	private String signAndEncode(String serviceProvider, LogoutRequest req, SingleLogoutService sss, EntityDescriptor idp)
 			throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException,
 			MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException,
@@ -563,7 +645,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			TransformerFactoryConfigurationError, TransformerException, UnsupportedEncodingException {
 		String encodedRequest;
 		req.setDestination( sss.getLocation() );
-		Element xml = sign (serviceProvider, builderFactory, req);
+		Element xml = sign (serviceProvider, builderFactory, req, idp);
 		String xmlString = generateString(xml);
 		encodedRequest  = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
 		return encodedRequest;
@@ -574,7 +656,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		return null;
 	}
 
-	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, org.opensaml.saml.saml2.core.RequestAbstractType req) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
+	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, org.opensaml.saml.saml2.core.RequestAbstractType req, EntityDescriptor idp) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
 		// Get the marshaller factory
 		MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 		Marshaller marshaller = marshallerFactory.getMarshaller(req);
@@ -589,7 +671,6 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		if (pk == null)
 			throw new InternalErrorException ("Cannot find private key for "+serviceProvider);
 
-		
 		// Sign
 		Credential cred = new BasicX509Credential(
 				(X509Certificate) certs.get(0), 
@@ -598,12 +679,12 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
 		signature.setSigningCredential(cred);
 		signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-//		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA);
-		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
 		KeyInfo keyInfo = getKeyInfo(serviceProvider);
 		keyInfo.detach();
 		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
+		
+		applyAlgorithms(signature, idp);
 		
 		// Marshal again
 		marshaller = marshallerFactory.getMarshaller(req);
@@ -617,6 +698,22 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		XMLObject req2 = unmarshallerFactory.getUnmarshaller(req.getDOM()).unmarshall(req.getDOM());
 		return marshallerFactory.getMarshaller(req).marshall(req2);
 
+	}
+
+	private void applyAlgorithms(Signature signature, EntityDescriptor idp) {
+		org.opensaml.saml.saml2.metadata.Extensions extensions = idp.getExtensions();
+		if (extensions != null) {
+			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "SigningMethod"))) {
+				String algorithm = extension.getDOM().getAttribute("Algorithm");
+				if (algorithm != null)
+					signature.setSignatureAlgorithm(algorithm);
+			}
+			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "DigestMethod"))) {
+				String algorithm = extension.getDOM().getAttribute("Algorithm");
+				if (algorithm != null) 
+					((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(algorithm);
+			}
+		}
 	}
 
 	private EntityDescriptor getIdpMetadata(String identityProvider) throws UnmarshallingException, SAXException, IOException, ParserConfigurationException {
@@ -741,17 +838,34 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		throw new InternalErrorException("Unable to find certificate chain for service provider "+identityProvider);
 	}
 
-	private KeyInfo getKeyInfo(String identityProvider) throws UnmarshallingException, SAXException, IOException, ParserConfigurationException, InternalErrorException {
-		EntityDescriptor md = getSpMetadata(identityProvider);
+	private KeyInfo getKeyInfo(String identityProvider) throws UnmarshallingException, SAXException, IOException, ParserConfigurationException, InternalErrorException, CertificateEncodingException, DOMException {
+		EntityDescriptor md = getIdpMetadata(identityProvider);
+		if (md == null)
+			md = getSpMetadata(identityProvider);
 		if (md != null)
 		{
 			SPSSODescriptor spsso = md.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
-			for ( KeyDescriptor kd: spsso.getKeyDescriptors())
-			{
-				KeyInfo ki = kd.getKeyInfo();
-				if (ki != null)
-					return ki;
+			if (spsso != null) {
+				for ( KeyDescriptor kd: spsso.getKeyDescriptors())
+				{
+					KeyInfo ki = kd.getKeyInfo();
+					if (ki != null)
+						return ki;
+				}
 			}
+		}
+		List<Certificate> certs = getCertificateChain(identityProvider);
+		if (certs != null && !certs.isEmpty()) {
+			Certificate cert = certs.iterator().next();
+			
+			KeyInfo ki = new KeyInfoBuilder().buildObject();
+			X509Data x509Data2 = new X509DataBuilder().buildObject();
+			org.opensaml.xmlsec.signature.X509Certificate cert2 = new X509CertificateBuilder ().buildObject();
+			cert2.setValue(Base64.encodeBytes(cert.getEncoded()));
+			x509Data2.getX509Certificates().add(cert2);
+			ki.getX509Datas().add(x509Data2);
+			return ki;
+					
 		}
 		throw new InternalErrorException("Unable to find key info for service provider "+identityProvider);
 	}

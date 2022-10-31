@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
@@ -134,9 +135,9 @@ public class TokenEndpoint extends HttpServlet {
 				// Accept request
 				log.info("Accepted mechanism PA for " + request.getFederationMember().getPublicId());
 			} else if (request.getFederationMember().getOpenidMechanism().contains("PC")) {
-				Password pass = Password.decode(request.getFederationMember().getOpenidSecret());
+				Digest pass = request.getFederationMember().getOpenidSecret();
 				if (clientId != null && clientSecret != null) {
-					if (!pass.getPassword().equals(clientSecret)) {
+					if (pass == null || ! pass.validate(clientSecret)) {
 						buildError(resp, "invalid_client", "Wrong client credentials");
 						return;
 					}
@@ -146,11 +147,7 @@ public class TokenEndpoint extends HttpServlet {
 						resp.setHeader("WWW-Authenticate", "Basic realm=\"Client credentials\"");
 						return;
 					}
-					String expectedAuth = request.getFederationMember().getOpenidClientId() + ":" + pass.getPassword();
-
-					expectedAuth = Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-					if (!authentication.toLowerCase().startsWith("basic ")
-							|| !expectedAuth.equals(authentication.substring(6))) {
+					if (!validAuthentication(authentication, request.getFederationMember())) {
 						buildError(resp, "invalid_client", "Wrong client credentials");
 						return;
 					}
@@ -274,9 +271,9 @@ public class TokenEndpoint extends HttpServlet {
 				buildError(resp, "invalid_grant", "Invalid authorization code");
 				return;
 			}
-			Password pass = Password.decode(t.getRequest().getFederationMember().getOpenidSecret());
+			Digest pass = t.getRequest().getFederationMember().getOpenidSecret();
 			
-			if (pass == null ||  pass.getPassword() == null || pass.getPassword().isEmpty()) {
+			if (pass == null) {
 				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 					return;
@@ -284,20 +281,15 @@ public class TokenEndpoint extends HttpServlet {
 			} 
 			else if (clientId != null && clientSecret != null) {
 				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())
-						|| !clientSecret.equals(pass.getPassword())) {
+						|| ! pass.validate(clientSecret)) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 					return;
 				}
 			} else {
-				String expectedAuth = t.getRequest().getFederationMember().getOpenidClientId() + ":"
-						+ pass.getPassword();
-
-				expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-				if (!expectedAuth.equals(authentication)) {
+				if (!validAuthentication(authentication, t.getRequest().getFederationMember())) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 					return;
 				}
-
 			}
 			if (! checkPkceCode(t, req.getParameter("code_verifier"))) {
 				buildError(resp, "unauthorized_client", "Wrong PKCE challenge", t);
@@ -333,6 +325,20 @@ public class TokenEndpoint extends HttpServlet {
 
 	}
 
+	private boolean validAuthentication(String authentication, FederationMember federationMember) {
+		if (!authentication.toLowerCase().startsWith("basic "))
+			return false;
+		
+		String rest = new String (java.util.Base64.getDecoder().decode(authentication.substring(6)), StandardCharsets.UTF_8);
+		
+		if ( ! rest.startsWith(federationMember.getOpenidClientId()+":"))
+			return false;
+		
+		rest = rest.substring(federationMember.getOpenidClientId().length()+1);
+		
+		return federationMember.getOpenidSecret().validate(rest);
+	}
+
 	private boolean checkPkceCode(TokenInfo t, String parameter) throws NoSuchAlgorithmException {
 		if (t.getPkceChallenge() == null)
 			return true;
@@ -366,11 +372,9 @@ public class TokenEndpoint extends HttpServlet {
 			}
 
 			FederationMember federationMember = t.getRequest().getFederationMember();
-			Password pass = Password.decode(federationMember.getOpenidSecret());
+			Digest pass = federationMember.getOpenidSecret();
 
-			String expectedAuth = federationMember.getOpenidClientId() + ":" + pass.getPassword();
-
-			if (pass == null || pass.getPassword().isEmpty()) {
+			if (pass == null) {
 				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 					return;
@@ -378,13 +382,12 @@ public class TokenEndpoint extends HttpServlet {
 			} 
 			else if (clientId != null && clientSecret != null) {
 				if (!clientId.equals(t.getRequest().getFederationMember().getOpenidClientId())
-						|| !clientSecret.equals(pass.getPassword())) {
+						|| ! pass.validate(clientSecret)) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 					return;
 				}
 			} else {
-				expectedAuth = "Basic " + Base64.encodeBytes(expectedAuth.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-				if (!expectedAuth.equals(authentication)) {
+				if (!validAuthentication(authentication, federationMember)) {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", t);
 					return;
 				}

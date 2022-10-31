@@ -5,6 +5,9 @@
 //
 
 package com.soffid.iam.addons.federation.model;
+import java.util.Collection;
+import java.util.Date;
+
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.mda.annotation.*;
 
@@ -56,6 +59,11 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Column(name="FED_OIBALOL", length=250)
 	public String openidLogoutUrlBack;
 
+	@Description("Open ID Sector Identifier URL")
+	@Nullable
+	@Column(name="FED_OISEIDL", length=250)
+	public String openidSectorIdentifierUrl;
+
 	@Column(name="FED_OIDMEC", length=50)
 	@Description("Open ID mechanisms (comma separated list of values): Implicit, AuthorizationCode, Password, PasswordClientCredentals")
 	@Nullable
@@ -81,6 +89,27 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Column (name="FED_CONSEN")
 	@Nullable
 	public Boolean consent;
+
+	@Description("Dynamic registration token")
+	@Column(name="FED_REGTOK", length = 128)
+	@Nullable
+	String registrationToken;
+
+	@Description("Dynamic registration token expiration")
+	@Column(name="FED_RETOEX")
+	@Nullable
+	Date registrationTokenExpiration;
+	
+	@Description("Dynamic registration servers allowed")
+	@Column(name="FED_RETONU")
+	@Nullable
+	Integer maxRegistrations;
+	
+
+	@Description("Dynamic registration server")
+	@Column(name="FED_REG_ID", reverseAttribute = "registered")
+	@Nullable
+	ServiceProviderEntity dynamicRegistrationServer;
 	
 	@DaoFinder("select sp "
 			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity sp "
@@ -89,5 +118,13 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 			java.lang.String openidClientId) {
 		 return null;
 		}
+
+	@DaoFinder("select sp "
+			+ "from com.soffid.iam.addons.federation.model.ServiceProviderEntity sp "
+			+ "where sp.dynamicRegistrationServer.publicId = :registrationServer and sp.tenant.id=:tenantId")
+	public Collection<ServiceProviderEntity> findByDynamicRegistrationServer(
+			java.lang.String registrationServer) {
+		 return null;
+	}
 
 }

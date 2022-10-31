@@ -68,7 +68,12 @@ public class ConfigurationEndpoint extends HttpServlet {
 			att.put("end_session_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+
 					(openIdProfile.getLogoutEndpoint() == null ? "/logout": openIdProfile.getLogoutEndpoint()));
 			att.put("introspection_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/token_info");
+			att.put("frontchannel_logout_supported", true);
+			att.put("frontchannel_logout_session_supported", true);
+			att.put("backchannel_logout_supported", true);
+			att.put("backchannel_logout_session_supported", true);
 			att.put("introspection_endpoint_auth_methods_supported", new String[] { "client_secret_basic"});
+			att.put("registration_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/register");
 			att.put("token_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());
 			att.put("revocation_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+
 					(openIdProfile.getRevokeEndpoint() == null ? "/revoke": openIdProfile.getRevokeEndpoint()));

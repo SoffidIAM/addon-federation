@@ -75,7 +75,7 @@ public class TokenHandler {
 		t.setType(request.getType());
 		t.setUser(user);
 		t.setRequest(request);
-		t.setAuthorizationCode( generateRandomString(36));
+		t.setAuthorizationCode( generateRandomString(32));
 		t.created = System.currentTimeMillis();
 		t.expires = t.created + 120000; // 2 Minutes to get token
 		t.authentication = t.created;
@@ -194,7 +194,7 @@ public class TokenHandler {
 
 		
 		t.authorizationCode = null;
-		t.refreshToken = generateRandomString(32);
+		t.refreshToken = generateRandomString(48);
 		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		refreshTokens.put(t.refreshToken, t);
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
@@ -211,7 +211,7 @@ public class TokenHandler {
 				t.expiresRefresh = System.currentTimeMillis() + 24L * 60 * 60 * 1000L; // 1 day
 			else
 				t.expiresRefresh = System.currentTimeMillis() + refreshTimeout.longValue() * 1000L;
-			String random = generateRandomString(129);
+			String random = generateRandomString(48);
 			t.setJwtId(random);
 			String signedToken = generateJWTToken(c, t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 			t.token = signedToken;
@@ -234,7 +234,7 @@ public class TokenHandler {
 		Builder builder = JWT.create().withAudience(sp.getOpenidClientId())
 				.withClaim("azp", sp.getOpenidClientId())
 				.withIssuedAt(new Date())
-				.withJWTId(generateRandomString(32))
+				.withJWTId(generateRandomString(48))
 				.withKeyId(c.getHostName())
 				.withIssuer(getIssuer(c, false));
 		if (sessionId != null)
@@ -354,9 +354,9 @@ public class TokenHandler {
 		getFederationService().deleteOauthToken(generateOauthToken(t));
 
 		t.authorizationCode = null;
-		t.jwtId = generateRandomString(129);		
+		t.jwtId = generateRandomString(48);		
 		t.token = generateJWTToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
-		t.refreshToken = generateRandomString(32);
+		t.refreshToken = generateRandomString(48);
 		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes

@@ -600,7 +600,17 @@ public class FederationServiceInternal {
 		// Update account attributes
 		
 		log.info("searchUser() - provision: "+autoProvision);
-		if (autoProvision)
+		String provisionScript = null;
+		for (FederationMemberEntity fm: federationMemberEntityDao.findFMByPublicId(identityProvider))
+		{
+			if (fm instanceof IdentityProviderEntity)
+			{
+				if (fm.getScriptParse() != null && ! fm.getScriptParse().trim().isEmpty())
+					provisionScript = fm.getScriptParse();
+			}
+		}
+
+		if (autoProvision || provisionScript != null )
 		{
 			User u = new User();
 			u.setActive(true);
@@ -617,38 +627,28 @@ public class FederationServiceInternal {
 			u.setMailServer("null");
 			Map<String,Object> attributes = (Map<String, Object>) map;
 
-			for (FederationMemberEntity fm: federationMemberEntityDao.findFMByPublicId(identityProvider))
-			{
-				if (fm instanceof IdentityProviderEntity)
+			try {
+				Interpreter interpreter = new Interpreter();
+				interpreter.set("user", u); //$NON-NLS-1$
+				interpreter.set("attributes", attributes); //$NON-NLS-1$
+				interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
+				log.info("searchUser() - execute scriptParse");
+				Object r = interpreter.eval( provisionScript );
+				if ( r == null || r.equals(Boolean.FALSE))
 				{
-					if (fm.getScriptParse() != null && ! fm.getScriptParse().trim().isEmpty())
-					{
-						try {
-							Interpreter interpreter = new Interpreter();
-							interpreter.set("user", u); //$NON-NLS-1$
-							interpreter.set("attributes", attributes); //$NON-NLS-1$
-							interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
-							log.info("searchUser() - execute scriptParse");
-							Object r = interpreter.eval( fm.getScriptParse() );
-							if ( r == null || r.equals(Boolean.FALSE))
-							{
-								return null;
-							}
-							else if ( ! (r instanceof String))
-							{
-								throw new InternalErrorException("Autoprovision script for "+identityProvider+" returned an object of class "+r.getClass().toString()+" when it should return a String object");
-							}
-							else
-							{
-								u.setUserName((String) r);
-							}
-						} catch (EvalError e) {
-							throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", identityProvider),
-									e);
-						}
-					}
-	
+					return null;
 				}
+				else if ( ! (r instanceof String))
+				{
+					throw new InternalErrorException("Autoprovision script for "+identityProvider+" returned an object of class "+r.getClass().toString()+" when it should return a String object");
+				}
+				else
+				{
+					u.setUserName((String) r);
+				}
+			} catch (EvalError e) {
+				throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", identityProvider),
+						e);
 			}
 			
 			log.info("searchUser() - trying to create the user...");

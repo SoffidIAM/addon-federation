@@ -10,7 +10,9 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -61,6 +63,9 @@ import org.jbpm.JbpmContext;
 import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.ProcessInstance;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONTokener;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
@@ -82,6 +87,7 @@ import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
 import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
@@ -1108,8 +1114,10 @@ public class FederationServiceImpl
 			for (Iterator<FederationMemberEntity> it = sp.iterator(); it.hasNext();) {
 				FederationMemberEntity fme = it.next();
 				FederationMember fm = getFederationMemberEntityDao().toFederationMember(fme);
-				String desc = fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
-				resultat.add(new EntityGroupMember(desc, EG_SP, pare, fm));
+				if (fm.getDynamicRegistrationServer() == null) {
+					String desc = fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
+					resultat.add(new EntityGroupMember(desc, EG_SP, pare, fm));
+				}
 			}
 		} else if (EG_IDP.equals(groupMember.getType()) && groupMember.getFederationMember() != null && groupMember.getFederationMember().getId() != null) {
 			// IDENTITY PROVIDER
@@ -1129,6 +1137,17 @@ public class FederationServiceImpl
 				resultat.add(new EntityGroupMember(desc, EG_VIP, pare, fmi));
 			}
 
+		} else if (EG_SP.equals(groupMember.getType()) && groupMember.getFederationMember().getServiceProviderType() == ServiceProviderType.OPENID_REGISTER) {
+			Collection<ServiceProviderEntity> sps = getServiceProviderEntityDao().findByDynamicRegistrationServer(groupMember.getFederationMember().getPublicId());
+
+			// Obtenim els membres per id del grup pare
+			// Afegim els fills classificats
+			for (ServiceProviderEntity sp: sps) {
+				FederationMember fm = getServiceProviderEntityDao().toFederationMember(sp);
+				String desc = fm.getPublicId() + (fm.getName() != null ? " - " + fm.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
+				resultat.add(new EntityGroupMember(desc, EG_SP, groupMember.getEntityGroup(), fm));
+			}
+			
 		}
 
 		return resultat;
@@ -2442,5 +2461,81 @@ public class FederationServiceImpl
 		List<OauthTokenEntity> l = getOauthTokenEntityDao().findBySessionId(sessionId);
 		return getOauthTokenEntityDao().toOauthTokenList(l);
 	}
+
+	@Override
+	protected Collection<FederationMember> handleFindServiceProvidersForDynamicRegister(String publicId)
+			throws Exception {
+		Collection<FederationMember> c = new LinkedList<FederationMember>();
+		for ( FederationMemberEntity fm: getFederationMemberEntityDao().findFMByPublicId(publicId))
+		{
+			if (fm instanceof ServiceProviderEntity)
+			{
+				ServiceProviderEntity sp = (ServiceProviderEntity) fm;
+				if (sp.getServiceProviderType() == ServiceProviderType.OPENID_REGISTER) {
+					for ( ServiceProviderEntity vip: sp.getRegistered())
+					{
+						c.add( getFederationMemberEntityDao().toFederationMember(vip));
+					}
+				}
+				break;
+			}
+		}
+		return c;
+	}
+
+	@Override
+	protected List<FederationMember> handleFindFederationByToken(String token) throws Exception {
+		List<FederationMember> l = new LinkedList<>();
+		for (FederationMemberEntity fm: getFederationMemberEntityDao(). findFMByEntityGroupAndPublicIdAndTipus(null, null, "S")) {
+			if (fm instanceof ServiceProviderEntity) {
+				ServiceProviderEntity sp = (ServiceProviderEntity) fm;
+				if (sp.getRegistrationToken() != null && !sp.getRegistrationToken().isEmpty()) {
+					Password p = Password.decode(sp.getRegistrationToken());
+					if (p.getPassword().equals(token))
+						l.add(getFederationMemberEntityDao().toFederationMember(sp));
+				}
+			}
+		}
+		return l;
+	}
+
+	@Override
+	protected FederationMember handleFindFederationMemberById(Long id) throws Exception {
+		FederationMemberEntity entity = getFederationMemberEntityDao().load(id);
+		return getFederationMemberEntityDao().toFederationMember(entity);
+	}
+
+	@Override
+	protected FederationMember handleUpdateSectorIdentifier(FederationMember fm) throws Exception {
+		ServiceProviderEntity entity = (ServiceProviderEntity) getServiceProviderEntityDao().load(fm.getId());
+		if (entity == null)
+			return null;
+		String uri = entity.getOpenidSectorIdentifierUrl();
+		if (uri != null && ! uri.trim().isEmpty()) {
+			HttpURLConnection conn = (HttpURLConnection) new URL(uri).openConnection();
+			boolean change = false;
+			JSONArray array = new JSONArray(new JSONTokener(conn.getInputStream()));
+			List<String> l = new LinkedList<>();
+			if (fm.getOpenidUrl().size() != array.length())
+				change = true;
+			for (int i = 0; i < array.length(); i++) {
+				String url = array.getString(i);
+				if ( ! fm.getOpenidUrl().contains(url)) change = true;
+				l.add(url);
+			}
+			if (change) {
+				fm = getFederationMemberEntityDao().toFederationMember(entity);
+				fm.setOpenidUrl(l);
+				getFederationMemberEntityDao().federationMemberToEntity(fm, entity, true);
+				getFederationMemberEntityDao().update(entity);
+				updateReturnUrls(entity, fm);
+				return getFederationMemberEntityDao().toFederationMember(entity);
+			} else
+				return fm;
+		}
+		else
+			return fm;
+	}
+
 
 }
