@@ -408,8 +408,7 @@ public class Main {
         f.setName("JCleanupFilter"); //$NON-NLS-1$
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
-        f = new FilterHolder(
-                edu.internet2.middleware.shibboleth.idp.session.IdPSessionFilter.class);
+        f = new FilterHolder(SoffidIdPSessionFilter.class);
         f.setName("IdPSessionFilter"); //$NON-NLS-1$
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 

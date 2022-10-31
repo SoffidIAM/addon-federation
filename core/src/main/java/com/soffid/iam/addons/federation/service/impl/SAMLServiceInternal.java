@@ -454,10 +454,10 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				req.setSubject(newSubject );
 			}
 
-			addEidasTags(req);
+			addEidasTags(req, idp);
 			
 			// Sign again
-			Element xml = sign (signatureOwner, builderFactory, req);
+			Element xml = sign (signatureOwner, builderFactory, req, idp);
 			String xmlString = generateString(xml);
 
 			// Encode base 64
@@ -484,41 +484,56 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		}
 	}
 
-	private void addEidasTags(AuthnRequest req) {
-		req.setProviderName("S2833002E_E04975701;Demo-App");
-		req.setIsPassive(false);
-		req.setConsent("urn:oasis:names:tc:SAML:2.0:consent:unspecified");
-		NameIDPolicy nip = new NameIDPolicyBuilder().buildObject();
-		nip.setAllowCreate(true);
-		nip.setFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified");
-		req.setNameIDPolicy(nip);
-		req.setIssuer(null);
-		
-		RequestedAuthnContext rac = new RequestedAuthnContextBuilder().buildObject();
-		rac.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
-		req.setRequestedAuthnContext(rac);
-		
-		AuthnContextClassRef acc = new AuthnContextClassRefBuilder().buildObject();
-		acc.setAuthnContextClassRef("http://eidas.europa.eu/LoA/low");
-		rac.getAuthnContextClassRefs().add(acc);
-		
-		Extensions exts = new ExtensionsBuilder().buildObject();
-		req.setExtensions(exts);
-		
-	    XSAny requestedAttributes = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttributes", "eidas");
-	    exts.getUnknownXMLObjects().add(requestedAttributes);
-	    
-//	    XSAny requestedAttribute = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttribute", "eidas");
-//	    requestedAttributes.getUnknownXMLObjects().add(requestedAttribute);
-//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "FriendlyName"), "RelayState");
-//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "Name"), "http://es.minhafp.clave/RelayState");
-//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "NameFormat"), "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "isRequired"), "false");
-//        
-//	    XSAny attributeValue = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "eidas:AttributeValue", "eidas");
-//	    requestedAttribute.getUnknownXMLObjects().add(attributeValue);
-//        attributeValue.getUnknownAttributes().put(new QName("http://www.w3.org/2001/XMLSchema-instance", "xsi:type"), "eidas-natural:PersonIdentifierType");
-//        attributeValue.setTextContent("_PewANml");
+	private void addEidasTags(AuthnRequest req, EntityDescriptor idp) {
+		org.opensaml.saml.saml2.metadata.Extensions extensions = idp.getExtensions();
+		if (extensions != null) {
+			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("http://eidas.europa.eu/saml-extensions", "Provider"))) {
+				String providerName = extension.getDOM().getAttribute("Name");
+				if (providerName == null)
+					req.setProviderName("S2833002E_E04975701;Demo-App");
+				else
+					req.setProviderName(providerName);
+				req.setIsPassive(false);
+				req.setConsent("urn:oasis:names:tc:SAML:2.0:consent:unspecified");
+				NameIDPolicy nip = new NameIDPolicyBuilder().buildObject();
+				nip.setAllowCreate(true);
+				nip.setFormat("urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified");
+				req.setNameIDPolicy(nip);
+				req.setIssuer(null);
+				
+				RequestedAuthnContext rac = new RequestedAuthnContextBuilder().buildObject();
+				rac.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
+				req.setRequestedAuthnContext(rac);
+				
+				AuthnContextClassRef acc = new AuthnContextClassRefBuilder().buildObject();
+				
+				String securityLevel = extension.getDOM().getAttribute("SecurityLevel");
+				if (securityLevel == null)
+					acc.setAuthnContextClassRef("http://eidas.europa.eu/LoA/low");
+				else
+					acc.setAuthnContextClassRef(securityLevel);
+				rac.getAuthnContextClassRefs().add(acc);
+				
+				Extensions exts = new ExtensionsBuilder().buildObject();
+				req.setExtensions(exts);
+				
+				XSAny requestedAttributes = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttributes", "eidas");
+				exts.getUnknownXMLObjects().add(requestedAttributes);
+				
+		//	    XSAny requestedAttribute = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttribute", "eidas");
+		//	    requestedAttributes.getUnknownXMLObjects().add(requestedAttribute);
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "FriendlyName"), "RelayState");
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "Name"), "http://es.minhafp.clave/RelayState");
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "NameFormat"), "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
+		//	    requestedAttribute.getUnknownAttributes().put(new QName("http://eidas.europa.eu/saml-extensions", "isRequired"), "false");
+		//        
+		//	    XSAny attributeValue = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "eidas:AttributeValue", "eidas");
+		//	    requestedAttribute.getUnknownXMLObjects().add(attributeValue);
+		//        attributeValue.getUnknownAttributes().put(new QName("http://www.w3.org/2001/XMLSchema-instance", "xsi:type"), "eidas-natural:PersonIdentifierType");
+		//        attributeValue.setTextContent("_PewANml");
+			}
+			
+		}
     }
 
 	
@@ -585,12 +600,12 @@ public class SAMLServiceInternal extends AbstractFederationService {
 					r.setMethod(SAMLConstants.SAML2_SOAP11_BINDING_URI);
 					r.setUrl(sss.getLocation());
 
-					encodedRequest = signAndEncode(serviceProvider, req, sss);
+					encodedRequest = signAndEncode(serviceProvider, req, sss, idp);
 					break;
 				}
 				if (sss.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI) && 
 						!backChannel) { // Max GET length is usually 8192
-					encodedRequest = signAndEncode(serviceProvider, req, sss);
+					encodedRequest = signAndEncode(serviceProvider, req, sss, idp);
 					if (encodedRequest.length() <= 2000)
 					{
 						r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
@@ -601,7 +616,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				if (sss.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI) && !backChannel) {
 					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
 					r.setUrl(sss.getLocation());
-					encodedRequest = signAndEncode(serviceProvider, req, sss);
+					encodedRequest = signAndEncode(serviceProvider, req, sss, idp);
 					break;
 				}
 			}
@@ -622,7 +637,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		}
 	}
 
-	private String signAndEncode(String serviceProvider, LogoutRequest req, SingleLogoutService sss)
+	private String signAndEncode(String serviceProvider, LogoutRequest req, SingleLogoutService sss, EntityDescriptor idp)
 			throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
 			NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException,
 			MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException,
@@ -630,7 +645,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			TransformerFactoryConfigurationError, TransformerException, UnsupportedEncodingException {
 		String encodedRequest;
 		req.setDestination( sss.getLocation() );
-		Element xml = sign (serviceProvider, builderFactory, req);
+		Element xml = sign (serviceProvider, builderFactory, req, idp);
 		String xmlString = generateString(xml);
 		encodedRequest  = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
 		return encodedRequest;
@@ -641,7 +656,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		return null;
 	}
 
-	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, org.opensaml.saml.saml2.core.RequestAbstractType req) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
+	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, org.opensaml.saml.saml2.core.RequestAbstractType req, EntityDescriptor idp) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
 		// Get the marshaller factory
 		MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 		Marshaller marshaller = marshallerFactory.getMarshaller(req);
@@ -664,14 +679,12 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
 		signature.setSigningCredential(cred);
 		signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-//		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA);
-		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA512);
 		KeyInfo keyInfo = getKeyInfo(serviceProvider);
 		keyInfo.detach();
 		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
 		
-		((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(SignatureConstants.ALGO_ID_DIGEST_SHA512);
+		applyAlgorithms(signature, idp);
 		
 		// Marshal again
 		marshaller = marshallerFactory.getMarshaller(req);
@@ -685,6 +698,22 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		XMLObject req2 = unmarshallerFactory.getUnmarshaller(req.getDOM()).unmarshall(req.getDOM());
 		return marshallerFactory.getMarshaller(req).marshall(req2);
 
+	}
+
+	private void applyAlgorithms(Signature signature, EntityDescriptor idp) {
+		org.opensaml.saml.saml2.metadata.Extensions extensions = idp.getExtensions();
+		if (extensions != null) {
+			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "SigningMethod"))) {
+				String algorithm = extension.getDOM().getAttribute("Algorithm");
+				if (algorithm != null)
+					signature.setSignatureAlgorithm(algorithm);
+			}
+			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "DigestMethod"))) {
+				String algorithm = extension.getDOM().getAttribute("Algorithm");
+				if (algorithm != null) 
+					((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(algorithm);
+			}
+		}
 	}
 
 	private EntityDescriptor getIdpMetadata(String identityProvider) throws UnmarshallingException, SAXException, IOException, ParserConfigurationException {
