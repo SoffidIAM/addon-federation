@@ -13,16 +13,19 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.User;
 import com.soffid.iam.remote.RemoteServiceLocator;
 import com.soffid.iam.service.OTPValidationService;
 
+import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.CaptchaVerifier;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -56,6 +59,18 @@ public class OTPAction extends HttpServlet {
             error = Messages.getString("UserPasswordAction.missing.password"); //$NON-NLS-1$
         } else {
             try {
+            	FederationMember idp = IdpConfig.getConfig().getFederationMember();
+            	if (Boolean.TRUE.equals(idp.getEnableCaptcha())) {
+            		CaptchaVerifier captcha = new CaptchaVerifier();
+            		if (! captcha.verify(req, idp, req.getParameter("captchaToken"))) {
+            			LogFactory.getLog(getClass()).warn("Trying to authenticate user "+u+" from a page with low captcha score "+captcha.getConfidence());
+                		error = "There seems to be problems to identify you, please, try again"; //$NON-NLS-1$
+                        req.setAttribute("ERROR", error); //$NON-NLS-1$
+        				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+        				dispatcher.forward(req, resp);
+        				return;
+            		}
+            	}
             	OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
             	IdpConfig config = IdpConfig.getConfig();
             	

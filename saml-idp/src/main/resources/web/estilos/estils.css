@@ -353,6 +353,17 @@ img.logo {
 	width: 80px;
 }
 
+
+.grecaptcha-badge {
+bottom: 50px !important;
+box-shadow: none !important;
+background-color: transparent !important;
+}
+
+.grecaptcha-badge div.rc-anchor-light {
+background-color: transparent !important;
+}
+
 p.biglogo {
 	text-align:center;
 }

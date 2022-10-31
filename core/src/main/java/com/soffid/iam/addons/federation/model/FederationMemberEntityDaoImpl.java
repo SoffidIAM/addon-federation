@@ -141,7 +141,12 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setHtmlCSS(getBlob(idp, "css"));
 			target.setHtmlFooter(getBlob(idp, "footer"));
 			target.setHtmlHeader(getBlob(idp, "header"));
-
+			target.setStoreUser(Boolean.TRUE.equals(idp.getStoreUser()));
+			// Recaptcha
+			target.setEnableCaptcha(Boolean.TRUE.equals(idp.getEnableCaptcha()));
+			target.setCaptchaKey(idp.getCaptchaKey());
+			target.setCaptchaSecret(idp.getCaptchaSecret() == null ? null: Password.decode(idp.getCaptchaSecret()));
+			target.setCaptchaThreshold(idp.getCaptchaThreshold());
 		} else if (source instanceof VirtualIdentityProviderEntity) {
 			target.setClasse("V"); //$NON-NLS-1$
 			// VirtualIdentityProvider
@@ -170,6 +175,9 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setKerberosDomain(vip.getKerberosDomain());
 			target.setSsoCookieDomain(vip.getSsoCookieDomain());
 			target.setSsoCookieName(vip.getSsoCookieName());
+			
+			target.setStoreUser(Boolean.TRUE.equals(vip.getStoreUser()));
+
 			// Default IDP
 			if (vip.getDefaultIdentityProvider() != null) {
 				FederationMember dip = toFederationMember(vip.getDefaultIdentityProvider());
@@ -189,7 +197,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			
 			generateRegisterValues(target, vip);
 			loadAuthenticatioMethods (vip, target);
-
 		} else if (source instanceof ServiceProviderEntity) {
 			target.setClasse("S"); //$NON-NLS-1$
 			// ServiceProvicer
@@ -228,6 +235,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			// Radius attributes
 			target.setSourceIps(sp.getSourceIps());
 			target.setRadiusSecret(sp.getRadiusSecret() == null ? null: Password.decode(sp.getRadiusSecret()));
+			
 			// Virtual Identity Provider (informatiu)
 			// Service providers
 			if (sp.getServiceProviderVirtualIdentityProvider() != null) {
@@ -467,7 +475,14 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setSsoCookieName(source.getSsoCookieName());
 			idp.setSessionTimeout(source.getSessionTimeout());
 			idp.setRegisterExternalIdentities(source.getRegisterExternalIdentities());
-			
+		
+			idp.setStoreUser(source.getStoreUser());
+			// Captcha
+			idp.setEnableCaptcha(Boolean.TRUE.equals(source.getEnableCaptcha()));
+			idp.setCaptchaKey(source.getCaptchaKey());
+			idp.setCaptchaSecret(source.getCaptchaSecret() == null ? null: source.getCaptchaSecret().toString());
+			idp.setCaptchaThreshold(source.getCaptchaThreshold());
+
 			if (source.getServiceProvider() != null) {
 				// els transformem tots i es guarden a sps
 				List<FederationMemberEntity> sps = federationMemberToEntityList(source.getServiceProvider()); // federarionmember
@@ -525,6 +540,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			vip.setSsoCookieDomain(source.getSsoCookieDomain());
 			vip.setSsoCookieName(source.getSsoCookieName());
 			vip.setLoginHintScript(source.getLoginHintScript());
+
+			vip.setStoreUser(source.getStoreUser());
 
 			// Default IDP
 			if (source.getDefaultIdentityProvider() != null) {

@@ -50,6 +50,7 @@ import com.soffid.iam.api.User;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.utils.ConfigurationCache;
 
+import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.AccountType;
@@ -137,10 +138,19 @@ public class AuthenticationContext {
     	hostId = null;
     	String cookieName = getHostIdCookieName();
     	String userCookie = getUserCookieName();
+    	
+    	FederationMember idp = config.getFederationMember();
+        String relyingParty = (String) request.getSession().getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        
+        if (relyingParty != null) {
+        	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
+        	if (ip != null) idp = ip;
+        }
+
     	if (cookieName != null && request != null && request.getCookies() != null)
     	{
 			for (Cookie cookie: request.getCookies()) {
-				if (cookie.getName().equals(userCookie))
+				if (cookie.getName().equals(userCookie) && Boolean.TRUE.equals(idp.getStoreUser()))
 					user = cookie.getValue();
     			if (cookie.getName().equals(cookieName))
     				hostId = cookie.getValue();

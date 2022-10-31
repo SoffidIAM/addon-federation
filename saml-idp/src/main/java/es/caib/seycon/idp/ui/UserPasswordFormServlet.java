@@ -85,15 +85,15 @@ public class UserPasswordFormServlet extends BaseForm {
             String relyingParty = (String) session.
                     getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
             
-            if (relyingParty == null)
-            	throw new es.caib.seycon.ng.exception.InternalErrorException("Internal error. Cannot guess relying party");
+            if (relyingParty == null) {
+            	resp.sendRedirect("/logout.jsp");
+            	return;
+            }
 
         	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
             if (ip == null)
             	throw new es.caib.seycon.ng.exception.InternalErrorException(String.format("Internal error. Cannot guess virtual identity provider for %s", relyingParty));
 
-            Collection<FederationMember> vip = ip.getVirtualIdentityProvider();
-            
         	log.info("Displaying login page");
         	log.info("Current user "+ctx.getUser());
         	if (ctx.getUser() != null) {
@@ -107,6 +107,8 @@ public class UserPasswordFormServlet extends BaseForm {
             
             HtmlGenerator g = new HtmlGenerator(context, req);
             g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("enableCaptcha", Boolean.TRUE.equals(config.getFederationMember().getEnableCaptcha()) ? "true": "false");
+            g.addArgument("captchaKey", config.getFederationMember().getCaptchaKey());
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
             g.addArgument("kerberosUrl", NtlmAction.URI); //$NON-NLS-1$
             g.addArgument("passwordLoginUrl", UserPasswordAction.URI); //$NON-NLS-1$
