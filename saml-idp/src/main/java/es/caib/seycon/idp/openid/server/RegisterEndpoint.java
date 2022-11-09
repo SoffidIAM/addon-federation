@@ -82,7 +82,7 @@ public class RegisterEndpoint extends HttpServlet {
 						log.warn("Trying to get access without bearer token");
 					} else {
 						String token = authentication.substring(7);
-						if (fm.getRegistrationToken() == null ||  ! fm.getRegistrationToken().validate(token)) {
+						if (!acceptableRegister(fm, token)) {
 							resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 							resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
 							log.warn("Trying to get access with wrong token");
@@ -111,6 +111,21 @@ public class RegisterEndpoint extends HttpServlet {
 		}
 	}
 	
+	private boolean acceptableRegister(FederationMember fm, String token) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		if (fm.getRegistrationToken() == null) 
+			return false;
+		if (! fm.getRegistrationToken().validate(token)) 
+			return false;
+		if (fm.getRegistrationTokenExpiration() == null || new Date().after(fm.getRegistrationTokenExpiration()))
+			return false;
+		if (fm.getMaxRegistrations() != null) {
+			int i = IdpConfig.getConfig().getFederationService().findServiceProvidersForDynamicRegister(fm.getPublicId()).size();
+			if (i >= fm.getMaxRegistrations())
+				return false;
+		}
+		return true;
+	}
+
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
