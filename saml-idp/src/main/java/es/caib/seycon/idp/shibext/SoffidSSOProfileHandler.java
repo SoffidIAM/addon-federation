@@ -125,7 +125,7 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
     	NameID nameId = super.buildNameId(requestContext);
     	FederationMemberSession fms = pendingSession.get();
-    	if (fms != null) {
+    	if (nameId != null && fms != null) {
     		fms.setUserName(nameId.getValue());
     		fms.setUserNameFormat(nameId.getFormat());
     		fms.setUserNameQualifier(nameId.getNameQualifier());
