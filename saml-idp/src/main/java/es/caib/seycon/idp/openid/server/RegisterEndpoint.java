@@ -82,7 +82,7 @@ public class RegisterEndpoint extends HttpServlet {
 						log.warn("Trying to get access without bearer token");
 					} else {
 						String token = authentication.substring(7);
-						if (!acceptableRegister(fm, token)) {
+						if (fm.getRegistrationToken() == null || !fm.getRegistrationToken().validate(token)) {
 							resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 							resp.addHeader("WWW-Authenticate", "Bearer realm=openid");
 							log.warn("Trying to get access with wrong token");
@@ -149,18 +149,16 @@ public class RegisterEndpoint extends HttpServlet {
 				Long id = Long.parseLong( new String ( java.util.Base64.getUrlDecoder().decode(token.substring(0, i)), "UTF-8"));
 				FederationMember s = IdpConfig.getConfig().getFederationService().findFederationMemberById(id);
 				
-				if (s != null && s.getRegistrationToken() != null && s.getRegistrationToken().validate(token)) {
-					if (new Date().before(s.getRegistrationTokenExpiration())) {
-						JSONObject o = register(s, req);
-						resp.setStatus(201);
-						resp.setContentType("appliaction/json");
-						resp.addHeader("Pragma", "no-cache");
-						resp.addHeader("Cache-Control", "no-store");
-						ServletOutputStream out = resp.getOutputStream();
-						out.write(o.toString().getBytes(StandardCharsets.UTF_8));
-						out.close();
-						return;
-					}
+				if (s != null && acceptableRegister(s, token)) {
+					JSONObject o = register(s, req);
+					resp.setStatus(201);
+					resp.setContentType("appliaction/json");
+					resp.addHeader("Pragma", "no-cache");
+					resp.addHeader("Cache-Control", "no-store");
+					ServletOutputStream out = resp.getOutputStream();
+					out.write(o.toString().getBytes(StandardCharsets.UTF_8));
+					out.close();
+					return;
 				}
 			}
 			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
