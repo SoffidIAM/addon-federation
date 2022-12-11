@@ -650,6 +650,12 @@ public class FederationServiceImpl
 				getAllowedScopeEntityDao().remove(sp.getAllowedScopes());
 				getServiceProviderReturnUrlEntityDao().remove(sp.getReturnUrls());
 				sp.setServiceProviderVirtualIdentityProvider(null);
+				
+				for (ServiceProviderEntity child: sp.getRegistered()) {
+					child.setDynamicRegistrationServer(null);
+					getServiceProviderEntityDao().update(child);
+				}
+				sp.getRegistered().clear();
 				getServiceProviderEntityDao().remove(sp);
 
 				String desc = sp.getPublicId() + (sp.getName() != null ? " - " + sp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$

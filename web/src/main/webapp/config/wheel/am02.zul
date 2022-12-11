@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?page id="UserDomains" title="Gestió dels dominis d'usuari"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+
+
+<window id="am02_w" position="top-center" closable="false" sizable="false"
+		title="Add applications"
+		use="com.soffid.iam.web.addons.federation.web.wheel.Am02Handler"
+		style="width: 80%; height: 560px; max-width: 800px; top: 200px !important;">
+	<timer id="timer" delay="1000" repeats="true" onTimer="ref:ad.onTimer" running="false"/>
+	<wizard id="wizard">
+			<attribute name="steps">
+	- ${c:l("federacio.wizard.registerIdp")}
+	- ${c:l('federacio.wizard.selectApp') }
+	- ${c:l("federacio.wizard.configureApp")}
+	- ${c:l("federacio.wizard.configureFederation")}
+	- ${c:l('user_createaccount.Finish') }
+	</attribute>
+		<div id="step1">
+			<div style="height: 400px">
+				<label value="${c:l('federation.registeridp.explanation') }"/>
+				<customfield3 label="Host name" dataType="STRING" placeholder="auth.soffid.com" required="true" id="name"/>
+				<customfield3 label="HTTPS port" dataType="NUMBER" placeholder="443" required="false" id="port"/>
+			</div>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+				<button image="/img/next-r.svg" label="${c:l('user_createaccount.Next')}" onClick="ref:am02_w.next"/>
+			</div>
+		</div>
+		<div id="step2">
+			<div style="height: 400px; overflow: auto">
+				<label multiline="true" value="${c:l('wheel.system.addApplication') }" style="display: block"/>
+				<div sclass="options options-tiny" style="display: inline-block; text-align: left">
+					<div sclass="menuoption" onClick="ref:am02_w.addAws">
+						<image src="/img/other/aws.svg"/>
+						<label sclass='menuoption-title' value="AWS" />
+					</div> 
+					<div sclass="menuoption" onClick="ref:am02_w.addGoogle">
+						<image src="/img/other/google.svg"/>
+						<label sclass='menuoption-title' value="Google workplace" />
+					</div> 
+					<div sclass="menuoption" onClick="ref:am02_w.addAzure">
+						<image src="/img/other/azure.svg"/>
+						<label sclass='menuoption-title' value="Microsoft 365" />
+					</div> 
+					<div sclass="menuoption" onClick="ref:am02_w.addOpenid">
+						<image src="/addon/federation/img/openid.svg"/>
+						<label sclass='menuoption-title' value="Openid" />
+					</div> 
+					<div sclass="menuoption" onClick="ref:am02_w.addOasis">
+						<image src="/addon/federation/img/oasis.jpg"/>
+						<label sclass='menuoption-title' value="SAML 2.0" />
+					</div> 
+				</div>
+			</div>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+			</div>
+		</div>
+		<div id="step3">
+			<div style="height: 400px; overflow: auto">
+				<html id="explanation"/>
+				<textbox id="copytb" multiline="true" visible="false"/>
+				<customfield3 label="${c:l('federation.sso.googledomain') }" dataType="STRING" visible="false"
+					placeholder="${c:l('federation.sso.googledomain2') }" required="true" id="googledomain"/>
+			</div>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+				<button image="/img/next-r.svg" label="${c:l('user_createaccount.Next')}" onClick="ref:am02_w.next"/>
+			</div>
+		</div>
+		<div id="step4">
+			<div style="height: 400px; overflow: auto">
+				<div id="azuredownloaddiv">
+					<label value="${c:l('federation.sso.azure2') }"></label>
+					<a xmlns="http://www.w3.org/1999/xhtml"
+						target="_blank"
+						style="display:block; margin-top: 15px; margin-bottom: 35px" 
+						href="https://nexus.microsoftonline-p.com/federationmetadata/saml20/federationmetadata.xml">
+						https://nexus.microsoftonline-p.com/federationmetadata/saml20/federationmetadata.xml
+					</a>
+				</div>
+				<label value="${c:l('federation.sso.aws2') }"/>
+				<uploader style="display: block"
+						multiple="false"
+						mold="simple"
+						onUpload="ref:am02_w.uploadMetadata"></uploader>
+			</div>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+			</div>
+		</div>
+		<div>
+			<div style="height: 400px; overflow: auto">
+				<label value="${c:l('fedreation.sso.finish') }" />
+			</div>
+			
+			<div style="text-align: right; width: 100%">
+				<button image="/img/ok-r.svg" label="${c:l('user_createaccount.Finish')}" onClick="ref:am02_w.next"/>
+			</div>
+		</div>
+	</wizard>
+</window>

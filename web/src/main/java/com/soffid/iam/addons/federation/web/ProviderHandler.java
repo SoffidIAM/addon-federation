@@ -1,6 +1,9 @@
 package com.soffid.iam.addons.federation.web;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 
 import com.soffid.iam.addons.federation.common.EntityGroup;
@@ -132,5 +135,16 @@ public class ProviderHandler extends FrameHandler {
 		DataTree2 tree = (DataTree2) getListbox();
 		tree.addNew("/entitygroupmember", egm);
 		showDetails();		
+	}
+
+	@Override
+	public void afterCompose() {
+		super.afterCompose();
+		HttpServletRequest req = (HttpServletRequest) Executions.getCurrent().getNativeRequest();
+		if (req.getParameter("filter") != null)
+		{
+			DataTree2 tree = (DataTree2) getListbox();
+			tree.setFilters(new String[] {req.getParameter("filter")});	
+		}
 	}
 }

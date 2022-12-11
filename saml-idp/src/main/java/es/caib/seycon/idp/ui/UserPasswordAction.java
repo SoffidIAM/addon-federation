@@ -69,6 +69,11 @@ public class UserPasswordAction extends HttpServlet {
         				return;
             		}
             	}
+    			if ( ctx != null && ctx.isFinished())
+    			{
+    				new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+    				return;
+    			}
                 if (v.validate(u, new Password(p))) {
                 	if (ctx == null) {
                 		error = "Session timeout"; //$NON-NLS-1$
