@@ -9,7 +9,11 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 import javax.ejb.CreateException;
 import javax.naming.InitialContext;
@@ -39,12 +43,14 @@ import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zk.ui.ext.AfterCompose;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Html;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
 import com.soffid.iam.EJBLocator;
+import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.common.AttributePolicy;
 import com.soffid.iam.addons.federation.common.AttributePolicyCondition;
@@ -67,6 +73,7 @@ import com.soffid.iam.web.component.CustomField3;
 import com.soffid.iam.web.popup.Editor;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.signatura.utils.Base64;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.zkiblaf.Missatgebox;
 
@@ -74,6 +81,8 @@ public class Am02Handler extends Window implements AfterCompose {
 	private static final String AWS = "AWS";
 	private static final String GOOGLE = "Google";
 	private static final String AZURE = "Azure";
+	private static final String OPENID = "Openid";
+	private static final String SAML = "SAML";
 	private Wizard wizard;
 	private CustomField3 name;
 	private CustomField3 port;
@@ -85,6 +94,16 @@ public class Am02Handler extends Window implements AfterCompose {
 	private String type;
 	private String serviceProvider;
 	private CustomField3 googleDomain;
+	private Div step3saml;
+	private Div step3openid;
+	private CustomField3 oid_implicit;
+	private CustomField3 openidUrl;
+	private CustomField3 oid_password;
+	private CustomField3 oid_passsword_clientcred;
+	private CustomField3 oid_authcode;
+	private CustomField3 openidName;
+	private CustomField3 openidSecret;
+	private CustomField3 openidClientId;
 	
 	@Override
 	public void afterCompose() {
@@ -94,6 +113,16 @@ public class Am02Handler extends Window implements AfterCompose {
 		explanation = (Html) getFellow("explanation");
 		copytb = (Textbox) getFellow("copytb");
 		googleDomain = (CustomField3) getFellow("googledomain");
+		step3saml = (Div) getFellow("step3saml");
+		step3openid = (Div) getFellow("step3openid");
+		oid_implicit = (CustomField3) getFellow("oid_implicit");
+		oid_authcode = (CustomField3) getFellow("oid_authcode");
+		oid_passsword_clientcred = (CustomField3) getFellow("oid_passsword_clientcred");
+		oid_password = (CustomField3) getFellow("oid_password");
+		openidUrl = (CustomField3) getFellow("openidUrl");
+		openidName = (CustomField3) getFellow("openidName");
+		openidClientId = (CustomField3) getFellow("openidClientId");
+		openidSecret = (CustomField3) getFellow("openidSecret");
 		
 		doHighlighted();
 		boolean sp = false, idp = false;
@@ -158,8 +187,10 @@ public class Am02Handler extends Window implements AfterCompose {
 		}
 	}
 
-	private void generateMetadata() throws InternalErrorException, TransformerConfigurationException, FactoryConfigurationError, SAXException, ParserConfigurationException, TransformerFactoryConfigurationError, TransformerException {
+	private void generateMetadata() throws InternalErrorException, TransformerConfigurationException, FactoryConfigurationError, SAXException, ParserConfigurationException, TransformerFactoryConfigurationError, TransformerException, NoSuchAlgorithmException {
 		getFellow("azuredownloaddiv").setVisible(false);
+		getFellow("step4saml").setVisible(false);
+		getFellow("step4openid").setVisible(false);
 		createPublicPolicy();
 		if (type == GOOGLE) {
 			if (googleDomain.attributeValidateAll()) {
@@ -188,16 +219,86 @@ public class Am02Handler extends Window implements AfterCompose {
 					wizard.next();
 				}
 			} catch (IOException e) {
+				getFellow("step4saml").setVisible(true);
 				getFellow("azuredownloaddiv").setVisible(true);
 				wizard.next();
 			}
 			
 		}
-		
-		else
-		{
+		else if (type == OPENID) {
+			openidUrl.setWarning(0, "");
+			if (!openidName.attributeValidateAll())
+				return;
+			boolean b1 = Boolean.TRUE.equals(oid_authcode.getValue());
+			boolean b2 = Boolean.TRUE.equals(oid_implicit.getValue());
+			boolean b3 = Boolean.TRUE.equals(oid_password.getValue());
+			boolean b4 = Boolean.TRUE.equals(oid_passsword_clientcred.getValue());
+			if (! b1 && ! b2 && ! b3 && ! b4 ) {
+				openidUrl.setWarning(0, Labels.getLabel("federation.sso.selectFlow"));
+				return;
+			}
+			List<String> r = (List<String>) openidUrl.getValue();
+			if ((b1 || b2) && (r == null || r.isEmpty())) {
+				openidUrl.setWarning(0, "Please, enter a value" );
+				return;
+			}
+			createOpenidServiceProvider();
+			getFellow("step4openid").setVisible(true);
 			wizard.next();
 		}
+		else
+		{
+			getFellow("step4saml").setVisible(true);
+			wizard.next();
+		}
+	}
+
+	private void createOpenidServiceProvider() throws InternalErrorException, NoSuchAlgorithmException {
+		serviceProvider = openidName.getValue().toString();
+		EntityGroup eg = createEntityGroup(svc, "Service providers");
+		FederationMember fm = svc.findFederationMemberByPublicId(serviceProvider);
+		if (fm == null)
+			fm = new FederationMember();
+		fm.setPublicId(serviceProvider);
+		fm.setClasse("S");
+		fm.setName(serviceProvider);
+		fm.setEntityGroup(eg);
+		fm.setServiceProviderType(ServiceProviderType.OPENID_CONNECT);
+
+		HashSet<String> s = new HashSet<>();
+		final boolean im = Boolean.TRUE.equals(oid_implicit.getValue());
+		final boolean ac = Boolean.TRUE.equals(oid_authcode.getValue());
+		final boolean pa = Boolean.TRUE.equals(oid_password.getValue());
+		final boolean pc = Boolean.TRUE.equals(oid_passsword_clientcred.getValue());
+		if ( im) s.add("IM");
+		if ( ac) s.add("AC");
+		if ( pa) s.add("PA");
+		if ( pc) s.add("PC");
+		fm.setOpenidMechanism(s);
+		fm.setOpenidUrl((List<String>) openidUrl.getValue());
+		fm.setOpenidClientId(generateSecret());
+		if (ac || pc) {
+			final String secret = generateSecret();
+			fm.setOpenidSecret(new Digest(secret));
+			openidSecret.setValue(secret);
+		} else {
+			fm.setOpenidSecret(null);
+			openidSecret.setValue("");
+		}
+
+		openidClientId.setValue(fm.getOpenidClientId());
+		
+		if (fm.getId() == null)
+			fm = svc.create(fm);
+		else
+			svc.update(fm);
+		
+	}
+
+	private String generateSecret() {
+		byte b[] = new byte[36];
+		new SecureRandom().nextBytes(b);
+		return Base64.encodeBytes(b, Base64.DONT_BREAK_LINES);
 	}
 
 	private void createServiceProvider(String metadata) throws InternalErrorException {
@@ -371,6 +472,8 @@ public class Am02Handler extends Window implements AfterCompose {
 	public void addAws(Event e) throws InternalErrorException {
 		type = AWS;
 		wizard.next();
+		step3openid.setVisible(false);
+		step3saml.setVisible(true);
 		String s = Labels.getLabel("federation.sso.aws1");
 		
 		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
@@ -391,9 +494,28 @@ public class Am02Handler extends Window implements AfterCompose {
 		Filedownload.save(m);
 	}
 
+	public void addOasis(Event e) throws InternalErrorException {
+		type = SAML;
+		wizard.next();
+		step3openid.setVisible(false);
+		step3saml.setVisible(true);
+		String s = Labels.getLabel("federation.sso.saml1");
+		
+		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
+		s = s.replace("{url}", 
+				encode("https://"+fm.getHostName()+":"+fm.getStandardPort()+"/SAML/metadata.xml"));
+		explanation.setContent(s);
+		
+		AMedia m = new AMedia(fm.getHostName()+"-metadata.xml", null, "binary/octect-stream", 
+				fm.getMetadades().getBytes(StandardCharsets.UTF_8));
+		Filedownload.save(m);
+	}
+
 	public void addGoogle(Event e) throws InternalErrorException {
 		type = GOOGLE;
 		wizard.next();
+		step3openid.setVisible(false);
+		step3saml.setVisible(true);
 		String s = Labels.getLabel("federation.sso.google1");
 		
 		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
@@ -425,6 +547,8 @@ public class Am02Handler extends Window implements AfterCompose {
 	public void addAzure(Event e) throws InternalErrorException {
 		type = AZURE;
 		wizard.next();
+		step3openid.setVisible(false);
+		step3saml.setVisible(true);
 		
 		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
 		String cert = fm.getCertificateChain();
@@ -458,6 +582,16 @@ public class Am02Handler extends Window implements AfterCompose {
 				fm.getCertificateChain().getBytes(StandardCharsets.UTF_8));
 	}
 
+	public void addOpenid(Event e) throws InternalErrorException {
+		type = OPENID;
+		wizard.next();
+		step3openid.setVisible(true);
+		step3saml.setVisible(false);
+		
+		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
+		
+		
+	}
 
 	private String copyButton2() {
 		return copyButton2("middle");

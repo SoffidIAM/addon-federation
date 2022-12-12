@@ -58,11 +58,29 @@
 			</div>
 		</div>
 		<div id="step3">
-			<div style="height: 400px; overflow: auto">
+			<div style="height: 400px; overflow: auto" id="step3saml">
 				<html id="explanation"/>
 				<textbox id="copytb" multiline="true" visible="false"/>
 				<customfield3 label="${c:l('federation.sso.googledomain') }" dataType="STRING" visible="false"
 					placeholder="${c:l('federation.sso.googledomain2') }" required="true" id="googledomain"/>
+			</div>
+			<div style="height: 400px; overflow: auto" id="step3openid">
+				<customfield3 dataType="STRING" id="openidName"
+					required="true"
+					multiValue="false"
+					maxLength="100"
+					label="${c:l('federacio.zul.Name')}"/>
+				<label value="${c:l('federacio.zul.openidFlow') }" style="margin-left: 8px"/>
+				<customfield3 dataType="BOOLEAN" id="oid_implicit" label="${c:l('federacio.zul.openidFlow.implicit')}"/>
+				<customfield3 dataType="BOOLEAN" id="oid_authcode" label="${c:l('federacio.zul.openidFlow.authorizationCode')}"/>
+				<customfield3 dataType="BOOLEAN" id="oid_password" label="${c:l('federacio.zul.openidGrantType.password')}"/>
+				<customfield3 dataType="BOOLEAN" id="oid_passsword_clientcred" label="${c:l('federacio.zul.openidGrantType.password_client_credentials')}"/>
+				<customfield3 dataType="STRING" id="openidUrl"
+					required=""
+					multiValue="true"
+					maxrows="10"
+					maxLength="100"
+					label="${c:l('federacio.zul.openidUrl')}"/>
 			</div>
 			<div style="text-align: right; width: 100%">
 				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
@@ -70,24 +88,53 @@
 			</div>
 		</div>
 		<div id="step4">
-			<div style="height: 400px; overflow: auto">
-				<div id="azuredownloaddiv">
-					<label value="${c:l('federation.sso.azure2') }"></label>
-					<a xmlns="http://www.w3.org/1999/xhtml"
-						target="_blank"
-						style="display:block; margin-top: 15px; margin-bottom: 35px" 
-						href="https://nexus.microsoftonline-p.com/federationmetadata/saml20/federationmetadata.xml">
-						https://nexus.microsoftonline-p.com/federationmetadata/saml20/federationmetadata.xml
-					</a>
+			<div id="step4saml">
+				<div style="height: 400px; overflow: auto" >
+					<div id="azuredownloaddiv">
+						<label value="${c:l('federation.sso.azure2') }"></label>
+						<a xmlns="http://www.w3.org/1999/xhtml"
+							target="_blank"
+							style="display:block; margin-top: 15px; margin-bottom: 35px" 
+							href="https://nexus.microsoftonline-p.com/federationmetadata/saml20/federationmetadata.xml">
+							https://nexus.microsoftonline-p.com/federationmetadata/saml20/federationmetadata.xml
+						</a>
+					</div>
+					<label value="${c:l('federation.sso.aws2') }"/>
+					<uploader style="display: block"
+							multiple="false"
+							mold="simple"
+							onUpload="ref:am02_w.uploadMetadata"></uploader>
 				</div>
-				<label value="${c:l('federation.sso.aws2') }"/>
-				<uploader style="display: block"
-						multiple="false"
-						mold="simple"
-						onUpload="ref:am02_w.uploadMetadata"></uploader>
+				<div style="text-align: right; width: 100%">
+					<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+				</div>
 			</div>
-			<div style="text-align: right; width: 100%">
-				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+			<div id="step4openid">
+				<div style="height: 400px; overflow: auto">
+					<label value="${c:l('federation.sso.clientIdExplanation') }" />
+					<div>
+						<customfield3 dataType="STRING"  id="openidClientId"
+							style="width: calc(100% - 64px); display: inline-block"
+							maxLength="100"
+							readonly="true"
+							label="${c:l('federacio.zul.openidKey')}"/>
+						<imageclic src='/img/copy.svg' style='height: 24px; width: 24px; padding: 1px' 
+							action="onClick:{var e = this.previousElementSibling; e.focus(); e.select(); document.execCommand('copy');}"/>
+					</div>
+					<div>
+						<customfield3 dataType="STRING" id="openidSecret"
+							style="width: calc(100% - 64px); display: inline-block"
+							maxLength="100"
+							readonly="true"
+							label="${c:l('federacio.zul.openidSecret')}" />
+						<imageclic src='/img/copy.svg' style='height: 24px; width: 24px; padding: 1px' 
+							action="onClick:{var e = this.previousElementSibling; e.focus(); e.select(); document.execCommand('copy');}"/>
+					</div>
+				</div>
+				<div style="text-align: right; width: 100%">
+					<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+					<button image="/img/next-r.svg" label="${c:l('user_createaccount.Next')}" onClick="ref:am02_w.next"/>
+				</div>
 			</div>
 		</div>
 		<div>
