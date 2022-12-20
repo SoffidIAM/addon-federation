@@ -1,8 +1,14 @@
 package com.soffid.iam.addons.federation.api.adaptive;
 
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 
+import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.api.User;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -20,6 +26,11 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	private double failuresRatio;
 	private String identityProvider;
 	private String serviceProvider;
+
+	private Collection<UserCredentialType> tokens;
+
+	private Collection<String> otps;
+	
 	public ActualAdaptiveEnvironment(User user, String sourceIp, String hostId) throws IOException, InternalErrorException {
 		this.user = user;
 		this.sourceIp = sourceIp;
@@ -168,6 +179,84 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	@Override
 	public User user() {
 		return user;
+	}
+
+	@Override
+	public boolean hasFidoToken() {
+		if (user == null)
+			return false;
+		
+		loadTokens();
+		return tokens.contains(UserCredentialType.FIDO);
+	}
+
+	@Override
+	public boolean hasCertificate() {
+		if (user == null)
+			return false;
+		
+		loadTokens();
+		return tokens.contains(UserCredentialType.CERT);
+	}
+
+	private void loadTokens() {
+		if (tokens != null) {
+			try {
+				tokens = getService().getEnabledCredentials(user.getId());
+			} catch (InternalErrorException e1) {
+				throw new RuntimeException(e1);
+			}
+		}
+	}
+
+	private void loadOtps() {
+		if (otps != null) {
+			try {
+				otps = getService().getEnabledOtps(user.getId());
+			} catch (InternalErrorException e1) {
+				throw new RuntimeException(e1);
+			}
+		}
+	}
+
+	@Override
+	public boolean hasOtpTotp() {
+		if (user == null)
+			return false;
+		loadOtps();
+		return otps.contains("TOTP");
+	}
+
+	@Override
+	public boolean hasOtpHotp() {
+		if (user == null)
+			return false;
+		loadOtps();
+		return otps.contains("HOTP");
+	}
+
+	@Override
+	public boolean hasOtpSms() {
+		if (user == null)
+			return false;
+		loadOtps();
+		return otps.contains("SMS");
+	}
+
+	@Override
+	public boolean hasOtpPin() {
+		if (user == null)
+			return false;
+		loadOtps();
+		return otps.contains("PIN");
+	}
+
+	@Override
+	public boolean hasOtpMail() {
+		if (user == null)
+			return false;
+		loadOtps();
+		return otps.contains("EMAIL");
 	}
 
 }

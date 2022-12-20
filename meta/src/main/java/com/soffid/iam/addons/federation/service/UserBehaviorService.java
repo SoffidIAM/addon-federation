@@ -1,10 +1,12 @@
 package com.soffid.iam.addons.federation.service;
 
+import java.util.Collection;
 import java.util.Date;
 
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.model.UserBehaviorEntity;
 import com.soffid.mda.annotation.Depends;
 import com.soffid.mda.annotation.Nullable;
@@ -19,7 +21,8 @@ import es.caib.seycon.ng.servei.XarxaService;
 	serverRole="agent")
 @Depends({UserBehaviorEntity.class, 
 		UsuariEntity.class,
-		XarxaService.class})
+		XarxaService.class,
+		UserCredentialService.class})
 public class UserBehaviorService {
 	public String getCountryForIp(String ip) { return null; }
 	public String getLastCountry(Long userId) {return null; }
@@ -36,4 +39,8 @@ public class UserBehaviorService {
 	public AuthenticationMethod getAuthenticationMethod ( FederationMember fm, AdaptiveEnvironment env) {return null;}
 	
 	public boolean isLocked(Long userId) {return false;}
+	
+	public Collection<UserCredentialType> getEnabledCredentials(Long userId) {return null;}
+	public Collection<String> getEnabledOtps(Long userId) {return null;}
+	
 }
