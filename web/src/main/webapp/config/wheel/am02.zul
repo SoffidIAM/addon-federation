@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?page id="UserDomains" title="Gestió dels dominis d'usuari"?>
 <?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
 
 
@@ -16,7 +15,7 @@
 	- ${c:l("federacio.wizard.configureFederation")}
 	- ${c:l('user_createaccount.Finish') }
 	</attribute>
-		<div id="step1">
+		<div id="step1"> 
 			<div style="height: 400px">
 				<label value="${c:l('federation.registeridp.explanation') }"/>
 				<customfield3 label="Host name" dataType="STRING" placeholder="auth.soffid.com" required="true" id="name"/>
@@ -31,6 +30,10 @@
 			<div style="height: 400px; overflow: auto">
 				<label multiline="true" value="${c:l('wheel.system.addApplication') }" style="display: block"/>
 				<div sclass="options options-tiny" style="display: inline-block; text-align: left">
+					<div sclass="menuoption" onClick="ref:am02_w.addSoffid">
+						<image src="/anonymous/logo.svg"/>
+						<label sclass='menuoption-title' value="This console" />
+					</div> 
 					<div sclass="menuoption" onClick="ref:am02_w.addAws">
 						<image src="/img/other/aws.svg"/>
 						<label sclass='menuoption-title' value="AWS" />

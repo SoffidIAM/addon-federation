@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+
+
+<window id="am02_w" position="top-center" closable="false" sizable="false"
+		title="${c:l('federation.mfa.title') }"
+		use="com.soffid.iam.web.addons.federation.web.wheel.Am03Handler"
+		style="width: 80%; height: 560px; max-width: 800px; top: 200px !important;">
+	<timer id="timer" delay="1000" repeats="true" onTimer="ref:am02_w.onTimer" running="false"/>
+	<wizard id="wizard">
+			<attribute name="steps">
+	- ${c:l("federation.mfa.type")}
+	- ${c:l('federation.mfa.deliveryMethod') }
+	- ${c:l("federation.mfa.activation")}
+	- ${c:l('user_createaccount.Finish') }
+	</attribute>
+		<div id="step1">
+			<div style="height: 400px">
+				<label value="${c:l('federation.mfa.type2') }"/>
+				<radiogroup id="radiogroup"  style="display:block; margin-top: 20px; padding-left: 50px">
+					<radio value="email" label="${c:l('com.soffid.iam.addons.otp.common.OtpDeviceType.EMAIL') }" style="display:block"/>
+					<radio value="sms" label="${c:l('com.soffid.iam.addons.otp.common.OtpDeviceType.SMS') }" style="display:block"/>
+					<radio value="totp" label="${c:l('com.soffid.iam.addons.otp.common.OtpDeviceType.TOTP') }" style="display:block"/>
+					<radio value="hotp" label="${c:l('com.soffid.iam.addons.otp.common.OtpDeviceType.HOTP') }" style="display:block"/>
+					<radio value="pin" label="${c:l('com.soffid.iam.addons.otp.common.OtpDeviceType.PIN') }" style="display:block"/>
+					<radio value="cert" label="${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT') }" style="display:block"/>
+					<radio value="fido" label="${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO') }" style="display:block"/>
+				</radiogroup>
+			</div>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+				<button image="/img/next-r.svg" label="${c:l('user_createaccount.Next')}" onClick="ref:am02_w.next"/>
+			</div>
+		</div>
+		<div id="step2">
+			<div style="height: 400px; overflow: auto">
+				<label value="${c:l('federation.mfa.deliveryMethod2') }"/>
+				<radiogroup id="radiogroup2"  style="display:block; margin-top: 20px; padding-left: 50px"
+					onCheck="ref:am02_w.changeMethod">
+					<radio value="all" label="${c:l('federation.mfa.deliveryMail') }" style="display:block"/>
+					<radio value="some" label="${c:l('federation.mfa.deliveryTestUsers') }" style="display:block"/>
+					<radio value="none" label="${c:l('federation.mfa.deliveryNot') }" style="display:block"/>
+				</radiogroup>
+				<customfield3 label="${c:l('user-groups.selectUser')}" id="users" dataType="USER"
+					required="true"
+					multiValue="true"
+					maxrows="4"/>
+				<customfield3 label="${c:l('federation.mfa.message')}" id="message"
+					dataType="HTML"/>
+			</div>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+				<button image="/img/next-r.svg" label="${c:l('user_createaccount.Next')}" onClick="ref:am02_w.next"/>
+			</div>
+		</div>
+		<div id="step3">
+			<div style="height: 400px; overflow: auto">
+				<label value="${c:l('federation.mfa.activation2') }"/>
+				<radiogroup id="radiogroup3"  style="display:block; margin-top: 20px; padding-left: 50px"
+					onCheck="ref:am02_w.changeActivation">
+					<radio value="all" label="${c:l('federation.mfa.activationAll') }" style="display:block"/>
+					<radio value="some" label="${c:l('federation.mfa.activationMfa') }" style="display:block"/>
+					<radio value="none" label="${c:l('federation.mfa.activationNot') }" style="display:block"/>
+				</radiogroup>
+				<customfield3 label="${c:l('federation.mfa.activationDate')}" id="date" dataType="DATE_TIME"
+					required="true" />
+			</div>
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:am02_w.back" />
+				<button image="/img/next-r.svg" label="${c:l('user_createaccount.Next')}" onClick="ref:am02_w.next"/>
+			</div>
+		</div>
+		<div>
+			<div style="height: 400px; overflow: auto; text-align: center; padding-top: 100px;">
+				<label value="${c:l('federation.mfa.applyingChanges') }" />
+				<image style="margin-left: 40px; height: 24px; vertical-align:middle" src="/anonymous/wait.gif" id="step3Wait"/>
+			</div>
+			
+			<div style="text-align: right; width: 100%">
+				<button image="/img/ok-r.svg" label="${c:l('user_createaccount.Finish')}" onClick="ref:am02_w.next" id="finish" visible="false"/>
+			</div>
+		</div>
+	</wizard>
+</window>

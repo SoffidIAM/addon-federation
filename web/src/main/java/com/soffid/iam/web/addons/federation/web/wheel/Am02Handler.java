@@ -1,11 +1,14 @@
 package com.soffid.iam.web.addons.federation.web.wheel;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +21,7 @@ import java.util.List;
 import javax.ejb.CreateException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
@@ -67,8 +71,12 @@ import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
+import com.soffid.iam.api.Configuration;
 import com.soffid.iam.api.System;
+import com.soffid.iam.service.ejb.ConfigurationService;
 import com.soffid.iam.service.ejb.DispatcherService;
+import com.soffid.iam.service.ejb.SamlService;
+import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.web.component.CustomField3;
 import com.soffid.iam.web.popup.Editor;
 
@@ -83,6 +91,7 @@ public class Am02Handler extends Window implements AfterCompose {
 	private static final String AZURE = "Azure";
 	private static final String OPENID = "Openid";
 	private static final String SAML = "SAML";
+	private static final String SOFFID = "Soffid";
 	private Wizard wizard;
 	private CustomField3 name;
 	private CustomField3 port;
@@ -214,7 +223,7 @@ public class Am02Handler extends Window implements AfterCompose {
 				final URL url = new URL("https://nexus.microsoftonline-p.com/federationmetadata/saml20/federationmetadata.xml");
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				InputStream in = conn.getInputStream();
-				if (registerServiceProvider(in)) {
+				if (registerServiceProvider("Cloud providers", in)) {
 					wizard.next();
 					wizard.next();
 				}
@@ -617,7 +626,7 @@ public class Am02Handler extends Window implements AfterCompose {
 		for (Media file: ev.getMedias()) {
 			try {
 				final InputStream inputStream = file.getStreamData();
-				if (registerServiceProvider(inputStream))
+				if (registerServiceProvider("Cloud providers", inputStream))
 					wizard.next();
 			} catch (SAXException e) {
 				Missatgebox.avis(Labels.getLabel("federation.sso.samlParseError"));
@@ -627,7 +636,7 @@ public class Am02Handler extends Window implements AfterCompose {
 		}
 	}
 
-	private boolean registerServiceProvider(final InputStream inputStream) throws FactoryConfigurationError, SAXException,
+	private boolean registerServiceProvider(String entityGroup, final InputStream inputStream) throws FactoryConfigurationError, SAXException,
 			IOException, ParserConfigurationException, InternalErrorException, TransformerFactoryConfigurationError,
 			TransformerConfigurationException, TransformerException {
 		DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
@@ -644,7 +653,7 @@ public class Am02Handler extends Window implements AfterCompose {
 			return false;
 		}
 		
-		EntityGroup eg = createEntityGroup(svc, "Cloud providers");
+		EntityGroup eg = createEntityGroup(svc, entityGroup);
 		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
 		if (fm == null)
 			fm = new FederationMember();
@@ -741,4 +750,50 @@ public class Am02Handler extends Window implements AfterCompose {
 		
 		svc.create(p);
 	}
+	
+	public void addSoffid(Event e) throws InternalErrorException, NamingException, CreateException, URISyntaxException, TransformerConfigurationException, FactoryConfigurationError, SAXException, IOException, ParserConfigurationException, TransformerFactoryConfigurationError, TransformerException {
+		type = SOFFID;
+		
+		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
+		
+		SamlService samlService = EJBLocator.getSamlService();
+		
+		HttpServletRequest req = (HttpServletRequest) Executions.getCurrent().getNativeRequest();
+		String externalURL = (String) req.getHeader("Referer");
+		final URI uri = new URI(externalURL);
+		String host = uri.getScheme()+"://"+uri.getHost();
+		if (uri.getPort() > 0) host += ":"+uri.getPort();
+		
+		String md = samlService.generateMetadata(host);
+		
+		registerServiceProvider("Soffid", new ByteArrayInputStream(md.getBytes(StandardCharsets.UTF_8)));
+		
+		FederationMember idp = svc.findFederationMemberByPublicId(publicId);
+		
+		updateConfig("soffid.saml.metadata.url", "java:com.soffid.iam.addons.federation.service.impl.InternalMetadataResolver");
+		updateConfig("soffid.saml.idp", publicId);
+		updateConfig("soffid.auth.saml", "true");
+		
+		samlService.findIdentityProviders();
+
+		wizard.next();
+		wizard.next();
+		wizard.next();
+	}
+
+	private void updateConfig(String param, String value) throws InternalErrorException, NamingException, CreateException {
+		ConfigurationService service = EJBLocator.getConfigurationService();
+		Configuration c = service.findParameterByNameAndNetworkName(param, null);
+		if (c == null) {
+			c = new Configuration();
+			c.setName(param);
+			c.setValue(value);
+			service.create(c);
+		} else {
+			c.setValue(value);
+			service.update(c);
+		}
+	}
+
+
 }
