@@ -175,9 +175,9 @@ public class HtmlGenerator {
         } else {
         	internalParams.put("htmlHeader", "	<div id=\"language\">\n"
         			+ "		<ul class=\"qtrans_language_chooser\" id=\"qtranslate-chooser\">\n"
-        			+ "			<li class=\"lang-en ${lang.active.en}\"><a href=\"${refreshUrl}?lang=en\" hreflang=\"en\" title=\"English\"><span>English</span></a></li>\n"
-        			+ "			<li class=\"lang-es ${lang.active.es}\"><a href=\"${refreshUrl}?lang=es\" hreflang=\"es\" title=\"Español\"><span>Español</span></a></li>\n"
-        			+ "			<li class=\"lang-ca ${lang.active.ca}\"><a href=\"${refreshUrl}?lang=ca\" hreflang=\"ca\" title=\"Català\"><span>Català</span></a></li>\n"
+        			+ "			<li class=\"lang-en ${lang.active.en}\"><a href=\""+internalParams.get("refreshUrl")+"?lang=en\" hreflang=\"en\" title=\"English\"><span>English</span></a></li>\n"
+        			+ "			<li class=\"lang-es ${lang.active.es}\"><a href=\""+internalParams.get("refreshUrl")+"?lang=es\" hreflang=\"es\" title=\"Español\"><span>Español</span></a></li>\n"
+        			+ "			<li class=\"lang-ca ${lang.active.ca}\"><a href=\""+internalParams.get("refreshUrl")+"?lang=ca\" hreflang=\"ca\" title=\"Català\"><span>Català</span></a></li>\n"
         			+ "		</ul>\n"
         			+ "	</div>\n"
         			+ "<p class='biglogo'><img src=\"/imgs/logo.png\"/></div>"
