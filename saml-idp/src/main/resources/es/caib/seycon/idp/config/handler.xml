@@ -18,11 +18,6 @@
 		<ph:RequestPath>/Status</ph:RequestPath>
 	</ph:ProfileHandler>
 
-	<ph:ProfileHandler xsi:type="ph:SAMLMetadata"
-		metadataFile="${conf}/idp-metadata.xml">
-		<ph:RequestPath>/Metadata/SAML</ph:RequestPath>
-	</ph:ProfileHandler>
-
 	<ph:ProfileHandler xsi:type="ph:ShibbolethSSO"
 		inboundBinding="urn:mace:shibboleth:1.0:profiles:AuthnRequest"
 		outboundBindingEnumeration="urn:oasis:names:tc:SAML:1.0:profiles:browser-post 
