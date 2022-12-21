@@ -400,6 +400,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			{
 				if (acs.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI))
 				{
+					req.setProtocolBinding(SAMLConstants.SAML2_POST_BINDING_URI);
 					req.setAssertionConsumerServiceURL(acs.getLocation());
 				}
 			}
@@ -423,7 +424,6 @@ public class SAMLServiceInternal extends AbstractFederationService {
 						pk == null) { // Max GET length is usually 8192
 					r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 					r.setUrl(sss.getLocation());
-					req.setProtocolBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 					req.setDestination(sss.getLocation());
 					break;
 				}
@@ -431,7 +431,6 @@ public class SAMLServiceInternal extends AbstractFederationService {
 					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
 					r.setUrl(sss.getLocation());
 					req.setDestination(sss.getLocation());
-					req.setProtocolBinding(SAMLConstants.SAML2_POST_BINDING_URI);
 					break;
 				}
 			}
