@@ -135,6 +135,12 @@ public class SoffidAttributeFilter extends ShibbolethAttributeFilteringEngine {
 		List<AttributeFilterPolicy> t = new LinkedList<>();
 		for ( Policy policy: policies)
 			t.add(transform(policy));
+		AttributeFilterPolicy tp = new AttributeFilterPolicy("releaseTransientIdToAnyone");
+		tp.setPolicyRequirementRule(new AnyMatchFunctor());
+		AttributeRule tr = new AttributeRule("transientId");
+		tp.getAttributeRules().add(tr);
+		tr.setPermitValueRule(new AnyMatchFunctor());
+		t.add(tp);
 		return t;
 	}
 

@@ -2,7 +2,7 @@ package es.caib.seycon.idp.shibext;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.rmi.RemoteException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,11 +15,13 @@ import javax.security.auth.Subject;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Account;
-import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.sso.Secret;
@@ -42,6 +44,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.Sh
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.attributeDefinition.AttributeDefinition;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.provider.attributeDefinition.SimpleAttributeDefinition;
 import edu.internet2.middleware.shibboleth.common.profile.provider.SAMLProfileRequestContext;
+import edu.internet2.middleware.shibboleth.common.service.ServiceException;
 import edu.internet2.middleware.shibboleth.common.session.Session;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -49,9 +52,11 @@ import es.caib.seycon.idp.openid.server.DummySamlRequestContext;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
-public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
+public class SoffidAttributeResolver extends ShibbolethAttributeResolver 
+	implements ApplicationContextAware  {
 	Log log = LogFactory.getLog(getClass());
-	
+	private ApplicationContext ctx;
+
 	Map<String, EntryData> cache = new Hashtable<>();
 	
 	protected EntryData getData() {
@@ -78,7 +83,7 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
 		}
 	}
 
-	private EntryData loadData() throws InternalErrorException, IOException {
+	private EntryData loadData() throws InternalErrorException, IOException, NoSuchAlgorithmException {
 		EntryData data = new EntryData();
 		data.lastRefresh = System.currentTimeMillis();
 		data.attributes = new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null);
@@ -319,6 +324,16 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver {
 		}
 		return m2;
 	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.ctx = applicationContext;
+		super.setApplicationContext(applicationContext);
+	}
+	
+    protected void loadContext() throws ServiceException {
+    	super.loadContext();
+    }
 }
 
 class EntryData {
