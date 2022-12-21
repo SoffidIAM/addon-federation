@@ -66,10 +66,23 @@ public class AdaptiveEnvironment implements Serializable {
 		return null;
 	}
 	
-//	public int daysSinceLastCompatibleLogon()
-//	{
-//		return 0;
-//	}
+	public boolean hasOtp() { return hasOtpHotp() || hasOtpMail() || hasOtpPin() || hasOtpSms() || hasOtpTotp(); }
+	
+	public boolean hasToken() {return hasFidoToken() || hasCertificate(); }
+	
+	public boolean hasFidoToken() {return false;}
+	
+	public boolean hasCertificate() {return false;}
+	
+	public boolean hasOtpTotp() {return false;}
+	
+	public boolean hasOtpHotp() {return false;}
+	
+	public boolean hasOtpSms() {return false;}
+	
+	public boolean hasOtpPin() {return false;}
+	
+	public boolean hasOtpMail() {return false;}
 	
 	public String serviceProvider()
 	{

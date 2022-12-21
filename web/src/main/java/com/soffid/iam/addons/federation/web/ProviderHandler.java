@@ -1,7 +1,13 @@
 package com.soffid.iam.addons.federation.web;
 
+import java.util.Arrays;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zul.Window;
 
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
@@ -13,6 +19,7 @@ import com.soffid.iam.web.component.Menu2item;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.zkib.component.DataTree2;
+import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datamodel.DataNode;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
@@ -132,5 +139,49 @@ public class ProviderHandler extends FrameHandler {
 		DataTree2 tree = (DataTree2) getListbox();
 		tree.addNew("/entitygroupmember", egm);
 		showDetails();		
+	}
+
+	@Override
+	public void afterCompose() {
+		super.afterCompose();
+		HttpServletRequest req = (HttpServletRequest) Executions.getCurrent().getNativeRequest();
+		final String publicId = req.getParameter("filter");
+		if (publicId != null)
+		{
+			DataTree2 tree = (DataTree2) getListbox();
+			tree.setFilters(new String[] {publicId});	
+			DataNode root = (DataNode) getModel().getJXPathContext().getValue("/");
+			if (find(publicId, root, new int[0])) {
+				showDetails();
+				if ("adaptive".equals(req.getParameter("wizard"))) {
+					Component identityProvider = getFellow("identity_provider");
+					Window adaptiveAuthentication = (Window) identityProvider.getFellow("adaptiveAuthentication");
+					adaptiveAuthentication.doHighlighted();
+				}
+			}
+		}
+	}
+
+	private boolean find(String publicId, DataNode root, int pos[]) {
+		Object o = root.getInstance();
+		if (o instanceof EntityGroupMember) {
+			EntityGroupMember egm = (EntityGroupMember) o;
+			if (egm.getFederationMember() != null && publicId.equals(egm.getFederationMember().getPublicId())) {
+				DataTree2 dt = (DataTree2) getListbox();
+				dt.setSelectedIndex(pos);
+				return true;
+			}
+		}
+		DataModelCollection coll = root.getListModel("entitygroupmember");
+		int[] newpos = Arrays.copyOf(pos, pos.length+1);
+		for (int i = 0; i < coll.getSize(); i++) {
+			DataNode dn = (DataNode) coll.getDataModel(i);
+			if (!dn.isDeleted()) {
+				newpos[pos.length] = i;
+				if (find(publicId, dn, newpos))
+					return true;
+			}
+		}
+		return false;
 	}
 }

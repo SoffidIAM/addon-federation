@@ -260,7 +260,7 @@
 		</dependencies>
 	</dependencyManagement>
 	<properties>
-		<console.version>3.3.15</console.version>
+		<console.version>3.3.62</console.version>
 	</properties>
 	<pluginRepositories>
 		<pluginRepository>

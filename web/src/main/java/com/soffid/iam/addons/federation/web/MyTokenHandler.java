@@ -5,10 +5,13 @@ import java.util.LinkedList;
 import java.util.Random;
 
 import javax.naming.InitialContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.zkoss.util.media.AMedia;
 import org.zkoss.util.resource.Labels;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
+import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Label;
@@ -28,8 +31,10 @@ import com.soffid.iam.web.component.FrameHandler;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 import es.caib.zkib.component.DataTable;
+import es.caib.zkib.component.DataTree2;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.datamodel.DataModelCollection;
+import es.caib.zkib.datamodel.DataNode;
 import es.caib.zkib.datasource.XPathUtils;
 
 public class MyTokenHandler extends FrameHandler {
@@ -114,6 +119,26 @@ public class MyTokenHandler extends FrameHandler {
 					Filedownload.save(m);
 				}
 			}
+		}
+	}
+
+	@Override
+	public void afterCompose() {
+		super.afterCompose();
+		HttpServletRequest req = (HttpServletRequest) Executions.getCurrent().getNativeRequest();
+		final String wizard = req.getParameter("wizard");
+		try {
+			if (wizard != null) {
+				addNew();
+				Window w = (Window) getFellow("add-window");
+				final CustomField3 typeField = (CustomField3)w.getFellow("type");
+				typeField.setValue(wizard);
+				changeType(null);
+				if ("fido".equals(wizard))
+					addApply();
+			}
+		} catch (Exception e) {
+			throw new UiException(e);
 		}
 	}
 

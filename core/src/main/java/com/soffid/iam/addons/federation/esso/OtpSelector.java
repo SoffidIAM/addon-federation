@@ -29,6 +29,7 @@ public class OtpSelector {
 			idp = fs.findFederationMemberByPublicId(idpName);
 		if ( idp != null ) {
 			ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(challenge.getUser(), challenge.getHost().getName(), challenge.getHost().getIp());
+			env.setService((UserBehaviorService)ServiceLocator.instance().getService(UserBehaviorService.SERVICE_NAME));
 			AuthenticationMethod m = ubs.getAuthenticationMethod(idp, env );
 			boolean accepted = false;
 			StringBuffer otpType = new StringBuffer();
