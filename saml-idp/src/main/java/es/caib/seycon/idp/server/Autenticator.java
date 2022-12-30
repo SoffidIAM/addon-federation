@@ -307,8 +307,8 @@ public class Autenticator {
         String relyingParty = (String) session.
                 getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
         
-        if (relyingParty == null)
-        	throw new es.caib.seycon.ng.exception.InternalErrorException("Internal error. Cannot guess relying party");
+        if (relyingParty == null) // Can happen in username & password openid authentication
+        	return;
 
     	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
         if (ip == null)
