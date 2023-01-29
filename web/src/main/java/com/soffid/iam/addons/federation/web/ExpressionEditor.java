@@ -446,7 +446,7 @@ public class ExpressionEditor extends Div implements XPathSubscriber, AfterCompo
 	public void apply(Event ev) throws CommitException {
 		Window w = (Window) getParent();
 		PolicyHandler frame = (PolicyHandler) w.getParent().getFellow("frame");
-		if (frame.validateAttributes(w) && frame.applyNoClose(ev)) {
+		if (frame.validateAttributes(w)) {
 			w.setVisible(false);
 			DataTable dt = (DataTable) frame.getFellow("attributesListbox");
 			dt.setSelectedIndex(-1);

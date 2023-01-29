@@ -131,7 +131,7 @@
 				<customfield3 id="regex" label="${c:l('federacio.zul.regex') }" dataType="STRING" onChange="ref:handler.updateRegex" />
 			</div>
 			<div style="text-align: right; width: 100%">
-				<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" onClick="ref:handler.apply"/>
+				<databutton image="/img/ok-r.svg" label="${c:l('error.zul.Tancar') }" datamodel="/model" onClick="ref:handler.apply"/>
 			</div>
 		</div>
 	</window>
@@ -182,7 +182,7 @@
 				<customfield3 id="regex" label="${c:l('federacio.zul.regex') }" dataType="STRING" onChange="ref:handler.updateRegex" />
 			</div>
 			<div style="text-align: right; width: 100%">
-				<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" onClick="ref:handler.apply"/>
+				<databutton image="/img/ok-r.svg" label="${c:l('error.zul.Tancar') }" datamodel="/model" onClick="ref:handler.apply"/>
 			</div>
 		</div>
 	</window>
