@@ -73,6 +73,7 @@
 			<div id="step1">
 
 				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
 					id="type"
 					onChange="ref:frame.changeType"
 					label="${c:l('selfcertificate.selectType') }"
@@ -80,6 +81,7 @@
 				</customfield3>		
 			
 				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
 					id="idp"
 					label="${c:l('selfcertificate.selectIdentityProvider') }"
 					visible="false"
@@ -87,6 +89,7 @@
 				</customfield3>		
 
 				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
 					id="method"
 					label="${c:l('selfcertificate.registrationMethod') }"
 					listOfValues="now: ${c:l('selfcertificate.registerNow') }, secure: ${c:l('selfcertificate.registerSecuryLink') }, insecure: ${c:l('selfcertificate.registerInsecureLink')}"
@@ -96,6 +99,7 @@
 				</customfield3>		
 
 				<customfield3 dataType="DATE"
+					sclass="databox longlabel"
 					id="date"
 					label="${c:l('selfcertificate.registrationLimit') }"
 					visible="false"
@@ -103,6 +107,7 @@
 				</customfield3>		
 
 				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
 					id="description"
 					label="${c:l('selfCertificate.description') }"
 					visible="false"
