@@ -43,6 +43,7 @@ import es.caib.zkib.component.DataTable;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datasource.XPathUtils;
+import es.caib.zkib.jxpath.JXPathNotFoundException;
 import es.caib.zkib.zkiblaf.Missatgebox;
 
 public class UserTokenHandler extends FrameHandler {
@@ -74,10 +75,14 @@ public class UserTokenHandler extends FrameHandler {
 	}
 	
 	public void refresh() throws Exception {
-		DataModelCollection coll = (DataModelCollection) XPathUtils.eval(getParentListbox(), "/token");
-		DataTable dt = (DataTable) getListbox();
-		if (dt.getSelectedIndexes().length == 0)
-			coll.refresh();
+		try {
+			DataModelCollection coll = (DataModelCollection) XPathUtils.eval(getParentListbox(), "/token");
+			DataTable dt = (DataTable) getListbox();
+			if (dt.getSelectedIndexes().length == 0)
+				coll.refresh();
+		} catch (JXPathNotFoundException e) {
+			// No user selected
+		}
 	}
 	
 	public void changeType(Event ev) {

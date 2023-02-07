@@ -78,6 +78,15 @@ public class RootCertificateHandler extends FrameHandler {
 		wizard.previous();
 	}
 	
+	public void addUndo(Event event) {
+		Window w = (Window) getFellow("add-window");
+		Wizard wizard = (Wizard) w.getFellow("wizard");
+		if (wizard.getSelected() == 0)
+			w.setVisible(false);
+		else
+			wizard.previous();
+	}
+	
 	public void onUpload(UploadEvent evnt) throws IOException {
 		Media media = evnt.getMedia();
 		if (media != null) {
