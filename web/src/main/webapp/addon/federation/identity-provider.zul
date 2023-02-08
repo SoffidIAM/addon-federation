@@ -479,7 +479,7 @@
 			<customfield3 id="r_includeAttributeStatement" label="${c:l('federa_profile.zul.includeAttributeStat')}"
 				bind="includeAttributeStatement" dataType="BOOLEAN"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
-			<customfield3 id="r_localityAddress" label="${c:l('federa_profile.zul.includeAttributeStat')}"
+			<customfield3 id="r_localityAddress" label="${c:l('federa_profile.zul.localityAddress')}"
 				bind="localityAddress" dataType="STRING" maxlength="255"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3> 
 			<customfield3 id="r_localityDNSName" label="${c:l('federa_profile.zul.localityDNSName')}"
