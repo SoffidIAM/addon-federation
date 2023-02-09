@@ -81,12 +81,12 @@
 						dataType="STRING"
 						bind="value"
 						selectIcon="/img/pencil.svg" />
+					<div style="text-align: right; width: 100%">
+						<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">
+						</databutton>
+						<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.apply"/>
+					</div>
 				</form2>
-				<div style="text-align: right; width: 100%">
-					<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">
-					</databutton>
-					<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.apply"/>
-				</div>
 			</div>
 		</div>
 	</div>
