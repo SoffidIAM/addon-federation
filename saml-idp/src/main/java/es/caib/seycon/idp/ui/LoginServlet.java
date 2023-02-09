@@ -55,11 +55,11 @@ public class LoginServlet extends LangSupportServlet {
 				if (!authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req) &&
 						auth.getSession(req, false) != null)
 				{
-					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false);
+					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
 					return;
 				}
         	}
-        	if (!authCtx.isAlwaysAskForCredentials() && auth.validateCookie(getServletContext(), req, resp))
+        	if (!authCtx.isAlwaysAskForCredentials() && auth.validateCookie(getServletContext(), req, resp, authCtx.getHostId(resp)))
         		return;
         	else {
         		authCtx.initialize(req);
@@ -82,7 +82,7 @@ public class LoginServlet extends LangSupportServlet {
     				authCtx.store(req);
     				if ( authCtx.isFinished())
     				{
-    					new Autenticator().autenticate2(certUser, getServletContext(),req, resp, authCtx.getUsedMethod(), true);
+    					new Autenticator().autenticate2(certUser, getServletContext(),req, resp, authCtx.getUsedMethod(), true, authCtx.getHostId(resp));
     					return true;
     				}
     			}

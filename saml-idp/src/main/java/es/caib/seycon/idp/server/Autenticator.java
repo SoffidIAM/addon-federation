@@ -80,7 +80,7 @@ public class Autenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
     static Hashtable<String, Long> lastLogout = new Hashtable<>();
     
-    public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth, String sessionId) throws Exception
+    public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth, String sessionId, String hostId) throws Exception
     {
         HttpSession session = req.getSession();
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
@@ -97,7 +97,7 @@ public class Autenticator {
 		if (sessio == null) {
 			sessio = new RemoteServiceLocator().getSessionService().registerWebSession(
         		user.getUserName(), config.getHostName(),
-        		LanguageFilter.getRemoteIp(),
+        		hostId == null ? LanguageFilter.getRemoteIp(): hostId,
         		url, type);
 		}
 		req.getSession().setAttribute("$$soffid_session$$", sessio);
@@ -144,7 +144,7 @@ public class Autenticator {
         return buffer.toString();
     }
     
-    public boolean validateCookie (ServletContext ctx, HttpServletRequest req, HttpServletResponse resp) 
+    public boolean validateCookie (ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String hostId) 
     		throws Exception
     {
         HttpSession session = req.getSession();
@@ -173,8 +173,8 @@ public class Autenticator {
         	{
         		if (c.getName().equals(ip.getSsoCookieName()))
         		{
-    				if (checkExternalCookie(ctx, req, resp, config, c, ip) || 
-    						checkOwnCookie(ctx, req, resp, config, c, ip))
+    				if (checkExternalCookie(ctx, req, resp, config, c, ip, hostId) || 
+    						checkOwnCookie(ctx, req, resp, config, c, ip, hostId))
     					return true;
         		}
         	}
@@ -189,11 +189,11 @@ public class Autenticator {
 		String user = ti.getUser();
 		if (user == null)
 			return false;
-		autenticate2(user, ctx, req, resp, ti.getAuthenticationMethod(), true);
+		autenticate2(user, ctx, req, resp, ti.getAuthenticationMethod(), true, null);
 		return true;
 	}
 
-	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip) 
+	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip, String hostId) 
 			throws Exception {
 		String value = c.getValue();
 		FederationService fs = new RemoteServiceLocator().getFederacioService();
@@ -244,7 +244,7 @@ public class Autenticator {
 						authCtx.store(req);
 						return false;
 					} else {
-						autenticate2(user, ctx, req, resp, "E", true);
+						autenticate2(user, ctx, req, resp, "E", true, hostId);
 						return true;
 					}
 		        }
@@ -253,7 +253,7 @@ public class Autenticator {
 		return check.isValid();
 	}
 
-	private boolean checkOwnCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip) throws Exception {
+	private boolean checkOwnCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip, String hostId) throws Exception {
 		Session session = getSession(req, false);
 		if (session != null) {
 			try {
@@ -286,7 +286,7 @@ public class Autenticator {
 					        req.getSession().setAttribute("$$soffid_session$$", session);
 							autenticate2(account.getName(), ctx, req, resp,  
 									session.getAuthenticationMethod() == null ? "E" : session.getAuthenticationMethod(), 
-									true);
+									true, hostId);
 			        		return true;
 						}
 					}
@@ -368,11 +368,12 @@ public class Autenticator {
     	throw new InternalErrorException("Not authorized to log in");
     }
     
-	public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth) throws Exception {
-    	autenticate2(user, ctx, req, resp, type, type, externalAuth);
+	public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth, String hostId) throws Exception {
+    	autenticate2(user, ctx, req, resp, type, type, externalAuth, hostId);
     }
     
-    public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth) throws Exception {
+    public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth,
+    		String hostId) throws Exception {
 
         LOG.info("Remote user identified as "+user+". returning control back to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -411,7 +412,7 @@ public class Autenticator {
         LOG.info("Session type " + session.getAttribute("soffid-session-type")); //$NON-NLS-1$ //$NON-NLS-2$
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
-        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, null);
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
         	LogRecorder.getInstance().addSuccessLogEntry("SAML", user, actualType, entityId, req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	
@@ -450,19 +451,19 @@ public class Autenticator {
         {
         	LOG.info("Generating openid response");
         	String sessionHash = generateRandomSessionId();
-        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash);
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
         	AuthorizationResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else if ("cas".equals(session.getAttribute("soffid-session-type")))
         {
         	LOG.info("Generating openid response");
         	String sessionHash = generateRandomSessionId();
-        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash);
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
         	LoginResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else
         {
-        	generateSession(req, resp, user, type, externalAuth, generateRandomSessionId());
+        	generateSession(req, resp, user, type, externalAuth, generateRandomSessionId(), hostId);
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	        if (returnPath != null) 
 	        {

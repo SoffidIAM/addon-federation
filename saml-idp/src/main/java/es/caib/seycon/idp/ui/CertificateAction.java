@@ -60,7 +60,7 @@ public class CertificateAction extends HttpServlet {
 	            		ctx.store(req);
 	            		if ( ctx.isFinished())
 	            		{
-	            			new Autenticator().autenticate2(certUser, getServletContext(),req, resp, ctx.getUsedMethod(), true);
+	            			new Autenticator().autenticate2(certUser, getServletContext(),req, resp, ctx.getUsedMethod(), true, ctx.getHostId(resp));
 	            			return;
 	            		}
 	            	} catch (Exception e) {

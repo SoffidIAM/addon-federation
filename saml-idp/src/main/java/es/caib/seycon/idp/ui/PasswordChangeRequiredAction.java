@@ -95,7 +95,7 @@ public class PasswordChangeRequiredAction extends HttpServlet {
 	        		ctx.store(req);
 	        		if ( ctx.isFinished())
 	        		{
-	        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false);
+	        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
 	        			return;
 	        		}
         		}

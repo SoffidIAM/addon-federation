@@ -148,7 +148,7 @@ public class SAMLSSOPostServlet extends BaseForm {
         		{
 					Autenticator auth = new Autenticator();
 					String account = auth.getUserAccount(sl.getUser().getUserName());
-					auth.autenticate2(accountName, getServletContext(), req, resp, ctx.getUsedMethod(), true);
+					auth.autenticate2(accountName, getServletContext(), req, resp, ctx.getUsedMethod(), true, ctx.getHostId(resp));
         		}
         		else
         		{

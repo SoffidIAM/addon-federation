@@ -75,7 +75,7 @@ public class ActivateUserAction extends HttpServlet {
       			if (existingSession)
       			{
       				try {
-      					new Autenticator().autenticate2(u.getUserName(), getServletContext(), req, resp, "P", false);
+      					new Autenticator().autenticate2(u.getUserName(), getServletContext(), req, resp, "P", false, null);
                         return;
       				} catch (Exception e)
       				{

@@ -198,7 +198,7 @@ public class TokenEndpoint extends HttpServlet {
 							// 2. Register Soffid session
 							Autenticator autenticator = new Autenticator();
 							String oauthSessionId = autenticator.generateRandomSessionId();
-							autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false, oauthSessionId);
+							autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false, oauthSessionId, null);
 							// Generate token
 							t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true), oauthSessionId);
 							t.setUser(username);
