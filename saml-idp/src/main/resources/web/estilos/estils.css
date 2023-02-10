@@ -126,7 +126,7 @@ p.header {
 }
 
 .logintype {
-	/* border-radius: 8px; */
+	border-radius: 7px;
 	padding: 5px 10px 10px 5px;
 	width:500px;
 	background-color: #a6ff00;
@@ -135,7 +135,7 @@ p.header {
 }
 
 .logintype2 {
-	border-radius: 8px;
+	border-radius: 7px;
 	padding: 5px 10px 10px 5px;
 	width:500px;
 	background-color: #86b800;
