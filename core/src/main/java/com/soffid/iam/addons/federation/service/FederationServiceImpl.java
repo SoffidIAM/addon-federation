@@ -648,8 +648,12 @@ public class FederationServiceImpl
 				for (AllowedScopeEntity as: sp.getAllowedScopes())
 					getAllowedScopeRoleEntityDao().remove(as.getRoles());
 				getAllowedScopeEntityDao().remove(sp.getAllowedScopes());
+				sp.getAllowedScopes().clear();
 				getServiceProviderReturnUrlEntityDao().remove(sp.getReturnUrls());
+				sp.getReturnUrls().clear();
 				sp.setServiceProviderVirtualIdentityProvider(null);
+				getServiceProviderRoleEntityDao().remove(sp.getRoles());
+				sp.getRoles().clear();
 				
 				for (ServiceProviderEntity child: sp.getRegistered()) {
 					child.setDynamicRegistrationServer(null);
