@@ -128,7 +128,11 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("kerberosDomain", ip.getKerberosDomain());
             g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
-            g.addArgument("userAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("userAllowed",  ctx.getNextFactor().contains("P") || 
+            		ctx.getNextFactor().contains("O") ||
+            		ctx.getNextFactor().contains("M") ||
+            		ctx.getNextFactor().contains("I") ||
+            		ctx.getNextFactor().contains("S") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("cancelAllowed", "openid".equals(session.getAttribute("soffid-session-type")) ? "true": "false");
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
         	g.addArgument("fingerprintRegister", "false");
