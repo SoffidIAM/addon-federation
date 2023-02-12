@@ -219,6 +219,7 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 				new Digest(s));
 		final InputField3 token = (InputField3) getFellow("registrationToken");
 		token.setVisible(true);
+		getFellow("registrationTokenExpiration").setVisible(true);
 		token.setValue(s);
 	}
 
