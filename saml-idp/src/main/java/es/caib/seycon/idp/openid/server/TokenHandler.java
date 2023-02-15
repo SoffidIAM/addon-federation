@@ -574,6 +574,7 @@ public class TokenHandler {
 		o.setOauthSession(t.getOauthSessionId());
 		o.setPkceAlgorithm(t.getPkceAlgorithm());
 		o.setPkceChallenge(t.getPkceChallenge());
+		o.setNonce(t.getRequest().getNonce());
 		return o;
 	}
 	
@@ -587,6 +588,7 @@ public class TokenHandler {
 		t.setExpires(o.getExpires().getTime());
 		t.setExpiresRefresh(o.getRefreshExpires().getTime());
 		t.setRefreshToken(o.getRefreshToken());
+		t.getRequest().setNonce(o.getNonce());
 		t.setRequest(new OpenIdRequest());
 		t.getRequest().setFederationMember(getFederationService().findFederationMemberByPublicId(o.getServiceProvider()));
 		t.getRequest().setClientId(t.getRequest().getFederationMember().getOpenidClientId());

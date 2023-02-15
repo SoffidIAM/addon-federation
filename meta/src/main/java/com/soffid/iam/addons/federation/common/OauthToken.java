@@ -37,6 +37,9 @@ public class OauthToken {
 	String scope;
 	
 	@Nullable
+	String nonce;
+
+	@Nullable
 	String tokenId;
 	
 	@Nullable

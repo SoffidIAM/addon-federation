@@ -47,6 +47,10 @@ public class OauthTokenEntity {
 	String tokenId;
 	
 	@Nullable
+	@Column (name="TOK_NONCE", length = 255)
+	String nonce;
+
+	@Nullable
 	@Column (name="TOK_FULL", length = 64000)
 	String fullToken;
 
