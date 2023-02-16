@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -68,12 +69,16 @@ public class UserPasswordFormServlet extends BaseForm {
         try {
         	if ( ctx.getStep() > 0 )
         		requestedUser = ctx.getUser();
-        	else
+        	else {
         		requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
 					.getAuthenticiationRequestXmlObject()
 					.getSubject()
 					.getNameID()
 					.getValue();
+        		if (forwardToIdp(requestedUser, req, resp))
+        			return;
+        		
+        	}
 			if (requestedUser != null && ! requestedUser.trim().isEmpty())
 				userReadonly = "readonly";
 		} catch (Exception e1) {
@@ -237,7 +242,29 @@ public class UserPasswordFormServlet extends BaseForm {
 		}
     }
 
-    private String generateExternalLogin(FederationMember ip, AuthenticationContext ctx) throws InternalErrorException, IOException {
+    private boolean forwardToIdp(String requestedUser, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, InternalErrorException {
+    	String idp = null;
+		try {
+			idp = new RemoteServiceLocator().getFederacioService().searchIdpForUser(requestedUser);
+		} catch (InternalErrorException | IOException e) {
+			LogFactory.getLog(getClass()).warn("Error guessing identity provider for "+requestedUser, e);
+		}
+    	if (idp != null) {
+    		RequestDispatcher d;
+    		FederationMember data = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(idp);
+    		if ( data.getIdpType() == IdentityProviderType.SAML ||
+    				(data.getIdpType() == IdentityProviderType.SOFFID))
+    			d = req.getRequestDispatcher(SAMLSSORequest.URI);
+    		else
+    			d = req.getRequestDispatcher(OauthRequestAction.URI);
+    		
+    		d.forward(new SamlSsoRequestWrapper(req, requestedUser, idp), resp);
+    		return true;
+    	} else
+    		return false;
+	}
+
+	private String generateExternalLogin(FederationMember ip, AuthenticationContext ctx) throws InternalErrorException, IOException {
     	if ( ! ctx.getNextFactor().contains("E"))
     		return "";
     	
