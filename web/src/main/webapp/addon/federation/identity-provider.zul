@@ -107,7 +107,7 @@
 		<div sclass="databox" id="sslKey">
 			<label sclass="label" value="${c:l('federacio.zul.publicKeySSL')}"/>
 			<div sclass="container">
-				<divVisible bind="/federationMember/sslPublicKey" valorVisible="null">
+				<divVisible bind="/federationMember/sslPublicKey" valorVisible="null" style="white-space:normal">
 					<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 					<separator/>
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
@@ -115,7 +115,7 @@
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
 						image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="ref:handler.uploadSslPkcs12()" />
 				</divVisible>
-				<divVisible bind="/federationMember/sslPublicKey" valorNoVisible="null">
+				<divVisible bind="/federationMember/sslPublicKey" valorNoVisible="null" style="white-space:normal">
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
 						image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="ref:handler.generateSslKey()"/>
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
@@ -143,7 +143,7 @@
 		<div sclass="databox">
 			<label sclass="label" value="${c:l('federacio.zul.publicKey')}"/>
 			<div sclass="container">
-				<divVisible bind="/federationMember/publicKey" valorVisible="null">
+				<divVisible bind="/federationMember/publicKey" valorVisible="null" style="white-space:normal">
 					<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
 					<separator/>
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
@@ -151,7 +151,7 @@
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
 					image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="ref:handler.uploadPkcs12()" />
 				</divVisible>
-				<divVisible bind="/federationMember/publicKey" valorNoVisible="null">
+				<divVisible bind="/federationMember/publicKey" valorNoVisible="null" style="white-space:normal">
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
 					image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" onClick="ref:handler.generateKey()" />
 					<button disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
