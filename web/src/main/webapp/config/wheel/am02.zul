@@ -5,7 +5,7 @@
 <window id="am02_w" position="top-center" closable="false" sizable="false"
 		title="Add applications"
 		use="com.soffid.iam.web.addons.federation.web.wheel.Am02Handler"
-		style="width: 80%; height: 560px; max-width: 800px; top: 200px !important;">
+		style="width: 80%; height: 560px; max-width: 1000px; top: 200px !important;">
 	<timer id="timer" delay="1000" repeats="true" onTimer="ref:ad.onTimer" running="false"/>
 	<wizard id="wizard">
 			<attribute name="steps">
