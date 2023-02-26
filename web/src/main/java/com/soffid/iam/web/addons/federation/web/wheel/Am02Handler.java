@@ -138,7 +138,8 @@ public class Am02Handler extends Window implements AfterCompose {
 		try {
 			svc = (FederationService) new InitialContext().lookup(FederationServiceHome.JNDI_NAME);
 			for (FederationMember member: svc.findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "I")) {
-				if (member.getClasse().equals("I") &&  member.getIdpType() == IdentityProviderType.SOFFID) {
+				if (member.getClasse().equals("I") &&  member.getIdpType() == IdentityProviderType.SOFFID &&
+						!idp) {
 					publicId = member.getPublicId();
 					idp = true;
 				}
@@ -159,6 +160,8 @@ public class Am02Handler extends Window implements AfterCompose {
 		else {
 			googleDomain.setVisible(type == GOOGLE);
 			wizard.previous();
+			if (wizard.getSelected() == 1)
+				googleDomain.setVisible(false);
 		}
 	}
 	
