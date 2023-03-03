@@ -386,7 +386,7 @@ public class Main {
                 + ";"; //$NON-NLS-1$
         ctx.setInitParameter("contextConfigLocation", conf); //$NON-NLS-1$
 
-        EventListener el = new ContextLoaderListener();
+        EventListener el = new SoffidContextLoaderListener();
         ctx.addEventListener(el);
         
         // Filters
