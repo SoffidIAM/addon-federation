@@ -66,6 +66,9 @@ import org.jbpm.graph.exe.ProcessInstance;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONTokener;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
@@ -168,7 +171,7 @@ import es.caib.seycon.ng.exception.UnknownUserException;
  * @see es.caib.seycon.ng.servei.FederationService
  */
 public class FederationServiceImpl 
-	extends FederationServiceBase {
+	extends FederationServiceBase implements ApplicationContextAware {
 
 	private static final String EMAIL = "EMAIL"; //$NON-NLS-1$
 	private static final String RECOVER_KEY = "RecoverKey"; //$NON-NLS-1$
@@ -2547,5 +2550,12 @@ public class FederationServiceImpl
 			return fm;
 	}
 
-
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		try {
+			getDelegate();
+		} catch (Exception e) {
+			throw new RuntimeException("Error initializing federation addon", e);
+		}
+	}
 }
