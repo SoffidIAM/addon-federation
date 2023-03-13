@@ -588,8 +588,8 @@ public class TokenHandler {
 		t.setExpires(o.getExpires().getTime());
 		t.setExpiresRefresh(o.getRefreshExpires().getTime());
 		t.setRefreshToken(o.getRefreshToken());
-		t.getRequest().setNonce(o.getNonce());
 		t.setRequest(new OpenIdRequest());
+		t.getRequest().setNonce(o.getNonce());
 		t.getRequest().setFederationMember(getFederationService().findFederationMemberByPublicId(o.getServiceProvider()));
 		t.getRequest().setClientId(t.getRequest().getFederationMember().getOpenidClientId());
 		t.getRequest().setScope(o.getScope());

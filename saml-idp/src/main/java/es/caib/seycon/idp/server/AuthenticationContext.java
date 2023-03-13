@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +55,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSyste
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.AccountType;
+import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
@@ -390,6 +392,14 @@ public class AuthenticationContext {
     				resp.addCookie(c2);
     			}
     			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
+    			if (currentAccount != null) {
+    				currentAccount = new RemoteServiceLocator().getAccountService().findAccountById(currentAccount.getId());
+    				currentAccount.setLastLogin(Calendar.getInstance());
+    				try {
+						new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
+					} catch (AccountAlreadyExistsException e) {
+					}
+    			}
     		}
     	}
     	else
