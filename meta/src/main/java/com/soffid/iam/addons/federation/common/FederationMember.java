@@ -11,15 +11,18 @@ import java.util.List;
 import java.util.Set;
 
 import com.soffid.iam.addons.federation.api.Digest;
+import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.mda.annotation.Attribute;
 import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Description;
+import com.soffid.mda.annotation.JsonObject;
 import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.ValueObject;
 
 import es.caib.seycon.ng.comu.Password;
 
 @ValueObject 
+@JsonObject(hibernateClass = FederationMemberEntity.class)
 public class FederationMember {
 
 	@Nullable

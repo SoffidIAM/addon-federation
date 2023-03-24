@@ -8,6 +8,7 @@ package com.soffid.iam.addons.federation.service;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
@@ -101,7 +102,9 @@ import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.CasProfileEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
+import com.soffid.iam.addons.federation.model.EntityGroupEntityDao;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
+import com.soffid.iam.addons.federation.model.FederationMemberEntityDao;
 import com.soffid.iam.addons.federation.model.FederationMemberSessionEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
@@ -127,12 +130,14 @@ import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.service.impl.FederationServiceInternal;
 import com.soffid.iam.addons.federation.service.impl.WorkflowInitiator;
 import com.soffid.iam.api.Account;
+import com.soffid.iam.api.AsyncList;
 import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Configuration;
 import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.MailDomain;
 import com.soffid.iam.api.MetadataScope;
+import com.soffid.iam.api.PagedResult;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PolicyCheckResult;
 import com.soffid.iam.api.Role;
@@ -141,6 +146,7 @@ import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
+import com.soffid.iam.bpm.service.scim.ScimHelper;
 import com.soffid.iam.model.AuditEntity;
 import com.soffid.iam.model.Parameter;
 import com.soffid.iam.model.PasswordDomainEntity;
@@ -149,11 +155,17 @@ import com.soffid.iam.model.RoleEntity;
 import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
+import com.soffid.iam.model.UserEntityDao;
+import com.soffid.iam.model.criteria.CriteriaSearchConfiguration;
+import com.soffid.iam.service.AdditionalDataJSONConfiguration;
 import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.service.impl.bshjail.SecureInterpreter;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
+import com.soffid.scimquery.EvalException;
+import com.soffid.scimquery.parser.ParseException;
+import com.soffid.scimquery.parser.TokenMgrError;
 
 import bsh.EnvironmentNamespace;
 import bsh.EvalError;
@@ -2557,5 +2569,105 @@ public class FederationServiceImpl
 		} catch (Exception e) {
 			throw new RuntimeException("Error initializing federation addon", e);
 		}
+	}
+
+	@Override
+	protected PagedResult<FederationMember> handleFindFederationMembersByJsonQuery(String text, String query, Integer first,
+			Integer pageSize) throws Exception {
+		LinkedList<FederationMember> result = new LinkedList<>();
+		return internalSearchByJson(text, query, result , first, pageSize);
+	}
+	
+	private PagedResult<FederationMember> internalSearchByJson(String text, String query, List<FederationMember> result, Integer first,
+			Integer pageSize) throws UnsupportedEncodingException, ClassNotFoundException, JSONException, InternalErrorException, EvalException, ParseException, TokenMgrError {
+		// Register virtual attributes for additional data
+		AdditionalDataJSONConfiguration.registerVirtualAttributes();
+
+		final FederationMemberEntityDao dao = getFederationMemberEntityDao();
+		ScimHelper h = new ScimHelper(FederationMember.class);
+		h.setPrimaryAttributes(new String[] { "publicId"} );
+		
+		CriteriaSearchConfiguration config = new CriteriaSearchConfiguration();
+		config.setFirstResult(first);
+		config.setMaximumResultSize(pageSize);
+		h.setConfig(config);
+		h.setTenantFilter("tenant.id");
+		h.setGenerator((entity) -> {
+			FederationMemberEntity ue = (FederationMemberEntity) entity;
+			return dao.toFederationMember(ue);
+		});
+		
+		h.search(text, query, (Collection) result); 
+
+		PagedResult<FederationMember> pr = new PagedResult<>();
+		pr.setStartIndex(first);
+		pr.setItemsPerPage(pageSize);
+		pr.setTotalResults(h.count());
+		pr.setResources(result);
+		return pr;
+	}
+
+	@Override
+	protected AsyncList<FederationMember> handleFindFederationMembersByJsonQueryAsync(String text, String query)
+			throws Exception {
+		AsyncList<FederationMember> l = new AsyncList<>();
+		getAsyncRunnerService().run(() -> {
+			try {
+				internalSearchByJson(text, query, l, null, null);
+			} catch (Throwable e) {
+				throw new RuntimeException(e);
+			}				
+		}, l );
+		return l;
+	}
+
+	@Override
+	protected PagedResult<EntityGroup> handleFindEntityGroupsByJsonQuery(String text, String query, Integer first,
+			Integer pageSize) throws Exception {
+		LinkedList<EntityGroup> result = new LinkedList<>();
+		return internalSearchEntityGroupByJson(text, query, result , first, pageSize);
+	}
+	
+	private PagedResult<EntityGroup> internalSearchEntityGroupByJson(String text, String query, List<EntityGroup> result, Integer first,
+			Integer pageSize) throws UnsupportedEncodingException, ClassNotFoundException, JSONException, InternalErrorException, EvalException, ParseException, TokenMgrError {
+		// Register virtual attributes for additional data
+		AdditionalDataJSONConfiguration.registerVirtualAttributes();
+
+		final EntityGroupEntityDao dao = getEntityGroupEntityDao();
+		ScimHelper h = new ScimHelper(EntityGroup.class);
+		h.setPrimaryAttributes(new String[] { "publicId"} );
+		
+		CriteriaSearchConfiguration config = new CriteriaSearchConfiguration();
+		config.setFirstResult(first);
+		config.setMaximumResultSize(pageSize);
+		h.setConfig(config);
+		h.setTenantFilter("tenant.id");
+		h.setGenerator((entity) -> {
+			EntityGroupEntity ue = (EntityGroupEntity) entity;
+			return dao.toEntityGroup(ue);
+		});
+		
+		h.search(text, query, (Collection) result); 
+
+		PagedResult<EntityGroup> pr = new PagedResult<>();
+		pr.setStartIndex(first);
+		pr.setItemsPerPage(pageSize);
+		pr.setTotalResults(h.count());
+		pr.setResources(result);
+		return pr;
+	}
+
+	@Override
+	protected AsyncList<EntityGroup> handleFindEntityGroupsByJsonQueryAsync(String text, String query)
+			throws Exception {
+		AsyncList<EntityGroup> l = new AsyncList<>();
+		getAsyncRunnerService().run(() -> {
+			try {
+				internalSearchEntityGroupByJson(text, query, l, null, null);
+			} catch (Throwable e) {
+				throw new RuntimeException(e);
+			}				
+		}, l );
+		return l;
 	}
 }

@@ -5,9 +5,11 @@
 //
 
 package com.soffid.iam.addons.federation.common;
+import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.mda.annotation.*;
 
 @ValueObject 
+@JsonObject(hibernateClass = EntityGroupEntity.class)
 public class EntityGroup {
 
 	@Nullable

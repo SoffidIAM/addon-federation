@@ -35,6 +35,10 @@ public abstract class FederationMemberEntity {
 	@Identifier
 	public java.lang.Long id;
 
+	@Column (name="FED_PUBID")
+	@Nullable
+	public java.lang.String publicId;
+
 	@Column (name="FED_NAME")
 	@Nullable
 	public java.lang.String name;

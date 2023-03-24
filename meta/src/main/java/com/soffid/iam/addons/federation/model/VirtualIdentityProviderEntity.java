@@ -16,9 +16,6 @@ import com.soffid.mda.annotation.*;
 	es.caib.seycon.ng.model.TipusUsuariEntity.class,
 	es.caib.seycon.ng.model.GrupEntity.class})
 public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addons.federation.model.FederationMemberEntity {
-	@Column (name="FED_PUBID")
-	public java.lang.String publicId;
-
 	@ForeignKey (foreignColumn="PRO_VIP_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.ProfileEntity> profiles;
 

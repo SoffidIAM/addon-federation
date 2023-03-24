@@ -21,10 +21,6 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	ServiceProviderType serviceProviderType;
 	
-	@Column (name="FED_PUBID")
-	@Nullable
-	public java.lang.String publicId;
-
 	@Column (name="FED_NIDFOR")
 	@Nullable
 	public java.lang.String nameIdFormat;

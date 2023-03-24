@@ -25,8 +25,11 @@ import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
+import com.soffid.iam.api.AsyncList;
+import com.soffid.iam.api.PagedResult;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.model.SamlRequestEntity;
+import com.soffid.iam.service.AsyncRunnerService;
 import com.soffid.iam.service.MailService;
 import com.soffid.mda.annotation.*;
 
@@ -118,7 +121,8 @@ import org.springframework.transaction.annotation.Transactional;
 	AllowedScopeRoleEntity.class,
 	AplicacioService.class,
 	ServiceProviderReturnUrlEntity.class,
-	FederationMemberSessionEntity.class
+	FederationMemberSessionEntity.class,
+	AsyncRunnerService.class
 })
 public abstract class FederationService {
 
@@ -572,6 +576,7 @@ public abstract class FederationService {
 	
 	/** Dynamic service registration **/
 	List<FederationMember> findFederationByToken(String token) {return null;}
+
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public Collection<com.soffid.iam.addons.federation.common.FederationMember> findServiceProvidersForDynamicRegister(
@@ -582,6 +587,46 @@ public abstract class FederationService {
 	
 	/** Udptae openid urls for federation member **/
 	FederationMember updateSectorIdentifier(FederationMember fm) { return null;}
+
+	@Description("Finds federation members using a SCIM query")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public PagedResult<com.soffid.iam.addons.federation.common.FederationMember> findFederationMembersByJsonQuery(
+		@Nullable String text, 
+		@Nullable java.lang.String query, @Nullable Integer first, @Nullable Integer pageSize)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+	
+	@Description("Finds federation members using a SCIM query")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public AsyncList<com.soffid.iam.addons.federation.common.FederationMember> findFederationMembersByJsonQueryAsync (
+		@Nullable String text, 
+		@Nullable java.lang.String query)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+	
+	@Description("Finds entity groups using a SCIM query")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public PagedResult<com.soffid.iam.addons.federation.common.EntityGroup> findEntityGroupsByJsonQuery(
+		@Nullable String text, 
+		@Nullable java.lang.String query, @Nullable Integer first, @Nullable Integer pageSize)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+	
+	@Description("Finds entity groups using a SCIM query")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public AsyncList<com.soffid.iam.addons.federation.common.EntityGroup> findEntityGroupsByJsonQueryAsync (
+		@Nullable String text, 
+		@Nullable java.lang.String query)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
 	
 
 }

@@ -21,6 +21,10 @@ import org.springframework.context.ApplicationContextAware;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.Attribute;
+import com.soffid.iam.addons.federation.common.EntityGroup;
+import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.service.impl.CrudEntityGroupHandler;
+import com.soffid.iam.addons.federation.service.impl.CrudFederationMemberHandler;
 import com.soffid.iam.addons.federation.sync.web.MetadataGenerator;
 import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.MetadataScope;
@@ -129,6 +133,9 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		} finally {
 			conn.close ();
 		}
+		
+		getCrudRegistryService().registerHandler(FederationMember.class, new CrudFederationMemberHandler());
+		getCrudRegistryService().registerHandler(EntityGroup.class, new CrudEntityGroupHandler());
 		
 	}
 	
