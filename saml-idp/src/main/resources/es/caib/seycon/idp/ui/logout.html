@@ -41,11 +41,12 @@
 	</script>
 </head>
 
-<body onLoad="doLoad()" class="login">
+<body onLoad="doLoad()" class="bodylogout">
 
 	${raw:htmlHeader}
 
-<div class="headcentrat"  style="width:100%;height:100%;" z.zidsp="page">
+	<div  class="login" >
+		<div class="headcentrat"  style="width:100%;height:100%;" z.zidsp="page">
 		<p class="loginheader"><a href="https://www.soffid.com/"  target="_blank"><img src="img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
 ${if showClose}
 			<p>${Your_session_is_finished}</p>
@@ -64,6 +65,7 @@ ${if showProgress}
 ${endif}
 </div>
 
+	</div>
 	
 	${raw:htmlFooter}
 

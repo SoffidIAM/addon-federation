@@ -31,6 +31,12 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>com.soffid.iam.addon.scim</groupId>
+			<artifactId>scim-webservice</artifactId>
+			<version>3.0.14</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 		    <groupId>org.apache.johnzon</groupId>
 		    <artifactId>johnzon-jaxrs</artifactId>
 		    <version>1.0.0</version>
