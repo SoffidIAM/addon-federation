@@ -25,6 +25,7 @@ import org.opensaml.saml2.metadata.OrganizationURL;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.utils.Security;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -239,7 +240,12 @@ public class HtmlGenerator {
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
         resp.setContentType("text/html; charset=UTF-8"); //$NON-NLS-1$
         
-        InputStream in = getClass().getClassLoader().getParent().getResourceAsStream("es/caib/seycon/idp/ui/"+page);
+        InputStream in = null;
+        try {
+			in = getClass().getClassLoader().getParent().getResourceAsStream("com/soffid/iam/idp/ui/"+Security.getCurrentTenantName()+"/"+page);
+		} catch (InternalErrorException e) {
+		}
+        in = getClass().getClassLoader().getParent().getResourceAsStream("es/caib/seycon/idp/ui/"+page);
         if (in == null)
         	in = getClass().getClassLoader().getParent().getResourceAsStream("com/soffid/iam/idp/ui/"+page);
         if (in == null)
