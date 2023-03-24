@@ -28,7 +28,7 @@ public class UidEvaluator {
     		if (member.getSystem() != null) {
     			Collection<UserAccount> accounts = new RemoteServiceLocator().getServerService().getUserAccounts(ui.getId(), member.getSystem());
     			if (accounts == null || accounts.isEmpty())
-    				throw new SecurityException("Access denied");
+    				throw new SecurityException("Access denied. No account available for "+ui.getUserName()+" on "+member.getSystem());
     		}
     		if (member.getRoles() != null && !member.getRoles().isEmpty()) {
     			boolean found = false;
