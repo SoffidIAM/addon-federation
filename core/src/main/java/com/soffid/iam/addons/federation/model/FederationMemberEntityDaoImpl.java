@@ -199,6 +199,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			loadAuthenticatioMethods (vip, target);
 		} else if (source instanceof ServiceProviderEntity) {
 			target.setClasse("S"); //$NON-NLS-1$
+			target.setIdpType(null);
 			// ServiceProvicer
 			// Obtenim l'instància
 			ServiceProviderEntity sp = (ServiceProviderEntity) source;
@@ -293,17 +294,22 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 	}
 
 	private void loadScopes(ServiceProviderEntity sp, FederationMember target) {
-		target.setAllowedScopes( getAllowedScopeEntityDao().toAllowedScopeList(sp.getAllowedScopes()));
-		if (target.getAllowedScopes().isEmpty()) {
-			target.getAllowedScopes().add(new AllowedScope(null, "*", new LinkedList<String>()));
-		}
-		for (AllowedScope scope: target.getAllowedScopes()) {
-			if (scope.getScope().equals("openid"))
-			{
-				return;
+		if ( sp.getServiceProviderType() == ServiceProviderType.OPENID_CONNECT || 
+				sp.getServiceProviderType() == ServiceProviderType.OPENID_REGISTER ) {
+			target.setAllowedScopes( getAllowedScopeEntityDao().toAllowedScopeList(sp.getAllowedScopes()));
+			if (target.getAllowedScopes().isEmpty()) {
+				target.getAllowedScopes().add(new AllowedScope(null, "*", new LinkedList<String>()));
 			}
+			for (AllowedScope scope: target.getAllowedScopes()) {
+				if (scope.getScope().equals("openid"))
+				{
+					return;
+				}
+			}
+			target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>()));
+		} else {
+			target.setAllowedScopes(null);
 		}
-		target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>()));
 	}
 
 	private void loadAuthenticatioMethods(VirtualIdentityProviderEntity source, FederationMember target) {

@@ -242,6 +242,7 @@ public class FederationServiceImpl
 	protected com.soffid.iam.addons.federation.common.FederationMember handleCreate(com.soffid.iam.addons.federation.common.FederationMember federationMember)
 			throws java.lang.Exception {
 		if (AutoritzacionsUsuari.canCreateAllIdentityFederation()) {
+			checkFederationMemberQuality(federationMember);
 			FederationMemberEntity entity = getFederationMemberEntityDao().federationMemberToEntity(federationMember);
 			getFederationMemberEntityDao().create(entity);
 			String desc = federationMember.getPublicId()
@@ -265,6 +266,36 @@ public class FederationServiceImpl
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToMakeFederationMember")); //$NON-NLS-1$
+	}
+
+	private void checkFederationMemberQuality(com.soffid.iam.addons.federation.common.FederationMember federationMember)
+			throws InternalErrorException {
+		if (federationMember.getPublicId() == null || federationMember.getPublicId().trim().isEmpty())
+			throw new InternalErrorException("Public id is missing");
+		if (federationMember.getClasse() == null || federationMember.getClasse().trim().isEmpty())
+			throw new InternalErrorException("Classe attribute is mandatory. Please, enter S, I or V");
+		if (! federationMember.getClasse().equals("I") &&
+				! federationMember.getClasse().equals("V") &&
+				! federationMember.getClasse().equals("S")) {
+			throw new InternalErrorException("Wrong value for attribute classe. Please, enter S, I or V");
+		}
+		if (federationMember.getClasse().equals("S")) {
+			if ( federationMember.getServiceProviderType() == null)
+				throw new InternalErrorException("Missing service provider type attribute");
+			if (federationMember.getMaxRegistrations() != null && federationMember.getMaxRegistrations() < 0)
+				throw new InternalErrorException("Max registrations attribute should be equal or greater than zero.");
+		}
+		if (federationMember.getClasse().equals("I")) {
+			if ( federationMember.getIdpType() == null)
+				throw new InternalErrorException("Missing identity provider type attribute");
+		}
+		if (federationMember.isAllowRegister() &&
+				(federationMember.getGroupToRegister() == null))
+			{
+				throw new InternalErrorException(
+						com.soffid.iam.addons.federation.service.Messages
+								.getString("FederacioServiceImpl.PrimaryGroupError")); //$NON-NLS-1$
+			}
 	}
 
 
@@ -428,13 +459,7 @@ public class FederationServiceImpl
 		if (AutoritzacionsUsuari.canUpdateAllIdentityFederation())
 		{
 			// Check allow auto-register
-			if (federationMember.isAllowRegister() &&
-				(federationMember.getGroupToRegister() == null))
-			{
-				throw new InternalErrorException(
-						com.soffid.iam.addons.federation.service.Messages
-								.getString("FederacioServiceImpl.PrimaryGroupError")); //$NON-NLS-1$
-			}
+			checkFederationMemberQuality(federationMember);
 			
 			FederationMemberEntity entity = getFederationMemberEntityDao().federationMemberToEntity(federationMember);
 
