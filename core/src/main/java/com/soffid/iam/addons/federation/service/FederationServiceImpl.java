@@ -393,33 +393,43 @@ public class FederationServiceImpl
 	}
 
 	private void updateScopes(ServiceProviderEntity entity, FederationMember federationMember) {
-		LinkedList<AllowedScope> l = new LinkedList<AllowedScope>(federationMember.getAllowedScopes());
-		for (Iterator<AllowedScopeEntity> iterator = entity.getAllowedScopes().iterator(); iterator.hasNext();) {
-			AllowedScopeEntity imp = iterator.next();
-			boolean found = false;
-			for ( Iterator<AllowedScope> iterator2 = l.iterator(); iterator2.hasNext();) {
-				AllowedScope scope = iterator2.next();
-				if (scope.getScope().equals(imp.getScope())) {
-					updateScope(imp, scope);
-					found = true;
-					iterator2.remove();
-					break;
-				}
-			}
-			if (!found) {
+		if (federationMember.getAllowedScopes() == null) {
+			for (Iterator<AllowedScopeEntity> iterator = entity.getAllowedScopes().iterator(); iterator.hasNext();) {
+				AllowedScopeEntity imp = iterator.next();
 				iterator.remove();
 				getAllowedScopeRoleEntityDao().remove(imp.getRoles());
 				getAllowedScopeEntityDao().remove(imp);
 			}
 		}
-		for (AllowedScope scope: l) {
-			AllowedScopeEntity scopeEntity = getAllowedScopeEntityDao().newAllowedScopeEntity();
-			scopeEntity.setServiceProvider(entity);
-			scopeEntity.setScope(scope.getScope());
-			getAllowedScopeEntityDao().create(scopeEntity);
-			updateScope(scopeEntity, scope);
-			entity.getAllowedScopes().add(scopeEntity);
-			
+		else {
+			LinkedList<AllowedScope> l = new LinkedList<AllowedScope>(federationMember.getAllowedScopes());
+			for (Iterator<AllowedScopeEntity> iterator = entity.getAllowedScopes().iterator(); iterator.hasNext();) {
+				AllowedScopeEntity imp = iterator.next();
+				boolean found = false;
+				for ( Iterator<AllowedScope> iterator2 = l.iterator(); iterator2.hasNext();) {
+					AllowedScope scope = iterator2.next();
+					if (scope.getScope().equals(imp.getScope())) {
+						updateScope(imp, scope);
+						found = true;
+						iterator2.remove();
+						break;
+					}
+				}
+				if (!found) {
+					iterator.remove();
+					getAllowedScopeRoleEntityDao().remove(imp.getRoles());
+					getAllowedScopeEntityDao().remove(imp);
+				}
+			}
+			for (AllowedScope scope: l) {
+				AllowedScopeEntity scopeEntity = getAllowedScopeEntityDao().newAllowedScopeEntity();
+				scopeEntity.setServiceProvider(entity);
+				scopeEntity.setScope(scope.getScope());
+				getAllowedScopeEntityDao().create(scopeEntity);
+				updateScope(scopeEntity, scope);
+				entity.getAllowedScopes().add(scopeEntity);
+				
+			}
 		}
 	}
 
