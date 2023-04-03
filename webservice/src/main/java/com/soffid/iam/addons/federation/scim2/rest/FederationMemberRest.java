@@ -14,6 +14,7 @@ import com.soffid.iam.addon.scim2.json.JSONBuilder;
 import com.soffid.iam.addon.scim2.rest.BaseRest;
 import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 
 @Path("/scim2/v1/FederationMember")
 @Produces({"application/scim+json", "application/json"})
@@ -32,6 +33,17 @@ public class FederationMemberRest extends BaseRest<FederationMember> {
 		fm.setSslPrivateKey(null);
 		fm.setOpenidSecret(null);
 		fm.setRegistrationToken(null);
+		if ("S".equals(fm.getClasse())) {
+			fm.setLoginHintScript(null);
+			fm.setExtendedAuthenticationMethods(null);
+			if (fm.getServiceProviderType() != ServiceProviderType.OPENID_CONNECT &&
+					fm.getServiceProviderType() != ServiceProviderType.OPENID_REGISTER) {
+				fm.setOpenidLogoutUrl(null);
+				fm.setOpenidMechanism(null);
+				fm.setOpenidUrl(null);
+				fm.setAllowedScopes(null);
+			}
+		}
 		super.writeObject(w, builder, obj);
 	}
 

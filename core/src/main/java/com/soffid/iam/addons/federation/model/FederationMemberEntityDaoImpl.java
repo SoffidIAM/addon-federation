@@ -307,8 +307,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				}
 			}
 			target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>()));
-		} else {
-			target.setAllowedScopes(null);
 		}
 	}
 

@@ -26,7 +26,7 @@ public class CrudFederationMemberHandler implements CrudHandler<FederationMember
 	
 	@Override
 	public FederationMember create(FederationMember object) throws Exception {
-		return ejb.create(object);
+		return getService().create(object);
 	}
 
 	@Override
