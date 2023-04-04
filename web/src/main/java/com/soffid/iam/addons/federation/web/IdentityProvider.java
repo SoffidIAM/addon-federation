@@ -539,16 +539,21 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 			w.getFellow("r_revokeEndpoint").setVisible(false);
 			w.getFellow("r_logoutEndpoint").setVisible(false);
 			w.getFellow("r_userinfoEndpoint").setVisible(false);
-			w.getFellow("r_signRequests").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe));
-			w.getFellow("r_signAssertions").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe));
-			w.getFellow("r_signResponses").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe));
+			w.getFellow("r_signRequests").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe) &&
+					!SamlProfileEnumeration.TACACS_PLUS.equals(classe));
+			w.getFellow("r_signAssertions").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe) &&
+					!SamlProfileEnumeration.TACACS_PLUS.equals(classe));
+			w.getFellow("r_signResponses").setVisible(! SamlProfileEnumeration.RADIUS.equals(classe) &&
+					!SamlProfileEnumeration.TACACS_PLUS.equals(classe));
 		 }
 
-		w.getFellow("r_radius_authPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
+		w.getFellow("r_radius_authPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
 		w.getFellow("r_radius_acctPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
-		w.getFellow("r_radius_pap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
-		w.getFellow("r_radius_chap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
-		w.getFellow("r_radius_mschap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
+		w.getFellow("r_radius_pap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
+		w.getFellow("r_radius_chap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
+		w.getFellow("r_radius_mschap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
+		w.getFellow("r_radius_ssl").setVisible(SamlProfileEnumeration.TACACS_PLUS.equals(classe));
+		w.getFellow("r_radius_ascii").setVisible(SamlProfileEnumeration.TACACS_PLUS.equals(classe));
 	}
 	
 	public void applyProfile(Event ev) {

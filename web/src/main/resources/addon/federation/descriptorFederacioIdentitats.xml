@@ -122,6 +122,16 @@
 				className="com.soffid.iam.addons.federation.common.SAMLProfile" />
 		</finder>
 
+		<finder name="tacacsPlusAuthRule" type="tacacsPlusAuthRule" executeOnNewObjects="true">
+			<ejb-finder
+				jndi="java:/module/FederationService-v2"
+				method="findTacacsPlusAuthRulesByServiceProvider" if="${instance.federationMember != null &amp;&amp; instance.federationMember.classe != null}">
+				<parameter value="${instance.federationMember.publicId}" />
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.common.TacacsPlusAuthRule" />
+		</finder>
+
 		<ejb-handler
 			jndi="java:/module/FederationService-v2">
 			<insert-method method="create" returnBean="true">
@@ -154,6 +164,29 @@
 				<parameter value="${instance}" />
 			</delete-method>
 			<update-method method="update">
+				<parameter value="${instance}" />
+			</update-method>
+		</ejb-handler>
+	</datanode>
+
+	<datanode name="tacacsPlusAuthRule">
+		<script-handler>
+			<update-script>
+				instance.serviceProvider = parent.instance.federationMember.publicId;
+			</update-script>
+			<insert-script>
+				instance.serviceProvider = parent.instance.federationMember.publicId;
+			</insert-script>
+		</script-handler>
+		<ejb-handler
+			jndi="java:/module/FederationService-v2">
+			<insert-method method="createTacacsPlusAuthRule" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<delete-method method="removeTacacsPlusAuthRule">
+				<parameter value="${instance}" />
+			</delete-method>
+			<update-method method="updateTacacsPlusAuthRule">
 				<parameter value="${instance}" />
 			</update-method>
 		</ejb-handler>

@@ -51,6 +51,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.ContextLoaderListener;
 import org.xml.sax.SAXException;
 
+import com.soffid.iad.addons.federation.idp.tacacs.TacacsServer;
+import com.soffid.iad.addons.federation.idp.tacacs.TacacsServerListener;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
@@ -230,6 +232,10 @@ public class Main {
             if (radius != null && Boolean.TRUE.equals(radius.getEnabled())) {
             	createRadiusServer (radius, ctx.getServletContext() );
             }
+            SAMLProfile tacacs = useTacacsProfile();
+            if (tacacs != null && Boolean.TRUE.equals(tacacs.getEnabled())) {
+            	createTacacsServer (tacacs, ctx.getServletContext() );
+            }
         } finally {
             if (oldClassLoader != null)
                 Thread.currentThread().setContextClassLoader(oldClassLoader);
@@ -245,6 +251,15 @@ public class Main {
     		rs.setAuthPort(radius.getAuthPort());
     	rs.setServletContext(ctx);
     	rs.start(true, true);
+	}
+
+    private void createTacacsServer(SAMLProfile radius, ServletContext ctx ) {
+    	TacacsServerListener rs = new TacacsServerListener();
+    	if (radius.getAuthPort() != null)
+    		rs.setAuthPort(radius.getAuthPort());
+    	rs.setServletContext(ctx);
+    	rs.setSsl(Boolean.TRUE.equals(radius.getSsl()));
+    	rs.start();
 	}
 
 	private void createConfigurationFiles(IdpConfig c)
@@ -748,6 +763,7 @@ public class Main {
         }
         return null;
 	}
+
 	private SAMLProfile useRadiusProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
 		FederationService federacioService = c.getFederationService();
@@ -759,6 +775,23 @@ public class Main {
             SAMLProfile profile = (SAMLProfile) it.next();
             SamlProfileEnumeration type = profile.getClasse();
             if (type.equals(SamlProfileEnumeration.RADIUS)  && Boolean.TRUE.equals(profile.getEnabled())) {
+            	return profile;
+            }
+        }
+        return null;
+	}
+
+	private SAMLProfile useTacacsProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederationService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.TACACS_PLUS)  && Boolean.TRUE.equals(profile.getEnabled())) {
             	return profile;
             }
         }

@@ -533,6 +533,14 @@
 				dataType="BOOLEAN"
 				bind="msChap"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_ascii" label="${c:l('federa_profile.zul.ascii')}"
+				dataType="BOOLEAN"
+				bind="ascii"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_ssl" label="${c:l('federa_profile.zul.ssl')}"
+				dataType="BOOLEAN"
+				bind="ssl"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
 			<div style="text-align: right; width: 100%">
 				<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar') }" onClick="ref:handler.applyProfile"/>
 			</div>

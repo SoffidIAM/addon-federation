@@ -611,6 +611,7 @@ public class AuthenticationContext {
 
 	static Map<String, AuthenticationContext> auths = new Hashtable<>();
 	static long lastPurge = 0;
+
 	public static AuthenticationContext fromRequest(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
 		expireOldContexts();
 		
@@ -636,7 +637,6 @@ public class AuthenticationContext {
 		return auth;
 	}
 
-
 	private void initialize(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		IdpConfig config = IdpConfig.getConfig();
     	remoteIp = accessRequest.getAttributeValue("Framed-IP-Address");
@@ -647,6 +647,40 @@ public class AuthenticationContext {
     	this.publicId = publicId;
     	user = accessRequest.getUserName();
     	getUserData(accessRequest.getUserName());
+
+    	updateAllowedAuthenticationMethods();
+        if (requestedAuthenticationMethod != null)
+        {
+        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
+        }
+        
+        if (allowedAuthenticationMethods.isEmpty())
+        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+        
+        nextFactor = new HashSet<String>();
+        firstFactor = null;
+        secondFactor = null;
+        step = 0;
+        timestamp = System.currentTimeMillis();
+        
+        if (nextFactor.isEmpty())
+        {
+            for ( String allowedMethod: allowedAuthenticationMethods)
+            {
+           		nextFactor.add( allowedMethod.substring(0,1));
+            }
+        }
+	}
+
+
+	public void initializeTacacsCtx(String user, String remoteIp, String serviceProvider) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		IdpConfig config = IdpConfig.getConfig();
+		this.remoteIp = remoteIp;
+    	hostId = null;
+    	currentUser = null;
+    	this.publicId = serviceProvider;
+    	this.user = user;
+    	getUserData(user);
 
     	updateAllowedAuthenticationMethods();
         if (requestedAuthenticationMethod != null)
@@ -695,6 +729,16 @@ public class AuthenticationContext {
 
 	public void setRadiusState(String radiusState) {
 		this.radiusState = radiusState;
+	}
+
+
+	public String getRemoteIp() {
+		return remoteIp;
+	}
+
+
+	public void setRemoteIp(String remoteIp) {
+		this.remoteIp = remoteIp;
 	}
 
 

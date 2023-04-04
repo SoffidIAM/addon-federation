@@ -75,6 +75,7 @@
 			dataType='ROLE'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		<customfield3
+			id="systemSelector"
 			label="${c:l('federacio.system')}"
 			bind="/federationMember/system"
 			dataType='STRING'
@@ -292,6 +293,91 @@
 			maxLength="20"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.radiusSecret')}"/>
+	</div>
+	<div sclass="section" id="tacacsPlusSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.tacacs') }" />
+
+		<customfield3 dataType="STRING" 
+			bind="/federationMember/sourceIps"
+			maxLength="150"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.sourceIps')}"/>
+
+		<customfield3 dataType="PASSWORD" 
+			bind="/federationMember/radiusSecret"
+			maxLength="20"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.tacacsSecret')}"/>
+		<div sclass="databox">
+			<label sclass="label" value="${c:l('federacio.zul.authorizationRules') }"/>
+			<div sclass="container">
+				<datatable dataPath="/tacacsPlusAuthRule" id="tacacsplusauthrulesgrid"
+					sortColumn="0"	
+					multiselect="true"
+					onMultiSelect="ref:handler.onMultiSelectTacacsPlusAuthRule"
+					onSelect="ref:handler.onSelectTacacsPlusAuthRule">
+				<attribute name="columns" ><![CDATA[
+- name: "${c:l('federacio.zul.authorizationRules')}"
+  value: name
+				]]></attribute>
+				</datatable>
+				<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('user:printer:create')}" >
+					<div class="deleteButton" onClick="ref:handler.deleteTacacsPlusAuthRule" visible="false" if="${soffid:isUserInRole('federation:update')}">-</div>
+					<div class="addButton" onClick="ref:handler.addTacacsPlusAuthRule"  if="${soffid:isUserInRole('federation:update')}">+</div>
+				</div>
+				<window 
+				    closable="false"
+					id="tacacsPlusAuthRule-window"
+					position="top, center" sizable="true"
+					title="${c:l('federacio.zul.authorizationRules')}" visible="false"
+					style="width: 80%; max-width: 1600px" onClose="ref:handler.closeTacacsPlusAuthRule()">
+			
+					<form id="form" width="100%" dataPath="../tacacsplusauthrulesgrid:/">
+						<script src='~./js/codemirror/java-classes.js' />
+						<script src='/comu/syncserver-classes.js' />
+					
+						<customfield3 dataType="STRING" 
+							bind="name" id="name"
+							maxLength="50"
+							required="true"
+							readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+							label="${c:l('federacio.zul.Name')}"/>
+						<codemirror value="" id="editor" linenumbers="true"
+							height="30em"
+							language="java"
+							width="100%"/>
+						<separator spacing="5px"/>
+						
+						<div id="env">
+							Available context variables:
+						</div>	
+						<html style="margin-left: 36px; display: block;"><![CDATA[
+							<b>user</b>: remote user name<br>
+							<b>prv_lvl</b>: privilege level<br>
+							<b>rem_addr</b>: remote address<br>
+							<b>port</b>: port<br>
+							<b>attributes</b>: map of optional attributes<br>
+							<b>return</b> true if the action is authorized<br>
+						]]></html>
+						<div>
+							Programming reference links:
+						</div>
+						<div style="margin-left: 36px">
+							<h:a href="http://www.soffid.org/doc/console/latest/uml/" target="_blank">Service model</h:a>
+						</div>
+					
+						<div style="margin-left: 36px">
+							<h:a href="http://www.soffid.org/doc/console/latest/iam-common/apidocs/index.html"  target="_blank">Full java classes documentation</h:a>
+						</div>	
+
+					</form>
+					<div style="text-align: right; width: 100%">
+						<databutton image="/img/ok-r.svg" label="${c:l('common.apply') }" 
+							onClick="ref:handler.applyTacacsPlusAuthRule"/>
+					</div>
+				</window>
+			</div>
+		</div>
 	</div>
 	<div sclass="section" id="tokenSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.tokenSection') }" />

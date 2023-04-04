@@ -92,6 +92,7 @@ import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
+import com.soffid.iam.addons.federation.common.TacacsPlusAuthRule;
 import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
 import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
@@ -125,6 +126,7 @@ import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.TacacsPlusAuthRuleEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.service.impl.FederationServiceInternal;
@@ -393,7 +395,8 @@ public class FederationServiceImpl
 	}
 
 	private void updateScopes(ServiceProviderEntity entity, FederationMember federationMember) {
-		if (federationMember.getAllowedScopes() == null) {
+		if (federationMember.getServiceProviderType() != ServiceProviderType.OPENID_CONNECT ||
+				federationMember.getAllowedScopes() == null) {
 			for (Iterator<AllowedScopeEntity> iterator = entity.getAllowedScopes().iterator(); iterator.hasNext();) {
 				AllowedScopeEntity imp = iterator.next();
 				iterator.remove();
@@ -1319,6 +1322,8 @@ public class FederationServiceImpl
 			SAMLProfile p = new SAMLProfile();
 			p.setClasse(e);
 			p.setEnabled(false);
+			if (e == SamlProfileEnumeration.TACACS_PLUS)
+				p.setAuthPort(49);	
 			p.setEncryptAssertions(SAMLRequirementEnumeration.CONDITIONAL);
 			p.setEncryptNameIds(SAMLRequirementEnumeration.NEVER);
 			p.setIncludeAttributeStatement(true);
@@ -2705,4 +2710,33 @@ public class FederationServiceImpl
 		}, l );
 		return l;
 	}
+
+	@Override
+	protected List<TacacsPlusAuthRule> handleFindTacacsPlusAuthRulesByServiceProvider(String serviceProvider)
+			throws Exception {
+		Collection<TacacsPlusAuthRuleEntity> l = getTacacsPlusAuthRuleEntityDao().findByServiceProvider(serviceProvider);
+		return getTacacsPlusAuthRuleEntityDao().toTacacsPlusAuthRuleList(l);
+	}
+
+	@Override
+	protected TacacsPlusAuthRule handleCreateTacacsPlusAuthRule(TacacsPlusAuthRule rule) throws Exception {
+		TacacsPlusAuthRuleEntity entity = getTacacsPlusAuthRuleEntityDao().tacacsPlusAuthRuleToEntity(rule);
+		getTacacsPlusAuthRuleEntityDao().create(entity);
+		return getTacacsPlusAuthRuleEntityDao().toTacacsPlusAuthRule(entity);
+	}
+
+	@Override
+	protected TacacsPlusAuthRule handleUpdateTacacsPlusAuthRule(TacacsPlusAuthRule rule) throws Exception {
+		TacacsPlusAuthRuleEntity entity = getTacacsPlusAuthRuleEntityDao().tacacsPlusAuthRuleToEntity(rule);
+		getTacacsPlusAuthRuleEntityDao().update(entity);
+		return getTacacsPlusAuthRuleEntityDao().toTacacsPlusAuthRule(entity);
+	}
+
+	@Override
+	protected void handleRemoveTacacsPlusAuthRule(TacacsPlusAuthRule rule) throws Exception {
+		TacacsPlusAuthRuleEntity entity = getTacacsPlusAuthRuleEntityDao().load(rule.getId());
+		if (entity != null)
+			getTacacsPlusAuthRuleEntityDao().remove(entity);
+	}
+	
 }

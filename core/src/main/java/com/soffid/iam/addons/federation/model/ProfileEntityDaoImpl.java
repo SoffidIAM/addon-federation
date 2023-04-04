@@ -122,6 +122,17 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setChap(entity.getChap());
 			target.setMsChap(entity.getMsChap());
 			target.setEnabled(entity.isEnabled());
+		} else if (source instanceof TacacsProfileEntity) {
+			// heretats
+			target.setClasse(SamlProfileEnumeration.TACACS_PLUS);
+			TacacsProfileEntity entity = (TacacsProfileEntity) source;
+			target.setAuthPort(entity.getAuthPort());
+			target.setPap(entity.getPap());
+			target.setChap(entity.getChap());
+			target.setMsChap(entity.getMsChap());
+			target.setSsl(entity.getSsl());
+			target.setAscii(entity.getAscii());
+			target.setEnabled(entity.isEnabled());
 		} else if (source instanceof CasProfileEntity) {
 			// heretats
 			target.setClasse(SamlProfileEnumeration.CAS);
@@ -143,22 +154,7 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			com.soffid.iam.addons.federation.common.SAMLProfile sAMLProfile) {
 		com.soffid.iam.addons.federation.model.ProfileEntity samlProfileEntity = null;
 		if (sAMLProfile.getId() != null) {
-			/*if (SamlProfileEnumeration.SAML2_ECP.equals(sAMLProfile.getClasse())) {
-				samlProfileEntity = findSAML2ECPPbyId(sAMLProfile.getId());
-			} else if (SamlProfileEnumeration.SAML2_AR.equals(sAMLProfile.getClasse())) {
-				samlProfileEntity = findSAML2ARPbyId(sAMLProfile.getId());
-			} else if (SamlProfileEnumeration.SAML1_AR.equals(sAMLProfile.getClasse())) {
-				samlProfileEntity = findSAML1ARPById(sAMLProfile.getId());
-			} else if (SamlProfileEnumeration.SAML2_SSO.equals(sAMLProfile.getClasse())) {
-				samlProfileEntity = findSAML2SSOPbyId(sAMLProfile.getId());
-			} else if (SamlProfileEnumeration.SAML2_AQ.equals(sAMLProfile.getClasse())) {
-				samlProfileEntity = findSAML2AQPbyId(sAMLProfile.getId());
-			} else if (SamlProfileEnumeration.SAML1_AQ.equals(sAMLProfile.getClasse())) {
-				samlProfileEntity = findSAML1AQPbyId(sAMLProfile.getId());
-			} else {*/
 			samlProfileEntity = this.load(sAMLProfile.getId());
-			// }
-
 		}
 		if (samlProfileEntity == null) {
 			if (SamlProfileEnumeration.SAML2_ECP.equals(sAMLProfile.getClasse())) {
@@ -179,6 +175,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 				samlProfileEntity = newOpenidProfileEntity();
 			} else if (SamlProfileEnumeration.RADIUS.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newRadiusProfileEntity();
+			} else if (SamlProfileEnumeration.TACACS_PLUS.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newTacacsProfileEntity();
 			} else if (SamlProfileEnumeration.CAS.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newCasProfileEntity();
 			} else {
@@ -341,6 +339,17 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			entity.setChap(source.getChap());
 			entity.setPap(source.getPap());
 			entity.setMsChap(source.getMsChap());
+			entity.setEnabled(source.getEnabled());
+			target = entity;
+		} else if (SamlProfileEnumeration.RADIUS.equals(source.getClasse())) {
+			// heretats
+			TacacsProfileEntity entity = (TacacsProfileEntity) target;
+			entity.setAuthPort(source.getAuthPort());
+			entity.setChap(source.getChap());
+			entity.setPap(source.getPap());
+			entity.setMsChap(source.getMsChap());
+			entity.setAscii(source.getAscii());
+			entity.setSsl(source.getSsl());
 			entity.setEnabled(source.getEnabled());
 			target = entity;
 		} else {

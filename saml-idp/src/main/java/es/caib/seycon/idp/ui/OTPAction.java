@@ -81,6 +81,18 @@ public class OTPAction extends HttpServlet {
                     logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
             	} else {
 	            	Challenge ch = ctx.getChallenge();
+	            	if (ch == null ||  ch.getCardNumber() == null) {
+						ch = new Challenge();
+						ch.setUser(user);
+						StringBuffer otpType = new StringBuffer();
+						if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
+						if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
+						if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
+						if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
+						ch.setOtpHandler(otpType.toString());
+						ch = v.selectToken(ch);
+						ctx.setChallenge(ch);
+	            	}
 	            	if (ch == null ||  ch.getCardNumber() == null)
 	            	{
 	            		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$

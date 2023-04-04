@@ -92,4 +92,12 @@ public class SAMLProfile {
 	@Nullable
 	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
 	Boolean msChap;
+
+	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
+	Boolean ascii;
+
+	@Nullable
+	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
+	Boolean ssl;
 }
