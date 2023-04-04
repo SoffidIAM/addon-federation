@@ -366,7 +366,7 @@ public class Main {
             UnrecoverableKeyException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException,
             InternalErrorException, InvalidKeyException, IllegalStateException,
-            NoSuchProviderException, SignatureException, LoginException {
+            NoSuchProviderException, SignatureException, LoginException, InstantiationException, IllegalAccessException, ClassNotFoundException {
     	
         ServletContextHandler ctx = new ServletContextHandler(
                 ServletContextHandler.SESSIONS);
@@ -527,6 +527,12 @@ public class Main {
         sessionManager.addEventListener(new SessionListener());
         ctx.getSessionHandler().setSessionManager(sessionManager);
         
+        // Add custom extensions
+        String extClass = new RemoteServiceLocator().getServerService().getConfig("soffid.idp.extension");
+        if (extClass != null) {
+        	IdpWebExtension ext = (IdpWebExtension) Class.forName(extClass).newInstance();
+        	ext.configure(ctx);
+        }
         return ctx;
 
     }
