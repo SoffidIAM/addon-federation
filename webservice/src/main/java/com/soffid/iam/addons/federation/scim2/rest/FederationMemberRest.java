@@ -44,7 +44,7 @@ public class FederationMemberRest extends BaseRest<FederationMember> {
 				fm.setAllowedScopes(null);
 			}
 		}
-		super.writeObject(w, builder, obj);
+		super.writeObject(w, builder, fm);
 	}
 
 	@Override
