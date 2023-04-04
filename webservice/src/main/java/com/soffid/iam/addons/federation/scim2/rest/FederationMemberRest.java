@@ -36,13 +36,14 @@ public class FederationMemberRest extends BaseRest<FederationMember> {
 		if ("S".equals(fm.getClasse())) {
 			fm.setLoginHintScript(null);
 			fm.setExtendedAuthenticationMethods(null);
-			if (fm.getServiceProviderType() != ServiceProviderType.OPENID_CONNECT &&
-					fm.getServiceProviderType() != ServiceProviderType.OPENID_REGISTER) {
-				fm.setOpenidLogoutUrl(null);
-				fm.setOpenidMechanism(null);
-				fm.setOpenidUrl(null);
-				fm.setAllowedScopes(null);
-			}
+		}
+		if (!"S".equals(fm.getClasse()) ||
+				(fm.getServiceProviderType() != ServiceProviderType.OPENID_CONNECT &&
+				 fm.getServiceProviderType() != ServiceProviderType.OPENID_REGISTER)) {
+			fm.setOpenidLogoutUrl(null);
+			fm.setOpenidMechanism(null);
+			fm.setOpenidUrl(null);
+			fm.setAllowedScopes(null);
 		}
 		super.writeObject(w, builder, fm);
 	}
