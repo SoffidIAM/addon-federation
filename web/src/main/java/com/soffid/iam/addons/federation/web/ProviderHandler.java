@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.zkoss.util.resource.Labels;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
@@ -21,8 +22,10 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.zkib.component.DataTree2;
 import es.caib.zkib.datamodel.DataModelCollection;
 import es.caib.zkib.datamodel.DataNode;
+import es.caib.zkib.datasource.CommitException;
 import es.caib.zkib.datasource.DataSource;
 import es.caib.zkib.datasource.XPathUtils;
+import es.caib.zkib.zkiblaf.Missatgebox;
 
 public class ProviderHandler extends FrameHandler {
 
@@ -183,5 +186,17 @@ public class ProviderHandler extends FrameHandler {
 			}
 		}
 		return false;
+	}
+
+	public void confirmApply (Event e) throws CommitException {
+		if (getModel() == null || ! getModel().isCommitPending()) {
+			hideDetails();
+		} else {
+			Missatgebox.confirmaYES_NO(Labels.getLabel("aplica_usuarisRolllista.zul.Confirm"), (event) -> {
+				if (event.getName().equals("onYes")) {
+					apply(e);
+				}
+			});
+		}
 	}
 }

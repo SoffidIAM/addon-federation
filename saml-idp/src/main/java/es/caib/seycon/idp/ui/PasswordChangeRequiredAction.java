@@ -74,7 +74,7 @@ public class PasswordChangeRequiredAction extends HttpServlet {
     		if (ctx != null)
     		{
     			try {
-					ctx.authenticationFailure(ctx.getUser());
+					ctx.authenticationFailure(ctx.getUser(), error);
 				} catch (InternalErrorException e) {
 				}
     		}

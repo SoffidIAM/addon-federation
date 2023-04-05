@@ -1,6 +1,5 @@
 package es.caib.seycon.idp.oauth.consumer;
 
-import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.*;
 
 import com.github.scribejava.core.model.OAuth1RequestToken;

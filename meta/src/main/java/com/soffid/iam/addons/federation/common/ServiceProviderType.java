@@ -11,4 +11,5 @@ public class ServiceProviderType {
 	public static String OPENID_REGISTER = "openid-dynamic-register";
 	public static String RADIUS = "radius";
 	public static String CAS = "cas";
+	public static String TACACSP = "tacacs+";
 }

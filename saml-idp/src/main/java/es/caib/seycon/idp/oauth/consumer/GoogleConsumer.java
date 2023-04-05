@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONObject;
-import org.mortbay.util.ajax.JSON;
+import org.json.JSONTokener;
 import org.openid4java.consumer.ConsumerException;
 
 import com.github.scribejava.apis.GoogleApi20;
@@ -33,7 +33,7 @@ import es.caib.seycon.util.Base64;
 public class GoogleConsumer extends OAuth2Consumer 
 {
 
-	static HashMap<String, Object> cfg = null;
+	static Map<String, Object> cfg = null;
 	
 	public GoogleConsumer(FederationMember fm)
 			throws ConsumerException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException,
@@ -45,7 +45,8 @@ public class GoogleConsumer extends OAuth2Consumer
 		{
 			URL cfgUrl = new URL("https://accounts.google.com/.well-known/openid-configuration");
 			InputStream in = cfgUrl.openConnection().getInputStream();
-			cfg = (HashMap<String, Object>) JSON.parse(new InputStreamReader(in, "UTF-8"), true);
+			JSONObject j = new JSONObject(new JSONTokener(in));
+			cfg = j.toMap();
 		}
 
 		service = new ServiceBuilder(fm.getOauthKey())
@@ -60,8 +61,8 @@ public class GoogleConsumer extends OAuth2Consumer
 	public boolean verifyResponse(HttpServletRequest httpReq) throws InternalErrorException, InterruptedException, ExecutionException, IOException  {
 		OAuth2AccessToken accessToken = parseResponse(httpReq);
 
-		Map<String,String> r = (Map<String, String>) JSON.parse(accessToken.getRawResponse());
-		String idToken = r.get("id_token");
+		JSONObject r = new JSONObject(accessToken.getRawResponse());
+		String idToken = r.optString("id_token", "");
 		String[] split = idToken.split("\\.");
 		
 		String openIdB64 = split[1];

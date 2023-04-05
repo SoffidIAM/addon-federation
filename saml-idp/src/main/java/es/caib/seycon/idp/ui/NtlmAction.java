@@ -96,7 +96,7 @@ public class NtlmAction extends HttpServlet {
 		        	}
 		        }
 	    		if (ctx != null)
-	    			ctx.authenticationFailure(ctx.getUser());
+	    			ctx.authenticationFailure(ctx.getUser(), Messages.getString("PasswordChangeRequiredAction.unknown.user"));
 	            error = String.format(Messages.getString("PasswordChangeRequiredAction.unknown.user"), principal); //$NON-NLS-1$
     		}
     	} catch (Exception e) {

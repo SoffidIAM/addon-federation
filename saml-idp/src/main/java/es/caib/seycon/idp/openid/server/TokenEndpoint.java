@@ -165,7 +165,7 @@ public class TokenEndpoint extends HttpServlet {
 				AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 				if (ctx != null) {
 					try {
-						ctx.authenticationFailure(username);
+						ctx.authenticationFailure(username, "Missing user name parameter");
 					} catch (InternalErrorException e) {
 					}
 				}
@@ -175,7 +175,7 @@ public class TokenEndpoint extends HttpServlet {
 				AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 				if (ctx != null) {
 					try {
-						ctx.authenticationFailure(username);
+						ctx.authenticationFailure(username, "Missing password parameter");
 					} catch (InternalErrorException e) {
 					}
 				}
@@ -206,7 +206,7 @@ public class TokenEndpoint extends HttpServlet {
 							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId());
 							t.setScope(scopes);
 						} else {
-							authCtx.authenticationFailure(username);
+							authCtx.authenticationFailure(username, Messages.getString("UserPasswordAction.8"));
 							logRecorder.addErrorLogEntry(username, Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
 									req.getRemoteAddr());
 							buildError(resp, "invalid_grant", "Password is expired");

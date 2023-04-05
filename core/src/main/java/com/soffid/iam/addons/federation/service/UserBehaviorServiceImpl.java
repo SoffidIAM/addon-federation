@@ -21,8 +21,16 @@ import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.iam.addons.federation.model.FederationMemberEntity;
+import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.UserBehaviorEntity;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.otp.service.OtpService;
+import com.soffid.iam.api.Audit;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.api.PasswordValidation;
+import com.soffid.iam.model.AccountEntity;
+import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserAccountEntity;
 import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.sync.engine.extobj.AttributeReferenceParser;
@@ -264,4 +272,33 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 			return new HashSet<String>();
 		}
 	}
+
+	@Override
+	protected PasswordValidation handleValidatePassword(FederationMember federationMember, String account, Password p)
+			throws Exception {
+		FederationMemberEntity fme = getFederationMemberEntityDao().load(federationMember.getId());
+		if (fme instanceof ServiceProviderEntity) {
+			ServiceProviderEntity sp = (ServiceProviderEntity) fme;
+			SystemEntity system = sp.getSystem();
+			if (system == null) {
+				system = getSystemEntityDao().findSoffidSystem();
+			}
+			AccountEntity acc = getAccountEntityDao().findByNameAndSystem(account, system.getName());
+			if (acc != null && !acc.isDisabled()) {
+				return getInternalPasswordService().checkAccountPassword(acc, p, true, false);
+			}
+		}
+		return PasswordValidation.PASSWORD_WRONG;
+	}
+
+	@Override
+	protected void handleChangePassword(FederationMember federationMember, String account, Password oldPass, Password newPass)
+			throws Exception {
+		if (handleValidatePassword(federationMember, account, oldPass) != PasswordValidation.PASSWORD_WRONG) {
+			getInternalPasswordService().storeAndSynchronizeAccountPassword(null, newPass, false, null);
+		} else {
+			throw new InternalErrorException("Wrong password");
+		}
+	}
+
 }

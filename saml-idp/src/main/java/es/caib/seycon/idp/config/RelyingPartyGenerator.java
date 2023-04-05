@@ -325,8 +325,10 @@ public class RelyingPartyGenerator {
         for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
             SAMLProfile profile = (SAMLProfile) it.next();
             if (! profile.getClasse().equals( SamlProfileEnumeration.OPENID) &&
+            		! profile.getClasse().equals( SamlProfileEnumeration.TACACS_PLUS) &&
             		! profile.getClasse().equals( SamlProfileEnumeration.CAS) &&
-            		! profile.getClasse().equals( SamlProfileEnumeration.RADIUS))
+            		! profile.getClasse().equals( SamlProfileEnumeration.RADIUS) &&
+            		! profile.getClasse().equals( SamlProfileEnumeration.SAML_PRO))
             {
 	            Element profileNode = doc.createElementNS(RP_NAMESPACE,
 	                    "ProfileConfiguration"); //$NON-NLS-1$

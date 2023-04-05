@@ -16,7 +16,6 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONObject;
-import org.mortbay.util.ajax.JSON;
 import org.openid4java.consumer.ConsumerException;
 
 import com.github.scribejava.apis.FacebookApi;

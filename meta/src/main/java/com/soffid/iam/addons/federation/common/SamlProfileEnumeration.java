@@ -29,4 +29,6 @@ public class SamlProfileEnumeration {
 	public java.lang.String RADIUS="RadiusProfile";
 
 	public java.lang.String CAS="CasProfile";
+
+	public java.lang.String TACACS_PLUS="Tacacs+Profile";
 }

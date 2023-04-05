@@ -121,6 +121,7 @@ public class AuthorizationResponse  {
 			if (url != null && ! url.isEmpty())
 			{
 				LinkedList<String> args = new LinkedList<String> ();
+				args.add("session_state=active");
 				if (r.getResponseType().contains("code"))
 					args.add("code=" + URLEncoder.encode(  token.authorizationCode) );
 				if ( r.getResponseTypeSet().contains("token") )
@@ -133,7 +134,6 @@ public class AuthorizationResponse  {
 					args.add("id_token=" + URLEncoder.encode(openidToken , "UTF-8"));
 				if ( r.getState() != null)
 					args.add("state=" + URLEncoder.encode(r.getState() , "UTF-8"));
-				sb.append("&session_state=active");
 				boolean first = true;
 				sb.append(url);
 				for ( String arg: args)

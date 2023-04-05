@@ -9,6 +9,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.common.TacacsPlusAuthRule;
 import com.soffid.iam.addons.federation.common.UserConsent;
 import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
 import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
@@ -22,6 +23,7 @@ import com.soffid.iam.addons.federation.model.OauthTokenScopeEntity;
 import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
+import com.soffid.iam.addons.federation.model.TacacsPlusAuthRuleEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
 import com.soffid.iam.addons.federation.roles.federation_update;
@@ -34,13 +36,16 @@ import com.soffid.iam.service.MailService;
 import com.soffid.mda.annotation.*;
 
 import es.caib.bpm.servei.BpmEngine;
+import es.caib.seycon.ng.comu.Auditoria;
 import es.caib.seycon.ng.comu.Usuari;
+import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.RolEntity;
 import es.caib.seycon.ng.servei.AplicacioService;
 import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.DispatcherService;
 import es.caib.seycon.ng.servei.DominiService;
 import es.caib.seycon.ng.servei.DominiUsuariService;
+import es.caib.seycon.ng.servei.InternalPasswordService;
 import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.servei.UsuariService;
 import es.caib.seycon.ng.sync.servei.LogonService;
@@ -122,7 +127,8 @@ import org.springframework.transaction.annotation.Transactional;
 	AplicacioService.class,
 	ServiceProviderReturnUrlEntity.class,
 	FederationMemberSessionEntity.class,
-	AsyncRunnerService.class
+	AsyncRunnerService.class,
+	TacacsPlusAuthRuleEntity.class
 })
 public abstract class FederationService {
 
@@ -629,4 +635,35 @@ public abstract class FederationService {
 	}
 	
 
+	@Description("Finds TACACS+ rules")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public List<TacacsPlusAuthRule> findTacacsPlusAuthRulesByServiceProvider (
+		@Nullable String serviceProvider)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
+	@Description("Create TACACS+ rules")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public TacacsPlusAuthRule createTacacsPlusAuthRule (TacacsPlusAuthRule rule) { return null;} 
+
+
+	@Description("Update TACACS+ rules")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public TacacsPlusAuthRule updateTacacsPlusAuthRule (TacacsPlusAuthRule rule) { return null;} 
+
+
+	@Description("Remove TACACS+ rules")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public void removeTacacsPlusAuthRule (TacacsPlusAuthRule rule) {} 
+	
+	@Description("Remove TACACS+ rules")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public void registerLoginAudit (Auditoria audit) {} 
+	
 }

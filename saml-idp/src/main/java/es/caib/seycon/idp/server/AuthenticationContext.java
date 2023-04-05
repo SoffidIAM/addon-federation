@@ -46,6 +46,7 @@ import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.api.Account;
+import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
 import com.soffid.iam.config.Config;
@@ -399,6 +400,16 @@ public class AuthenticationContext {
 						new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
 					} catch (AccountAlreadyExistsException e) {
 					}
+    				Audit a = new Audit();
+    				a.setAccount(currentAccount.getName());
+    				a.setUser(currentUser.getUserName());
+    				a.setAction("S");
+    				a.setObject("LOGIN");
+    				a.setDatabase(currentAccount.getSystem());
+    				a.setCalendar(Calendar.getInstance());
+    				a.setSourceIp(remoteIp);
+    				a.setHost(hostId);
+    				new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
     			}
     		}
     	}
@@ -427,7 +438,7 @@ public class AuthenticationContext {
 		}
 	}
 
-	public void authenticationFailure (String u) throws IOException, InternalErrorException
+	public void authenticationFailure (String u, String comments) throws IOException, InternalErrorException
 	{
 		getUserData(u);
 		feedRatio(true);
@@ -436,6 +447,27 @@ public class AuthenticationContext {
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			long f = ubh.getUserFailures(currentUser.getId());
 			ubh.setUserFailures(currentUser.getId(), f+1);
+			Audit a = new Audit();
+			a.setAccount(currentAccount.getName());
+			a.setUser(currentUser.getUserName());
+			a.setAction("P");
+			a.setObject("LOGIN");
+			a.setDatabase(currentAccount.getSystem());
+			a.setCalendar(Calendar.getInstance());
+			a.setComment(comments);
+			a.setSourceIp(remoteIp);
+			a.setHost(hostId);
+			new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
+		} else {
+			Audit a = new Audit();
+			a.setUser(u);
+			a.setAction("U");
+			a.setObject("LOGIN");
+			a.setCalendar(Calendar.getInstance());
+			a.setComment(comments);
+			a.setSourceIp(remoteIp);
+			a.setHost(hostId);
+			new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
 		}
 	}
 	
@@ -611,6 +643,7 @@ public class AuthenticationContext {
 
 	static Map<String, AuthenticationContext> auths = new Hashtable<>();
 	static long lastPurge = 0;
+
 	public static AuthenticationContext fromRequest(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
 		expireOldContexts();
 		
@@ -636,7 +669,6 @@ public class AuthenticationContext {
 		return auth;
 	}
 
-
 	private void initialize(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		IdpConfig config = IdpConfig.getConfig();
     	remoteIp = accessRequest.getAttributeValue("Framed-IP-Address");
@@ -647,6 +679,52 @@ public class AuthenticationContext {
     	this.publicId = publicId;
     	user = accessRequest.getUserName();
     	getUserData(accessRequest.getUserName());
+
+    	updateAllowedAuthenticationMethods();
+        if (requestedAuthenticationMethod != null)
+        {
+        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
+        }
+        
+        if (allowedAuthenticationMethods.isEmpty())
+        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+        
+        nextFactor = new HashSet<String>();
+        firstFactor = null;
+        secondFactor = null;
+        step = 0;
+        timestamp = System.currentTimeMillis();
+        
+        if (nextFactor.isEmpty())
+        {
+            for ( String allowedMethod: allowedAuthenticationMethods)
+            {
+           		nextFactor.add( allowedMethod.substring(0,1));
+            }
+        }
+	}
+
+
+	public void initializeTacacsCtx(String user, String remoteIp, String serviceProvider) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		IdpConfig config = IdpConfig.getConfig();
+		this.remoteIp = remoteIp;
+    	hostId = null;
+    	currentUser = null;
+
+    	String system = IdpConfig.getConfig().getSystem().getName();
+    	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
+    	if (fm.getSystem() != null)
+    		system = fm.getSystem();
+
+    	Account acc = new RemoteServiceLocator().getServerService().getAccountInfo(user, system);
+    	if (acc == null || acc.isDisabled())
+    		throw new InternalErrorException("Account is not enabled");
+    	if (acc.getType() != AccountType.USER)
+    		throw new InternalErrorException("Account is not of type user");
+    	
+    	this.publicId = serviceProvider;
+    	this.user = acc.getOwnerUsers().iterator().next();
+    	getUserData(user);
 
     	updateAllowedAuthenticationMethods();
         if (requestedAuthenticationMethod != null)
@@ -695,6 +773,16 @@ public class AuthenticationContext {
 
 	public void setRadiusState(String radiusState) {
 		this.radiusState = radiusState;
+	}
+
+
+	public String getRemoteIp() {
+		return remoteIp;
+	}
+
+
+	public void setRemoteIp(String remoteIp) {
+		this.remoteIp = remoteIp;
 	}
 
 

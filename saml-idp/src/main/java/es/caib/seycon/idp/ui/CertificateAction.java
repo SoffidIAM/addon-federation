@@ -52,7 +52,7 @@ public class CertificateAction extends HttpServlet {
 	        		req.setAttribute("ERROR", Messages.getString("SignatureAction.unrecognizedCertificate")); //$NON-NLS-1$ //$NON-NLS-2$
             		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
             		if (ctx != null && ctx.getUser() != null)
-            			ctx.authenticationFailure( ctx.getUser() );
+            			ctx.authenticationFailure( ctx.getUser() , Messages.getString("SignatureAction.unrecognizedCertificate"));
 	            } else {
 	            	try {
 	            		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);

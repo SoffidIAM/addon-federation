@@ -7,14 +7,20 @@ import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.UserBehaviorEntity;
 import com.soffid.mda.annotation.Depends;
 import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.Service;
 
+import es.caib.seycon.ng.comu.Password;
+import es.caib.seycon.ng.comu.PasswordValidation;
+import es.caib.seycon.ng.model.AccountEntity;
+import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.UsuariEntity;
 import es.caib.seycon.ng.servei.AccountService;
 import es.caib.seycon.ng.servei.DispatcherService;
+import es.caib.seycon.ng.servei.InternalPasswordService;
 import es.caib.seycon.ng.servei.XarxaService;
 
 @Service(serverPath = "/seycon/UserBehaviorService",
@@ -22,7 +28,11 @@ import es.caib.seycon.ng.servei.XarxaService;
 @Depends({UserBehaviorEntity.class, 
 		UsuariEntity.class,
 		XarxaService.class,
-		UserCredentialService.class})
+		UserCredentialService.class,
+		FederationMemberEntity.class,
+		AccountEntity.class,
+		DispatcherEntity.class,
+		InternalPasswordService.class})
 public class UserBehaviorService {
 	public String getCountryForIp(String ip) { return null; }
 	public String getLastCountry(Long userId) {return null; }
@@ -42,5 +52,7 @@ public class UserBehaviorService {
 	
 	public Collection<UserCredentialType> getEnabledCredentials(Long userId) {return null;}
 	public Collection<String> getEnabledOtps(Long userId) {return null;}
-	
+
+	public PasswordValidation validatePassword(FederationMember federationMember, String account, Password p) { return null; }
+	public void changePassword(FederationMember federationMember, String account, Password oldPass, Password newPass) {}
 }

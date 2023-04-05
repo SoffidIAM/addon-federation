@@ -38,6 +38,7 @@ import org.zkoss.zul.Div;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Window;
 
+import com.soffid.codemirror.Codemirror;
 import com.soffid.iam.EJBLocator;
 import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.AllowedScope;
@@ -90,8 +91,10 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		getFellow("openidSection").setVisible(spType == ServiceProviderType.OPENID_CONNECT || spType == ServiceProviderType.OPENID_REGISTER);
 		getFellow("casSection").setVisible(spType == ServiceProviderType.CAS);
 		getFellow("configurationSection").setVisible( spType != ServiceProviderType.OPENID_CONNECT &&
-				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS  &
+				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS  &&
+				spType != ServiceProviderType.TACACSP &&
 				spType != ServiceProviderType.OPENID_REGISTER);
+		getFellow("tacacsPlusSection").setVisible(spType == ServiceProviderType.TACACSP);
 		getFellow("radiusSection").setVisible(spType == ServiceProviderType.RADIUS);
 		getFellow("tokenSection").setVisible(spType == ServiceProviderType.OPENID_REGISTER);
 		
@@ -102,14 +105,18 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		
 		((CustomField3)getFellow("metadades")).setVisible(spType != ServiceProviderType.OPENID_CONNECT &&
 				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS &&
+				spType != ServiceProviderType.TACACSP &&
 				spType != ServiceProviderType.OPENID_REGISTER);
 		((CustomField3)getFellow("metadades")).setDisabled(spType != ServiceProviderType.SAML);
 //		((CustomField3)getFellow("oauthKey")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
 //		((CustomField3)getFellow("oauthSecret")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
 		((CustomField3)getFellow("contact")).setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		((CustomField3)getFellow("organization")).setVisible(spType == ServiceProviderType.SOFFID_SAML);
-		((CustomField3)getFellow("impersonations")).setVisible(spType != ServiceProviderType.RADIUS && spType != ServiceProviderType.OPENID_REGISTER);
-		((CustomField3)getFellow("consent")).setVisible(spType != ServiceProviderType.RADIUS);
+		((CustomField3)getFellow("impersonations")).setVisible(spType != ServiceProviderType.RADIUS && 
+				spType != ServiceProviderType.OPENID_REGISTER &&
+				spType != ServiceProviderType.TACACSP);
+		((CustomField3)getFellow("consent")).setVisible(spType != ServiceProviderType.RADIUS && spType != ServiceProviderType.TACACSP);
+		((CustomField3) getFellow("uidScript")).setVisible(spType != ServiceProviderType.RADIUS && spType != ServiceProviderType.TACACSP);
 		
 		((CustomField3)getFellow("openidClientId")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
 		(getFellow("openidSecretDiv")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
@@ -119,6 +126,11 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		((CustomField3)getFellow("openidLogoutUrlBack")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
 		((CustomField3)getFellow("oauthSessionTimeout")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
 		((CustomField3)getFellow("openidLogoutUrl")).setVisible(spType != ServiceProviderType.OPENID_REGISTER);
+		
+		CustomField3 systemSelector = (CustomField3) getFellow("systemSelector");
+		systemSelector.setRequired(spType == ServiceProviderType.RADIUS || spType == ServiceProviderType.TACACSP);
+		systemSelector.updateMetadata();
+		
 		// Dynamic regitration
 		if ( spType == ServiceProviderType.OPENID_REGISTER) {
 			Digest p = (Digest) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember/registrationToken");
@@ -709,4 +721,50 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 			}
 		}
 	}
+	
+	public void addTacacsPlusAuthRule (Event ev) {
+		DataTable lb = (DataTable) getFellow("tacacsplusauthrulesgrid");
+		lb.addNew();
+		Window w = (Window) getFellow("tacacsPlusAuthRule-window");
+		w.doHighlighted();
+		Codemirror cm = (Codemirror) w.getFellow("editor");
+		cm.setValue("");
+	}
+	
+	public void onSelectTacacsPlusAuthRule (Event ev) {
+		DataTable lb = (DataTable) getFellow("tacacsplusauthrulesgrid");
+		Window w = (Window) getFellow("tacacsPlusAuthRule-window");
+		w.doHighlighted();
+		Codemirror cm = (Codemirror) w.getFellow("editor");
+		cm.setValue((String) XPathUtils.eval(lb, "expression"));
+	}
+
+	public void removeTacacsPlusAuthRule (Event ev) {
+		Missatgebox.confirmaOK_CANCEL(Labels.getLabel("common.delete"), 
+				(event2) -> {
+					if (event2.getName().equals("onOK")) {
+						DataTable dt = (DataTable) getFellow("tacacsplusauthrulesgrid");
+						dt.delete();
+					}
+				});
+		
+	}
+	
+	public void applyTacacsPlusAuthRule (Event ev) {
+		Window w = (Window) getFellow("tacacsPlusAuthRule-window");
+		w.doHighlighted();
+		CustomField3 db = (CustomField3) w.getFellow("name");
+		if (db.attributeValidateAll()) {
+			Codemirror cm = (Codemirror) w.getFellow("editor");
+			DataTable dt = (DataTable) getFellow("tacacsplusauthrulesgrid");
+			XPathUtils.setValue(dt, "expression", cm.getValue());
+			w.setVisible(false);
+		}
+	}
+	
+	public void onMultiSelectTacacsPlusAuthRule(Event event) {
+		DataTable lb = (DataTable) event.getTarget();
+		displayRemoveButton( lb, lb.getSelectedIndexes() != null && lb.getSelectedIndexes().length > 0);
+	}
+
 }
