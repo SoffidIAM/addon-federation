@@ -52,7 +52,8 @@ public class AuthorizationChecker {
 				mandatoryArguments.put(arg.attribute, arg.value);
 		}
 		
-		vars.put("level", p.priv_lvl);
+		vars.put("priv_level", p.priv_lvl);
+		vars.put("port", p.port);
 		vars.put("service", p.authen_service);
 		vars.put("remote_address", p.rem_addr);
 		vars.put("user", eo);

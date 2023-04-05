@@ -64,6 +64,8 @@ public class SessionServer extends Session
 	private Password password;
 
 	private Password otp;
+
+	private byte privilegeLevel;
 	
 	/** Server-side constructor */
 	SessionServer(TAC_PLUS.AUTHEN.SVC svc, String port, String rem_addr, byte priv_lvl, TacacsReader tacacs, byte[] sessionID)
@@ -190,6 +192,7 @@ public class SessionServer extends Session
 
 
 	private Packet handleAuthenticationStartLogin(AuthenStart p) throws Exception {
+		privilegeLevel = p.priv_lvl;
 		return doLogin(p);
 	}
 
@@ -200,7 +203,7 @@ public class SessionServer extends Session
 			interactiveLogin = true;
 			return doInteractiveLogin(p);
 		case  PAP:
-			return dePapLogin(p);
+			return doPapLogin(p);
 		case CHAP:
 			return doChapLogin(p);
 		case MSCHAPV2:
@@ -243,12 +246,20 @@ public class SessionServer extends Session
 				if (checkChap (pppId, pass, challenge, response)) { 
 					authenticationContext.authenticated(user, "P", null);
 					if (authenticationContext.isFinished()) {
-						return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-							TAC_PLUS.AUTHEN.STATUS.PASS, 
-							FLAG_ZERO,
-							"",
-							""
-							);
+						if (new AuthorizationChecker().hasSecurityLevel(p.priv_lvl, user, tacacs.getServiceProvider().getSystem()))
+							return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+								TAC_PLUS.AUTHEN.STATUS.PASS, 
+								FLAG_ZERO,
+								"",
+								""
+								);
+						else
+							return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+									TAC_PLUS.AUTHEN.STATUS.FAIL, 
+									FLAG_ZERO,
+									"Not authorized to privilege level "+privilegeLevel,
+									""
+									);
 					} else {
 						server_msg = "MFA not supported by TACACS+ CHAP protocol";
 						authenticationContext.authenticationFailure(user, server_msg);
@@ -294,12 +305,20 @@ public class SessionServer extends Session
 				if (MSCHAP.verifyMSCHAPv2(user.getBytes(StandardCharsets.UTF_8), pass.getPassword().getBytes(StandardCharsets.UTF_8), challenge, response))  {
 					authenticationContext.authenticated(user, "P", null);
 					if (authenticationContext.isFinished()) {
-						return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-							TAC_PLUS.AUTHEN.STATUS.PASS, 
-							FLAG_ZERO,
-							"",
-							""
-							);
+						if (new AuthorizationChecker().hasSecurityLevel(p.priv_lvl, user, tacacs.getServiceProvider().getSystem()))
+							return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+								TAC_PLUS.AUTHEN.STATUS.PASS, 
+								FLAG_ZERO,
+								"",
+								""
+								);
+						else
+							return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+									TAC_PLUS.AUTHEN.STATUS.FAIL, 
+									FLAG_ZERO,
+									"Not authorized to privilege level "+privilegeLevel,
+									""
+									);
 					} else {
 						authenticationContext.authenticationFailure(user, "MFA not supported by TACACS+ CHAP protocol");
 					}
@@ -336,7 +355,7 @@ public class SessionServer extends Session
 	}
 
 
-	private Packet dePapLogin(AuthenStart p) throws IOException {
+	private Packet doPapLogin(AuthenStart p) throws IOException {
 		if (user == null || user.trim().isEmpty())
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.FAIL, 
@@ -352,12 +371,20 @@ public class SessionServer extends Session
 					tacacs.getServiceProvider().getSystem());
 			if (validatePassword(password)) {
 				if (authenticationContext.isFinished()) {
-					return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-							TAC_PLUS.AUTHEN.STATUS.PASS, 
-							FLAG_ZERO,
-							"",
-							""
-							);
+					if (new AuthorizationChecker().hasSecurityLevel(p.priv_lvl, user, tacacs.getServiceProvider().getSystem()))
+						return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+									TAC_PLUS.AUTHEN.STATUS.PASS, 
+									FLAG_ZERO,
+									"",
+									""
+									);
+					else
+						return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+								TAC_PLUS.AUTHEN.STATUS.FAIL, 
+								FLAG_ZERO,
+								"Not authorized to privilege level "+privilegeLevel,
+								""
+								);
 				} else {
 					authenticationContext.authenticationFailure(user, "MFA not supported in TACACS+ PAP protocol");
 				}
@@ -499,12 +526,20 @@ public class SessionServer extends Session
 		Set<String> nextFactors = authenticationContext.getNextFactor();
 		
 		if (authenticationContext != null && authenticationContext.isFinished()) {
-			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+			if (new AuthorizationChecker().hasSecurityLevel(privilegeLevel, user, tacacs.getServiceProvider().getSystem()))
+				return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.PASS, 
 					FLAG_ZERO,
 					"",
 					""
 					);
+			else
+				return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+						TAC_PLUS.AUTHEN.STATUS.FAIL, 
+						FLAG_ZERO,
+						"Not authorized to privilege level "+privilegeLevel,
+						""
+						);
 		} else if (user == null || user.trim().isEmpty()) {
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.GETUSER, 

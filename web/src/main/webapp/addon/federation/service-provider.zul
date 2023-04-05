@@ -353,11 +353,12 @@
 						</div>	
 						<html style="margin-left: 36px; display: block;"><![CDATA[
 							<b>user</b>: remote user name<br>
-							<b>prv_lvl</b>: privilege level<br>
-							<b>rem_addr</b>: remote address<br>
+							<b>priv_level</b>: privilege level<br>
+							<b>remote_address</b>: remote address<br>
 							<b>port</b>: port<br>
-							<b>attributes</b>: map of optional attributes<br>
-							<b>return</b> true if the action is authorized<br>
+							<b>optionalArguments</b>: modifiable map of optional attributes.<br>
+							<b>mandatoryArguments</b>: modifiable map of mandatory attributes.<br>
+							<b>return</b> true if the action is authorized.<br>
 						]]></html>
 						<div>
 							Programming reference links:

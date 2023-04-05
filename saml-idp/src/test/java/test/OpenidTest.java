@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
-import org.mortbay.util.ajax.JSON;
+import org.json.JSONObject;
 
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.builder.api.DefaultApi20;
@@ -52,15 +52,15 @@ public class OpenidTest {
 		{
 		    OAuth2AccessToken token = service.getAccessToken(code);
 		    System.out.println("Token="+token.getAccessToken());
-			Map<String,String> r = (Map<String, String>) JSON.parse(token.getRawResponse());
-			String idToken = r.get("id_token");
+		    JSONObject r = new JSONObject(token.getRawResponse());
+			String idToken = r.optString("id_token", "");
 			String[] split = idToken.split("\\.");
 			
 			String openIdB64 = split[1];
 			while (openIdB64.length() % 4 != 0)
 				openIdB64 += "=";
 			String openIdToken = new String(Base64.decode(openIdB64));
-			Map<String,Object> m = (Map<String, Object>) JSON.parse( openIdToken);
+			JSONObject m = new JSONObject(openIdToken);
 			for (String k: m.keySet())
 			{
 				System.out.println(k+"="+m.get(k));
