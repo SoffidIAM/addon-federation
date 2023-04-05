@@ -12,9 +12,11 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.LogRecord;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,12 +28,18 @@ import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordValidation;
+import com.soffid.iam.api.User;
 import com.soffid.iam.service.OTPValidationService;
+import com.soffid.iam.service.SessionService;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.client.PasswordManager;
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.ng.comu.AccountType;
+import es.caib.seycon.ng.comu.TipusSessio;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.InvalidPasswordException;
 import es.caib.seycon.ng.exception.SoffidStackTrace;
@@ -145,20 +153,77 @@ public class SessionServer extends Session
 						);
 				} catch (Exception e) {
 					log.warn("Error processing tacacs request "+p, e);
-					r = errorMessage(p);
+					r = new AuthorReply (p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.AUTHOR.STATUS.FAIL, 
+							"Error processing authorization",
+							"Error processing authorization",
+							null
+							);
 				}
 				tacacs.write(r);
 				break;
 			case ACCT:
-				r = new AcctReply
-				(
-					p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-					TAC_PLUS.ACCT.STATUS.ERROR, 
-					"The ACCOUNTING operation is not implemented.",
-					"The ACCOUNTING operation is not implemented."
-				);
+				try {
+					doRegisterAccounting ((AcctRequest) p);
+					r = new AcctReply(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.ACCT.STATUS.SUCCESS, 
+							"",
+							""
+							);
+				} catch (Exception e) {
+					log.warn("Error processing tacacs request "+p, e);
+					r = new AcctReply(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.ACCT.STATUS.ERROR, 
+							"Error processing accounting",
+							"Error processing accounting"
+							);
+				}
 				tacacs.write(r);
 				break;
+		}
+	}
+
+
+	private void doRegisterAccounting(AcctRequest p) throws InternalErrorException, IOException, UnknownUserException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		final SessionService ss = new RemoteServiceLocator().getSessionService();
+		final ServerService serverService = new RemoteServiceLocator().getServerService();
+		if ((((int)p.flags) & TAC_PLUS.ACCT.FLAG.START.code()) != 0) {
+			account = serverService.getAccountInfo(p.user, 
+					tacacs.getServiceProvider().getSystem());
+			if (account != null && account.getType() == AccountType.USER) {
+				String taskId = "";
+				for (Argument param: p.arguments) 
+					if (param.getAttribute().equals("task_id"))
+						taskId = param.getValue();
+				ss.registerSession(account.getOwnerUsers().iterator().next(), 
+						IdpConfig.getConfig().getFederationMember().getHostName(), 
+						p.rem_addr, 
+						0, 
+						taskId, "TAC+");
+//	        	LogRecorder.getInstance().addSuccessLogEntry("TACACS+", p.user, "P", tacacs.getServiceProvider().getName(), p.rem_addr, 
+//	        			null, null, "TACACS_"+taskId);
+			}
+		}
+		else if ((((int)p.flags) & TAC_PLUS.ACCT.FLAG.STOP.code()) != 0)
+		{
+			account = serverService.getAccountInfo(p.user, 
+					tacacs.getServiceProvider().getSystem());
+			if (account != null && account.getType() == AccountType.USER) {
+				String taskId = "";
+				User u = serverService.getUserInfo(account.getName(), account.getSystem());
+				for (Argument param: p.arguments) 
+					if (param.getAttribute().equals("task_id"))
+						taskId = param.getValue();
+				for (com.soffid.iam.api.Session session: ss.getActiveSessions(u.getId()))
+				{
+					if (session.getAuthenticationMethod().equals("TAC+") &&
+							session.getKey() != null && session.getKey().equals(taskId) &&
+							session.getServerHostName().equals(IdpConfig.getConfig().getFederationMember().getHostName())) {
+						ss.destroySession(session);
+					}
+				}
+//	        	LogRecorder.getInstance().flushLogoutEntry("TACACS_"+taskId);
+			}
 		}
 	}
 
