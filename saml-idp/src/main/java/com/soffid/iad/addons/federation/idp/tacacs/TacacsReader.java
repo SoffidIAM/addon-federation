@@ -109,6 +109,7 @@ public class TacacsReader extends Thread
 			{
 				error = e;
 				shutdown();
+				e.printStackTrace();
 			}
 		}
 		if (error==null) { error = new IOException("Shutdown"); }

@@ -12,22 +12,25 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.soffid.iad.addons.federation.idp.tacacs.impl.AuthenticationHandler;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusException;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusUtil;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;
+import com.soffid.iam.api.PasswordValidation;
 import com.soffid.iam.service.OTPValidationService;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.client.PasswordManager;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.InvalidPasswordException;
@@ -51,6 +54,16 @@ public class SessionServer extends Session
 	private AuthenticationContext authenticationContext;
 	private boolean interactiveLogin;
 	private MessageDigest md5Digest;
+
+	private boolean changingPassword;
+
+	private int step = 0;
+
+	private Password newPassword2;
+
+	private Password password;
+
+	private Password otp;
 	
 	/** Server-side constructor */
 	SessionServer(TAC_PLUS.AUTHEN.SVC svc, String port, String rem_addr, byte priv_lvl, TacacsReader tacacs, byte[] sessionID)
@@ -72,35 +85,67 @@ public class SessionServer extends Session
 		switch(p.header.type)
 		{
 			case AUTHEN:
-				if (p instanceof AuthenStart)
-					r = handleAuthenticationStart((AuthenStart) p);
-				else if (p instanceof AuthenContinue)
-					r = handleAuthenticationContinue((AuthenContinue) p);
-				else {
-					r = new AuthenReply
-							(
-								p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-								TAC_PLUS.AUTHEN.STATUS.FAIL, 
-								FLAG_ZERO,
-								"Wrong authentication package.",
-								"Wrong authentiaciton package."
-							);
-
+				try {
+					if (p instanceof AuthenStart)
+						r = handleAuthenticationStart((AuthenStart) p);
+					else if (p instanceof AuthenContinue)
+						r = handleAuthenticationContinue((AuthenContinue) p);
+					else {
+						r = new AuthenReply
+								(
+									p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+									TAC_PLUS.AUTHEN.STATUS.FAIL, 
+									FLAG_ZERO,
+									"Wrong authentication package.",
+									"Wrong authentiaction package."
+								);
+	
+					}
+				} catch (Exception e) {
+					log.warn("Error processing tacacs request "+p, e);
+					r = errorMessage(p);
 				}
 				tacacs.write(r);
-				end(r);
 				break;
 			case AUTHOR:
-				r = new AuthorReply
-				(
-					p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-					TAC_PLUS.AUTHOR.STATUS.FAIL, 
-					"The AUTHORIZATION operation is not implemented.",
-					"The AUTHORIZATION operation is not implemented.",
-					null
-				);
+				try {
+					List<Argument> arguments = new LinkedList<>();
+					AuthorRequest ar = (AuthorRequest) p;
+					if (! new AuthorizationChecker().hasSecurityLevel(ar.priv_lvl, tacacs.getServiceProvider().getSystem(), ar.user))
+					{
+						r = new AuthorReply
+						(
+							p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.AUTHOR.STATUS.FOLLOW, 
+							"",
+							"Not authorized to security level "+ar.priv_lvl,
+							null
+						);
+						
+					}
+					else if (new AuthorizationChecker().validate((AuthorRequest) p, tacacs, arguments))
+						r = new AuthorReply
+						(
+							p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.AUTHOR.STATUS.FOLLOW, 
+							"",
+							"",
+							arguments.toArray(new Argument[arguments.size()])
+						);
+					else
+						r = new AuthorReply
+						(
+							p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.AUTHOR.STATUS.FOLLOW, 
+							"",
+							"",
+							null
+						);
+				} catch (Exception e) {
+					log.warn("Error processing tacacs request "+p, e);
+					r = errorMessage(p);
+				}
 				tacacs.write(r);
-				end(r);
 				break;
 			case ACCT:
 				r = new AcctReply
@@ -111,68 +156,45 @@ public class SessionServer extends Session
 					"The ACCOUNTING operation is not implemented."
 				);
 				tacacs.write(r);
-				end(r);
 				break;
 		}
 	}
 
 
-	private Packet handleAuthenticationContinue(AuthenContinue p) {
+	private Packet handleAuthenticationContinue(AuthenContinue p) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		if (interactiveLogin)
+			return doInteractiveLogin(p);
+		else
+			return doInteractiveChangePassword(p);
 	}
 
 
-	private Packet handleAuthenticationStart(AuthenStart p) throws InternalErrorException, IOException {
+	private Packet handleAuthenticationStart(AuthenStart p) throws Exception {
 		this.user = p.username;
 		switch (p.action) {
 		case LOGIN:
 			return handleAuthenticationStartLogin(p);
 		case CHPASS:
 			return handleChangePassword(p);
-		case SENDAUTH:
-			return handleSendAuthorization(p);
-		}
-	}
-
-
-	private Packet handleSendAuthorization(AuthenStart p) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	private Packet handleChangePassword(AuthenStart p) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	private Packet handleAuthenticationStartLogin(AuthenStart p) {
-		switch ( authen_svc ) {
-		case NONE:
-			return new AuthenReply
-						(
-							p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-							TAC_PLUS.AUTHEN.STATUS.PASS, 
-							FLAG_ZERO,
-							"",
-							""
-						);
-		case ENABLE:
-			return new AuthenReply
-					(
-						p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-						TAC_PLUS.AUTHEN.STATUS.FAIL, 
-						FLAG_ZERO,
-						"Not supported",
-						"Net supported"
-					);
 		default:
-			return doLogin(p);
+			return errorMessage(p);
 		}
 	}
 
 
-	private Packet doLogin(AuthenStart p) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+	private Packet handleChangePassword(AuthenStart p) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		changingPassword = true;
+		step = 0;
+		return doInteractiveChangePassword(p);
+	}
+
+
+	private Packet handleAuthenticationStartLogin(AuthenStart p) throws Exception {
+		return doLogin(p);
+	}
+
+
+	private Packet doLogin(AuthenStart p) throws Exception {
 		switch (p.type) {
 		case ASCII: 
 			interactiveLogin = true;
@@ -181,17 +203,28 @@ public class SessionServer extends Session
 			return dePapLogin(p);
 		case CHAP:
 			return doChapLogin(p);
+		case MSCHAPV2:
+			return doMsChap2Login(p);
+		default:
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.FAIL, 
+					FLAG_ZERO,
+					"Method not supported",
+					"Method not supported"
+				);
+			
 		}
 		
 	}
 
 
 	private Packet doChapLogin(AuthenStart p) throws IOException {
+		String server_msg = "Wrong user name or password";
 		if (user == null || user.trim().isEmpty())
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.FAIL, 
 					FLAG_ZERO,
-					"Wrong user name or password",
+					server_msg,
 					""
 				);
 		byte pppId = p.dataBytes[0];
@@ -207,14 +240,75 @@ public class SessionServer extends Session
 			Password pass = serverService.getAccountPassword(account.getName(), account.getSystem());
 
 			if (pass != null) {
-				if (checkChap (pppId, pass, challenge, response)) 
-					return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+				if (checkChap (pppId, pass, challenge, response)) { 
+					authenticationContext.authenticated(user, "P", null);
+					if (authenticationContext.isFinished()) {
+						return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 							TAC_PLUS.AUTHEN.STATUS.PASS, 
 							FLAG_ZERO,
 							"",
 							""
 							);
+					} else {
+						server_msg = "MFA not supported by TACACS+ CHAP protocol";
+						authenticationContext.authenticationFailure(user, server_msg);
+					}
+				} else {
+					authenticationContext.authenticationFailure(user, "Wrong password (CHAP)");
+				}
+			} else {
+				authenticationContext.authenticationFailure(user, "Password not available in clear text (CHAP)");
+			}
+		} catch (Exception e) {
+			log.warn("Error authenticating "+user+": "+SoffidStackTrace.generateShortDescription(e));
+		}
+		return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+				TAC_PLUS.AUTHEN.STATUS.FAIL, 
+				FLAG_ZERO,
+				server_msg,
+				""
+				);
+	}
+
+	private Packet doMsChap2Login(AuthenStart p) throws IOException {
+		if (user == null || user.trim().isEmpty())
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.FAIL, 
+					FLAG_ZERO,
+					"Wrong user name or password",
+					""
+				);
+		byte pppId = p.dataBytes[0];
+		byte challenge[] = Arrays.copyOfRange(p.dataBytes, 1, p.dataBytes.length-49);
+		byte response[] = Arrays.copyOfRange(p.dataBytes, p.dataBytes.length-49, p.dataBytes.length);
+		
+		authenticationContext = new AuthenticationContext();
+		try {
+			authenticationContext.initializeTacacsCtx(user, rem_addr, tacacs.getServiceProvider().getPublicId());
+			final ServerService serverService = new RemoteServiceLocator().getServerService();
+			account = serverService.getAccountInfo(user, 
+					tacacs.getServiceProvider().getSystem());
+			Password pass = serverService.getAccountPassword(account.getName(), account.getSystem());
+
+			if (pass != null) {
+				if (MSCHAP.verifyMSCHAPv2(user.getBytes(StandardCharsets.UTF_8), pass.getPassword().getBytes(StandardCharsets.UTF_8), challenge, response))  {
+					authenticationContext.authenticated(user, "P", null);
+					if (authenticationContext.isFinished()) {
+						return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.AUTHEN.STATUS.PASS, 
+							FLAG_ZERO,
+							"",
+							""
+							);
+					} else {
+						authenticationContext.authenticationFailure(user, "MFA not supported by TACACS+ CHAP protocol");
+					}
+				} else {
+					authenticationContext.authenticationFailure(user, "Wrong password (MSCHAPv2)");
+				}
 				
+			} else {
+				authenticationContext.authenticationFailure(user, "Password not available in clear text (CHAP)");
 			}
 		} catch (Exception e) {
 			log.warn("Error authenticating "+user+": "+SoffidStackTrace.generateShortDescription(e));
@@ -226,7 +320,6 @@ public class SessionServer extends Session
 				""
 				);
 	}
-
 
 	private boolean checkChap(byte pppId, Password pass, byte[] challenge, byte[] response) {
 		MessageDigest md5 = getMd5Digest();
@@ -257,14 +350,19 @@ public class SessionServer extends Session
 			authenticationContext.initializeTacacsCtx(user, rem_addr, tacacs.getServiceProvider().getPublicId());
 			account = new RemoteServiceLocator().getServerService().getAccountInfo(user, 
 					tacacs.getServiceProvider().getSystem());
-			if (validatePassword(password) && authenticationContext.isFinished()) {
-				return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-						TAC_PLUS.AUTHEN.STATUS.PASS, 
-						FLAG_ZERO,
-						"",
-						""
-					);
-				
+			if (validatePassword(password)) {
+				if (authenticationContext.isFinished()) {
+					return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.AUTHEN.STATUS.PASS, 
+							FLAG_ZERO,
+							"",
+							""
+							);
+				} else {
+					authenticationContext.authenticationFailure(user, "MFA not supported in TACACS+ PAP protocol");
+				}
+			} else {
+				authenticationContext.authenticationFailure(user, "Wrong password");
 			}
 		} catch (Exception e) {
 			log.warn("Error authenticating "+user+": "+SoffidStackTrace.generateShortDescription(e));
@@ -312,6 +410,34 @@ public class SessionServer extends Session
 
 
 	private Packet doInteractiveLogin(Packet p) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		// Fetch login data
+		
+		if (p instanceof AuthenStart) {
+			user = ((AuthenStart) p).username;
+		}
+		else {
+			AuthenContinue c = (AuthenContinue) p;
+			if (user == null || user.trim().isEmpty())
+				user = c.user_msg;
+			else if (authenticationContext == null) {
+				if (c.user_msg != null && !c.user_msg.trim().isEmpty())
+					password = new Password( c.user_msg );
+			}
+			else if (authenticationContext.getNextFactor().contains("P") && password == null) {
+				if (c.user_msg != null && !c.user_msg.trim().isEmpty())
+					password = new Password( c.user_msg );
+			} 
+			else if (authenticationContext.getNextFactor().contains("P") && newPassword == null && changingPassword) {
+				if (c.user_msg != null && !c.user_msg.trim().isEmpty())
+					newPassword = new Password( c.user_msg );
+			} else {
+				if (c.user_msg != null && !c.user_msg.trim().isEmpty())
+					otp = new Password( c.user_msg );
+			}
+		}
+		
+		// Process login
+		
 		if (user == null || user.trim().isEmpty())
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.GETUSER, 
@@ -319,26 +445,88 @@ public class SessionServer extends Session
 					"User name",
 					""
 				);
-		authenticationContext = new AuthenticationContext();
-		try {
-			authenticationContext.initializeTacacsCtx(user, rem_addr, tacacs.getServiceProvider().getPublicId());
-			account = new RemoteServiceLocator().getServerService().getAccountInfo(user, 
-					tacacs.getServiceProvider().getSystem());
-		} catch (Exception e) {
-			// Not authorized --> To fail later
-		}
-		
-		Set<String> nf = authenticationContext.getNextFactor();
-		if (nf.contains("P"))
-			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+		else if (authenticationContext == null && password == null) {
+			authenticationContext = new AuthenticationContext();
+			try {
+				authenticationContext.initializeTacacsCtx(user, rem_addr, tacacs.getServiceProvider().getPublicId());
+				account = new RemoteServiceLocator().getServerService().getAccountInfo(user, 
+						tacacs.getServiceProvider().getSystem());
+			} catch (Exception e) {
+				return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 						TAC_PLUS.AUTHEN.STATUS.GETPASS, 
 						FLAG_ZERO,
 						"Password",
 						""
-					);
-		if (nf.contains("O") || nf.contains("M") || nf.contains("I") || nf.contains("S")) {
+						);
+			}
+		}
+		else if (authenticationContext == null || account == null || account.isDisabled()) {
+			return failMessage(p);
+		}
+		
+		Set<String> nf = authenticationContext.getNextFactor();
+		if (changingPassword) {
+			if (newPassword != null) {
+				new RemoteServiceLocator().getUserBehaviorService().changePassword(tacacs.getServiceProvider(), account.getName(), password, newPassword);
+				authenticationContext.authenticated(authenticationContext.getUser(), "P", null);
+				changingPassword = false;
+			}
+		}
+		else if (nf.contains("P") && password != null) {
+			PasswordValidation r = new RemoteServiceLocator().getUserBehaviorService().validatePassword(tacacs.getServiceProvider(), account.getName(), password);
+			if (r == PasswordValidation.PASSWORD_GOOD_EXPIRED) {
+				changingPassword = true;
+			}
+			else if (r == PasswordValidation.PASSWORD_GOOD) {
+				authenticationContext.authenticated(authenticationContext.getUser(), "P", null);
+			}
+			else
+			{
+				authenticationContext.authenticationFailure(authenticationContext.getUser(), "Wrong password");
+				return failMessage(p);
+			}
+		}
+		else if (otp != null && (nf.contains("O") || nf.contains("M") || nf.contains("I") || nf.contains("S"))) {
 			OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
-			
+			if (v.validatePin(authenticationContext.getChallenge(), otp.getPassword())) {
+				authenticationContext.authenticated(authenticationContext.getUser(), "O", null);
+			} else {
+				authenticationContext.authenticationFailure(authenticationContext.getUser(), "Wrong OTP PIN");
+				return failMessage(p);
+			}
+		}
+		
+		Set<String> nextFactors = authenticationContext.getNextFactor();
+		
+		if (authenticationContext != null && authenticationContext.isFinished()) {
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.PASS, 
+					FLAG_ZERO,
+					"",
+					""
+					);
+		} else if (user == null || user.trim().isEmpty()) {
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.GETUSER, 
+					FLAG_ZERO,
+					"User name",
+					""
+					);
+		} else if (changingPassword) {
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.GETPASS, 
+					FLAG_ZERO,
+					"New password",
+					""
+					);
+		} else if (authenticationContext == null || nextFactors.contains("P")) {
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.GETPASS, 
+					FLAG_ZERO,
+					"Password",
+					""
+					);
+		} else if (nextFactors.contains("O") || nextFactors.contains("M") || nextFactors.contains("I")|| nextFactors.contains("S")) {
 			Challenge ch = new Challenge();
 			ch.setUser(authenticationContext.getCurrentUser());
 			StringBuffer otpType = new StringBuffer();
@@ -347,6 +535,7 @@ public class SessionServer extends Session
 			if (nf.contains("I")) otpType.append("PIN ");
 			if (nf.contains("S")) otpType.append("SMS ");
 			ch.setOtpHandler(otpType.toString());
+			OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
 			ch = v.selectToken(ch);
 			authenticationContext.setChallenge(ch);
 			if (ch.getCardNumber() != null)
@@ -356,20 +545,118 @@ public class SessionServer extends Session
 						FLAG_ZERO,
 						ch.getCardNumber()+" "+ch.getCell(),
 						""
-					);
+						);
+				
+			} else {
+				return failMessage(p);
+			}
+		} else {
+			return failMessage(p);
+		}
+	}
+
+	private Packet failMessage(Packet p) throws IOException {
+		return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+				TAC_PLUS.AUTHEN.STATUS.FAIL, 
+				FLAG_ZERO,
+				"Wrong user name or password",
+				"Wrong user name or password"
+				);
+	}
 		
+	private Packet errorMessage(Packet p) throws IOException {
+		return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+				TAC_PLUS.AUTHEN.STATUS.FAIL, 
+				FLAG_ZERO,
+				"Protocol not supported",
+				"Protocol not supported"
+				);
+	}
+		
+		
+	private Packet doInteractiveChangePassword(Packet p) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		// Fetch data
+		if (p instanceof AuthenStart) {
+			user = ((AuthenStart)p).username;
+		} else {
+			AuthenContinue c = (AuthenContinue) p;
+			if (user == null || user.trim().isEmpty()) {
+				user = c.user_msg;
+			} else if (oldPassword == null) {
+				if (c.user_msg != null && !c.user_msg.trim().isEmpty())
+					oldPassword = new Password(c.user_msg);
+			} else if (step == 3) {
+				if (c.user_msg != null && !c.user_msg.trim().isEmpty())
+					newPassword = new Password(c.user_msg);
+			} else if (step == 4) {
+				if (c.user_msg != null && !c.user_msg.trim().isEmpty())
+					newPassword2 = new Password(c.user_msg);
 			}
 		}
 		
-		return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
-				TAC_PLUS.AUTHEN.STATUS.GETPASS, 
-				FLAG_ZERO,
-				"Password",
-				""
-			);
-		
-	}
+		// Ask for user_msg or process
+		if (user == null || user.trim().isEmpty())
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.GETUSER, 
+					FLAG_ZERO,
+					"User name",
+					""
+				);
+		else if (oldPassword == null)
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.GETDATA, 
+					FLAG_ZERO,
+					"Current password",
+					""
+				);
+		else if (newPassword == null) 
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.GETDATA, 
+					FLAG_ZERO,
+					"New password",
+					""
+				);
+		else if (newPassword == null) 
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.GETDATA, 
+					FLAG_ZERO,
+					"Repeat new password",
+					""
+				);
+		else {
+			authenticationContext = new AuthenticationContext();
 	
+			try {
+				authenticationContext.initializeTacacsCtx(user, rem_addr, tacacs.getServiceProvider().getPublicId());
+				account = new RemoteServiceLocator().getServerService().getAccountInfo(user, 
+						tacacs.getServiceProvider().getSystem());
+			} catch (Exception e) {
+				return failMessage(p);
+				
+			}
+			// Not authorized --> To fail later
+			if (account == null || account.isDisabled())
+				return failMessage(p);
+			Set<String> nf = authenticationContext.getNextFactor();
+			if (! nf.contains("P")) {
+				return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+							TAC_PLUS.AUTHEN.STATUS.FAIL, 
+							FLAG_ZERO,
+							"Password authentication method is disabled",
+							"Password authentication method is disabled"
+						);
+			}
+
+			new RemoteServiceLocator().getUserBehaviorService().changePassword(tacacs.getServiceProvider(), account.getName(), oldPassword, newPassword);
+
+			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
+					TAC_PLUS.AUTHEN.STATUS.PASS, 
+					FLAG_ZERO,
+					"",
+					""
+					);
+		}
+	}
 	
 	protected MessageDigest getMd5Digest() {
 		if (md5Digest == null)

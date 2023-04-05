@@ -116,7 +116,7 @@ public class OTPAction extends HttpServlet {
 	            		}
 	                } else {
 	            		if (ctx != null)
-	            			ctx.authenticationFailure(u);
+	            			ctx.authenticationFailure(u, Messages.getString("UserPasswordAction.wrong.password"));
 	                	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
 	                    logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
 	                }

@@ -103,7 +103,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure(ctx.getUser());
+						ctx.authenticationFailure(ctx.getUser(), "Error fetching SAML response from external IdP");
 					} catch (InternalErrorException e) {
 					}
 	    		}
@@ -115,7 +115,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure(ctx.getUser());
+	    				ctx.authenticationFailure(ctx.getUser(),  "Error validating SAML response from external IdP");
 					} catch (InternalErrorException e) {
 					}
 	    		}
@@ -129,7 +129,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 	    		if (ctx != null)
 	    		{
 	    			try {
-						ctx.authenticationFailure(ctx.getUser());
+						ctx.authenticationFailure(ctx.getUser(),  "Missing user name in SAML response from external IdP");
 					} catch (InternalErrorException e) {
 					}
 	    		}

@@ -49,7 +49,6 @@ public class AuthorRequest extends Packet
 		final int overhead = 8;
 		if (body.length<overhead) { throw new IOException("Corrupt packet or bad key"); }
 		int chkLen = overhead + body[4] + body[5] + body[6] + body[7];
-		if (chkLen != body.length) { throw new IOException("Corrupt packet or bad key"); }
 		//
 		authen_method = TAC_PLUS.AUTHEN.METH.forCode(body[0]);
 		priv_lvl = body[1];
@@ -67,6 +66,7 @@ public class AuthorRequest extends Packet
 			arguments[a] = new Argument(arg); 
 			offset+=body[overhead+a]; 
 		}
+		if (offset != body.length) { throw new IOException("Corrupt packet or bad key"); }
 	}
 
 	

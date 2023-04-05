@@ -132,6 +132,8 @@ import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
 import com.soffid.iam.addons.federation.service.impl.FederationServiceInternal;
 import com.soffid.iam.addons.federation.service.impl.WorkflowInitiator;
 import com.soffid.iam.api.Account;
+import com.soffid.iam.api.Application;
+import com.soffid.iam.api.ApplicationType;
 import com.soffid.iam.api.AsyncList;
 import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
@@ -141,6 +143,7 @@ import com.soffid.iam.api.MailDomain;
 import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.PagedResult;
 import com.soffid.iam.api.Password;
+import com.soffid.iam.api.PasswordDomain;
 import com.soffid.iam.api.PolicyCheckResult;
 import com.soffid.iam.api.Role;
 import com.soffid.iam.api.RoleGrant;
@@ -148,6 +151,8 @@ import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
+import com.soffid.iam.api.UserDomain;
+import com.soffid.iam.api.UserType;
 import com.soffid.iam.bpm.service.scim.ScimHelper;
 import com.soffid.iam.model.AuditEntity;
 import com.soffid.iam.model.Parameter;
@@ -263,11 +268,67 @@ public class FederationServiceImpl
 				updateRoles((ServiceProviderEntity) entity, federationMember);
 				updateScopes((ServiceProviderEntity) entity, federationMember);
 				updateReturnUrls((ServiceProviderEntity) entity, federationMember);
+				updateTacacsRoles((ServiceProviderEntity) entity, federationMember);
 			}
 			creaAuditoria("SC_FEDERA", "C", desc); //$NON-NLS-1$ //$NON-NLS-2$
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToMakeFederationMember")); //$NON-NLS-1$
+	}
+
+	private void updateTacacsRoles ( ServiceProviderEntity entity, FederationMember federationMember) throws InternalErrorException {
+		if (federationMember.getServiceProviderType() == ServiceProviderType.TACACSP ||
+			federationMember.getServiceProviderType() == ServiceProviderType.RADIUS) {
+			if (federationMember.getSystem() == null) {
+				com.soffid.iam.api.System s = new com.soffid.iam.api.System();
+				s.setName(federationMember.getPublicId());
+				s.setDescription(federationMember.getName());
+				s.setUrl(null);
+				s.setRolebased(Boolean.TRUE);
+				s.setUserTypes(findAllUserTypes());
+				s.setClassName("-");
+				s.setPasswordsDomain(searchDefaultPasswordDomain());
+				s.setUsersDomain(searchDefaultUsersDomain());
+				s.setReadOnly(true);
+				s = getDispatcherService().create(s);
+				entity.setSystem(getSystemEntityDao().load(s.getId()));
+				getFederationMemberEntityDao().update(entity);
+			}
+			if (federationMember.getServiceProviderType() == ServiceProviderType.TACACSP) {
+				checkRole(federationMember.getSystem(), "TAC_PLUS_PRIV_LVL_MIN", "Anonymous TACACS+ user");
+				checkRole(federationMember.getSystem(), "TAC_PLUS_PRIV_LVL_USER", "Standard TACACS+ user");
+				checkRole(federationMember.getSystem(), "TAC_PLUS_PRIV_LVL_ROOT", "Super TACACS+ user");
+				for (int i = 2; i < 15; i++)
+					checkRole(federationMember.getSystem(), "TAC_PLUS_PRIV_LVL_"+i, "TACACS+ level "+i);
+			}
+		}
+	}
+
+	private void checkRole(String system, String name, String description) throws InternalErrorException {
+		Role role = getApplicationService().findRoleByNameAndSystem(system, name);
+		if (role == null) {
+			role = new Role();
+			role.setName(name);
+			role.setDescription(description);
+			role.setSystem(system);
+			role.setCategory("TACACS+");
+			role.setBpmEnabled(true);
+			role.setInformationSystemName(searchTacacsApplication());
+			getApplicationService().create(role);
+		}
+	}
+
+	private String searchTacacsApplication() throws InternalErrorException {
+		Application app = getApplicationService().findApplicationByApplicationName("TACACS+");
+		if (app == null) {
+			app = new Application();
+			app.setName("TACACS+");
+			app.setDescription("TACACS+ access roles");
+			app.setBpmEnabled(false);
+			app.setType(ApplicationType.APPLICATION);
+			app = getApplicationService().create(app);
+		}
+		return app.getName();
 	}
 
 	private void checkFederationMemberQuality(com.soffid.iam.addons.federation.common.FederationMember federationMember)
@@ -300,6 +361,31 @@ public class FederationServiceImpl
 			}
 	}
 
+
+	private String searchDefaultUsersDomain() throws InternalErrorException {
+		UserDomain d = getUserDomainService().findUserDomainByName("DEFAULT");
+		if (d != null) return d.getName();
+		for (UserDomain d2: getUserDomainService().findAllUserDomain()) {
+			return d2.getName();
+		}
+		throw new InternalErrorException("There is no user domain");
+	}
+	
+	private String findAllUserTypes() throws InternalErrorException {
+		StringBuffer sb = new StringBuffer();
+		for (UserType ut: getUserDomainService().findAllUserType()) {
+			sb.append(ut.getName()).append(" ");
+		}
+		return sb.toString();
+	}
+
+	private String searchDefaultPasswordDomain() throws InternalErrorException {
+		PasswordDomain d = getUserDomainService().findPasswordDomainByName("DEFAULT");
+		if (d != null) return d.getName();
+		for (PasswordDomain d2: getUserDomainService().findAllPasswordDomain())
+			return d2.getName();
+		throw new InternalErrorException("There is no password domain");
+	}
 
 	private void updateUi(FederationMemberEntity entity, FederationMember federationMember) throws InternalErrorException {
 		updateUi(entity.getId(), "css", federationMember.getHtmlCSS());
@@ -576,6 +662,7 @@ public class FederationServiceImpl
 				updateRoles((ServiceProviderEntity) entity, federationMember);
 				updateScopes((ServiceProviderEntity) entity, federationMember);
 				updateReturnUrls((ServiceProviderEntity) entity, federationMember);
+				updateTacacsRoles((ServiceProviderEntity) entity, federationMember);
 				String desc = sp.getPublicId() + (sp.getName() != null ? " - " + sp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
 				return getFederationMemberEntityDao().toFederationMember(sp);
@@ -2737,6 +2824,14 @@ public class FederationServiceImpl
 		TacacsPlusAuthRuleEntity entity = getTacacsPlusAuthRuleEntityDao().load(rule.getId());
 		if (entity != null)
 			getTacacsPlusAuthRuleEntityDao().remove(entity);
+	}
+
+	@Override
+	protected void handleRegisterLoginAudit(Audit audit) throws Exception {
+		if (! audit.getObject().equals("LOGIN"))
+			throw new InternalErrorException("Only LOGIN events can be recorded");
+		AuditEntity entity = getAuditEntityDao().auditToEntity(audit);
+		getAuditEntityDao().create(entity);
 	}
 	
 }

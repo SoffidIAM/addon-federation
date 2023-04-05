@@ -36,13 +36,16 @@ import com.soffid.iam.service.MailService;
 import com.soffid.mda.annotation.*;
 
 import es.caib.bpm.servei.BpmEngine;
+import es.caib.seycon.ng.comu.Auditoria;
 import es.caib.seycon.ng.comu.Usuari;
+import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.RolEntity;
 import es.caib.seycon.ng.servei.AplicacioService;
 import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.DispatcherService;
 import es.caib.seycon.ng.servei.DominiService;
 import es.caib.seycon.ng.servei.DominiUsuariService;
+import es.caib.seycon.ng.servei.InternalPasswordService;
 import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.servei.UsuariService;
 import es.caib.seycon.ng.sync.servei.LogonService;
@@ -657,4 +660,10 @@ public abstract class FederationService {
 	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void removeTacacsPlusAuthRule (TacacsPlusAuthRule rule) {} 
+	
+	@Description("Remove TACACS+ rules")
+	@Operation ( grantees={com.soffid.iam.addons.federation.roles.federation_update.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public void registerLoginAudit (Auditoria audit) {} 
+	
 }

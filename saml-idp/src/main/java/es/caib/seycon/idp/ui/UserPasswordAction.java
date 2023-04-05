@@ -12,6 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Password;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -83,7 +84,7 @@ public class UserPasswordAction extends HttpServlet {
                     		error = "Account is locked"; //$NON-NLS-1$
                     		LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
         	    			try {
-        						ctx.authenticationFailure(u);
+        						ctx.authenticationFailure(u, "Account is locked");
         					} catch (InternalErrorException e) {
         					}
                 		}
@@ -115,7 +116,7 @@ public class UserPasswordAction extends HttpServlet {
     	    		if (ctx != null)
     	    		{
     	    			try {
-    						ctx.authenticationFailure(u);
+    						ctx.authenticationFailure(u, "Account is locked");
     					} catch (InternalErrorException e) {
     					}
                 		if (ctx.isLocked(u)) {
