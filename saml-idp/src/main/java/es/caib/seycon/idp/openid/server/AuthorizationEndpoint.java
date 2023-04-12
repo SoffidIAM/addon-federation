@@ -19,6 +19,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.common.AllowedScope;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -37,6 +40,8 @@ public class AuthorizationEndpoint extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	static HashMap<String, Long> lastSectorUpdate = new HashMap<>();
+	
+	Log log = LogFactory.getLog(getClass());
 	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
@@ -61,6 +66,17 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
 	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
+	    	}
+	    	if (OidcDebugController.isDebug()) {
+				log.info("Received authorization request:");
+				log.info("client_id     = "+r.getClientId());
+				log.info("response_type = "+r.getResponseType());
+				log.info("state         = "+r.getState());
+				log.info("nonce         = "+r.getNonce());
+				log.info("redirect_uri  = "+r.getRedirectUrl());
+				log.info("scope         = "+req.getParameter("scope"));
+				log.info("code_algorithm= "+r.getPkceAlgorithm());
+				log.info("code_challenge= "+r.getPkceChallenge());
 	    	}
 	    	HttpSession session = req.getSession(true);
 	    	if (r.getFederationMember() != null) {
@@ -109,6 +125,9 @@ public class AuthorizationEndpoint extends HttpServlet {
 
 
 	private void generateError(OpenIdRequest r, String error, String description, HttpServletResponse resp) throws IOException {
+		if (OidcDebugController.isDebug()) {
+			log.info("Sending back error "+error+": "+description);
+		}
 		resp.sendRedirect(r.getRedirectUrl()+ (r.getRedirectUrl().contains("?") ? "&": "?") + "error="+error+"&error_description="+
 				URLEncoder.encode(description, "UTF-8")+
 				(r.getState() != null ? "&state="+r.getState(): ""));

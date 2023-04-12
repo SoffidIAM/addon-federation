@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
@@ -29,7 +30,7 @@ import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 
 public class LogoutEndpoint extends HttpServlet {
-
+	Log log = LogFactory.getLog(getClass());
 	/**
 	 * 
 	 */
@@ -44,6 +45,14 @@ public class LogoutEndpoint extends HttpServlet {
 		String postLogoutRedirectUri = req.getParameter("post_logout_redirect_uri");
 		String state = req.getParameter("state");
 		try {
+			if (OidcDebugController.isDebug()) {
+				log.info("Received logout request");
+				log.info("id_token_hint            = "+tokenHint);
+				log.info("logout_hint              = "+logoutHint);
+				log.info("client_id                = "+clientId);
+				log.info("post_logout_redirect_uri = "+postLogoutRedirectUri);
+				log.info("state                    = "+state);
+			}
 			IdpConfig config = IdpConfig.getConfig();
 
 			LogoutResponse response = null;

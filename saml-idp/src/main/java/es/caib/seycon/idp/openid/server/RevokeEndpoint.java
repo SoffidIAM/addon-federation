@@ -1,9 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -18,17 +16,6 @@ import org.json.JSONObject;
 
 import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.api.Password;
-
-import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
-import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
-import es.caib.seycon.idp.client.PasswordManager;
-import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.shibext.LogRecorder;
-import es.caib.seycon.idp.ui.Messages;
-import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.util.Base64;
 
 public class RevokeEndpoint extends HttpServlet {
 
@@ -50,6 +37,14 @@ public class RevokeEndpoint extends HttpServlet {
 		
 		TokenHandler th = TokenHandler.instance();
 		try {
+			if (OidcDebugController.isDebug()) {
+				log.info("Received revoke token request");
+				log.info("toket_type_hint = "+token_type_hint);
+				log.info("token           = "+token);
+				log.info("authentication  = "+OidcDebugController.ofuscate(authentication));
+				log.info("client_id       = "+clientId);
+				log.info("client_secret   = "+OidcDebugController.ofuscate(clientSecret));
+			}
 			TokenInfo t = null;
 			if ("refresh_token".equals(token_type_hint)) {
 				t = th.getRefreshToken(token);
@@ -82,7 +77,7 @@ public class RevokeEndpoint extends HttpServlet {
 				}
 
 				th.revoke(getServletContext(), req, t);
-			}			
+			}		
 			resp.getOutputStream().close();
 		} catch (Exception e) {
 			buildError (resp, e.toString());
@@ -132,6 +127,9 @@ public class RevokeEndpoint extends HttpServlet {
 		ServletOutputStream out = resp.getOutputStream();
 		out.print( o.toString() );
 		out.close();
+		if (OidcDebugController.isDebug()) {
+			log.info("Sending back error "+error+": "+description);
+		}
 	}
 
 	@Override

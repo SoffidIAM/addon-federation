@@ -52,6 +52,6 @@ public class TacacsPlusTest {
 	}
 
 	public static void main (String args[]) throws IOException, TimeoutException, NoSuchAlgorithmException {
-		new TacacsPlusTest().test4();
+		new TacacsPlusTest().test1();
 	}
 }

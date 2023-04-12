@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -22,8 +23,10 @@ import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.Session;
+import com.soffid.iam.utils.ConfigurationCache;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -38,7 +41,6 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
 public class TokenEndpoint extends HttpServlet {
-
 	/**
 	 * 
 	 */
@@ -64,6 +66,10 @@ public class TokenEndpoint extends HttpServlet {
 		}
 	}
 
+	private boolean isDebug() {
+		return OidcDebugController.isDebug();
+	}
+
 	private void passwordGrant(HttpServletRequest req, HttpServletResponse resp, String authentication)
 			throws IOException, ServletException {
 		try {
@@ -72,6 +78,16 @@ public class TokenEndpoint extends HttpServlet {
 			String password = req.getParameter("password");
 			String clientId = req.getParameter("client_id");
 			String clientSecret = req.getParameter("client_secret");
+
+			if (isDebug()) {
+				log.info("Received token request with password mechanism:");
+				log.info("client_id     = "+clientId);
+				log.info("client_secret = "+ofuscate(clientSecret));
+				log.info("username      = "+username);
+				log.info("password      = "+ofuscate(password));
+				log.info("auth header   = "+ofuscate(authentication));
+				log.info("scope         = "+req.getParameter("scope"));
+			}
 
 			TokenHandler h = TokenHandler.instance();
 			OpenIdRequest request = new OpenIdRequest();
@@ -266,6 +282,13 @@ public class TokenEndpoint extends HttpServlet {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo t = null;
 		try {
+			if (isDebug()) {
+				log.info("Received token request with grant code mechanism:");
+				log.info("client_id          = "+clientId);
+				log.info("client_secret      = "+ofuscate(clientSecret));
+				log.info("authorization_code = "+ofuscate(authorizationCode));
+				log.info("auth header        = "+ofuscate(authentication));
+			}
 			t = h.getAuthorizationCode(authorizationCode);
 			if (t == null) {
 				buildError(resp, "invalid_grant", "Invalid authorization code");
@@ -325,6 +348,10 @@ public class TokenEndpoint extends HttpServlet {
 
 	}
 
+	private String ofuscate(String s) {
+		return OidcDebugController.ofuscate(s);
+	}
+
 	private boolean validAuthentication(String authentication, FederationMember federationMember) {
 		if (!authentication.toLowerCase().startsWith("basic "))
 			return false;
@@ -365,6 +392,13 @@ public class TokenEndpoint extends HttpServlet {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo t = null;
 		try {
+			if (isDebug()) {
+				log.info("Received token request with refrush mechanism:");
+				log.info("client_id     = "+clientId);
+				log.info("client_secret = "+ofuscate(clientSecret));
+				log.info("password      = "+ofuscate(refreshToken));
+				log.info("auth header   = "+ofuscate(authentication));
+			}
 			t = h.getRefreshToken(refreshToken);
 			if (t == null) {
 				buildError(resp, "invalid_grant", "Invalid refresh token");
@@ -454,6 +488,13 @@ public class TokenEndpoint extends HttpServlet {
 			o.put("refresh_token", t.refreshTokenFull);
 			o.put("expires_in", (t.expires - System.currentTimeMillis()) / 1000);
 			o.put("id_token", token);
+			if (isDebug()) {
+				log.info("Sending response");
+				log.info("access_token  = "+t.token);
+				log.info("refresh_token = "+t.refreshToken);
+				log.info("id_token      = "+token);
+				log.info("expires_in    = "+ new Date(t.expires).toString());
+			}
 			buildResponse(resp, o);
 		} catch (Throwable e) {
 			log.warn("Error generating open id token", e);
@@ -494,6 +535,9 @@ public class TokenEndpoint extends HttpServlet {
 		ServletOutputStream out = resp.getOutputStream();
 		out.print(o.toString());
 		out.close();
+		if (isDebug()) {
+			log.info("Sending back error "+error+": "+description);
+		}
 	}
 
 	private void buildResponse(HttpServletResponse resp, JSONObject o) throws IOException {

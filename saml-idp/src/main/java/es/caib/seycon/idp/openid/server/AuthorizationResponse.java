@@ -10,7 +10,6 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -28,14 +27,9 @@ import org.json.JSONException;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
-import com.soffid.iam.api.RoleGrant;
-import com.soffid.iam.api.User;
-import com.soffid.iam.api.UserAccount;
-import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
-import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthorizationHandler;
@@ -66,6 +60,11 @@ public class AuthorizationResponse  {
 	}
 
 	private static void unauthorized(HttpServletRequest request, HttpServletResponse response, OpenIdRequest r, String user) throws UnsupportedEncodingException, IOException {
+		if (OidcDebugController.isDebug()) {
+			log.info("error = access_denied");
+			log.info("user  = "+user);
+			log.info("state = "+r.getState());
+		}
    		response.sendRedirect(r.getRedirectUrl() + (r.getRedirectUrl().contains("?") ? "&": "?") +"error=access_denied&error_description="+
     				URLEncoder.encode("Access denied for user "+user , "UTF-8")+
     				(r.getState() != null ? "&state="+r.getState(): ""));
@@ -143,8 +142,16 @@ public class AuthorizationResponse  {
 					sb.append(arg);
 					first = false;
 				}
-				
+								
 				response.sendRedirect(sb.toString());
+				
+				if (OidcDebugController.isDebug()) {
+					log.info("Sending authorization response");
+					for (String entry: args) {
+						log.info(entry);
+					}
+				}
+
 			} else {
 				ServletOutputStream out = response.getOutputStream();
 				response.setContentType("text/plain");
@@ -200,6 +207,11 @@ public class AuthorizationResponse  {
 		String url = r.getRedirectUrl();
 		if ((url == null || url.isEmpty()) && ! r.getFederationMember().getOpenidUrl().isEmpty())
 			url = r.getFederationMember().getOpenidUrl().iterator().next();
+		if (OidcDebugController.isDebug()) {
+			log.info("url   = "+url);
+			log.info("code  = "+OidcDebugController.ofuscate(token.authorizationCode));
+			log.info("state = "+r.getState());
+		}
 		if (url != null && ! url.isEmpty())
 		{
 			sb.append(url);
