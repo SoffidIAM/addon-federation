@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.LocalizedString;
 import org.opensaml.saml2.metadata.Organization;
@@ -242,10 +243,14 @@ public class HtmlGenerator {
         
         InputStream in = null;
         try {
-			in = getClass().getClassLoader().getParent().getResourceAsStream("com/soffid/iam/idp/ui/"+Security.getCurrentTenantName()+"/"+page);
-		} catch (InternalErrorException e) {
+        	String tenant = IdpConfig.getConfig().getSystem().getTenant();
+			final String name = "com/soffid/iam/idp/ui/"+tenant+"/"+page;
+			LogFactory.getLog(getClass()).info("Generating page for "+name);
+			in = getClass().getClassLoader().getParent().getResourceAsStream(name);
+		} catch (Exception e) {
 		}
-        in = getClass().getClassLoader().getParent().getResourceAsStream("es/caib/seycon/idp/ui/"+page);
+        if (in == null)
+        	in = getClass().getClassLoader().getParent().getResourceAsStream("es/caib/seycon/idp/ui/"+page);
         if (in == null)
         	in = getClass().getClassLoader().getParent().getResourceAsStream("com/soffid/iam/idp/ui/"+page);
         if (in == null)
