@@ -393,10 +393,10 @@ public class TokenEndpoint extends HttpServlet {
 		TokenInfo t = null;
 		try {
 			if (isDebug()) {
-				log.info("Received token request with refrush mechanism:");
+				log.info("Received token request with refresh mechanism:");
 				log.info("client_id     = "+clientId);
 				log.info("client_secret = "+ofuscate(clientSecret));
-				log.info("password      = "+ofuscate(refreshToken));
+				log.info("refresh token = "+refreshToken);
 				log.info("auth header   = "+ofuscate(authentication));
 			}
 			t = h.getRefreshToken(refreshToken);
