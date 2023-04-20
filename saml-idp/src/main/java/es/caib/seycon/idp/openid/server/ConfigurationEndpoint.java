@@ -62,25 +62,24 @@ public class ConfigurationEndpoint extends HttpServlet {
             IdpConfig c = IdpConfig.getConfig();
         	SAMLProfile openIdProfile = useOpenidProfile();
 			Map<String, Object> att = new HashMap<String, Object>();
-			att.put("issuer", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort());
-			att.put("authorization_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getAuthorizationEndpoint());
-			att.put("check_session_iframe", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+IframeSession.URI);
-			att.put("end_session_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+
-					(openIdProfile.getLogoutEndpoint() == null ? "/logout": openIdProfile.getLogoutEndpoint()));
-			att.put("introspection_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/token_info");
+			final String portSuffix = c.getStandardPort() == 443 ? "":  ":"+c.getStandardPort();
+			att.put("issuer", "https://"+c.getFederationMember().getHostName()+portSuffix);
+			att.put("authorization_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+openIdProfile.getAuthorizationEndpoint());
+			att.put("check_session_iframe", "https://"+c.getFederationMember().getHostName()+portSuffix+IframeSession.URI);
+			att.put("end_session_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+(openIdProfile.getLogoutEndpoint() == null ? "/logout": openIdProfile.getLogoutEndpoint()));
+			att.put("introspection_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/token_info");
 			att.put("frontchannel_logout_supported", true);
 			att.put("frontchannel_logout_session_supported", true);
 			att.put("backchannel_logout_supported", true);
 			att.put("backchannel_logout_session_supported", true);
 			att.put("introspection_endpoint_auth_methods_supported", new String[] { "client_secret_basic"});
-			att.put("registration_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/register");
-			att.put("token_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getTokenEndpoint());
-			att.put("revocation_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+
-					(openIdProfile.getRevokeEndpoint() == null ? "/revoke": openIdProfile.getRevokeEndpoint()));
-			att.put("userinfo_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getUserInfoEndpoint());
+			att.put("registration_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/register");
+			att.put("token_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+openIdProfile.getTokenEndpoint());
+			att.put("revocation_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+(openIdProfile.getRevokeEndpoint() == null ? "/revoke": openIdProfile.getRevokeEndpoint()));
+			att.put("userinfo_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+openIdProfile.getUserInfoEndpoint());
 			if (openIdProfile.getRevokeEndpoint() != null)
-				att.put("revoke_endpoint", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+openIdProfile.getRevokeEndpoint());
-			att.put("jwks_uri", "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/.well-known/jwks.json");
+				att.put("revoke_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+openIdProfile.getRevokeEndpoint());
+			att.put("jwks_uri", "https://"+c.getFederationMember().getHostName()+portSuffix+"/.well-known/jwks.json");
 			JSONArray scopes = new JSONArray();
 			scopes.put("openid");
 			att.put("scopes_supported", scopes);
