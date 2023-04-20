@@ -56,9 +56,9 @@ public class FederationMemberRest extends BaseRest<FederationMember> {
 	@Override
 	protected FederationMember loadObject(JSONObject data) throws Exception {
 		FederationMember fm = super.loadObject(data);
-		if (data.has("registrationToken"))
+		if (data.has("registrationToken") && (data.get("registrationToken") instanceof String))
 			fm.setRegistrationToken(new Digest(data.getString("registrationToken")));
-		if (data.has("openidSecret"))
+		if (data.has("openidSecret") && (data.get("openidSecret") instanceof String))
 			fm.setOpenidSecret(new Digest(data.getString("openidSecret")));
 		return fm;
 	}
