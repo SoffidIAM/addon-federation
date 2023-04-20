@@ -66,22 +66,25 @@ public class UserPasswordFormServlet extends BaseForm {
         String requestedUser = "";
         String userReadonly = "dummy";
         AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        
+        
         try {
-        	if ( ctx.getStep() > 0 )
+        	if ( ctx.getStep() > 0 ) {
         		requestedUser = ctx.getUser();
+        	}
         	else {
         		requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
 					.getAuthenticiationRequestXmlObject()
 					.getSubject()
 					.getNameID()
 					.getValue();
-        		if (forwardToIdp(requestedUser, req, resp))
-        			return;
-        		
-        	}
-			if (requestedUser != null && ! requestedUser.trim().isEmpty())
+        	}       		
+        	if (requestedUser != null && forwardToIdp(requestedUser, req, resp))
+        		return;
+ 			if (requestedUser != null && ! requestedUser.trim().isEmpty())
 				userReadonly = "readonly";
 		} catch (Exception e1) {
+			log.warn("Error guessing user idp", e1);
 		}
         try {
             HttpSession session = req.getSession();
@@ -250,6 +253,7 @@ public class UserPasswordFormServlet extends BaseForm {
 			LogFactory.getLog(getClass()).warn("Error guessing identity provider for "+requestedUser, e);
 		}
     	if (idp != null) {
+    		log.info("ARXUS: No idp for "+requestedUser+ " = "+idp);
     		RequestDispatcher d;
     		FederationMember data = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(idp);
     		if ( data.getIdpType() == IdentityProviderType.SAML ||
@@ -259,9 +263,12 @@ public class UserPasswordFormServlet extends BaseForm {
     			d = req.getRequestDispatcher(OauthRequestAction.URI);
     		
     		d.forward(new SamlSsoRequestWrapper(req, requestedUser, idp), resp);
+    		log.info("ARXUS: forwarding to "+idp);
     		return true;
-    	} else
+    	} else {
+    		log.info("ARXUS: No iddp for "+requestedUser);
     		return false;
+    	}
 	}
 
 	private String generateExternalLogin(FederationMember ip, AuthenticationContext ctx) throws InternalErrorException, IOException {
