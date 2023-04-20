@@ -338,7 +338,7 @@ public class Autenticator {
         	if (! externalAuth && ! type.startsWith("C") && ! type.startsWith("E") &&
         			Boolean.TRUE.equals(ip.getStoreUser())) {
 	        	Cookie cookieUser = new Cookie(ip.getSsoCookieName()+"_user", principal);
-	       		cookieUser.setMaxAge ( -1 );
+	       		cookieUser.setMaxAge( 30 * 24 * 60 * 60_000  ); // Remember for one month
 	        	cookieUser.setSecure(true);
 	        	cookieUser.setHttpOnly(true);
 	        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
