@@ -73,11 +73,13 @@ public class UserPasswordFormServlet extends BaseForm {
         		requestedUser = ctx.getUser();
         	}
         	else {
-        		requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
-					.getAuthenticiationRequestXmlObject()
-					.getSubject()
-					.getNameID()
-					.getValue();
+        		try {
+	        		requestedUser = ((Saml2LoginContext)HttpServletHelper.getLoginContext(req))
+						.getAuthenticiationRequestXmlObject()
+						.getSubject()
+						.getNameID()
+						.getValue();
+        		} catch (Exception e) {}
         	}       		
         	if (requestedUser != null && forwardToIdp(requestedUser, req, resp))
         		return;
