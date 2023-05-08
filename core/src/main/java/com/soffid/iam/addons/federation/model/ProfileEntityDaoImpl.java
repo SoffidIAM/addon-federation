@@ -122,6 +122,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setChap(entity.getChap());
 			target.setMsChap(entity.getMsChap());
 			target.setEnabled(entity.isEnabled());
+			target.setSecurePort(entity.getSecurePort());
+			target.setFreeRadiusPort(entity.getFreeRadiusPort());
 		} else if (source instanceof TacacsProfileEntity) {
 			// heretats
 			target.setClasse(SamlProfileEnumeration.TACACS_PLUS);
@@ -340,8 +342,10 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			entity.setPap(source.getPap());
 			entity.setMsChap(source.getMsChap());
 			entity.setEnabled(source.getEnabled());
+			entity.setFreeRadiusPort(source.getFreeRadiusPort());
+			entity.setSecurePort(source.getSecurePort());
 			target = entity;
-		} else if (SamlProfileEnumeration.RADIUS.equals(source.getClasse())) {
+		} else if (SamlProfileEnumeration.TACACS_PLUS.equals(source.getClasse())) {
 			// heretats
 			TacacsProfileEntity entity = (TacacsProfileEntity) target;
 			entity.setAuthPort(source.getAuthPort());

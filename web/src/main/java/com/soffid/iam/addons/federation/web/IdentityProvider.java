@@ -549,6 +549,8 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 
 		w.getFellow("r_radius_authPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
 		w.getFellow("r_radius_acctPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
+		w.getFellow("r_radius_securePort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
+		w.getFellow("r_radius_freeRadiusPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
 		w.getFellow("r_radius_pap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
 		w.getFellow("r_radius_chap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
 		w.getFellow("r_radius_mschap").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));

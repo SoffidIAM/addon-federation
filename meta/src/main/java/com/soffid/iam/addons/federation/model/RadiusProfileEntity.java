@@ -32,4 +32,11 @@ public abstract class RadiusProfileEntity extends ProfileEntity {
 	@Nullable
 	Boolean msChap;
 
+	@Column (name="PRO_SECPOR")
+	@Nullable
+	Integer securePort;
+
+	@Column (name="PRO_FRRAPO")
+	@Nullable
+	Integer freeRadiusPort;
 }

@@ -293,6 +293,20 @@
 			maxLength="20"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			label="${c:l('federacio.zul.radiusSecret')}"/>
+
+		<customfield3 id="clientCertificate"
+			label="${c:l('federacio.zul.clientCertificate')}"
+			dataType="STRING"
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/serverCertificate"/>
+
+		<customfield3
+			label="${c:l('federacio.zul.freeRadius')}"
+			dataType="BOOLEAN"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/freeRadius"/>
+
 	</div>
 	<div sclass="section" id="tacacsPlusSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.tacacs') }" />

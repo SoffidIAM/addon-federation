@@ -81,7 +81,9 @@ public class UserPasswordFormServlet extends BaseForm {
 						.getValue();
         		} catch (Exception e) {}
         	}       		
-        	if (requestedUser != null && forwardToIdp(requestedUser, req, resp))
+        	if (requestedUser != null &&  !requestedUser.trim().isEmpty() && forwardToIdp(requestedUser, req, resp))
+        		return;
+        	if (ctx.getUser() != null &&  !ctx.getUser().trim().isEmpty() && forwardToIdp(ctx.getUser(), req, resp))
         		return;
  			if (requestedUser != null && ! requestedUser.trim().isEmpty())
 				userReadonly = "readonly";
@@ -255,7 +257,7 @@ public class UserPasswordFormServlet extends BaseForm {
 			LogFactory.getLog(getClass()).warn("Error guessing identity provider for "+requestedUser, e);
 		}
     	if (idp != null) {
-    		log.info("ARXUS: No idp for "+requestedUser+ " = "+idp);
+    		log.info("ARXUS: Idp for "+requestedUser+ " = "+idp);
     		RequestDispatcher d;
     		FederationMember data = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(idp);
     		if ( data.getIdpType() == IdentityProviderType.SAML ||

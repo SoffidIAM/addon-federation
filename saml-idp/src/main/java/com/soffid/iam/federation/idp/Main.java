@@ -57,6 +57,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+import com.soffid.iam.addons.federation.idp.radius.server.FreeRadiusWebServer;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusServer;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
@@ -243,14 +244,21 @@ public class Main {
     
     }
 
-    private void createRadiusServer(SAMLProfile radius, ServletContext ctx ) {
+    private void createRadiusServer(SAMLProfile radius, ServletContext ctx ) throws Exception {
     	RadiusServer rs = new RadiusServer();
     	if (radius.getAcctPort() != null)
     		rs.setAcctPort(radius.getAcctPort());
     	if (radius.getAuthPort() != null)
     		rs.setAuthPort(radius.getAuthPort());
+    	if (radius.getSecurePort() != null)
+    		rs.setSecurePort(radius.getSecurePort());
     	rs.setServletContext(ctx);
     	rs.start(true, true);
+    	
+    	if (radius.getFreeRadiusPort() != null) {
+    		FreeRadiusWebServer s = new FreeRadiusWebServer(radius, rs);
+    		s.start();
+    	}
 	}
 
     private void createTacacsServer(SAMLProfile radius, ServletContext ctx ) {

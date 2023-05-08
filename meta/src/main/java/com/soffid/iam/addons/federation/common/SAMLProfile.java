@@ -97,6 +97,14 @@ public class SAMLProfile {
 	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
 	Boolean ascii;
 
+	@Column (name="PRO_SECPOR")
+	@Nullable
+	Integer securePort;
+
+	@Column (name="PRO_FRRAPO")
+	@Nullable
+	Integer freeRadiusPort;
+
 	@Nullable
 	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
 	Boolean ssl;

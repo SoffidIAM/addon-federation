@@ -81,6 +81,17 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	public String radiusSecret;
 	
+	@Description("Client certificate")
+	@Column(name="FED_CLICER", length = 4000)
+	@Nullable
+	String serverCertificate;
+
+	@Description("Is a Freeradius server")
+	@Column(name="FED_FRERAD")
+	@Nullable
+	Boolean freeRadius;
+
+
 	@Description("Ask consent to share information with this service provider")
 	@Column (name="FED_CONSEN")
 	@Nullable
@@ -100,7 +111,6 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Column(name="FED_RETONU")
 	@Nullable
 	Integer maxRegistrations;
-	
 
 	@Description("Dynamic registration server")
 	@Column(name="FED_REG_ID", reverseAttribute = "registered")

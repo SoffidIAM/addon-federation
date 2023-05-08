@@ -521,6 +521,14 @@
 				dataType="NUMBER"
 				bind="acctPort"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_securePort" label="${c:l('federa_profile.zul.securePort')}"
+				dataType="NUMBER"
+				bind="securePort"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_radius_freeRadiusPort" label="${c:l('federa_profile.zul.freeRadiusPort')}"
+				dataType="NUMBER"
+				bind="freeRadiusPort"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
 			<customfield3 id="r_radius_pap" label="${c:l('federa_profile.zul.pap')}"
 				dataType="BOOLEAN"
 				bind="pap"

@@ -237,6 +237,14 @@ public class FederationMember {
 	@Nullable
 	public Password radiusSecret;
 
+	@Description("Client certificate")
+	@Nullable
+	String serverCertificate;
+
+	@Description("Is a Freeradius server")
+	@Nullable
+	Boolean freeRadius;
+
 	@Description("Kerberos keytabs")
 	@Attribute(defaultValue="new java.util.LinkedList()")
 	@Nullable

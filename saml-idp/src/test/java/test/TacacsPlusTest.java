@@ -21,8 +21,8 @@ public class TacacsPlusTest {
 	
 	private void test2 () throws IOException, TimeoutException {
 		TacacsClient tc = new TacacsClient(host, key);
-		SessionClient s = tc.newSession(SVC.LOGIN, host, "soffid.bubu.lab", (byte) 15);
-		AuthenReply r = s.authenticate_PAP("admin", "changeit");
+		SessionClient s = tc.newSession(SVC.LOGIN, host, "soffid.bubu.lab", (byte) 0);
+		AuthenReply r = s.authenticate_PAP("dilbert", "changeit");
 		System.out.println(r);
 	}
 
@@ -34,7 +34,7 @@ public class TacacsPlusTest {
 		System.out.println(r);
 	}
 
-	private void test4 () throws IOException, TimeoutException, NoSuchAlgorithmException {		
+	private void test4 () throws IOException, TimeoutException, NoSuchAlgorithmException, InterruptedException {		
 		TacacsClient tc = new TacacsClient(host, key, 5000, true);
 		SessionClient s = tc.newSession(SVC.LOGIN, host, "soffid.bubu.lab", (byte) 0);
 		
@@ -43,6 +43,8 @@ public class TacacsPlusTest {
 				TAC_PLUS.AUTHEN.SVC.LOGIN, new Argument[0]);
 		
 		System.out.println(r);
+		
+		Thread.sleep(5000);
 
 		r = s.account(TAC_PLUS.ACCT.FLAG.STOP.code(), "admin", TAC_PLUS.AUTHEN.METH.LOCAL,
 				TAC_PLUS.AUTHEN.TYPE.PAP,
@@ -51,7 +53,7 @@ public class TacacsPlusTest {
 		System.out.println(r);
 	}
 
-	public static void main (String args[]) throws IOException, TimeoutException, NoSuchAlgorithmException {
-		new TacacsPlusTest().test1();
+	public static void main (String args[]) throws IOException, TimeoutException, NoSuchAlgorithmException, InterruptedException {
+		new TacacsPlusTest().test4();
 	}
 }

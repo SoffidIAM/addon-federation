@@ -10,33 +10,53 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import java.security.cert.X509Certificate;
 import javax.servlet.ServletContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iad.addons.federation.idp.tacacs.TacacsKeyManager;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.idp.radius.attribute.IntegerAttribute;
@@ -53,6 +73,7 @@ import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.User;
 import com.soffid.iam.service.OTPValidationService;
+import com.soffid.iam.ssl.SeyconKeyStore;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -75,19 +96,23 @@ import es.caib.seycon.idp.ui.Messages;
 public class RadiusServer {
 	Log log = LogFactory.getLog(getClass());
 	private ServletContext servletContext;
+	private SSLServerSocket secureSocket;
+	private CertificateCache certificateCache;
 	
 	public FederationMember getServiceProvider(InetSocketAddress client, String nasIdentifier) throws InternalErrorException, IOException {
 		final Collection<FederationMember> servers = new RemoteServiceLocator().getFederacioService().findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "S");
 		for (FederationMember sp: servers) {
-			if (sp.getServiceProviderType() == ServiceProviderType.RADIUS) {
-				if (NetmaskMatch.matches(sp.getSourceIps(), client.getAddress())) {
+			if (sp.getServiceProviderType() == ServiceProviderType.RADIUS &&
+					(sp.getServerCertificate() == null || sp.getServerCertificate() == null)) {
+				if (NetmaskMatch.matches(sp.getSourceIps(), client.getAddress()) ) {
 					if (nasIdentifier == null || nasIdentifier.equals(sp.getPublicId()))
 						return sp;
 				}
 			}
 		}
 		for (FederationMember sp: servers) {
-			if (sp.getServiceProviderType() == ServiceProviderType.RADIUS) {
+			if (sp.getServiceProviderType() == ServiceProviderType.RADIUS &&
+					(sp.getServerCertificate() == null || sp.getServerCertificate() == null)) {
 				if (NetmaskMatch.matches(sp.getSourceIps(), client.getAddress())) {
 					return sp;
 				}
@@ -96,6 +121,15 @@ public class RadiusServer {
 		return null;
 	}
 	
+	public FederationMember getServiceProvider(InetSocketAddress client, String nasIdentifier, X509Certificate certs[]) throws InternalErrorException, IOException {
+		if (certs != null && certs.length > 0) {
+			return getCertificateCache().getFederationMember(certs[0]);
+		}
+		else
+			return getServiceProvider(client, nasIdentifier);
+	}
+
+
 	/**
 	 * Constructs an answer for an Access-Request packet. Either this
 	 * method or isUserAuthenticated should be overriden.
@@ -208,16 +242,7 @@ public class RadiusServer {
 	}
 	
 	private void addCustomAttributes(RadiusPacket answer, String user, FederationMember member) throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
-		TokenInfo t = new TokenInfo();
-		t.setAuthentication(System.currentTimeMillis());
-		t.setAuthenticationMethod("P");
-		t.setCreated(System.currentTimeMillis());
-		t.setExpires(System.currentTimeMillis());
-		t.setUser(user);
-		final OpenIdRequest request = new OpenIdRequest();
-		t.setRequest(request);
-		request.setFederationMember(member);
-		Map<String, Object> attributes = new UserAttributesGenerator().generateAttributes(servletContext, t, false, true, false);
+		Map<String, Object> attributes = generateAttributes(user, member);
 		for (String att: attributes.keySet()) {
 			Object value = attributes.get(att);
 			try {
@@ -231,6 +256,21 @@ public class RadiusServer {
 				log.warn("Cannot parse attribute id "+att, e);
 			}
 		}
+	}
+
+	public Map<String, Object> generateAttributes(String user, FederationMember member)
+			throws AttributeResolutionException, AttributeFilteringException, InternalErrorException, IOException {
+		TokenInfo t = new TokenInfo();
+		t.setAuthentication(System.currentTimeMillis());
+		t.setAuthenticationMethod("P");
+		t.setCreated(System.currentTimeMillis());
+		t.setExpires(System.currentTimeMillis());
+		t.setUser(user);
+		final OpenIdRequest request = new OpenIdRequest();
+		t.setRequest(request);
+		request.setFederationMember(member);
+		Map<String, Object> attributes = new UserAttributesGenerator().generateAttributes(servletContext, t, false, true, false);
+		return attributes;
 	}
 
 	private void addAttribute(RadiusPacket answer, String att, Object value) {
@@ -365,6 +405,23 @@ public class RadiusServer {
 						logger.info("starting RadiusAcctListener on port " + getAcctPort());
 						listenAcct();
 						logger.info("RadiusAcctListener is being terminated");
+					} catch(Exception e) {
+						e.printStackTrace();
+						logger.fatal("acct thread stopped by exception", e);
+					} finally {
+						acctSocket.close();
+						logger.debug("acct socket closed");
+					}
+				}
+			}.start();
+		}
+		
+		if (securePort != null) {
+			new Thread() {
+				public void run() {
+					setName("Radius secure listener");
+					try {
+						listenSecure();
 					} catch(Exception e) {
 						e.printStackTrace();
 						logger.fatal("acct thread stopped by exception", e);
@@ -532,6 +589,24 @@ public class RadiusServer {
 		listen(getAcctSocket());
 	}
 
+	protected void listenSecure()
+	throws IOException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, CertificateException {
+		SSLServerSocket socket = getSecureSocket();
+		try {
+			do {
+				final SSLSocket s = (SSLSocket) socket.accept();
+				new Thread( () -> {
+					try {
+						processSocket(s);
+					} catch (IOException e) {
+						log.warn("Error processing request", e);
+					}
+				} ).start();
+			} while (true);
+		} finally {
+			socket.close();
+		}
+	}
 	/**
 	 * Listens on the passed socket, blocks until stop() is called.
 	 * @param s socket to listen on
@@ -594,6 +669,70 @@ public class RadiusServer {
 			} catch (SocketTimeoutException ste) {
 				// this is expected behaviour
 				logger.trace("normal socket timeout");
+			} catch (IOException ioe) {
+				// error while reading/writing socket
+				logger.error("communication error", ioe);
+			} catch (RadiusException re) {
+				// malformed packet
+				logger.error("malformed Radius packet", re);
+			} catch (Exception e) {
+				logger.error("Error processing radius package", e);
+			}
+		}
+	}
+
+	protected void processSocket(SSLSocket s) throws IOException {
+		InputStream in = s.getInputStream();
+		OutputStream out = s.getOutputStream();
+		while (! s.isClosed()) {
+			try {
+				// receive packet
+				InetSocketAddress localAddress = (InetSocketAddress)s.getLocalSocketAddress();
+				InetSocketAddress remoteAddress = new InetSocketAddress(s.getInetAddress(), s.getPort());				
+				// parse packet
+				RadiusPacket request = RadiusPacket.decodeRequestPacket(in);
+				
+				String nasIdentifier = request.getAttributeValue("NAS-Identifier");
+				javax.security.cert.X509Certificate[] xcert = s.getSession().getPeerCertificateChain();
+				X509Certificate[] cert = null;
+				if (xcert.length > 0) {
+					cert = new X509Certificate[xcert.length];
+					for (int i = 0; i < xcert.length; i++)  {
+						ByteArrayInputStream ba = new ByteArrayInputStream(xcert[i].getEncoded());
+						cert[i] = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(ba);
+					}
+				}
+				FederationMember member = getServiceProvider(remoteAddress, nasIdentifier, cert);
+				if (member == null) {
+					if (logger.isInfoEnabled())
+						logger.info("ignoring packet from unknown client " + remoteAddress + " received on local address " + localAddress);
+					continue;
+				}
+
+				// decrypt attributes
+				request.decodeRequestAttributes(member.getRadiusSecret().getPassword());
+				request.checkRequestAuthenticator(member.getRadiusSecret().getPassword());
+
+				if (logger.isInfoEnabled())
+					logger.info("received packet from " + remoteAddress + " on local address " + localAddress + ": " + request);
+
+				// handle packet
+				logger.trace("about to call RadiusServer.handlePacket()");
+				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, "radsec", member);
+				
+				// send response
+				if (response != null) {
+					if (logger.isInfoEnabled())
+						logger.info("send response: " + response);
+					response.encodeResponsePacket(out, member.getRadiusSecret().getPassword(), request);
+					out.flush();
+				} else
+					logger.info("no response sent");						
+			} catch (SocketTimeoutException ste) {
+				// this is expected behaviour
+				logger.trace("normal socket timeout");
+			} catch (SSLHandshakeException e) {
+				log.warn("Connection not allowed from "+s.getInetAddress().toString()+": "+e.getMessage());
 			} catch (IOException ioe) {
 				// error while reading/writing socket
 				logger.error("communication error", ioe);
@@ -682,6 +821,35 @@ public class RadiusServer {
 			acctSocket.setSoTimeout(getSocketTimeout());
 		}
 		return acctSocket;
+	}
+
+	protected SSLServerSocket getSecureSocket() 
+	throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException, UnrecoverableKeyException {
+		if (secureSocket == null) {
+			SSLContext sslCtx = SSLContext.getInstance("TLS"); //$NON-NLS-1$
+			
+			KeyStore keyStore = SeyconKeyStore.loadKeyStore(SeyconKeyStore.getKeyStoreFile());
+			List<String> keys = new LinkedList<String>();
+			for (Enumeration<String> e = keyStore.aliases(); e.hasMoreElements();)
+			{
+				String alias = e.nextElement();
+				if ( keyStore.isKeyEntry(alias) && ! alias.equalsIgnoreCase("idp"))
+					keys.add(alias);
+				if ( keyStore.isCertificateEntry(alias) && ! alias.equalsIgnoreCase(SeyconKeyStore.ROOT_CERT))
+					keys.add(alias);
+			}
+			for (String key: keys)
+				keyStore.deleteEntry(key);
+			KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");        
+			keyManagerFactory.init(keyStore, SeyconKeyStore.getKeyStorePassword().getPassword().toCharArray());
+			
+			sslCtx.init(new KeyManager[] { new TacacsKeyManager()}, 
+					new TrustManager[] {new TrustRadiusServers(certificateCache)}, null);
+			
+			SSLServerSocketFactory sslFactory = sslCtx.getServerSocketFactory();
+			secureSocket = (SSLServerSocket) sslFactory.createServerSocket(securePort);
+		}
+		return secureSocket;
 	}
 
 	/**
@@ -775,6 +943,7 @@ public class RadiusServer {
 	private List receivedPackets = new LinkedList();
 	private long duplicateInterval = 30000; // 30 s
 	private boolean closing = false;
+	private Integer securePort;
 	private static Log logger = LogFactory.getLog(RadiusServer.class);
 
 	public ServletContext getServletContext() {
@@ -783,6 +952,17 @@ public class RadiusServer {
 
 	public void setServletContext(ServletContext servletContext) {
 		this.servletContext = servletContext;
+	}
+
+	public void setSecurePort(Integer securePort) {
+		this.securePort = securePort;
+	}
+
+	public CertificateCache getCertificateCache() {
+		if (certificateCache == null)
+			certificateCache = new CertificateCache();
+		
+		return certificateCache;
 	}
 	
 }
