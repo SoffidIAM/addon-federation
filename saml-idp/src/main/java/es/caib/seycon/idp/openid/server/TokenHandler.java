@@ -195,9 +195,9 @@ public class TokenHandler {
 		
 		t.authorizationCode = null;
 		t.refreshToken = generateRandomString(48);
-		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		refreshTokens.put(t.refreshToken, t);
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
+		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		t.updateLastUse();
 		if (t.getType() == TokenType.TOKEN_CAS) {
@@ -288,10 +288,11 @@ public class TokenHandler {
 	}
 
 	public String getIssuer(IdpConfig c, boolean keycloak) {
+		String port = c.getStandardPort() == 443 ? "" : ":"+c.getStandardPort();
 		if (keycloak)
-			return "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort()+"/auth/realms/soffid";
+			return "https://"+c.getFederationMember().getHostName()+port+"/auth/realms/soffid";
 		else
-			return "https://"+c.getFederationMember().getHostName()+":"+c.getStandardPort();
+			return "https://"+c.getFederationMember().getHostName()+port;
 	}
 
 	public String generateRefreshToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) {
