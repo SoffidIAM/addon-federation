@@ -30,6 +30,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
@@ -80,10 +81,21 @@ public class UserPasswordFormServlet extends BaseForm {
 						.getNameID()
 						.getValue();
         		} catch (Exception e) {}
+        		try {
+        			if (requestedUser == null) {
+	        	    	OpenIdRequest oidr =  (OpenIdRequest) req.getSession().getAttribute(SessionConstants.OPENID_REQUEST);
+	        	    	if (oidr != null)
+	        	    		requestedUser = oidr.getLoginHint();
+        			}
+        		} catch (Exception e) {}
         	}       		
-        	if (requestedUser != null &&  !requestedUser.trim().isEmpty() && forwardToIdp(requestedUser, req, resp))
+        	if (requestedUser != null &&  !requestedUser.trim().isEmpty() &&
+        			! ctx.isFinished() &&
+        			forwardToIdp(requestedUser, req, resp))
         		return;
-        	if (ctx.getUser() != null &&  !ctx.getUser().trim().isEmpty() && forwardToIdp(ctx.getUser(), req, resp))
+        	if (ctx.getUser() != null &&  !ctx.getUser().trim().isEmpty() && 
+        			! ctx.isFinished() &&
+        			forwardToIdp(ctx.getUser(), req, resp))
         		return;
  			if (requestedUser != null && ! requestedUser.trim().isEmpty())
 				userReadonly = "readonly";

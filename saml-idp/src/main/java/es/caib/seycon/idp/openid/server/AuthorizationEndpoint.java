@@ -63,6 +63,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setRedirectUrl(req.getParameter("redirect_uri"));
 	    	r.setPkceAlgorithm(req.getParameter("code_challenge_method"));
 	    	r.setPkceChallenge(req.getParameter("code_challenge"));
+	    	r.setLoginHint(req.getParameter("login_hint"));
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
 	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
