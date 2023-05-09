@@ -188,23 +188,23 @@ public class Am03Handler extends Window implements AfterCompose {
 			}
 			else if ("sms".equals(radiogroup.getSelectedItem().getValue()))
 			{
-				am.setExpression(dateLimit+" && hasSms;");				
+				am.setExpression(dateLimit+" && hasOtpSms;");				
 			}
 			else if ("email".equals(radiogroup.getSelectedItem().getValue()))
 			{
-				am.setExpression(dateLimit+" && hasMail;");				
+				am.setExpression(dateLimit+" && hasOtpMail;");				
 			}
 			else if ("totp".equals(radiogroup.getSelectedItem().getValue()))
 			{
-				am.setExpression(dateLimit+" && hasTotp;");				
+				am.setExpression(dateLimit+" && hasOtpTotp;");				
 			}
 			else if ("hotp".equals(radiogroup.getSelectedItem().getValue()))
 			{
-				am.setExpression(dateLimit+" && hasHotp;");				
+				am.setExpression(dateLimit+" && hasOtpHotp;");				
 			}
 			else if ("pin".equals(radiogroup.getSelectedItem().getValue()))
 			{
-				am.setExpression(dateLimit+" && hasPin;");				
+				am.setExpression(dateLimit+" && hasOtpPin;");				
 			}
 			else if ("fido".equals(radiogroup.getSelectedItem().getValue()))
 			{
