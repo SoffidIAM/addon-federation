@@ -554,7 +554,11 @@ public class Main {
         String extClass = new RemoteServiceLocator().getServerService().getConfig("soffid.idp.extension");
         if (extClass != null) {
         	IdpWebExtension ext = (IdpWebExtension) Class.forName(extClass).newInstance();
-        	ext.configure(ctx);
+        	for (IdpServletDescriptor s: ext.getServletDescriptors()) {
+                servlet = new ServletHolder(s.getClassName());
+                servlet.setName(s.getClassName().getName()); //$NON-NLS-1$
+                ctx.addServlet(servlet, s.getPath()); //$NON-NLS-1$
+        	}
         }
         return ctx;
 
