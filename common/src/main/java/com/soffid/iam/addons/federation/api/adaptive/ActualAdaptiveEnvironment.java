@@ -210,7 +210,7 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	}
 
 	private void loadOtps() {
-		if (otps != null) {
+		if (otps == null) {
 			try {
 				otps = getService().getEnabledOtps(user.getId());
 			} catch (InternalErrorException e1) {
