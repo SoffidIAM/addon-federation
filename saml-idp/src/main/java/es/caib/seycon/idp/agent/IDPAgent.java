@@ -56,7 +56,7 @@ public class IDPAgent extends Agent implements AccessLogMgr {
 		                    }
 		                    if (name == null)
 		                        log.info("Starting IDP {} (Previous {})", newName, name); //$NON-NLS-1$
-		                    main = new Main();
+		                    main = createMain();
 		                    main.start(newName, getSystem());
 		                    name = newName;
 		                }
@@ -71,6 +71,10 @@ public class IDPAgent extends Agent implements AccessLogMgr {
         	}
         }
     }
+
+	protected Main createMain() {
+		return new Main();
+	}
 
     private void stopMain() {
         try {

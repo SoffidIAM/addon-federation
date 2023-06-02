@@ -385,7 +385,7 @@ public class Main {
         installConnector(host, port, true);
     }
 
-    private ServletContextHandler deployWar(boolean plainSocket) throws FileNotFoundException, IOException,
+    protected ServletContextHandler deployWar(boolean plainSocket) throws FileNotFoundException, IOException,
             UnrecoverableKeyException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException,
             InternalErrorException, InvalidKeyException, IllegalStateException,
@@ -550,18 +550,7 @@ public class Main {
         sessionManager.addEventListener(new SessionListener());
         ctx.getSessionHandler().setSessionManager(sessionManager);
         
-        // Add custom extensions
-        String extClass = new RemoteServiceLocator().getServerService().getConfig("soffid.idp.extension");
-        if (extClass != null) {
-        	IdpWebExtension ext = (IdpWebExtension) Class.forName(extClass).newInstance();
-        	for (IdpServletDescriptor s: ext.getServletDescriptors()) {
-                servlet = new ServletHolder(s.getClassName());
-                servlet.setName(s.getClassName().getName()); //$NON-NLS-1$
-                ctx.addServlet(servlet, s.getPath()); //$NON-NLS-1$
-        	}
-        }
         return ctx;
-
     }
 
 	private void configureOpenidProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
