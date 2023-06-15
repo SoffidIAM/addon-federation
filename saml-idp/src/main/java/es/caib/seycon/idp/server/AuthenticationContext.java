@@ -786,4 +786,9 @@ public class AuthenticationContext {
 	}
 
 
+	public static void remove(HttpServletRequest req) {
+		 req.getSession().removeAttribute("Soffid-Authentication-Context");
+	}
+
+
 }

@@ -180,6 +180,11 @@
 			bind="/federationMember/oauthSessionTimeout" 
 			dataType="NUMBER"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+		<customfield3 label="${c:l('federacio.zul.maxSessionDuration')}"
+			id="maxSessionDuration"
+			bind="/federationMember/maxSessionDuration" 
+			dataType="NUMBER"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 		<customfield3 label="${c:l('federacio.zul.ssoCookieName')}"
 			dataType="STRING"
 			bind="/federationMember/ssoCookieName" maxlength="120"
