@@ -705,5 +705,25 @@ public class Autenticator {
 		}
 		return null;
 	}
+	
+	public void clearCookies(HttpServletRequest req, HttpServletResponse resp) throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+		IdpConfig config = IdpConfig.getConfig();
+        String relyingParty = getRelyingParty(req);
+        
+        FederationMember ip = config.getFederationMember();
+        if (relyingParty != null) {
+	    	FederationMember ip2 = config.findIdentityProviderForRelyingParty(relyingParty);
+	        if (ip2 != null) {
+	        	ip = ip2;
+	        }
+		}
+    	
+        if (ip.getSsoCookieName() != null && ip.getSsoCookieName().length() > 0 && req.getCookies() != null)
+        {
+        	Cookie c = new Cookie(ip.getSsoCookieName(), "-");
+        	c.setMaxAge(0);
+        	resp.addCookie(c);
+        }
+	}
 
 }

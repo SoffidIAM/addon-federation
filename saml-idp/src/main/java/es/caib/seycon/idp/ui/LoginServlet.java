@@ -1,7 +1,15 @@
 package es.caib.seycon.idp.ui;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Collections;
 
 import javax.servlet.ServletException;
@@ -13,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -20,7 +29,8 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class LoginServlet extends LangSupportServlet {
     
-    /**
+    private static final String SOFFID_LOGIN_TIME_ATTR = "$$soffid$loginTime";
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
@@ -35,8 +45,11 @@ public class LoginServlet extends LangSupportServlet {
         	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, entityId);
         else
         	entityId = (String) session.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM); 
+        
 
        	try {
+       		boolean timeout = checkSessionDuration(req, resp);
+       		
        		Autenticator auth = new Autenticator();
         	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
         	if (authCtx == null )
@@ -52,14 +65,15 @@ public class LoginServlet extends LangSupportServlet {
     			authCtx.updateAllowedAuthenticationMethods();
    				authCtx.setSamlRequestedAuthenticationMethod(null);
     				
-				if (!authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req) &&
+				if (!timeout && !authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req) &&
 						auth.getSession(req, false) != null)
 				{
 					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
 					return;
 				}
         	}
-        	if (!authCtx.isAlwaysAskForCredentials() && auth.validateCookie(getServletContext(), req, resp, authCtx.getHostId(resp)))
+        	if (! timeout && 
+        			!authCtx.isAlwaysAskForCredentials() && auth.validateCookie(getServletContext(), req, resp, authCtx.getHostId(resp)))
         		return;
         	else {
         		authCtx.initialize(req);
@@ -72,7 +86,29 @@ public class LoginServlet extends LangSupportServlet {
     	}
     }
 
-    private boolean certificateLogin(AuthenticationContext authCtx, HttpServletRequest req, HttpServletResponse resp) throws InternalErrorException, IOException, UnknownUserException {
+    private boolean checkSessionDuration(HttpServletRequest req, HttpServletResponse resp) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+    	Long l = IdpConfig.getConfig().getFederationMember().getMaxSessionTimeout();
+    	if (l != null) {
+    		HttpSession s = req.getSession();
+    		Long start = (Long) s.getAttribute(SOFFID_LOGIN_TIME_ATTR);
+    		if (start == null) {
+    			start = System.currentTimeMillis();
+    			s.setAttribute(SOFFID_LOGIN_TIME_ATTR, start);
+    		}
+    		long end = start.longValue() + l.longValue() * 1000;
+    		if (end < System.currentTimeMillis()) {
+    			// Session has been finished
+    			start = System.currentTimeMillis();
+    			s.setAttribute(SOFFID_LOGIN_TIME_ATTR, start);
+           		AuthenticationContext.remove(req);
+           		new Autenticator().clearCookies(req, resp);
+           		return true;
+    		}
+    	}
+    	return false;
+	}
+
+	private boolean certificateLogin(AuthenticationContext authCtx, HttpServletRequest req, HttpServletResponse resp) throws InternalErrorException, IOException, UnknownUserException {
     	if (authCtx.getNextFactor().contains("C")) {
     		CertificateValidator v = new CertificateValidator();
     		try {

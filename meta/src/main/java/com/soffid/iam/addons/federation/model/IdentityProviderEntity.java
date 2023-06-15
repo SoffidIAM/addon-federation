@@ -44,6 +44,11 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Column (name="FED_SETIOU")
 	Long sessionTimeout;
 
+	@Description ("Identity Provider maximum session time")
+	@Nullable
+	@Column (name="FED_MASETI")
+	Long maxSessionTimeout;
+
 	@Description ("Act as a identity broker")
 	@Nullable
 	@Column (name="FED_BROKER", defaultValue="Boolean.FALSE")
