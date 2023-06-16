@@ -122,7 +122,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setSsoCookieName(idp.getSsoCookieName());
 			target.setSsoCookieDomain(idp.getSsoCookieDomain());
 			target.setSessionTimeout(idp.getSessionTimeout());
-			target.setMaxSessionTimeout(idp.getMaxSessionTimeout());
+			target.setMaxSessionDuration(idp.getMaxSessionDuration());
 			target.setRegisterExternalIdentities(idp.getRegisterExternalIdentities());
 			// Service providers
 			if (idp.getServiceProviderVirtualIdentityProvider() != null) {
@@ -481,7 +481,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setSsoCookieDomain(source.getSsoCookieDomain());
 			idp.setSsoCookieName(source.getSsoCookieName());
 			idp.setSessionTimeout(source.getSessionTimeout());
-			idp.setMaxSessionTimeout(source.getMaxSessionTimeout());
+			idp.setMaxSessionDuration(source.getMaxSessionDuration());
 			idp.setRegisterExternalIdentities(source.getRegisterExternalIdentities());
 		
 			idp.setStoreUser(source.getStoreUser());
