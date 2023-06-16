@@ -5,7 +5,7 @@
 	<artifactId>root</artifactId>
 	<packaging>pom</packaging>
 	<name>SAML Federation</name>
-	<version>3.4.23-SNAPSHOT</version>
+	<version>3.4.23</version>
 	<description>SOFFID IAM Federation addon</description>
 	<prerequisites>
 		<maven>2.0.1</maven>
@@ -21,7 +21,7 @@
 	<scm>
 		<connection>scm:git:ssh://git@github.com:/SoffidIAM/addon-federation.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com:/SoffidIAM/addon-federation.git</developerConnection>
-		<tag>version-3.4.22</tag>
+		<tag>version-3.4.23</tag>
 	</scm>
 	<build>
 		<defaultGoal>install</defaultGoal>
