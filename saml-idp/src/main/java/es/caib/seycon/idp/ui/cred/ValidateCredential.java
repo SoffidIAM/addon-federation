@@ -45,11 +45,6 @@ public class ValidateCredential extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
-        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (! amf.allowUserCredential())
-            throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
-
 		String clientJSON = req.getParameter("clientJSON");
 		String authData = req.getParameter("authenticatorData");
 		String signature = req.getParameter("signature");

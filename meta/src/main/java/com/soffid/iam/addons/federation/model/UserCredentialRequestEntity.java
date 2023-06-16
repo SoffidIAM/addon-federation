@@ -3,6 +3,7 @@ package com.soffid.iam.addons.federation.model;
 import java.util.Collection;
 import java.util.Date;
 
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.DaoOperation;
@@ -28,6 +29,9 @@ public class UserCredentialRequestEntity {
 	
 	@Column(name="UCQ_EXPIRE")
 	Date expiration;
+	
+	@Nullable @Column(name="UCQ_TYPE")
+	UserCredentialType type;
 	
 	UserCredentialRequestEntity findByHash(String hash) {return null;}
 

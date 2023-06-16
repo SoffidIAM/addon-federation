@@ -129,8 +129,11 @@ import es.caib.seycon.idp.ui.cred.ProtectedUserCredentialRegisterServlet;
 import es.caib.seycon.idp.ui.cred.ProtectedValidateRegisteredCredential;
 import es.caib.seycon.idp.ui.cred.RegisterCredential;
 import es.caib.seycon.idp.ui.cred.UserCredentialRegisterServlet;
+import es.caib.seycon.idp.ui.cred.UserPushCredentialRegisterServlet;
+import es.caib.seycon.idp.ui.cred.UserPushCredentialServlet;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.cred.ValidateRegisteredCredential;
+import es.caib.seycon.idp.ui.cred.ValidateUserPushCredentialServlet;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.idp.ui.oauth.OauthResponseAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberAction;
@@ -470,12 +473,23 @@ public class Main {
         ctx.addServlet(UserInfoForm.class, UserInfoForm.URI);
         ctx.addServlet(ConsentAction.class, ConsentAction.URI);
         ctx.addServlet(ConsentFormServlet.class, ConsentFormServlet.URI);
+        
+        // Credentials
         ctx.addServlet(RegisterCredential.class, RegisterCredential.URI);
         ctx.addServlet(ValidateCredential.class, ValidateCredential.URI);
         ctx.addServlet(UserCredentialRegisterServlet.class, UserCredentialRegisterServlet.URI);
         ctx.addServlet(ValidateRegisteredCredential.class, ValidateRegisteredCredential.URI);
         ctx.addServlet(ProtectedUserCredentialRegisterServlet.class, ProtectedUserCredentialRegisterServlet.URI);
         ctx.addServlet(ProtectedValidateRegisteredCredential.class, ProtectedValidateRegisteredCredential.URI);
+        
+        // Push tokens
+        
+        ctx.addServlet(UserPushCredentialRegisterServlet.class, UserPushCredentialRegisterServlet.URI);
+        ctx.addServlet(UserPushCredentialServlet.class, UserPushCredentialServlet.URI);
+        ctx.addServlet(ValidateUserPushCredentialServlet.class, ValidateUserPushCredentialServlet.URI);
+        
+        
+        // Standard UI actions
         ctx.addServlet(CancelAction.class, CancelAction.URI);
         ctx.addServlet(UserPasswordFormServlet.class,
                 UserPasswordFormServlet.URI);

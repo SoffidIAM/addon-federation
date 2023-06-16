@@ -42,7 +42,7 @@
   filter: false
   value: type
   className: typeColumn
-  template: <img class='small-icon' src='${execution.contextPath }/addon/federation/img/#{type.value}.svg' />#{type.value == 'cert'? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT')}' : type.value == 'fido' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO')}' : ''}
+  template: <img class='small-icon' src='${execution.contextPath }/addon/federation/img/#{type.value}.svg' />#{type.value == 'cert'? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT')}' :type.value == 'fido' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO')}' :type.value == 'push' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.PUSH')}' :''}
 - name: ${c:l('federation.token.serial')}
   value: serialNumber
   className: datetimeColumn
@@ -97,9 +97,10 @@
 						
 			</div>
 			<div>
-				<label value="${c:l('federation.certificate.instructions') } :" style="display:block;word-break: break-word;overflow-wrap: anywhere;"/>
-				
-				<div style="display: block; width: 100%; text-align: center; margin: 24px;" id="pinblock">
+				<div style="display: block; width: 100%; text-align: center; margin: 24px;" id="forcert">
+					<div>
+						<label value="${c:l('federation.certificate.instructions') } :" style="display:block;word-break: break-word;overflow-wrap: anywhere;"/>
+					</div>
 					<label value="" id="password" style='font-weight: bold; '/>
 					<imageclic src="/img/copy.svg"
 						action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
@@ -107,6 +108,22 @@
 						title="${c:l('vault.account.copy')}"/>
 					<textbox readonly="true" style="display:none;" 
 						id="qpassword"/>
+				</div>
+				<div style="display: block; width: 100%; text-align: center" id="forpush">
+					<div>
+						<label value="${c:l('federation.push.urlmessage') }" style="display:block; word-break: break-word"/>
+					</div>
+					<image id="image" style="width: 250px; height: 250px"/>
+					<div>
+						<label id="url" />
+						<label value="" id="pushurl" style='font-weight: bold; '/>
+						<imageclic src="/img/copy.svg" 
+							action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
+							style="vertical-align: middle"
+							title="${c:l('vault.account.copy')}"/>
+						<textbox readonly="true" style="display:none;" 
+							id="pushurl2"/>
+					</div>
 				</div>
 
 				<div style="text-align: right; width: 100%">

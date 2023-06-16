@@ -126,12 +126,12 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 	}
 
 	@Override
-	protected URI handleGenerateNewCredential() throws Exception {
-		return handleGenerateNewCredential(Security.getCurrentUser(), false, null, null);
+	protected URI handleGenerateNewCredential( UserCredentialType type) throws Exception {
+		return handleGenerateNewCredential(type, Security.getCurrentUser(), false, null, null);
 	}
 
 	@Override
-	protected URI handleGenerateNewCredential(String userName, boolean unsecure, Date activateBefore, String identityProvider) throws Exception {
+	protected URI handleGenerateNewCredential(UserCredentialType type, String userName, boolean unsecure, Date activateBefore, String identityProvider) throws Exception {
 		getUserCredentialRequestEntityDao().deleteExpired();
 		UserCredentialRequestEntity c = getUserCredentialRequestEntityDao().newUserCredentialRequestEntity();
 		byte b[] = new byte[66];
@@ -141,6 +141,8 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 				new SecureRandom().nextBytes(b);
 				hash = Base64.getUrlEncoder().encodeToString(b);
 			} while ( getUserCredentialRequestEntityDao().findByHash(hash) != null);
+			if (type == UserCredentialType.PUSH)
+				hash = hash.substring(0, 48);
 			c.setHash(hash);
 		}
 		if (activateBefore == null)
@@ -152,6 +154,7 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		UserEntity u = getUserEntityDao().findByUserName(userName);
 		if (u == null) throw new InternalErrorException("Cannot locate user "+userName);
 		c.setUserId(u.getId());
+		c.setType(type);
 		getUserCredentialRequestEntityDao().create(c);
 		
 		for (FederationMemberEntity fm: getFederationMemberEntityDao().findFMByEntityGroupAndPublicIdAndTipus("%", "%", "I")) {
@@ -159,7 +162,20 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 				final IdentityProviderEntity idp = (IdentityProviderEntity) fm;
 				if (idp.getIdpType() == IdentityProviderType.SOFFID && 
 						(identityProvider == null || identityProvider.trim().isEmpty() || identityProvider.equals(idp.getPublicId()))) {
-					if (!unsecure)
+					if (type == UserCredentialType.PUSH) {
+						URI u2 = new URI(
+								Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
+								null, // User
+								idp.getHostName(),
+								Integer.parseInt(idp.getStandardPort()),
+								"/rpc/"+c.getHash(),
+								null, // Query
+								null  // Hash
+								);
+						return new URI("soffidpush", u2.toString(),
+								null);
+					}
+					else if (!unsecure)
 						return new URI(
 								Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
 								null, // User

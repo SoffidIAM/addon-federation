@@ -34,4 +34,10 @@ public class UserCredentialEntityDaoImpl extends UserCredentialEntityDaoBase {
 		super.userCredentialToEntity(source, target, copyIfNull);
 	}
 
+	@Override
+	public void remove(UserCredentialEntity entity) {
+		getUserCredentialChallengeEntityDao().remove(entity.getChallenges());
+		super.remove(entity);
+	}
+
 }

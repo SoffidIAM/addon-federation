@@ -34,15 +34,15 @@
 	<datatable enablefilter="true" id="listbox"
 		autocommit="true"
 		multiselect="true"
-		onSelect="ref:frame.multiSelect" 
-		onMultiSelect="ref:frame.multiSelect" 
+		onSelect="ref:frame.multiSelectToken" 
+		onMultiSelect="ref:frame.multiSelectToken" 
 	    dataPath="${arg.listbox }:/token" >
 	<attribute name="columns"><![CDATA[
 - name: ${c:l('selfcertificate.type')}
   filter: false
   value: type
   className: typeColumn
-  template: <img class='small-icon' src='${execution.contextPath }/addon/federation/img/#{type.value}.svg' />#{type.value == 'cert'? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT')}' : type.value == 'fido' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO')}' : ''}
+  template: <img class='small-icon' src='${execution.contextPath }/addon/federation/img/#{type.value}.svg' />#{type.value == 'cert'? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT')}' :type.value == 'fido' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO')}' :type.value == 'push' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.PUSH')}' :''}
 - name: ${c:l('federation.token.serial')}
   value: serialNumber
 - name: ${c:l('federation.token.description')}
@@ -128,14 +128,28 @@
 					</div>
 					<div id="forcert"  style="margn-bottom: 24px">
 						<label value="${c:l('federation.certificate.instructions') } :" style="display:block;word-break: break-word;overflow-wrap: anywhere;"/>					
+						<label value="" id="password" style='font-weight: bold; '/>
+						<imageclic src="/img/copy.svg" 
+							action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
+							style="vertical-align: middle"
+							title="${c:l('vault.account.copy')}"/>
+						<textbox readonly="true" style="display:none;" 
+							id="qpassword"/>
 					</div>
-					<label value="" id="password" style='font-weight: bold; '/>
-					<imageclic src="/img/copy.svg" 
-						action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
-						style="vertical-align: middle"
-						title="${c:l('vault.account.copy')}"/>
-					<textbox readonly="true" style="display:none;" 
-						id="qpassword"/>
+					<div style="display: block; width: 100%; text-align: center" id="forpush">
+						<label value="${c:l('federation.push.urlmessage') }" style="display:block; word-break: break-word"/>
+						<image id="image" style="width: 250px; height: 250px"/>
+						<div>
+							<label id="url" />
+							<label value="" id="pushurl" style='font-weight: bold; '/>
+							<imageclic src="/img/copy.svg" 
+								action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
+								style="vertical-align: middle"
+								title="${c:l('vault.account.copy')}"/>
+							<textbox readonly="true" style="display:none;" 
+								id="pushurl2"/>
+						</div>
+					</div>
 				</div>
 
 				<div style="text-align: right; width: 100%">

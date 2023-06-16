@@ -61,6 +61,10 @@ public class UserCredentialEntity {
 	@Column(name="UCR_LASUSE")
 	Date lastUse;
 	
+	@Nullable
+	@Column(name="UCR_FAILS")
+	Integer fails;
+
 	@Column (name="UCR_CAR_ID", reverseAttribute = "certificates")
 	@Nullable
 	public RootCertificateEntity root;

@@ -16,6 +16,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
@@ -76,7 +78,8 @@ public class AuthenticationContext {
 	private UserCredential newCredential;
 	long timestamp = 0;
 	private Challenge challenge;
-
+	private Collection<UserCredentialChallenge> pushChallenge;
+	
 	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
 	private boolean alwaysAskForCredentials;
@@ -788,6 +791,15 @@ public class AuthenticationContext {
 
 	public static void remove(HttpServletRequest req) {
 		 req.getSession().removeAttribute("Soffid-Authentication-Context");
+   }
+
+	public Collection<UserCredentialChallenge> getPushChallenge() {
+		return pushChallenge;
+	}
+
+
+	public void setPushChallenge(Collection<UserCredentialChallenge> pushChallenge) {
+		this.pushChallenge = pushChallenge;
 	}
 
 

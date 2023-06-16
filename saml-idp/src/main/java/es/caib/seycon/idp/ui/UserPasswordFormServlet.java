@@ -2,6 +2,7 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
@@ -34,6 +36,7 @@ import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
+import es.caib.seycon.idp.ui.cred.ValidateUserPushCredentialServlet;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -141,11 +144,10 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("changeUserUrl", ChangeUserAction.URI); //$NON-NLS-1$
             g.addArgument("cancelUrl", CancelAction.URI); //$NON-NLS-1$
             g.addArgument("otpLoginUrl", OTPAction.URI); //$NON-NLS-1$
+            g.addArgument("pushLoginUrl", ValidateUserPushCredentialServlet.URI); //$NON-NLS-1$
             g.addArgument("registerUrl", RegisterFormServlet.URI);
             g.addArgument("recoverUrl", PasswordRecoveryAction.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
-            g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            g.addArgument("passwordAllowed", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$
             g.addArgument("requestedUser", requestedUser);
             g.addArgument("kerberosAllowed", ctx.getNextFactor().contains("K") && session.getAttribute("disableKerberos") == null ? "true" : "false"); 
@@ -204,6 +206,25 @@ public class UserPasswordFormServlet extends BaseForm {
             	g.addArgument("otpAllowed",  otpAllowed ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             }
             
+            boolean pushAllowed = ctx.getNextFactor().contains("Z");
+            if (pushAllowed && !requestedUser.trim().isEmpty())
+            {
+            	User user;
+				try {
+					user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
+					Collection<UserCredentialChallenge> ch = new RemoteServiceLocator().getPushAuthenticationService().sendPushAuthentication(user.getUserName());
+					ctx.setPushChallenge(ch);
+					g.addArgument("pushAllowed", ch.isEmpty() ? "false": "true");
+				} catch (UnknownUserException e) {
+	            	g.addArgument("pushAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
+				}
+            }
+            else
+            {
+            	g.addArgument("pushAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+        	g.addArgument("externalAllowed", ctx.getNextFactor().contains("E") ? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
+
             if (ctx.getNextFactor().contains("F") && !requestedUser.trim().isEmpty())
             {
             	try {

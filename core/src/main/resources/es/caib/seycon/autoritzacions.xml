@@ -172,6 +172,12 @@
 	</autoritzacio>
 
 	<autoritzacio>
+		<codi>federation:push:user</codi>
+		<descripcio>Register a new mobile push token for himself</descripcio>
+		<ambit>Self service</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
 		<codi>selfcertificate:create</codi>
 		<descripcio>Register certificates for any user</descripcio>
 		<ambit>Identify Federation</ambit>

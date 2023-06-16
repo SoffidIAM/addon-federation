@@ -1,5 +1,6 @@
 package com.soffid.iam.addons.federation.web;
 
+import java.awt.image.BufferedImage;
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.Random;
@@ -14,11 +15,17 @@ import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.UiException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zul.Filedownload;
+import org.zkoss.zul.Image;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.soffid.iam.EJBLocator;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.service.ejb.SelfCertificateService;
 import com.soffid.iam.addons.federation.service.ejb.SelfCertificateServiceHome;
 import com.soffid.iam.addons.federation.service.ejb.UserCredentialService;
@@ -71,6 +78,8 @@ public class MyTokenHandler extends FrameHandler {
 			values.add("cert: "+Labels.getLabel("com.soffid.iam.addons.federation.common.UserCredentialType.CERT"));
 		if ( Security.isUserInRole("federation:token:user"))
 			values.add("fido: "+Labels.getLabel("com.soffid.iam.addons.federation.common.UserCredentialType.FIDO"));
+		if ( Security.isUserInRole("federation:push:user"))
+			values.add("push: "+Labels.getLabel("com.soffid.iam.addons.federation.common.UserCredentialType.PUSH"));
 		typeField.setValues(values);
 		typeField.updateMetadata();
 	}
@@ -93,11 +102,37 @@ public class MyTokenHandler extends FrameHandler {
 				}
 				UserCredentialService ejb = (UserCredentialService) new InitialContext().lookup(UserCredentialServiceHome.JNDI_NAME);
 				
-				URI uri = ejb.generateNewCredential();
+				URI uri = ejb.generateNewCredential(UserCredentialType.FIDO);
 				
 				Executions.getCurrent().sendRedirect(uri.toString(), "_blank");
 				w.setVisible(false);
+			} else if ("push".equals(type)) {
+				w.getFellow("forcert").setVisible(false);
+				w.getFellow("forpush").setVisible(true);
+				if ( ! Security.isUserInRole("federation:push:user")) {
+					typeField.setWarning(0, "Not authorized");
+					return;
+				}
+				UserCredentialService ejb = (UserCredentialService) new InitialContext().lookup(UserCredentialServiceHome.JNDI_NAME);
+				
+				URI uri = ejb.generateNewCredential(UserCredentialType.PUSH);
+				
+				QRCodeWriter barcodeWriter = new QRCodeWriter();
+			    BitMatrix bitMatrix = 
+			    	      barcodeWriter.encode(uri.toString(), BarcodeFormat.QR_CODE, 200, 200);
+
+		   	    BufferedImage img = MatrixToImageWriter.toBufferedImage(bitMatrix);
+		   	    
+		   	    Image i = (Image) w.getFellow("image");
+		   	    i.setContent(img);
+
+		   	    Label l = (Label) w.getFellow("pushurl");
+				l.setValue(uri.toString());
+				((Textbox)w.getFellow("pushurl2")).setValue(uri.toString());
+				wizard.next();
 			} else {
+				w.getFellow("forcert").setVisible(true);
+				w.getFellow("forpush").setVisible(false);
 				if ( ! Security.isUserInRole("federation:certificate:user")) {
 					typeField.setWarning(0, "Not authorized");
 					return;

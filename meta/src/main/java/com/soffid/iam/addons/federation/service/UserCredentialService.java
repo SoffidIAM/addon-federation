@@ -6,6 +6,8 @@
 
 package com.soffid.iam.addons.federation.service;
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialRequestEntity;
@@ -23,6 +25,7 @@ import roles.selfcertificate_user;
 import roles.user_query;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
@@ -69,10 +72,10 @@ public class UserCredentialService
 
 	
 	@Operation(grantees= {federation_create_token.class})
-	public URI generateNewCredential () { return null;}
+	public URI generateNewCredential (UserCredentialType type) { return null;}
 		
 	@Operation(grantees= {federation_credential_create.class})
-	public URI generateNewCredential (String user, boolean unsecure, @Nullable Date registerBefore, @Nullable String identityProvider) { return null;}
+	public URI generateNewCredential (UserCredentialType type, String user, boolean unsecure, @Nullable Date registerBefore, @Nullable String identityProvider) { return null;}
 
 	@Description("Method used by the identity provider to bind the token to the user. Checks fo secure hash")
 	public Usuari findUserForNewCredentialURI (String uriHash) {return null;}
@@ -85,4 +88,5 @@ public class UserCredentialService
 
 	@Description("Method used by the identity provider to bind the token to the user. Cancels a secure hash")
 	public void cancelNewCredentialURI (String uriHash) {}
+	
 }

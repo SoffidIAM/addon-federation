@@ -6,4 +6,5 @@ import com.soffid.mda.annotation.Enumeration;
 public class UserCredentialType {
 	public final String FIDO = "fido";
 	public final String CERT = "cert";
+	public final String PUSH = "push";
 }

@@ -1,5 +1,6 @@
 package com.soffid.iam.addons.federation.web;
 
+import java.awt.image.BufferedImage;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Calendar;
@@ -19,13 +20,19 @@ import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Path;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zul.Filedownload;
+import org.zkoss.zul.Image;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.soffid.iam.EJBLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
 import com.soffid.iam.addons.federation.service.ejb.SelfCertificateService;
@@ -91,8 +98,9 @@ public class UserTokenHandler extends FrameHandler {
 		((CustomField3)w.getFellow("description")).setVisible("cert".equals(type));
 		((CustomField3)w.getFellow("idp")).setVisible(! "cert".equals(type));
 		final CustomField3 customField3 = (CustomField3)w.getFellow("method");
-		customField3.setVisible(! "cert".equals(type));
-		((CustomField3)w.getFellow("date")).setVisible(!"now".equals(customField3.getValue()) && ! "cert".equals(type));
+		customField3.setVisible("fido".equals(type));
+		((CustomField3)w.getFellow("date")).setVisible("push".equals(type) || 
+				"fido".equals(type) && !"now".equals(customField3.getValue()));
 	}
 	
 	public void changeRegistrationMethod(Event ev) {
@@ -114,6 +122,8 @@ public class UserTokenHandler extends FrameHandler {
 			values.add("fido: "+Labels.getLabel("com.soffid.iam.addons.federation.common.UserCredentialType.FIDO"));
 		if ( Security.isUserInRole("federation:certificate:user"))
 			values.add("cert: "+Labels.getLabel("com.soffid.iam.addons.federation.common.UserCredentialType.CERT"));
+		if ( Security.isUserInRole("federation:push:user"))
+			values.add("push: "+Labels.getLabel("com.soffid.iam.addons.federation.common.UserCredentialType.PUSH"));
 		typeField.setValues(values);
 		typeField.updateMetadata();
 		
@@ -164,6 +174,7 @@ public class UserTokenHandler extends FrameHandler {
 				}
 				w.getFellow("forFido").setVisible(true);
 				w.getFellow("forcert").setVisible(false);
+				w.getFellow("forpush").setVisible(false);
 				UserCredentialService ejb = (UserCredentialService) new InitialContext().lookup(UserCredentialServiceHome.JNDI_NAME);
 				
 				final CustomField3 generationMethod = (CustomField3)w.getFellow("method");
@@ -174,7 +185,7 @@ public class UserTokenHandler extends FrameHandler {
 						(!dateField.isVisible() || dateField.attributeValidateAll() ) &&
 						idp.attributeValidateAll()) {
 					if ("now".equals(generationMethod.getValue())) {
-						URI uri = ejb.generateNewCredential(user, false, null, (String) idp.getValue() );
+						URI uri = ejb.generateNewCredential(UserCredentialType.FIDO, user, false, null, (String) idp.getValue() );
 						response(null, new AuSendRedirect(uri.toString(), "_blank"));
 						w.setVisible(false);
 					}
@@ -185,9 +196,9 @@ public class UserTokenHandler extends FrameHandler {
 							dateField.setWarning(0, "Please, enter a date after today");
 						} else {
 							if ("secure".equals(generationMethod.getValue())) 
-								uri = ejb.generateNewCredential(user, false, date, (String) idp.getValue());
+								uri = ejb.generateNewCredential(UserCredentialType.FIDO, user, false, date, (String) idp.getValue());
 							else
-								uri = ejb.generateNewCredential(user, true, date, (String) idp.getValue());
+								uri = ejb.generateNewCredential(UserCredentialType.FIDO, user, true, date, (String) idp.getValue());
 							((Label)w.getFellow("fidoinstructions")).setValue(Labels.getLabel("federation.token.urlmessage"));
 							Label l = (Label) w.getFellow("password");
 							l.setValue(uri.toString());
@@ -196,6 +207,46 @@ public class UserTokenHandler extends FrameHandler {
 						}
 					}
 				}
+			} else if ("push".equals(type)) {
+				if ( ! Security.isUserInRole("federation-credential:create")) {
+					typeField.setWarning(0, "Not authorized");
+					return;
+				}
+				w.getFellow("forFido").setVisible(false);
+				w.getFellow("forcert").setVisible(false);
+				w.getFellow("forpush").setVisible(true);
+				UserCredentialService ejb = (UserCredentialService) new InitialContext().lookup(UserCredentialServiceHome.JNDI_NAME);
+				
+				final CustomField3 generationMethod = (CustomField3)w.getFellow("method");
+				final CustomField3 dateField = ((CustomField3)w.getFellow("date"));
+				final CustomField3 idp = (CustomField3) w.getFellow("idp");
+
+				if (generationMethod.attributeValidateAll() &&
+						(!dateField.isVisible() || dateField.attributeValidateAll() ) &&
+						idp.attributeValidateAll()) {
+					URI uri;
+					Date date = (Date) dateField.getValue();
+					if (date.before(new Date())) {
+						dateField.setWarning(0, "Please, enter a date after today");
+					} else {
+						uri = ejb.generateNewCredential(UserCredentialType.PUSH, user, false, date, (String) idp.getValue());
+						
+						QRCodeWriter barcodeWriter = new QRCodeWriter();
+					    BitMatrix bitMatrix = 
+					    	      barcodeWriter.encode(uri.toString(), BarcodeFormat.QR_CODE, 200, 200);
+
+				   	    BufferedImage img = MatrixToImageWriter.toBufferedImage(bitMatrix);
+				   	    
+				   	    Image i = (Image) w.getFellow("image");
+				   	    i.setContent(img);
+
+				   	    Label l = (Label) w.getFellow("pushurl");
+						l.setValue(uri.toString());
+						((Textbox)w.getFellow("pushurl2")).setValue(uri.toString());
+						wizard.next();
+					}
+				}
+
 			} else {
 				if ( ! Security.isUserInRole("selfcertificate:create")) {
 					typeField.setWarning(0, "Not authorized");
@@ -205,6 +256,7 @@ public class UserTokenHandler extends FrameHandler {
 				if (descField.attributeValidateAll()) {
 					w.getFellow("forFido").setVisible(false);
 					w.getFellow("forcert").setVisible(true);
+					w.getFellow("forpush").setVisible(false);
 					SelfCertificateService ejb = (SelfCertificateService) new InitialContext().lookup(SelfCertificateServiceHome.JNDI_NAME);
 					byte b[] = new byte[6];
 					new Random().nextBytes(b);
@@ -221,6 +273,11 @@ public class UserTokenHandler extends FrameHandler {
 				}
 			}
 		}
+	}
+	
+	public void multiSelectToken(Event ev) {
+		DataTable lb = (DataTable) getListbox();
+		displayRemoveButton( lb, lb.getSelectedIndexes() != null && lb.getSelectedIndexes().length > 0);
 	}
 
 }

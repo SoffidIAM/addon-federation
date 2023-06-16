@@ -32,7 +32,7 @@ public class TextFormatter {
                 String conditionName = rawText.substring(conditionBegin
                         + LOOP_OPEN_TAG.length(), conditionEnd);
                 String value = (String) params.get(conditionName);
-                if (value == null || "false".equals(value)) {
+                if (value == null || value.trim().isEmpty() || "false".equals(value)) {
                     exclusions++;
                 }
             }

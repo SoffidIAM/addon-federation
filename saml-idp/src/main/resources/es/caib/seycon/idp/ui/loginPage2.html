@@ -30,6 +30,23 @@
 	var fingerprintRegister = ${fingerprintRegister};
 	var fingerprintRawIds = [${raw:fingerprintRawIds}];
 	var fingerprintRegisterUrl = "${fingerprintRegisterUrl}";
+
+	{if pushAllowed}
+	async function checkPush() {
+	    const response = await fetch('${pushLoginUrl}', {
+	      method: 'GET',
+	      headers: {
+	        'Accept': 'application/json'
+	      }
+	    });
+	    const data = await response.json();
+	    if (data.done)
+	    {
+			document.getElementById("pushForm").submit();
+	    }
+	}
+	setInterval(checkPush, 500);
+	{endif}
 	</script>
 
 	<script src="/js/jquery-3.6.0.slim.min.js"></script>
@@ -121,6 +138,10 @@
 					${fingerprintinprogress.message}
 				</div>
 			</div>
+			{if pushAllowed} 
+			<form method="post" action="${pushLoginUrl}" id="pushForm">
+			</form>
+			{endif}
 			{if kerberosAllowed} 
 			<div class="logintype2"  id ="kerberoslogin">
     			<a class="openidlink" href="${kerberosUrl}"><img class="openidbutton" src="/img/kerberos.png"></img>${Kerberos}</a>

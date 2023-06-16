@@ -218,6 +218,7 @@
 						<column label="${c:l('federacio.zul.PIN') }"> <custom-attributes type="I"/></column>
 						<column label="${c:l('federacio.zul.Certificate') }"> <custom-attributes type="C"/></column>
 						<column label="${c:l('federacio.zul.Fingerprint') }"> <custom-attributes type="F"/></column>
+						<column label="${c:l('federacio.zul.Push') }"> <custom-attributes type="Z"/></column>
 					</columns>
 					<rows>
 					</rows>
@@ -630,6 +631,7 @@
 									<column label="${c:l('federacio.zul.PIN') }"> <custom-attributes type="I"/></column>
 									<column label="${c:l('federacio.zul.Certificate') }"> <custom-attributes type="C"/></column>
 									<column label="${c:l('federacio.zul.Fingerprint') }"> <custom-attributes type="F"/></column>
+									<column label="${c:l('federacio.zul.Push') }"> <custom-attributes type="Z"/></column>
 								</columns>
 								<rows>
 								</rows>

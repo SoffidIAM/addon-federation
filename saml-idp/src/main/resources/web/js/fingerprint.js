@@ -180,3 +180,4 @@ function activateFingerprint ()
     		e2.style.display="block";
     }
 }
+
