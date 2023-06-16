@@ -695,8 +695,8 @@ public class Autenticator {
 					byte digest[] = MessageDigest.getInstance("SHA-256").digest(sessio.getKey().getBytes("UTF-8"));
 					String digestString = Base64.encodeBytes(digest);
 					if (digestString.equals(hash) &&
-							(ip.getSessionTimeout() == null || 
-							sessio.getStartDate().getTime().getTime() + ip.getSessionTimeout().longValue() * 1000 > System.currentTimeMillis()))
+						(ip.getMaxSessionDuration() == null || 
+						sessio.getStartDate().getTime().getTime() + ip.getMaxSessionDuration().longValue() * 1000 > System.currentTimeMillis()))
 					{
 						return sessio;
 					}

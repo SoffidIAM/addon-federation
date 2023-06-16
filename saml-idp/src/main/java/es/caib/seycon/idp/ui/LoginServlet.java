@@ -87,7 +87,7 @@ public class LoginServlet extends LangSupportServlet {
     }
 
     private boolean checkSessionDuration(HttpServletRequest req, HttpServletResponse resp) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
-    	Long l = IdpConfig.getConfig().getFederationMember().getMaxSessionTimeout();
+    	Long l = IdpConfig.getConfig().getFederationMember().getMaxSessionDuration();
     	if (l != null) {
     		HttpSession s = req.getSession();
     		Long start = (Long) s.getAttribute(SOFFID_LOGIN_TIME_ATTR);

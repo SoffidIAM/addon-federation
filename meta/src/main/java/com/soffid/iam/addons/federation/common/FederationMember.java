@@ -166,7 +166,7 @@ public class FederationMember {
 
 	@Description ("Identity Provider maximum session time")
 	@Nullable
-	Long maxSessionTimeout;
+	Long maxSessionDuration;
 
 	@Description("Bean shell expression to generate user id")
 	@Nullable
