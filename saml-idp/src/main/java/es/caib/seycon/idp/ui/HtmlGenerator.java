@@ -58,6 +58,26 @@ public class HtmlGenerator {
 		return ResourceBundle.getBundle(RESOURCE_BUNDLE, new Locale("en")); //$NON-NLS-1$
     }
     
+    public ResourceBundle getResourceBundle2 ()
+    {
+    	for (Locale lang: langs)
+    	{
+	        try {
+	        	String tenant = IdpConfig.getConfig().getSystem().getTenant();
+				String name = "com/soffid/iam/idp/ui/"+tenant+"/loginPage";
+				InputStream in = getClass().getClassLoader().getParent().getResourceAsStream(name);
+				if (in == null) {
+					name = "com/soffid/iam/idp/ui/loginPage";
+				}
+				return ResourceBundle.getBundle(name, lang,
+						ResourceBundle.Control.getNoFallbackControl(
+								ResourceBundle.Control.FORMAT_PROPERTIES));
+			} catch (Exception e) {
+			}
+    	}
+    	return getResourceBundle();
+    }
+
     public HtmlGenerator(ServletContext ctx, HttpServletRequest request)
             throws ServletException, IOException {
         internalParams = new HashMap<String, String>();
@@ -124,6 +144,7 @@ public class HtmlGenerator {
         internalParams.put("login_inicio", entityId); //$NON-NLS-1$
         internalParams.put("entityId", entityId); //$NON-NLS-1$
         ResourceBundle rb = getResourceBundle();
+        ResourceBundle rb2 = getResourceBundle();
         String header;
         if (md != null) {
             Organization org = md.getOrganization();
@@ -146,30 +167,41 @@ public class HtmlGenerator {
                 }
                 internalParams.put("organizationUrl", selectLocalized(urls2)); //$NON-NLS-1$
                 if (orgName == null)
-                    header = String.format (rb.getString("login.wellcome2"),  //$NON-NLS-1$
+                    header = String.format (getMessage(rb, rb2, "login.wellcome2"),  //$NON-NLS-1$
                     		entityId) ;
                 else
-                	header = String.format (rb.getString("login.wellcome"),  //$NON-NLS-1$
+                	header = String.format (getMessage(rb, rb2, "login.wellcome"),  //$NON-NLS-1$
                 		orgName) ;
             }
             else
             {
-                header = String.format (rb.getString("login.wellcome2"),  //$NON-NLS-1$
+                header = String.format (getMessage(rb, rb2, "login.wellcome2"),  //$NON-NLS-1$
                 		md.getEntityID()) ;
             }
         } else if (fm != null) {
-            header = String.format (rb.getString("login.wellcome"), entityId) ; //$NON-NLS-1$
+            header = String.format (getMessage(rb, rb2, "login.wellcome"), entityId) ; //$NON-NLS-1$
             internalParams.put("organizationName", fm.getOrganization()); //$NON-NLS-1$
             internalParams.put("organizationUrl", ""); //$NON-NLS-1$
         } else {
-            header = String.format (rb.getString("login.wellcome"), entityId) ; //$NON-NLS-1$
+            header = String.format (getMessage(rb, rb2, "login.wellcome"), entityId) ; //$NON-NLS-1$
             internalParams.put("organizationName", (String) session.getAttribute(ORGANIZATION_NAME)); //$NON-NLS-1$
             internalParams.put("organizationUrl", (String) session.getAttribute(ORGANIZATION_URL)); //$NON-NLS-1$
         }
         internalParams.put("header", header); //$NON-NLS-1$
     }
 
-    private void addCustomHtml(IdpConfig idpConfig) 
+    private String getMessage(ResourceBundle rb, ResourceBundle rb2, String string) {
+    	String s = null; 
+    	try {
+    		s = rb2.getString(string);
+    	} catch (Exception e ) {}
+    	try {
+    		if (s == null) s = rb2.getString(string);
+    	} catch (Exception e ) {}
+    	return s;
+	}
+
+	private void addCustomHtml(IdpConfig idpConfig) 
     {
         FederationMember fm = idpConfig.getFederationMember();
         if (fm != null && fm.getHtmlHeader() != null && ! fm.getHtmlHeader().trim().isEmpty()) {
