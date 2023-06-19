@@ -571,6 +571,8 @@ public class Autenticator {
 			return AuthnContext.X509_AUTHN_CTX;
 		else if (method.equals("C"))
 			return AuthnContext.X509_AUTHN_CTX;
+		else if (method.equals("Z"))
+			return AuthnContext.MOFC_AUTHN_CTX;
 		else
 			return null;
 	}
@@ -581,15 +583,15 @@ public class Autenticator {
 		if (method == null)
 			return null;
 		if (method.equals(AuthnContext.PPT_AUTHN_CTX))
-			values = new String[] { "P", "K", "C", "O", "E", "I","M","S", "PO", "PC", "KO", "KC", "PI", "PM", "PS", "Z", "PZ" };
+			values = new String[] { "P", "Z", "K", "C", "O", "E", "I","M","S", "PO", "PC", "KO", "KC", "KZ", "PI", "PM", "PS", "Z", "PZ" };
 		else if (method.equals(AuthnContext.KERBEROS_AUTHN_CTX))
-			values = new String[] { "K", "KO", "KI", "KM", "KS", "KC", "C" };
+			values = new String[] { "K", "KO", "KI", "KM", "KS", "KC", "KZ", "C" };
 		else if (method.equals(AuthnContext.MTFC_AUTHN_CTX))
-			values = new String[] { "PO", "KO", "C", "EO", "PI", "PM", "PS", "PZ" };
+			values = new String[] { "PO", "KO", "C", "EO", "PI", "PM", "PS", "PZ", "KZ"};
 		else if (method.equals(AuthnContext.PASSWORD_AUTHN_CTX))
-			values = new String[] { "P", "K", "C", "O", "E", "I","M","S", "PO", "PC", "KO", "KC", "PI", "PM", "PS", "Z", "PZ" };
+			values = new String[] { "P", "K", "C", "O", "E", "I","M", "S", "Z", "PO", "PC", "KO", "KC", "KZ", "PI", "PM", "PS", "PZ" };
 		else if (method.equals(AuthnContext.PREVIOUS_SESSION_AUTHN_CTX))
-			values = new String[] { "P", "K", "C", "O", "E", "I", "M", "S", "Z", "PO", "PC", "KO", "KC",
+			values = new String[] { "P", "K", "C", "O", "E", "I", "M", "S", "Z", "PO", "PC", "KO", "KC", "KZ",
 									"PI", "PM", "PS", "PZ"};
 		else if (method.equals(AuthnContext.SMARTCARD_AUTHN_CTX))
 			values = new String[] { "C", "CO", "CI", "CM", "CS" };

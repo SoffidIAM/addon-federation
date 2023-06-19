@@ -16,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Depends ({com.soffid.iam.addons.federation.service.FederationService.class, UserBehaviorService.class, UserCredentialService.class,
 	CertificateValidationService.class, 
 	SelfCertificateValidationService.class,
-	CrudRegistryService.class})
+	CrudRegistryService.class,
+	PushAuthenticationService.class})
 public abstract class FederationBootService extends es.caib.seycon.ng.servei.ApplicationBootService {
 
 }

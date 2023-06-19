@@ -363,7 +363,7 @@ public class AuthenticationContext {
 		}
 		
 		if (nextFactor == null || ! nextFactor.contains(method))
-			throw new InternalErrorException("Authentication method '"+method+"' not allowed. Expected one of '"+method+"'. Allowed methods: "+allowedAuthenticationMethods);
+			throw new InternalErrorException("Authentication method '"+method+"' not allowed. Expected one of '"+nextFactor+"'. Allowed methods: "+allowedAuthenticationMethods);
 
 		if (step == 0) 
 		{

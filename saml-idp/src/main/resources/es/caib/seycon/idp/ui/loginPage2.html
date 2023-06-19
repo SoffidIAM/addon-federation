@@ -42,10 +42,11 @@
 	    const data = await response.json();
 	    if (data.done)
 	    {
+	    	clearInterval(intervalId);
 			document.getElementById("pushForm").submit();
 	    }
 	}
-	setInterval(checkPush, 500);
+	var intervalId = setInterval(checkPush, 500);
 	{endif}
 	</script>
 
@@ -115,6 +116,11 @@
 			</div>
 			<p/>
 			{endif}
+			{if pushAllowed} 
+			<div class="logintype2"  id ="pushlogin">
+					${pushlogininprogress.message}
+			</div>
+			<p/>
 			{if fingerprintAllowed} 
 			<div class="logintype2"  id ="fingerprintlogin">
 				<form method="post" action="${fingerprintLoginUrl}" id="form-fingerprint">
@@ -221,6 +227,7 @@
 				  $("#openidlogin").fadeOut("slow");
 				  $("#otplogin").fadeOut("slow");
 				  $("#kerberoslogin").fadeOut("slow");
+				  $("#pushlogin").fadeOut("slow");
 				  $("#fingerprintlogin").fadeOut("slow");
 				  $("#canceldiv").fadeOut("slow");
 			  });
@@ -235,7 +242,8 @@
 				  $("#otplogin").fadeOut("slow");
 				  $("#fingerprintlogin").fadeOut("slow");
 				  $("#canceldiv").fadeOut("slow");
-			  });
+				  $("#pushlogin").fadeOut("slow");
+				  			  });
 			  $("#loginotpbutton").click(function () {
 				  $("#progressdiv").css("visibility", "visible");
 				  $("#registerlogin").fadeOut("slow");
@@ -248,6 +256,7 @@
 				  $("#passlogin").fadeOut("slow");
 				  $("#fingerprintlogin").fadeOut("slow");
 				  $("#canceldiv").fadeOut("slow");
+				  $("#pushlogin").fadeOut("slow");
 			  });
 			  $("#loginfingerprintbutton").click(function () {
 				  $("#progressdiv").css("visibility", "visible");
@@ -261,7 +270,8 @@
 				  $("#otplogin").fadeOut("slow");
 				  $("#passlogin").fadeOut("slow");
 				  $("#canceldiv").fadeOut("slow");
-			  });
+				  $("#pushlogin").fadeOut("slow");
+				  });
 			  $("a,openidlink").click(function () {
 				  $("#progressdiv").css("visibility", "visible");
 				  $("#registerlogin").fadeOut("slow");
@@ -272,6 +282,7 @@
 				  $("#otplogin").fadeOut("slow");
 				  $("#fingerprintlogin").fadeOut("slow");
 				  $("#canceldiv").fadeOut("slow");
+				  $("#pushlogin").fadeOut("slow");
 			  });
   
   </script>

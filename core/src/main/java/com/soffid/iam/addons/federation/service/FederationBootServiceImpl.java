@@ -54,6 +54,8 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 			publish(getUserBehaviorService(), UserBehaviorService.REMOTE_PATH, "agent");
 		SoffidApplication.getJetty(). 
 			publish(getUserCredentialService(), UserCredentialService.REMOTE_PATH, "agent");
+		SoffidApplication.getJetty(). 
+			publish(getPushAuthenticationService(), PushAuthenticationService.REMOTE_PATH, "agent");
 	}
 
  	private void testAttribute (String name, String shortName, String oid, String openId) throws InternalErrorException
