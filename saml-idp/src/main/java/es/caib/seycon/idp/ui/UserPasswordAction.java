@@ -117,12 +117,12 @@ public class UserPasswordAction extends HttpServlet {
     	    		{
     	    			try {
     						ctx.authenticationFailure(u, "Account is locked");
+    						if (ctx.isLocked(u)) {
+    							LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
+    						}
     					} catch (InternalErrorException e) {
+    						// Account is disabled
     					}
-                		if (ctx.isLocked(u)) {
-                    		error = "Account is locked"; //$NON-NLS-1$
-                    		LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
-                		}
     	    		}
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }
