@@ -68,7 +68,7 @@ public class AdaptiveEnvironment implements Serializable {
 	
 	public boolean hasOtp() { return hasOtpHotp() || hasOtpMail() || hasOtpPin() || hasOtpSms() || hasOtpTotp(); }
 	
-	public boolean hasToken() {return hasFidoToken() || hasCertificate(); }
+	public boolean hasToken() {return hasFidoToken() || hasCertificate() || hasPushToken(); }
 	
 	public boolean hasFidoToken() {return false;}
 	
@@ -84,6 +84,8 @@ public class AdaptiveEnvironment implements Serializable {
 	
 	public boolean hasOtpMail() {return false;}
 	
+	public boolean hasPushToken() {return false;}
+
 	public String serviceProvider()
 	{
 		return "";

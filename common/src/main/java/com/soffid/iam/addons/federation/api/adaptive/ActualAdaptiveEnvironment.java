@@ -220,6 +220,14 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	}
 
 	@Override
+	public boolean hasPushToken() {
+		if (user == null)
+			return false;
+		loadTokens();
+		return tokens.contains(UserCredentialType.PUSH);
+	}
+
+	@Override
 	public boolean hasOtpTotp() {
 		if (user == null)
 			return false;
