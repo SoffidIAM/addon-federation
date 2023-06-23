@@ -19,7 +19,7 @@ public class TextFormatter {
     protected static final String DATA_START_TOKEN = "${"; //$NON-NLS-1$
     protected static final String END_TOKEN = "}"; //$NON-NLS-1$
 
-    public String formatString(String rawText, ResourceBundle rb, Map params)
+    public String formatString(String rawText, ResourceBundle rb, ResourceBundle rb2, Map params)
             throws TextFormatException {
 
         int conditionBegin = rawText.indexOf(LOOP_OPEN_TAG);
@@ -71,7 +71,11 @@ public class TextFormatter {
                 String value = (String) params.get(tag);
                 if (value == null) {
                     try {
-                        value = rb.getString(tag);
+                    	try {
+                    		value = rb2.getString(tag);
+                        } catch (MissingResourceException e) {
+                    		value = rb.getString(tag);
+                    	} 
                     } catch (MissingResourceException e) {
                         value = ""; //$NON-NLS-1$ //$NON-NLS-2$
                     }
@@ -95,13 +99,13 @@ public class TextFormatter {
     }
 
     public void formatTemplate(InputStream is, OutputStream out,
-            ResourceBundle rb, Map params) throws TextFormatException {
+            ResourceBundle rb, ResourceBundle rb2, Map params) throws TextFormatException {
         try {
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(is, "UTF-8")); //$NON-NLS-1$
             String line;
             while ((line = reader.readLine()) != null) {
-                String s = formatString(line, rb, params);
+                String s = formatString(line, rb, rb2, params);
                 out.write(s.getBytes("UTF-8")); //$NON-NLS-1$
                 out.write('\r');
                 out.write('\n');

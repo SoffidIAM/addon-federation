@@ -144,7 +144,7 @@ public class HtmlGenerator {
         internalParams.put("login_inicio", entityId); //$NON-NLS-1$
         internalParams.put("entityId", entityId); //$NON-NLS-1$
         ResourceBundle rb = getResourceBundle();
-        ResourceBundle rb2 = getResourceBundle();
+        ResourceBundle rb2 = getResourceBundle2();
         String header;
         if (md != null) {
             Organization org = md.getOrganization();
@@ -196,7 +196,7 @@ public class HtmlGenerator {
     		s = rb2.getString(string);
     	} catch (Exception e ) {}
     	try {
-    		if (s == null) s = rb2.getString(string);
+    		if (s == null) s = rb.getString(string);
     	} catch (Exception e ) {}
     	return s;
 	}
@@ -265,11 +265,12 @@ public class HtmlGenerator {
     public void generate(HttpServletResponse resp, String page)
             throws TextFormatException, IOException {
         ResourceBundle rb = getResourceBundle();
-        generate(resp, page, rb);
+        ResourceBundle rb2 = getResourceBundle2();
+        generate(resp, page, rb, rb2);
     }
 
     private void generate(HttpServletResponse resp, String page,
-            ResourceBundle rb) throws TextFormatException, IOException {
+            ResourceBundle rb, ResourceBundle rb2) throws TextFormatException, IOException {
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
         resp.setContentType("text/html; charset=UTF-8"); //$NON-NLS-1$
         
@@ -287,7 +288,7 @@ public class HtmlGenerator {
         	in = getClass().getClassLoader().getParent().getResourceAsStream("com/soffid/iam/idp/ui/"+page);
         if (in == null)
         	in = HtmlGenerator.class.getResourceAsStream(page);
-        new TextFormatter().formatTemplate(in, resp.getOutputStream(), rb,
+        new TextFormatter().formatTemplate(in, resp.getOutputStream(), rb, rb2,
                 internalParams);
     }
 
