@@ -20,6 +20,7 @@ import es.caib.seycon.ng.model.ConfiguracioEntity;
 import es.caib.seycon.ng.model.UsuariEntity;
 import es.caib.seycon.ng.servei.UsuariService;
 import roles.Tothom;
+import roles.federation_create_push;
 import roles.federation_create_token;
 import roles.selfcertificate_user;
 import roles.user_query;
@@ -56,7 +57,7 @@ public class UserCredentialService
 		{ return null; }
 	
 	
-	@Operation ( grantees={federation_create_token.class, selfcertificate_user.class})
+	@Operation ( grantees={federation_create_token.class, selfcertificate_user.class, federation_create_push.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void remove(UserCredential credential)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
@@ -71,7 +72,7 @@ public class UserCredentialService
 	public UserCredential updateLastUse (UserCredential uc) {return null;}
 
 	
-	@Operation(grantees= {federation_create_token.class})
+	@Operation(grantees= {federation_create_token.class, federation_create_push.class})
 	public URI generateNewCredential (UserCredentialType type) { return null;}
 		
 	@Operation(grantees= {federation_credential_create.class})
