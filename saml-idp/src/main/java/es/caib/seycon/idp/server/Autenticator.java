@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.Subject;
@@ -419,7 +420,6 @@ public class Autenticator {
 			Principal principal = new SessionPrincipal(user, soffidSession);
 	        
 	        req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
-	        req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, toSamlAuthenticationMethod(type));
 	        req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
 	        Set<Principal> principals = new HashSet<Principal> ();
 	        Set<?> pubCredentals = new HashSet<Object>();
@@ -435,8 +435,14 @@ public class Autenticator {
 	        }
 	        
 			Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
-			if (saml2LoginContext != null)
-				saml2LoginContext.setAuthenticationMethodInformation(null); 
+			if (saml2LoginContext != null) {
+				List<String> set = saml2LoginContext.getRequestedAuthenticationMethods();
+				String actualLogin = toSamlAuthenticationMethod(type);
+				if (set.isEmpty() || set.contains(actualLogin))
+					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, actualLogin);
+				else
+					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, set.iterator().next());
+			}
 			
 	        if (returnPath == null) 
 	        {
