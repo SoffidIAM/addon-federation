@@ -200,7 +200,7 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	}
 
 	private void loadTokens() {
-		if (tokens != null) {
+		if (tokens == null) {
 			try {
 				tokens = getService().getEnabledCredentials(user.getId());
 			} catch (InternalErrorException e1) {
