@@ -2,6 +2,7 @@ package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -99,8 +100,14 @@ public class TokenEndpoint extends HttpServlet {
 				if (clientId != null && !clientId.equals(clientId2)) {
 					buildError(resp, "invalid_request", "Client id and credentials mismatch");
 					return;
-				} else
+				} else {
 					clientId = clientId2;
+					clientSecret = decoded.substring(decoded.indexOf(":") + 1 );
+					if (config.getFederationService().findFederationMemberByClientID(clientId) == null) {
+						clientId = URLDecoder.decode(clientId, "UTF-8");
+						clientSecret = URLDecoder.decode(clientSecret, "UTF-8");
+					}
+				}
 			}
 			request.setClientId(clientId);
 			if (clientId == null || clientId.isEmpty()) {
@@ -352,18 +359,20 @@ public class TokenEndpoint extends HttpServlet {
 		return OidcDebugController.ofuscate(s);
 	}
 
-	private boolean validAuthentication(String authentication, FederationMember federationMember) {
+	private boolean validAuthentication(String authentication, FederationMember federationMember) throws UnsupportedEncodingException {
 		if (!authentication.toLowerCase().startsWith("basic "))
 			return false;
 		
 		String rest = new String (java.util.Base64.getDecoder().decode(authentication.substring(6)), StandardCharsets.UTF_8);
 		
-		if ( ! rest.startsWith(federationMember.getOpenidClientId()+":"))
+		String ci = rest.substring(0, rest.indexOf(":"));
+		String cs = rest.substring(rest.indexOf(":")+1);
+		if ( ! rest.startsWith(federationMember.getOpenidClientId()+":") &&
+				! URLDecoder.decode(ci, "UTF-8").equals(federationMember.getOpenidClientId()))
 			return false;
 		
-		rest = rest.substring(federationMember.getOpenidClientId().length()+1);
-		
-		return federationMember.getOpenidSecret().validate(rest);
+		return federationMember.getOpenidSecret().validate(cs) ||
+				federationMember.getOpenidSecret().validate(URLDecoder.decode(cs, "UTF-8")) ;
 	}
 
 	private boolean checkPkceCode(TokenInfo t, String parameter) throws NoSuchAlgorithmException {

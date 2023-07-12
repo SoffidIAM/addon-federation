@@ -172,7 +172,7 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 	private void generateNewSecret() throws NoSuchAlgorithmException {
 		byte b[] = new byte[36];
 		new SecureRandom().nextBytes(b);
-		String sb = Base64.encodeBytes(b, Base64.DONT_BREAK_LINES).replace("+", "-");
+		String sb = Base64.encodeBytes(b, Base64.DONT_BREAK_LINES);
 		
 		es.caib.zkib.datasource.XPathUtils.setValue(this, 
 				"/federationMember/openidSecret",
