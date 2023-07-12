@@ -26,6 +26,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.CaptchaVerifier;
+import es.caib.seycon.idp.server.CreateIssueHelper;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -66,6 +67,8 @@ public class OTPAction extends HttpServlet {
             			LogFactory.getLog(getClass()).warn("Trying to authenticate user "+u+" from a page with low captcha score "+captcha.getConfidence());
                 		error = "There seems to be problems to identify you, please, try again"; //$NON-NLS-1$
                         req.setAttribute("ERROR", error); //$NON-NLS-1$
+                        CreateIssueHelper.robotLogin(ctx.getCurrentUser(), captcha.getConfidence(),
+                        		ctx.getHostId(resp), ctx.getRemoteIp());
         				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         				dispatcher.forward(req, resp);
         				return;
@@ -76,9 +79,11 @@ public class OTPAction extends HttpServlet {
             	
             	User user = new RemoteServiceLocator().getServerService().getUserInfo(u, config.getSystem().getName());
             	
-            	if (ctx == null) {
+            	if (user == null) {
             		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
                     logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
+                    CreateIssueHelper.wrongUser(u,
+                    		ctx.getHostId(resp), ctx.getRemoteIp());
             	} else {
 	            	Challenge ch = ctx.getChallenge();
 	            	if (ch == null ||  ch.getCardNumber() == null) {

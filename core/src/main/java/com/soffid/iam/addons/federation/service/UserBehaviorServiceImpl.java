@@ -25,8 +25,10 @@ import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.UserBehaviorEntity;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.impl.IssueHelper;
 import com.soffid.iam.addons.otp.service.OtpService;
 import com.soffid.iam.api.Audit;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordValidation;
 import com.soffid.iam.model.AccountEntity;
@@ -145,15 +147,36 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 	@Override
 	protected void handleRegisterLogon(Long userId, String hostIp, String hostId) throws Exception {
 		String now = Long.toString( System.currentTimeMillis() );
-		if (hostId != null)
-		{
-			setValue (userId, "lastLogon_"+hostId, now);
-		}
 		setValue (userId, "failures", "0");
 		setValue (userId, "lastFail", "");
 		setValue (userId, "lastLogon", now);
 		String country = handleGetCountryForIp(hostIp);
-		setValue (userId, "lastCountry", country);
+			
+		if (country != null && !country.equals("??")) {
+			String lastCountry = getValue(userId, "lastCountry");
+			if (lastCountry != null && !lastCountry.equals(country))
+			{
+				try {
+					IssueHelper.fromDifferentCountry(userId, country);
+				} catch (Error e) {
+					// Old syncserver version
+				}
+			}
+			setValue (userId, "lastCountry", country);
+			
+		}
+		if (hostId != null) {
+			String lastLogon = getValue(userId, "lastLogon_"+hostId);
+			if (lastLogon == null) {
+				try {
+					Host host = getNetworkService().findHostBySerialNumber(hostId);
+					IssueHelper.fromNewHost(userId, host);				
+				} catch (Error e) {
+					// Old syncserver version
+				}
+			}
+			setValue (userId, "lastLogon_"+hostId, now);
+		}
 	}
 
 	protected String getValue (Long userId, String key)

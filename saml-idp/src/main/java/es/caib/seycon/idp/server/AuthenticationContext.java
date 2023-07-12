@@ -441,6 +441,7 @@ public class AuthenticationContext {
 		}
 	}
 
+	boolean underAttack = false;
 	public void authenticationFailure (String u, String comments) throws IOException, InternalErrorException
 	{
 		getUserData(u);
@@ -470,8 +471,18 @@ public class AuthenticationContext {
 			a.setComment(comments);
 			a.setSourceIp(remoteIp);
 			a.setHost(hostId);
+            CreateIssueHelper.wrongUser(u, hostId, remoteIp);
 			new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
 		}
+		double ratio = worstAthenticationRatio();
+		if (ratio > 0.8 && !underAttack)
+			try {
+				CreateIssueHelper.globalFailedLogin(ratio);
+			} catch (Error e) {
+				// Older syncserver version
+			}
+		else if (ratio < 0.5)
+			underAttack = false;
 	}
 	
 	public boolean isLocked (String u) throws IOException, InternalErrorException

@@ -21,6 +21,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.CaptchaVerifier;
+import es.caib.seycon.idp.server.CreateIssueHelper;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -65,6 +66,8 @@ public class UserPasswordAction extends HttpServlet {
             			LogFactory.getLog(getClass()).warn("Trying to authenticate user "+u+" from a page with low captcha score "+captcha.getConfidence());
                 		error = "There seems to be problems to identify you, please, try again"; //$NON-NLS-1$
                         req.setAttribute("ERROR", error); //$NON-NLS-1$
+                        CreateIssueHelper.robotLogin(ctx.getCurrentUser(), captcha.getConfidence(),
+                        		ctx.getHostId(resp), ctx.getRemoteIp());
         				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         				dispatcher.forward(req, resp);
         				return;
@@ -116,13 +119,14 @@ public class UserPasswordAction extends HttpServlet {
     	    		if (ctx != null)
     	    		{
     	    			try {
-    						ctx.authenticationFailure(u, "Account is locked");
-    						if (ctx.isLocked(u)) {
-    							LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
-    						}
-    					} catch (InternalErrorException e) {
-    						// Account is disabled
-    					}
+                  ctx.authenticationFailure(u, "Wrong user name or password");
+                  ctx.authenticationFailure(u, "Account is locked");
+                  if (ctx.isLocked(u)) {
+                    LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
+                  }
+                } catch (InternalErrorException e) {
+                  // Account is disabled
+                }
     	    		}
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }
