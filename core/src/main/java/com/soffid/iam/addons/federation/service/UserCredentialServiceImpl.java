@@ -204,7 +204,7 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 	@Override
 	protected void handleCancelNewCredentialURI(String hash) throws Exception {
 		UserCredentialRequestEntity r = getUserCredentialRequestEntityDao().findByHash(hash);
-		if (r != null)
+		if (r != null  && ! Boolean.TRUE.equals(r.getPersistent()))
 			getUserCredentialRequestEntityDao().remove(r);
 	}
 
@@ -226,7 +226,8 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		UserEntity u = getUserEntityDao().findByUserName(user);
 		
 		for (UserCredentialRequestEntity r: getUserCredentialRequestEntityDao().findByUser(u.getId())) {
-			if (r.getHash() == null && r.getExpiration().getTime() > System.currentTimeMillis())
+			if (r.getHash() == null && r.getExpiration().getTime() > System.currentTimeMillis() &&
+					! Boolean.TRUE.equals(r.getPersistent()))
 			{
 				getUserCredentialRequestEntityDao().remove(r);
 				break;

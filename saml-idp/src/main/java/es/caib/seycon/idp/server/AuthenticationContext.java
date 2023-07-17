@@ -471,12 +471,12 @@ public class AuthenticationContext {
 			a.setComment(comments);
 			a.setSourceIp(remoteIp);
 			a.setHost(hostId);
-            CreateIssueHelper.wrongUser(u, hostId, remoteIp);
 			new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
 		}
 		double ratio = worstAthenticationRatio();
 		if (ratio > 0.8 && !underAttack)
 			try {
+				underAttack = true;
 				CreateIssueHelper.globalFailedLogin(ratio);
 			} catch (Error e) {
 				// Older syncserver version
@@ -506,8 +506,10 @@ public class AuthenticationContext {
 	    String d = cfg.getSystem().getName();
 	    currentAccount = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
 
-	    if (currentAccount == null || currentAccount.isDisabled())
+	    if (currentAccount == null || currentAccount.isDisabled()) {
+            CreateIssueHelper.wrongUser(userName, hostId, remoteIp);
 	    	throw new InternalErrorException("The account "+userName+" is disabled");
+	    }
 	    
 	    if (currentAccount != null && currentAccount.getType() == AccountType.USER && currentAccount.getOwnerUsers() != null && currentAccount.getOwnerUsers().size() == 1)
 	    	currentUser = new RemoteServiceLocator().getUserService().findUserByUserName(currentAccount.getOwnerUsers().iterator().next());

@@ -27,13 +27,6 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 	@Override
 	protected boolean handleIsPushAuthenticationAccepted(UserCredentialChallenge challenge) throws Exception {
 		UserCredentialChallengeEntity entity = getUserCredentialChallengeEntityDao().load(challenge.getId());
-		if (entity == null)
-		{
-			log.info("Challenge "+challenge.getId()+" not found");
-		}
-		else if (entity != null) {
-			log.info("Challenge "+challenge.getId()+" solved = "+entity.isSolved());
-		}
 		return entity != null && entity.isSolved();
 	}
 

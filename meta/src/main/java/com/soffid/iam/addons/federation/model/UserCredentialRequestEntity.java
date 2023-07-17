@@ -33,6 +33,9 @@ public class UserCredentialRequestEntity {
 	@Nullable @Column(name="UCQ_TYPE")
 	UserCredentialType type;
 	
+	@Column(name="UCQ_PERSIS")
+	Boolean persistent;
+
 	UserCredentialRequestEntity findByHash(String hash) {return null;}
 
 	Collection<UserCredentialRequestEntity> findByUser(Long userId) {return null;}

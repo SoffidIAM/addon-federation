@@ -33,7 +33,7 @@ public class CreateIssueHelper {
 		Issue i = new Issue();
 		i.setCreated(new Date());
 		i.setStatus(IssueStatus.NEW);
-		i.setType("global-failed-login");
+		i.setType("robot-login");
 		i.setFailedLoginPct(pct);
 		if (user != null) {
 			IssueUser iu = new IssueUser();
@@ -47,6 +47,7 @@ public class CreateIssueHelper {
 		ih.setHostIp(ip);
 		ih.setHostName(hostId);
 		i.setHosts(Arrays.asList(ih));
+		i.setHash(hostId);
 
 		server.registerIssue(i);
 	}
@@ -60,7 +61,7 @@ public class CreateIssueHelper {
 		IssueUser iu = new IssueUser();
 		iu.setUserName(u);
 		i.setUsers(Arrays.asList(iu));
-		
+		i.setHash(u);
 		IssueHost ih = new IssueHost();
 		Host h;
 		ih.setHostIp(ip);

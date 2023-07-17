@@ -24,6 +24,9 @@ public class CaptchaVerifier {
 		if (idp.getCaptchaSecret() == null || idp.getCaptchaSecret().getPassword().isEmpty())
 			throw new InternalErrorException("Missing captcha secret for identity provider "+idp.getPublicId());
 		
+		if (token == null)
+			return false;
+		
 		URL u = new URL("https://www.google.com/recaptcha/api/siteverify");
 		HttpURLConnection conn = (HttpURLConnection) u.openConnection();
 		conn.setDoInput(true);

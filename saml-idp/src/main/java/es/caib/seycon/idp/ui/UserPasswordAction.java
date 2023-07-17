@@ -43,7 +43,6 @@ public class UserPasswordAction extends HttpServlet {
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
         if (! amf.allowUserPassword())
             throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
-        
 
         String u = req.getParameter("j_username"); //$NON-NLS-1$
         String p = req.getParameter("j_password"); //$NON-NLS-1$
@@ -119,14 +118,13 @@ public class UserPasswordAction extends HttpServlet {
     	    		if (ctx != null)
     	    		{
     	    			try {
-                  ctx.authenticationFailure(u, "Wrong user name or password");
-                  ctx.authenticationFailure(u, "Account is locked");
-                  if (ctx.isLocked(u)) {
-                    LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
-                  }
-                } catch (InternalErrorException e) {
-                  // Account is disabled
-                }
+		                  ctx.authenticationFailure(u, "Wrong user name or password");
+		                  if (ctx.isLocked(u)) {
+		                    LogFactory.getLog(getClass()).info("Error authenticating user.  "+u+". Account is locked");
+		                  }
+		                } catch (InternalErrorException e) {
+		                  // Account is disabled
+		                }
     	    		}
                     logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
                 }
