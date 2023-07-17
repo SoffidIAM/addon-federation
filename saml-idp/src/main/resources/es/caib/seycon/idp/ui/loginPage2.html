@@ -43,6 +43,18 @@
 	    if (data.done)
 	    {
 	    	clearInterval(intervalId);
+		    $("#progressdiv").css("visibility", "visible");
+		    $("#registerlogin").fadeOut("slow");
+		    $("#recoverlogin").fadeOut("slow");
+		    $("#certlogin").fadeOut("slow");
+		    $("#errormsg").fadeOut("slow");
+		    $("#kerberoslogin").fadeOut("slow");
+		    $("#loginfingerprintbutton").fadeOut("slow");
+	    	$("#openidlogin").fadeOut("slow");
+		    $("#otplogin").fadeOut("slow");
+		    $("#passlogin").fadeOut("slow");
+		    $("#canceldiv").fadeOut("slow");
+  		    $("#pushlogin").fadeOut("slow");
 			document.getElementById("pushForm").submit();
 	    }
 	}
