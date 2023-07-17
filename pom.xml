@@ -261,7 +261,7 @@
 		</dependencies>
 	</dependencyManagement>
 	<properties>
-		<console.version>3.5.0-m9-SNAPSHOT</console.version>
+		<console.version>3.5.0-m10</console.version>
 	</properties>
 	<pluginRepositories>
 		<pluginRepository>
