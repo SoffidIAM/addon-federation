@@ -63,6 +63,7 @@ maven_deploy:
     - mvn deploy $MAVEN_CLI_OPTS -s $DEPLOYER_SETTINGS  -Darguments="$MAVEN_CERT_OPTS"
   rules:
     - if: $CI_COMMIT_TAG != null
+    - when: manual
       
 maven_release:
   stage: deploy
@@ -77,17 +78,17 @@ maven_release:
     - rm -rf ../clone
     - mvn scm:checkout -DscmVersion="$CI_COMMIT_BRANCH" -DscmVersionType=branch -DcheckoutDirectory=../clone
     - cd ../clone
+    - git config pull.rebase false
     - 'git remote add gitlab "ssh://git@gitlab.internal.soffid.com:2224/${CI_PROJECT_PATH}.git"' 
-    - git pull gitlab "$CI_COMMIT_PATH" --no-edit
+    - git pull gitlab "$CI_COMMIT_BRANCH" --no-edit
     - git config --global user.email "$GITLAB_USER_EMAIL"
     - git config --global user.name "$GITLAB_USER_NAME"
     - mvn release:prepare $MAVEN_CLI_OPTS -s $DEPLOYER_SETTINGS --batch-mode -DtagNameFormat='version-@{project.version}' -DpreparationGoals='install'
     - git remote -v
     - git push gitlab "$CI_COMMIT_BRANCH"
     - git push gitlab --tags
-    - mkdir "$HOME/.docker"
   rules:
-    - if: $CI_COMMIT_BRANCH == "version-3"
+    - if: $CI_COMMIT_TAG == null
       when: manual
 
 release:

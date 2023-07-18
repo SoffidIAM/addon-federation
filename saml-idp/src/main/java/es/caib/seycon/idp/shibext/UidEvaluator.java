@@ -43,12 +43,12 @@ public class UidEvaluator {
     		}
     		if (member.getUidExpression() != null && ! member.getUidExpression().trim().isEmpty())
     		{
-    			ValueObjectMapper mapper = new ValueObjectMapper();
             	IdpConfig config = IdpConfig.getConfig();
     			Account account = server.getAccountInfo(principal, config.getSystem().getName());
     			ExtensibleObject eo = ui == null ? 
     				new AccountExtensibleObject(account, server):
     				new UserExtensibleObject(account, ui, server);
+    			eo.setAttribute("relyingParty", rpid);
    				uid = (String) new ObjectTranslator(config.getSystem(), server,
     					new java.util.LinkedList<ExtensibleObjectMapping>())
     						.eval(member.getUidExpression(), eo);

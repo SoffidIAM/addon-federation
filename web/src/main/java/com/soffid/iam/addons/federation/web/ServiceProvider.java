@@ -224,7 +224,7 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		Long id = (Long) XPathUtils.eval(this, "federationMember/id");
 		
 		String s = encodeId(id) +
-				"."+Base64.encodeBytes(b);
+				"."+Base64.encodeBytes(b).replace("+", "-");
 
 		es.caib.zkib.datasource.XPathUtils.setValue(this, 
 				"/federationMember/registrationToken",

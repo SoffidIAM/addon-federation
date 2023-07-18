@@ -1,5 +1,6 @@
 package com.soffid.iam.web.addons.federation.web.wheel;
 
+import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -7,6 +8,7 @@ import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.xml.utils.URI;
 import org.apache.xml.utils.URI.MalformedURIException;
 import org.zkoss.util.resource.Labels;
@@ -117,7 +119,8 @@ public class Am03Handler extends Window implements AfterCompose {
 			applyChanges();
 			break;
 		case 3:
-			Executions.getCurrent().sendRedirect("/addon/federation/providers.zul?filter="+publicId, "_blank");
+			if (publicId != null)
+				Executions.getCurrent().sendRedirect("/addon/federation/providers.zul?filter="+publicId, "_blank");
 			detach();
 		default:
 			wizard.next();
@@ -267,11 +270,33 @@ public class Am03Handler extends Window implements AfterCompose {
 		}
 	}
 
-	private void notifyUser(User user) throws InternalErrorException {
+	private void notifyUser(User user) throws Exception {
 		ServiceLocator.instance().getMailService().sendHtmlMailToActors(
 				new String[] {user.getUserName()}, 
 				Labels.getLabel("federation.mfa.mailSubject"),
-				message.getValue().toString());
+				translate(message.getValue().toString(), user));
+	}
+
+	protected String translate(String string, User user) throws Exception {
+		int pos = 0;
+		StringBuffer sb = new StringBuffer();
+		while (true) {
+			int next = string.indexOf("${", pos);
+			if (next < 0) break;
+			
+			int end = string.indexOf("}", next);
+			if (end < 0) break;
+			
+			sb.append(string.substring(pos, next));
+			
+			String tag = string.substring(next + 2, end);
+			final Object v = PropertyUtils.getProperty(user, tag);
+			sb.append(v == null ? "":  v.toString());
+			
+			pos = end + 1;
+		}
+		sb.append(string.substring(pos));
+		return sb.toString();
 	}
 
 	private void configureCert() throws InternalErrorException {

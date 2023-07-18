@@ -1,6 +1,8 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 import javax.servlet.ServletException;
@@ -84,18 +86,20 @@ public class RevokeEndpoint extends HttpServlet {
 		}
 	}
 
-	private boolean validAuthentication(String authentication, FederationMember federationMember) {
+	private boolean validAuthentication(String authentication, FederationMember federationMember) throws UnsupportedEncodingException {
 		if (!authentication.toLowerCase().startsWith("basic "))
 			return false;
 		
 		String rest = new String (java.util.Base64.getDecoder().decode(authentication.substring(6)), StandardCharsets.UTF_8);
 		
-		if ( ! rest.startsWith(federationMember.getOpenidClientId()+":"))
+		String ci = rest.substring(0, rest.indexOf(":"));
+		String cs = rest.substring(rest.indexOf(":")+1);
+		if ( ! rest.startsWith(federationMember.getOpenidClientId()+":") &&
+				! URLDecoder.decode(ci, "UTF-8").equals(federationMember.getOpenidClientId()))
 			return false;
 		
-		rest = rest.substring(federationMember.getOpenidClientId().length()+1);
-		
-		return federationMember.getOpenidSecret().validate(rest);
+		return federationMember.getOpenidSecret().validate(cs) ||
+				federationMember.getOpenidSecret().validate(URLDecoder.decode(cs, "UTF-8")) ;
 	}
 
 	private void buildError(HttpServletResponse resp, String string) throws IOException, ServletException {

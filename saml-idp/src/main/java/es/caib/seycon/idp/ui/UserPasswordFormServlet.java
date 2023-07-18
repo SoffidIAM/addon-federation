@@ -290,7 +290,6 @@ public class UserPasswordFormServlet extends BaseForm {
 			LogFactory.getLog(getClass()).warn("Error guessing identity provider for "+requestedUser, e);
 		}
     	if (idp != null) {
-    		log.info("ARXUS: Idp for "+requestedUser+ " = "+idp);
     		RequestDispatcher d;
     		FederationMember data = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(idp);
     		if ( data.getIdpType() == IdentityProviderType.SAML ||
@@ -300,10 +299,8 @@ public class UserPasswordFormServlet extends BaseForm {
     			d = req.getRequestDispatcher(OauthRequestAction.URI);
     		
     		d.forward(new SamlSsoRequestWrapper(req, requestedUser, idp), resp);
-    		log.info("ARXUS: forwarding to "+idp);
     		return true;
     	} else {
-    		log.info("ARXUS: No iddp for "+requestedUser);
     		return false;
     	}
 	}
