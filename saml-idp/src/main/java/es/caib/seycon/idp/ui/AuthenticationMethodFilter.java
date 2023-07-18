@@ -24,11 +24,13 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class AuthenticationMethodFilter {
     String method ;
 	private String relyingParty;
+	private AuthenticationContext ctx;
     public AuthenticationMethodFilter(HttpServletRequest req) throws ServletException {
         HttpSession s = req.getSession(false);
         if (s == null)
@@ -37,44 +39,30 @@ public class AuthenticationMethodFilter {
                 getAttribute(ExternalAuthnSystemLoginHandler.AUTHN_METHOD_PARAM);
     	relyingParty = (String) req.getSession().
                 getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+    	ctx = AuthenticationContext.fromRequest(req);
+    			
     }
     
     public boolean allowUserPassword () {
-        if (method == null)
-            return true;
-        if (AuthnContext.UNSPECIFIED_AUTHN_CTX.equals (method))
-            return true;
-        if (AuthnContext.PPT_AUTHN_CTX.equals (method))
-            return true;
-        if (AuthnContext.KERBEROS_AUTHN_CTX.equals (method))
+        if (ctx == null || ctx.getNextFactor() == null || ctx.getNextFactor().contains("P"))
             return true;
         return false;
     }
 
     public boolean requiresKerberos () {
-        if (method == null)
-            return true;
-        if (AuthnContext.KERBEROS_AUTHN_CTX.equals (method))
+        if (ctx == null || ctx.getNextFactor() == null || ctx.getNextFactor().contains("K"))
             return true;
         return false;
     }
 
     public boolean allowKerberos () {
-        if (method == null)
-            return true;
-        if (AuthnContext.UNSPECIFIED_AUTHN_CTX.equals (method))
-            return true;
-        if (AuthnContext.KERBEROS_AUTHN_CTX.equals (method))
-            return true;
-        if (AuthnContext.PPT_AUTHN_CTX.equals (method))
+        if (ctx == null || ctx.getNextFactor() == null || ctx.getNextFactor().contains("K"))
             return true;
         return false;
     }
 
     public boolean allowTls () {
-        if (allowUserPassword() )
-            return true;
-        if (AuthnContext.TLS_CLIENT_AUTHN_CTX.equals (method))
+        if (ctx == null || ctx.getNextFactor() == null || ctx.getNextFactor().contains("C"))
             return true;
     
         return false;
@@ -129,17 +117,4 @@ public class AuthenticationMethodFilter {
 		}
 		return config.getFederationMember();
 	}
-
-	public boolean allowUserCredential() {
-        if (allowUserPassword() )
-            return true;
-        if (AuthnContext.TLS_CLIENT_AUTHN_CTX.equals (method))
-            return true;
-    
-        if (AuthnContext.MOFU_AUTHN_CTX.equals (method))
-            return true;
-
-        return false;
-	}
-
 }
