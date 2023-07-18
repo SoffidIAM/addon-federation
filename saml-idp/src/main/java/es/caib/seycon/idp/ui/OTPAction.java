@@ -67,7 +67,7 @@ public class OTPAction extends HttpServlet {
             			LogFactory.getLog(getClass()).warn("Trying to authenticate user "+u+" from a page with low captcha score "+captcha.getConfidence());
                 		error = "There seems to be problems to identify you, please, try again"; //$NON-NLS-1$
                         req.setAttribute("ERROR", error); //$NON-NLS-1$
-                        CreateIssueHelper.robotLogin(ctx.getCurrentUser(), captcha.getConfidence(),
+                        CreateIssueHelper.robotLogin(u, captcha.getConfidence(),
                         		ctx.getHostId(resp), ctx.getRemoteIp());
         				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         				dispatcher.forward(req, resp);
