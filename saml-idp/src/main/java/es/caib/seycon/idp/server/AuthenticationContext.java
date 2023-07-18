@@ -166,15 +166,14 @@ public class AuthenticationContext {
     	currentUser = null;
 
     	updateAllowedAuthenticationMethods();
-        if (requestedAuthenticationMethod != null)
-        {
-        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
-        }
-        
         if (allowedAuthenticationMethods.isEmpty())
         	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
-        
-        nextFactor = new HashSet<String>();
+        onInitialStep();
+	}
+
+
+	public void onInitialStep() {
+		nextFactor = new HashSet<String>();
         firstFactor = null;
         secondFactor = null;
         step = 0;
@@ -350,14 +349,7 @@ public class AuthenticationContext {
 			getUserData(user);
 		
 			updateAllowedAuthenticationMethods();
-	        if (requestedAuthenticationMethod != null)
-	        {
-	        	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
-	        }
-            for ( String allowedMethod: allowedAuthenticationMethods)
-            {
-           		nextFactor.add( allowedMethod.substring(0,1));
-            }
+			onInitialStep();
 		} else if ( user != null && ! user.equals(currentAccount.getName())){
 			throw new InternalErrorException( String.format("Cannot mix credentials of %s and %s", user, currentAccount.getName()));
 		}

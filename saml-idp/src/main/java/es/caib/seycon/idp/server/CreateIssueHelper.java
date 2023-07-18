@@ -28,17 +28,16 @@ public class CreateIssueHelper {
 		server.registerIssue(i);
 	}
 
-	public static void robotLogin(User user, double pct, String hostId, String ip) throws InternalErrorException, IOException {
+	public static void robotLogin(String u, double pct, String hostId, String ip) throws InternalErrorException, IOException {
 		ServerService server = new RemoteServiceLocator().getServerService();
 		Issue i = new Issue();
 		i.setCreated(new Date());
 		i.setStatus(IssueStatus.NEW);
 		i.setType("robot-login");
 		i.setFailedLoginPct(pct);
-		if (user != null) {
+		if (u != null) {
 			IssueUser iu = new IssueUser();
-			iu.setUserId(user.getId());
-			iu.setUserName(user.getUserName());
+			iu.setUserName(u);
 			i.setUsers(Arrays.asList(iu));
 		}
 

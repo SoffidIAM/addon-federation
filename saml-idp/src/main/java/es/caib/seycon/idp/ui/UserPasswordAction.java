@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
@@ -31,6 +32,7 @@ public class UserPasswordAction extends HttpServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	static Log log = LogFactory.getLog(UserPasswordFormServlet.class);
 
 	LogRecorder logRecorder = LogRecorder.getInstance();
 
@@ -39,7 +41,8 @@ public class UserPasswordAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        
+        AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
         if (! amf.allowUserPassword())
             throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
@@ -47,7 +50,6 @@ public class UserPasswordAction extends HttpServlet {
         String u = req.getParameter("j_username"); //$NON-NLS-1$
         String p = req.getParameter("j_password"); //$NON-NLS-1$
         String error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
-        AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
         if (u == null && ctx != null)
         	u = ctx.getUser();
         if (u == null || u.length() == 0) {
@@ -65,7 +67,11 @@ public class UserPasswordAction extends HttpServlet {
             			LogFactory.getLog(getClass()).warn("Trying to authenticate user "+u+" from a page with low captcha score "+captcha.getConfidence());
                 		error = "There seems to be problems to identify you, please, try again"; //$NON-NLS-1$
                         req.setAttribute("ERROR", error); //$NON-NLS-1$
-                        CreateIssueHelper.robotLogin(ctx.getCurrentUser(), captcha.getConfidence(),
+                        if (ctx == null) {
+                        	ctx = new AuthenticationContext();
+                        	ctx.initialize(req);
+                        }
+                        CreateIssueHelper.robotLogin(u, captcha.getConfidence(),
                         		ctx.getHostId(resp), ctx.getRemoteIp());
         				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         				dispatcher.forward(req, resp);

@@ -78,6 +78,7 @@ public class UserAction extends HttpServlet {
 	           			error = "User is temporary locked";
 	           		} else {
 						ctx.updateAllowedAuthenticationMethods();
+						ctx.onInitialStep();
 	           		}
 				} catch (Exception e) {
 		           	error = "Cannot find suitable authentication methods";
