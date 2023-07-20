@@ -677,6 +677,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		XMLObjectBuilder<Signature> signatureBuilder = builderFactory.getBuilderOrThrow(Signature.DEFAULT_ELEMENT_NAME);
 		Signature signature = signatureBuilder.buildObject(Signature.DEFAULT_ELEMENT_NAME);
 		signature.setSigningCredential(cred);
+		signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
 		signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 		KeyInfo keyInfo = getKeyInfo(serviceProvider);
 		keyInfo.detach();
@@ -704,12 +705,12 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		if (extensions != null) {
 			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "SigningMethod"))) {
 				String algorithm = extension.getDOM().getAttribute("Algorithm");
-				if (algorithm != null)
+				if (algorithm != null && ! algorithm.trim().isEmpty())
 					signature.setSignatureAlgorithm(algorithm);
 			}
 			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "DigestMethod"))) {
 				String algorithm = extension.getDOM().getAttribute("Algorithm");
-				if (algorithm != null) 
+				if (algorithm != null && !algorithm.trim().isEmpty()) 
 					((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(algorithm);
 			}
 		}
