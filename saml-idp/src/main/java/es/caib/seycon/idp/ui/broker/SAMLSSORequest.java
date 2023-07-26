@@ -54,7 +54,7 @@ public class SAMLSSORequest extends BaseForm {
         try {
 
 	    	IdpConfig cfg = IdpConfig.getConfig();
-			FederationService federacioService = new RemoteServiceLocator().getFederacioService();
+			FederationService federacioService = (FederationService) new com.soffid.iam.remote.RemoteServiceLocator().getRemoteService( FederationService.REMOTE_PATH);
 			
 			Long timeOut = cfg.getFederationMember().getSessionTimeout();
 			SamlRequest samlRequest = federacioService.generateSamlRequest( 
