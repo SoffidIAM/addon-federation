@@ -71,8 +71,10 @@ public class UserPasswordAction extends HttpServlet {
                         	ctx = new AuthenticationContext();
                         	ctx.initialize(req);
                         }
-                        CreateIssueHelper.robotLogin(u, captcha.getConfidence(),
+                        try {
+                        	CreateIssueHelper.robotLogin(u, captcha.getConfidence(),
                         		ctx.getHostId(resp), ctx.getRemoteIp());
+                        } catch (Error e) {}
         				RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         				dispatcher.forward(req, resp);
         				return;
