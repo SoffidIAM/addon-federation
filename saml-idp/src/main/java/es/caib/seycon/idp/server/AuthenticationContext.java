@@ -499,7 +499,9 @@ public class AuthenticationContext {
 	    currentAccount = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
 
 	    if (currentAccount == null || currentAccount.isDisabled()) {
-            CreateIssueHelper.wrongUser(userName, hostId, remoteIp);
+	    	try {
+	    		CreateIssueHelper.wrongUser(userName, hostId, remoteIp);
+	    	} catch (Error e) {}
 	    	throw new InternalErrorException("The account "+userName+" is disabled");
 	    }
 	    
