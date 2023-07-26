@@ -32,3 +32,7 @@
         url: addon/federation/providers.zul
         img: /addon/federation/img/providers.svg
         permissions: ["seu:federacioIdentitats:show"]
+      - name: federacio.zul.sse
+        url: addon/federation/sse.zul
+        img: /addon/federation/menu/sse.svg
+        permissions: ["seu:sharedsignals:show"]

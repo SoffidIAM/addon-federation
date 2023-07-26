@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<zkib-model>
+
+	<datanode name="root">
+		<finder name="receiver" type="receiver">
+			<ejb-finder
+				jndi="java:/module/SharedSignalEventsService-v2"
+				method="findReceiverAsync">
+				<parameter value="${textquery}"/>
+				<parameter value="${query}"/>
+			</ejb-finder>
+			<new-instance-bean
+				className="com.soffid.iam.addons.federation.api.SseReceiver" />
+		</finder>
+	</datanode>
+
+	<datanode name="receiver">
+		<ejb-handler
+				jndi="java:/module/SharedSignalEventsService-v2" >
+			<insert-method method="create" returnBean="true">
+				<parameter value="${instance}" />
+			</insert-method>
+			<update-method method="update" returnBean="true">
+				<parameter value="${instance}" />
+			</update-method>
+			<delete-method method="delete">
+				<parameter value="${instance}" />
+			</delete-method>
+		</ejb-handler>
+	</datanode>
+
+</zkib-model>

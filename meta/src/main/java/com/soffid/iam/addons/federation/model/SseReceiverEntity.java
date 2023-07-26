@@ -32,7 +32,7 @@ public class SseReceiverEntity {
 	@Nullable @Column(name="SSR_SRCIP")
 	String sourceIps;
 	
-	@Column(name="SSR_METHOD")
+	@Nullable @Column(name="SSR_METHOD")
 	SseReceiverMethod method;
 	
 	@Nullable @Column(name="SSR_URL", length = 256)

@@ -188,4 +188,23 @@
 		<descripcio>Manage digital certificate authorities</descripcio>
 		<ambit>Identify Federation</ambit>
 	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation:sse:update</codi>
+		<descripcio>Update shared signals &amp; events members</descripcio>
+		<ambit>Shared signals &amp; events</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>federation:sse:query</codi>
+		<descripcio>Query shared signals &amp; events members</descripcio>
+		<ambit>Shared signals &amp; events</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>seu:sharedsignals:show</codi>
+		<descripcio>Shared signals &amp; events members page</descripcio>
+		<ambit>Soffid</ambit>
+	</autoritzacio>
+
 </autoritzacions>

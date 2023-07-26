@@ -31,10 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
 	AsyncRunnerService.class})
 public class SharedSignalEventsService  {
 	@Operation(grantees = {sse_read.class})
-	public AsyncList<SseReceiver> findReceiverAsync(@Nullable String query) { return null;}
+	public AsyncList<SseReceiver> findReceiverAsync(@Nullable String textQuery, @Nullable String query) { return null;}
 
 	@Operation(grantees = {sse_read.class})
-	public PagedResult<SseReceiver> findReceiver(@Nullable String query, @Nullable Integer first, 
+	public PagedResult<SseReceiver> findReceiver(@Nullable String textQuery, @Nullable String query, @Nullable Integer first, 
 			@Nullable Integer pageSize) { return null;}
 
 	@Operation(grantees = {sse_update.class})

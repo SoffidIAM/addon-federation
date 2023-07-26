@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+
+<frame xmlns:h="http://www.w3.org/1999/xhtml" mold="div" style="position: relative" 
+	use="com.soffid.iam.addons.federation.web.SseHandler" id="frame">
+	<datamodel id="model" rootNode="root" src="addon/federation/sseDescriptor.xml"/>
+	<div sclass="card" id="card">
+		<div sclass="card__face card__face--front">
+	
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame">
+				<menu2>
+					<menu2item image="/img/download.svg" label="${c:l('zkdb.download') }" onClick="ref:frame.downloadCsv"/>
+					<menu2item image="/img/change-columns.svg" label="${c:l('select-columns.title') }" 
+						onClick="ref:frame.changeColumns"/>
+					<menu2item image="/img/add.svg" label="${c:l('agents.zul.Afegeixnou') }" 
+						onClick="ref:frame.addNew"
+						if="${soffid:isUserInRole('federation:sse:update')}" />
+				</menu2>
+			</div>
+			<searchbox auto="true" id="searchBox"
+				jsonObject="com.soffid.iam.addons.federation.api.SseReceiver" 
+				defaultAttributes="name, description"
+				preference="sseReceiver"
+				dataPath="/model:/receiver" variableName="query" variableNameText="textQuery"></searchbox>
+
+			<datatable id="listbox" autocommit="true" 
+				multiselect="true"
+				use="com.soffid.iam.addons.federation.web.SseReceiverDatatable"
+				preference="sseReceiver"
+				dataPath="/model:/receiver" sortColumn="0"
+				onSelect="ref:frame.showDetails" enablefilter="true">
+			</datatable>
+			<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('federation:sse:update')}" >
+				<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false">-</div>
+				<div class="addButton" onClick="ref:frame.addNew">+</div>
+			</div>
+		</div>
+		
+		<div sclass="card__face card__face--back">
+			<div use="com.soffid.iam.web.component.NavigationBar" frame="frame" lastAction="ref:frame.confirmApply">
+				<pager datatable="listbox"/>
+								
+				<databutton image="/img/save.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.applyNoClose" onlyIcon="true"
+					use="com.soffid.iam.web.component.DatasourceButton3"/>
+			</div>
+			<form id="form" onChangeXPath="ref:frame.onChangeForm"
+				dataPath="/listbox:/." width="100%">
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.name')}"
+					bind="name"
+					dataType="STRING" required="true" />
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.description')}"
+					bind="description"
+					dataType="STRING" required="true" multiline='true' />
+				<div id="tokendiv">
+					<customfield3 dataType="STRING" id="token"
+						style="width: calc(100% - 64px); display: inline-block"
+						maxLength="100"
+						readonly="true"
+						label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.token')}" />
+					<imageclic src="/img/refresh.svg"
+						onClick="ref:frame.generateOpenidSecret"
+						disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+					<imageclic src="/img/cancel.png"
+						onClick="ref:frame.clearOpenidSecret"
+						disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+				</div>
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.expiration')}"
+					bind="expiration"
+					dataType="DATE_TIME" required="false" />
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.sourceIps')}"
+					bind="sourceIps"
+					dataType="STRING" required="false" />
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.url')}"
+					bind="url"
+					dataType="STRING" required="false" readonly="true" />
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.method')}"
+					bind="method"
+					dataType="STRING" required="false" readonly="true" 
+					enumeration="com.soffid.iam.addons.federation.api.SseReceiverMethod"/>
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.events')}"
+					bind="events"
+					dataType="STRING" required="false" readonly="true" multiValue="true" />
+				
+			</form>
+			<div style="text-align: right; width: 100%">
+				<databutton image="/img/undo-r.svg" label="${c:l('common.undo')}" datamodel="/model" onClick="ref:frame.undo">
+				</databutton>
+				<databutton image="/img/save-r.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.apply"/>
+			</div>
+		</div>
+	</div>
+</frame>

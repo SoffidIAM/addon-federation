@@ -50,6 +50,7 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 					SseReceiverEventEntity e = eventDao.newSseReceiverEventEntity();
 					e.setName(event);
 					e.setReceiver(entity);
+					eventDao.create(e);
 					entity.getEvents().add(e);
 				}
 			}
@@ -67,11 +68,11 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 	}
 
 	@Override
-	protected AsyncList<SseReceiver> handleFindReceiverAsync(String query) throws Exception {
+	protected AsyncList<SseReceiver> handleFindReceiverAsync(String textQuery, String query) throws Exception {
 		AsyncList<SseReceiver> l = new AsyncList<>();
 		getAsyncRunnerService().run(() -> {
 			try {
-				internalSearchByJson(query, l, null, null);
+				internalSearchByJson(textQuery, query, l, null, null);
 			} catch (Throwable e) {
 				throw new RuntimeException(e);
 			}				
@@ -80,10 +81,10 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 	}
 
 	@Override
-	protected PagedResult<SseReceiver> handleFindReceiver(String query, Integer first, Integer pageSize)
+	protected PagedResult<SseReceiver> handleFindReceiver(String textQuery, String query, Integer first, Integer pageSize)
 			throws Exception {
 		LinkedList<SseReceiver> r = new LinkedList<>();
-		return internalSearchByJson(query, r, first, pageSize);
+		return internalSearchByJson(textQuery, query, r, first, pageSize);
 	}
 
 	@Override
@@ -93,13 +94,13 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 			getSseReceiverEntityDao().remove(receiver.getId());
 	}
 
-	private PagedResult<SseReceiver> internalSearchByJson(String query, List<SseReceiver> result, 
+	private PagedResult<SseReceiver> internalSearchByJson(String textQuery, String query, List<SseReceiver> result, 
 			Integer first,
 			Integer pageSize) throws UnsupportedEncodingException, ClassNotFoundException, JSONException, InternalErrorException, EvalException, ParseException, TokenMgrError {
 		// Register virtual attributes for additional data
 		final SseReceiverEntityDao dao = getSseReceiverEntityDao();
 		ScimHelper h = new ScimHelper(SseReceiver.class);
-		h.setPrimaryAttributes(new String[] { "publicId"} );
+		h.setPrimaryAttributes(new String[] { "name", "description"} );
 		
 		CriteriaSearchConfiguration config = new CriteriaSearchConfiguration();
 		config.setFirstResult(first);
@@ -110,7 +111,7 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 			return dao.toSseReceiver((SseReceiverEntity) entity);
 		});
 		
-		h.search(null, query, (Collection) result); 
+		h.search(textQuery, query, (Collection) result); 
 
 		PagedResult<SseReceiver> pr = new PagedResult<>();
 		pr.setStartIndex(first);

@@ -34,6 +34,7 @@ public class SseReceiver {
 	@Description("Allowed source IPs")
 	String sourceIps;
 
+	@Nullable
 	@Attribute(readonly = true)
 	@Description("Subscription mechanism")
 	SseReceiverMethod method;
