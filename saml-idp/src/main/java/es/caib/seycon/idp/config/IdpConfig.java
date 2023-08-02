@@ -490,8 +490,13 @@ public class IdpConfig {
         if (federationMember.getClientCertificatePort()  == null ||
         		federationMember.getClientCertificatePort().trim().isEmpty())
             return 1443;
-        else
-            return Integer.decode(federationMember.getClientCertificatePort());
+        else {
+        	try {
+        		return Integer.decode(federationMember.getClientCertificatePort());
+        	} catch (NumberFormatException e) {
+        		return 1443;
+        	}
+        }
     }
     
     public int getStandardPort() {

@@ -39,7 +39,9 @@ public class TenantFilter implements Filter {
 		String uri = req.getContextPath()+req.getServletPath();
 		if (req.getPathInfo() != null)
 			uri += req.getPathInfo();
-		request = new HttpServletRequestSourceIpWrapper(req, Security.getClientIp());
+		int port = Integer.parseInt(filterConfig.getInitParameter("port"));
+		String host = filterConfig.getInitParameter("host");
+		request = new HttpServletRequestSourceIpWrapper(req, Security.getClientIp(), host, port);
 		String tenant = filterConfig.getInitParameter("tenant");
 		if (tenant != null)
 		{

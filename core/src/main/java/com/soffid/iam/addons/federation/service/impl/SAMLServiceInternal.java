@@ -705,13 +705,18 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		if (extensions != null) {
 			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "SigningMethod"))) {
 				String algorithm = extension.getDOM().getAttribute("Algorithm");
-				if (algorithm != null && ! algorithm.trim().isEmpty())
+				if (algorithm != null && ! algorithm.trim().isEmpty() && algorithm.toLowerCase().contains("#rsa"))
+				{
 					signature.setSignatureAlgorithm(algorithm);
+					break;
+				}
 			}
 			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("urn:oasis:names:tc:SAML:metadata:algsupport", "DigestMethod"))) {
 				String algorithm = extension.getDOM().getAttribute("Algorithm");
-				if (algorithm != null && !algorithm.trim().isEmpty()) 
+				if (algorithm != null && !algorithm.trim().isEmpty())  {
 					((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(algorithm);
+					break;
+				}
 			}
 		}
 	}

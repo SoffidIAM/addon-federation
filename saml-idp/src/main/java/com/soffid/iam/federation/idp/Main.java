@@ -427,6 +427,8 @@ public class Main {
         f = new FilterHolder(TenantFilter.class);
         f.setName("TenantFilter");
         f.setInitParameter("tenant", Security.getCurrentTenantName());
+        f.setInitParameter("port", c.getFederationMember().getStandardPort());
+        f.setInitParameter("host", c.getFederationMember().getHostName());
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
         
         f = new FilterHolder(

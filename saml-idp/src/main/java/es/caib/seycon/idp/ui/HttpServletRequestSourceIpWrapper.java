@@ -1,37 +1,31 @@
 package es.caib.seycon.idp.ui;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import org.apache.commons.logging.LogFactory;
 
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.ng.exception.InternalErrorException;
 
 
 public class HttpServletRequestSourceIpWrapper extends HttpServletRequestWrapper {
 
 	private String address;
 	private HashMap<String,List<String>> headers;
+	private int port;
+	private String hostName;
 
-	public HttpServletRequestSourceIpWrapper(HttpServletRequest request, String sourceAddress) {
+	public HttpServletRequestSourceIpWrapper(HttpServletRequest request, String sourceAddress, String hostName, int port) {
 		super(request);
 		this.address = sourceAddress;
+		this.port = port;
+		this.hostName = hostName;
 		headers = new HashMap<>();
 		for (Enumeration<String> e = request.getHeaderNames(); e.hasMoreElements(); ) {
 			String name = e.nextElement();
@@ -105,6 +99,16 @@ public class HttpServletRequestSourceIpWrapper extends HttpServletRequestWrapper
 	@Override
 	public Enumeration<String> getHeaderNames() {
 		return Collections.enumeration(headers.keySet());
+	}
+
+	@Override
+	public int getServerPort() {
+		return port;
+	}
+
+	@Override
+	public String getServerName() {
+		return hostName;
 	}
 
 }
