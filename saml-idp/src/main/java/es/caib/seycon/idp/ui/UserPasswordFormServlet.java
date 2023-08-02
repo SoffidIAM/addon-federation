@@ -73,7 +73,7 @@ public class UserPasswordFormServlet extends BaseForm {
         
         
         try {
-        	if ( ctx.getStep() > 0 ) {
+        	if ( ctx != null && ctx.getStep() > 0 ) {
         		requestedUser = ctx.getUser();
         	}
         	else {
@@ -155,6 +155,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userAllowed",  ctx.getNextFactor().contains("P") || 
+            		ctx.getNextFactor().contains("Z") ||
             		ctx.getNextFactor().contains("O") ||
             		ctx.getNextFactor().contains("M") ||
             		ctx.getNextFactor().contains("I") ||
