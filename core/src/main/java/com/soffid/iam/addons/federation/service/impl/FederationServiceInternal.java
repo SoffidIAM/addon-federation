@@ -627,28 +627,30 @@ public class FederationServiceInternal {
 			u.setMailServer("null");
 			Map<String,Object> attributes = (Map<String, Object>) map;
 
-			try {
-				Interpreter interpreter = new Interpreter();
-				interpreter.set("user", u); //$NON-NLS-1$
-				interpreter.set("attributes", attributes); //$NON-NLS-1$
-				interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
-				log.info("searchUser() - execute scriptParse");
-				Object r = interpreter.eval( provisionScript );
-				if ( r == null || r.equals(Boolean.FALSE))
-				{
-					return null;
+			if (provisionScript != null) {
+				try {
+					Interpreter interpreter = new Interpreter();
+					interpreter.set("user", u); //$NON-NLS-1$
+					interpreter.set("attributes", attributes); //$NON-NLS-1$
+					interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
+					log.info("searchUser() - execute scriptParse");
+					Object r = interpreter.eval( provisionScript );
+					if ( r == null || r.equals(Boolean.FALSE))
+					{
+						return null;
+					}
+					else if ( ! (r instanceof String))
+					{
+						throw new InternalErrorException("Autoprovision script for "+identityProvider+" returned an object of class "+r.getClass().toString()+" when it should return a String object");
+					}
+					else
+					{
+						u.setUserName((String) r);
+					}
+				} catch (EvalError e) {
+					throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", identityProvider),
+							e);
 				}
-				else if ( ! (r instanceof String))
-				{
-					throw new InternalErrorException("Autoprovision script for "+identityProvider+" returned an object of class "+r.getClass().toString()+" when it should return a String object");
-				}
-				else
-				{
-					u.setUserName((String) r);
-				}
-			} catch (EvalError e) {
-				throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", identityProvider),
-						e);
 			}
 			
 			log.info("searchUser() - trying to create the user...");
