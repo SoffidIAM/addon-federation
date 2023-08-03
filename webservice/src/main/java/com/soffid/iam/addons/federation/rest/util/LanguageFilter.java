@@ -37,6 +37,12 @@ public class LanguageFilter implements Filter {
 			} else if (l.getLanguage().equalsIgnoreCase("nl")) {
 				idioma = l;
 				break;
+			} else if (l.getLanguage().equalsIgnoreCase("fr")) {
+				idioma = l;
+				break;
+			} else if (l.getLanguage().equalsIgnoreCase("de")) {
+				idioma = l;
+				break;
 			}
 		}
 		if (idioma == null) {
