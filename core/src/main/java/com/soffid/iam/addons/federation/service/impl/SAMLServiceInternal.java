@@ -256,14 +256,28 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			return result;
 		}
 		log.info("createAuthenticationRecord() - subject: "+subject);
+		for (AttributeStatement attStmt: assertion.getAttributeStatements())
+		{
+			for (Attribute att: attStmt.getAttributes())
+			{
+				List<String> values = new LinkedList<String>();
+				for (XMLObject value: att.getAttributeValues())
+				{
+					values.add(value.getDOM().getTextContent());
+				}
+				if (att.getName() != null)
+					result.getAttributes().put( att.getName(),values);
+				if (att.getFriendlyName() != null)
+					result.getAttributes().put( att.getFriendlyName(),values);
+			}
+		}
 		NameID nameID = subject.getNameID();
 		if (nameID == null)
 		{
-			result.setFailureReason("Assertion does not contain nameID information");
-			return result;
+			result.setPrincipalName(null);
+			result.setValid(true);
 		}
-		log.info("createAuthenticationRecord() - nameID: "+nameID);
-		if (nameID.getFormat() == null || 
+		else if (nameID.getFormat() == null || 
 				nameID.getFormat().equals(NameID.PERSISTENT) ||
 				nameID.getFormat().equals(NameID.TRANSIENT) ||
 				nameID.getFormat().equals(NameID.UNSPECIFIED) ||
@@ -273,21 +287,6 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			log.info("createAuthenticationRecord() - user: "+user);
 			result.setPrincipalName(user);
 			result.setValid(true);
-			for (AttributeStatement attStmt: assertion.getAttributeStatements())
-			{
-				for (Attribute att: attStmt.getAttributes())
-				{
-					List<String> values = new LinkedList<String>();
-					for (XMLObject value: att.getAttributeValues())
-					{
-						values.add(value.getDOM().getTextContent());
-					}
-					if (att.getName() != null)
-						result.getAttributes().put( att.getName(),values);
-					if (att.getFriendlyName() != null)
-						result.getAttributes().put( att.getFriendlyName(),values);
-				}
-			}
 		}
 		else
 		{

@@ -43,6 +43,7 @@ import com.soffid.iam.api.PasswordPolicy;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
+import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.UserType;
 import com.soffid.iam.bpm.service.BpmEngine;
@@ -579,23 +580,23 @@ public class FederationServiceInternal {
 	public User findAccountOwner(String principalName, String identityProvider, Map<String, ? extends Object> map,
 			boolean autoProvision) throws Exception
 	{
-		log.info("searchUser()");
-		
 		com.soffid.iam.api.System dispatcher = createSamlDispatcher(identityProvider);
-		Account account = accountService.findAccount( principalName , dispatcher.getName());
-		log.info("searchUser() - account: "+account);
-		if (account != null)
-		{
-			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
+		if (principalName != null) {
+			Account account = accountService.findAccount( principalName , dispatcher.getName());
+			log.info("searchUser() - account: "+account);
+			if (account != null)
 			{
-				log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
-				updateAccountAttributes ( account, map);
-				return getUserService().findUserByUserName(account.getOwnerUsers().iterator().next());
+				if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
+				{
+					log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
+					updateAccountAttributes ( account, map);
+					return getUserService().findUserByUserName(account.getOwnerUsers().iterator().next());
+				}
+				if ( ! account.getType().equals(AccountType.IGNORED))
+					throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+							principalName,
+							dispatcher.getName()));
 			}
-			if ( ! account.getType().equals(AccountType.IGNORED))
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						principalName,
-						dispatcher.getName()));
 		}
 		// Update account attributes
 		
@@ -610,7 +611,7 @@ public class FederationServiceInternal {
 			}
 		}
 
-		if (autoProvision || provisionScript != null )
+		if (autoProvision || provisionScript != null)
 		{
 			User u = new User();
 			u.setActive(true);
@@ -698,18 +699,20 @@ public class FederationServiceInternal {
 				}
 			}
 			// Register account
-			try {
-				account = accountService.createAccount(u, dispatcher, principalName);
-				updateAccountAttributes ( account, map);
-				log.info("searchUser() - account created");
-			} catch (NeedsAccountNameException e) {
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						principalName,
-						dispatcher.getName()));
-			} catch (AccountAlreadyExistsException e) {
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						principalName,
-						dispatcher.getName()));
+			if (principalName != null) {
+				try {
+					UserAccount account = accountService.createAccount(u, dispatcher, principalName);
+					updateAccountAttributes ( account, map);
+					log.info("searchUser() - account created");
+				} catch (NeedsAccountNameException e) {
+					throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+							principalName,
+							dispatcher.getName()));
+				} catch (AccountAlreadyExistsException e) {
+					throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+							principalName,
+							dispatcher.getName()));
+				}
 			}
 			return u;
 		}
