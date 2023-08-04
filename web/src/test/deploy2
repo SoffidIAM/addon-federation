@@ -1,0 +1,12 @@
+#!/bin/bash
+cp -vru /home/gbuades/soffid/addon-federation/web/src/main/webapp/* /home/gbuades/soffid-2.0/test/iam-console-2/work/soffid/iam-ear.ear/iam-web-*/
+#cp -vru /home/gbuades/soffid/addon-federation/web/src/main/resources/* /home/gbuades/soffid-2.0/test/iam-console-2/work/soffid/iam-ear.ear/iam-web-*/WEB-INF/classes
+cp -vru /home/gbuades/soffid/addon-federation/web/target/classes/* /home/gbuades/soffid-2.0/test/iam-console-2/work/soffid/iam-ear.ear/iam-web-*/WEB-INF/classes
+
+ 
+cp -vur /home/gbuades/soffid/addon-federation/web/src/main/webapp/addon/*    /home/gbuades/soffid/test/iam-console-3/work/soffid/iam-ear.ear/iam-web-*-SNAPSHOT/addon
+cp -vur /home/gbuades/soffid/addon-federation/web/target/classes/* /home/gbuades/soffid/test/iam-console-3/work/soffid/iam-ear.ear/iam-web-*-SNAPSHOT/WEB-INF/classes/
+cp -vur /home/gbuades/soffid/addon-federation/web/src/main/resources/* /home/gbuades/soffid/test/iam-console-3/work/soffid/iam-ear.ear/iam-web-*-SNAPSHOT/WEB-INF/classes/
+ 
+ 
+ 
