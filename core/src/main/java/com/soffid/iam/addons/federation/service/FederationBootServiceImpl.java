@@ -27,10 +27,13 @@ import com.soffid.iam.addons.federation.service.impl.CrudEntityGroupHandler;
 import com.soffid.iam.addons.federation.service.impl.CrudFederationMemberHandler;
 import com.soffid.iam.addons.federation.sync.web.MetadataGenerator;
 import com.soffid.iam.api.DataType;
+import com.soffid.iam.api.Host;
+import com.soffid.iam.api.LetterCaseEnum;
 import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.Tenant;
 import com.soffid.iam.sync.SoffidApplication;
 
+import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class FederationBootServiceImpl extends FederationBootServiceBase 
@@ -243,6 +246,24 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
 		testAttribute("Session key", "SessionKey", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.6", null);
+		testHostAttribute("device", "Device type");
+		testHostAttribute("detectedOs", "Operating system");
+		testHostAttribute("browser", "Internet browser");
+		testHostAttribute("cpu", "CPU type");
+	}
+
+	private void testHostAttribute(String name, String label) throws InternalErrorException {
+		for (DataType att: getAdditionalDataService().findDataTypesByObjectTypeAndName2(Host.class.getName(), name)) {
+			if (att.getName().equals(name))
+				return;
+		}
+		DataType dt = new DataType();
+		dt.setCustomObjectType(Host.class.getName());
+		dt.setLabel(label);
+		dt.setName(name);
+		dt.setLetterCase(LetterCaseEnum.MIXEDCASE);
+		dt.setType(TypeEnumeration.STRING_TYPE);
+		getAdditionalDataService().create(dt);
 	}
 
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

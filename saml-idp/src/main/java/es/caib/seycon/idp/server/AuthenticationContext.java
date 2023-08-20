@@ -18,6 +18,7 @@ import java.security.cert.CertificateException;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -33,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.compress.harmony.pack200.CPClass;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -61,6 +63,10 @@ import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
+import nl.basjes.parse.useragent.UserAgent;
+import nl.basjes.parse.useragent.UserAgent.ImmutableUserAgent;
+import nl.basjes.parse.useragent.UserAgent.MutableUserAgent;
+import nl.basjes.parse.useragent.UserAgentAnalyzer;
 
 public class AuthenticationContext {
 	String publicId;
@@ -84,8 +90,13 @@ public class AuthenticationContext {
 
 	private boolean alwaysAskForCredentials;
 	private String radiusState;
-	private long created; 
-	
+	private long created;
+	boolean underAttack = false;
+	private String device; 
+	private String os;
+	private String browser;
+	private String cpu;
+
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
 		if (r == null)
@@ -141,6 +152,7 @@ public class AuthenticationContext {
 	{
 		IdpConfig config = IdpConfig.getConfig();
     	remoteIp = getClientRequest(request);
+    	parseUserAgent(request);
     	hostId = null;
     	String cookieName = getHostIdCookieName();
     	String userCookie = getUserCookieName();
@@ -193,6 +205,32 @@ public class AuthenticationContext {
 	{
 		String ip = req.getRemoteAddr();
 		return ip;
+	}
+	
+	static UserAgentAnalyzer uaa = UserAgentAnalyzer
+			.newBuilder()
+			.withField(UserAgent.DEVICE_NAME)
+			.withField(UserAgent.OPERATING_SYSTEM_NAME)
+			.withField(UserAgent.DEVICE_CPU)
+			.withField(UserAgent.AGENT_NAME_VERSION)
+			.hideMatcherLoadStats()
+			.withCache(500)
+			.build();
+
+	public void parseUserAgent(HttpServletRequest req) {
+		
+		Map<String,String> headers = new HashMap<>();
+		for (Enumeration<String> e = req.getHeaderNames(); e.hasMoreElements(); ) {
+			String key = e.nextElement();
+			headers.put(key, req.getHeader(key));
+		}
+		synchronized (uaa) {
+			ImmutableUserAgent p = uaa.parse(headers);
+			os = p.get(UserAgent.OPERATING_SYSTEM_NAME).getValue();
+			cpu = p.get(UserAgent.DEVICE_CPU).getValue();
+			browser = p.get(UserAgent.AGENT_NAME_VERSION).getValue();
+			device = p.get(UserAgent.DEVICE_NAME).getValue();
+		}
 	}
 
 	public boolean isPreviousAuthenticationMethodAllowed (HttpServletRequest request) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
@@ -378,9 +416,11 @@ public class AuthenticationContext {
     			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
     			long f = ubh.getUserFailures(currentUser.getId());
     			ubh.setUserFailures(currentUser.getId(), 0);
+    			if (hostId != null)
+    				updateHost(ubh);
     			if (hostId == null && resp != null)
     			{
-    				hostId = ubh.registerHost(remoteIp);
+    				registerHost(ubh);
     				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
     				c2.setSecure(true);
     				c2.setMaxAge(Integer.MAX_VALUE);
@@ -425,6 +465,15 @@ public class AuthenticationContext {
         	throw new InternalErrorException ("Internal error. No authentication method is allowed");
 	}
 
+
+	protected void registerHost(UserBehaviorService ubh) throws InternalErrorException {
+		hostId = ubh.registerHost(remoteIp, device, browser, os, cpu);
+	}
+
+	protected void updateHost(UserBehaviorService ubh) throws InternalErrorException {
+		ubh.updateHost(hostId, remoteIp, device, browser, os, cpu);
+	}
+
 	private void registerNewCredential() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
 		if (currentUser !=null && newCredential != null)
 		{
@@ -433,7 +482,6 @@ public class AuthenticationContext {
 		}
 	}
 
-	boolean underAttack = false;
 	public void authenticationFailure (String u, String comments) throws IOException, InternalErrorException
 	{
 		getUserData(u);
@@ -624,7 +672,7 @@ public class AuthenticationContext {
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			if (hostId == null)
 			{
-				hostId = ubh.registerHost(remoteIp);
+				registerHost(ubh);
 				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
 				c2.setSecure(true);
 				c2.setMaxAge(Integer.MAX_VALUE);
@@ -684,6 +732,10 @@ public class AuthenticationContext {
     	remoteIp = accessRequest.getAttributeValue("Framed-IP-Address");
     	if (remoteIp == null)
     		remoteIp = sourceAddress.getHostAddress();
+    	os = "Unknown";
+    	browser = "Radius";
+    	cpu = null;
+    	
     	hostId = null;
     	currentUser = null;
     	this.publicId = publicId;
@@ -720,6 +772,9 @@ public class AuthenticationContext {
 		this.remoteIp = remoteIp;
     	hostId = null;
     	currentUser = null;
+    	os = "Unknown";
+    	browser = "Radius";
+    	cpu = null;
 
     	String system = IdpConfig.getConfig().getSystem().getName();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);

@@ -213,20 +213,24 @@
 			$("form.captcha-form").submit(function(event) {
 				var currentForm = event.target;
 				var ok = true;
-				$("input.captcha-token").each( function(pos, el) {
-					if (el.value == null || el.value == "") ok = false;			
-				});
-				if (!ok) {
-		          event.preventDefault();
-		          grecaptcha.ready(function() {
-		            grecaptcha.execute('${captchaKey}', {action: 'submit'}).then(function(token) {
-						$("input.captcha-token").each( function(pos, el) {
-							el.value = token;			
-						});
-						currentForm.submit();
-		            });
-		          });
-					
+				if (typeof grecaptcha == 'undefined') { // Possible recaptcha is out of service 
+					currentForm.submit();
+				} else {
+					$("input.captcha-token").each( function(pos, el) {
+						if (el.value == null || el.value == "") ok = false;			
+					});
+					if (!ok) {
+			          event.preventDefault();
+			          grecaptcha.ready(function() {
+			            grecaptcha.execute('${captchaKey}', {action: 'submit'}).then(function(token) {
+							$("input.captcha-token").each( function(pos, el) {
+								el.value = token;			
+							});
+							currentForm.submit();
+			            });
+			          });
+						
+					}					
 				}
 			});
 			{endif}

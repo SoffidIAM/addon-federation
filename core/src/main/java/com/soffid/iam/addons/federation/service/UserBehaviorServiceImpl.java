@@ -107,14 +107,33 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 	}
 
 	@Override
-	protected String handleRegisterHost(String hostIp) throws Exception {
+	protected String handleRegisterHost(String hostIp, String device, String browser, String os, String cpu) throws Exception {
 		String hostName = hostIp + "_" + System.currentTimeMillis();
 		byte b[] = new byte[24];
 		SecureRandom r = new SecureRandom();
 		r.nextBytes(b);
 		String serialNumber = System.currentTimeMillis()+"_"+Base64.encodeBytes(b);
-		getNetworkService().registerDynamicIP(hostName, hostIp, serialNumber);
+		Host h = getNetworkService().registerDynamicIP(hostName, hostIp, serialNumber);
+		h.getAttributes().put("device", device);
+		h.getAttributes().put("detectedOs", os);
+		h.getAttributes().put("browser", browser);
+		h.getAttributes().put("cpu", cpu);
+		h.setLastSeen(Calendar.getInstance());
+		getNetworkService().update(h);
 		return serialNumber;
+	}
+
+	@Override
+	protected void handleUpdateHost(String hostId, String hostIp, String device, String browser, String os, String cpu) throws Exception {
+		Host h = getNetworkService().findHostBySerialNumber(hostId);
+		if (h != null) {
+			h.setLastSeen(Calendar.getInstance());
+			h.getAttributes().put("device", device);
+			h.getAttributes().put("detectedOs", os);
+			h.getAttributes().put("browser", browser);
+			h.getAttributes().put("cpu", cpu);
+			getNetworkService().update(h);
+		}
 	}
 
 	@Override

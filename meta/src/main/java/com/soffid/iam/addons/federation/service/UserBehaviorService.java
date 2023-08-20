@@ -44,7 +44,8 @@ public class UserBehaviorService {
 	public Date getLastLogon (Long userId) {return null;}
 	public Date getLastLogon (Long userId, String hostId) {return null;}
 	public void registerLogon (Long userId, String hostIp, @Nullable String hostId) {}
-	public String registerHost (String hostIp) {return null;}
+	public String registerHost (String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {return null;}
+	public void updateHost (String hostId, String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {}
 	
 	public AuthenticationMethod getAuthenticationMethod ( FederationMember fm, AdaptiveEnvironment env) {return null;}
 	
