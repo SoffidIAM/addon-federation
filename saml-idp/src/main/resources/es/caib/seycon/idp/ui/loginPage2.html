@@ -60,6 +60,16 @@
 	}
 	var intervalId = setInterval(checkPush, 500);
 	{endif}
+	{if resendSms} 
+	setInterval(() => {
+		$("a.resend").css("display", "");
+	}, 5000);
+	{endif}
+	{if sendVoice} 
+	setInterval(() => {
+		$("a.voice").css("display", "");
+	}, 15000);
+	{endif}
 	</script>
 
 	<script src="/js/jquery-3.6.0.slim.min.js"></script>
@@ -124,6 +134,8 @@
 					<div class="upbutton">
 						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
 					</div>
+					<a href="${resendSmsUrl}" class="resend" style="display:none">Resend PIN</a>
+					<a href="${resendSmsUrl}?voice=true" class="voice" style="display:none">Send PIN by voice call</a>
 				</form>
 			</div>
 			<p/>

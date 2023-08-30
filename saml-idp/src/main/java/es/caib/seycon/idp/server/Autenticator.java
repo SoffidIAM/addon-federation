@@ -197,7 +197,8 @@ public class Autenticator {
 	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip, String hostId) 
 			throws Exception {
 		String value = c.getValue();
-		FederationService fs = new RemoteServiceLocator().getFederacioService();
+		// User remote version to avoid class cast exception error
+		FederationService fs = (FederationService) new RemoteServiceLocator().getRemoteService(FederationService.REMOTE_PATH);
 		SamlValidationResults check = fs.validateSessionCookie(value);
 		if (check.isValid() && check.getUser() != null)
 		{

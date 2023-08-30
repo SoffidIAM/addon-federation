@@ -115,6 +115,7 @@ import es.caib.seycon.idp.ui.PasswordRecoveryForm;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
+import es.caib.seycon.idp.ui.ResendSmsAction;
 import es.caib.seycon.idp.ui.RootServlet;
 import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
@@ -499,6 +500,7 @@ public class Main {
         ctx.addServlet(UserAction.class, UserAction.URI);
         ctx.addServlet(ChangeUserAction.class, ChangeUserAction.URI);
         ctx.addServlet(OTPAction.class, OTPAction.URI);
+        ctx.addServlet(ResendSmsAction.class, ResendSmsAction.URI);
         ctx.addServlet(PasswordChangeRequiredForm.class,
                 PasswordChangeRequiredForm.URI);
         ctx.addServlet(PasswordChangeRequiredAction.class,

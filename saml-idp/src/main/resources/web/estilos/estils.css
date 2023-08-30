@@ -370,3 +370,12 @@ p.biglogo {
 p.biglogo img {
 	width: 200px; 
 }
+
+a.resend {
+	font-weight: bold;
+}
+
+a.voice {
+	font-weight: bold;
+	float: right;
+}

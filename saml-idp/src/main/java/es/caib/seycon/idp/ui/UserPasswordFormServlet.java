@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -142,6 +143,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("userUrl", UserAction.URI); //$NON-NLS-1$
             g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
             g.addArgument("changeUserUrl", ChangeUserAction.URI); //$NON-NLS-1$
+            g.addArgument("resendSmsUrl", ResendSmsAction.URI);
             g.addArgument("cancelUrl", CancelAction.URI); //$NON-NLS-1$
             g.addArgument("otpLoginUrl", OTPAction.URI); //$NON-NLS-1$
             g.addArgument("pushLoginUrl", ValidateUserPushCredentialServlet.URI); //$NON-NLS-1$
@@ -174,16 +176,19 @@ public class UserPasswordFormServlet extends BaseForm {
 					user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
 					OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
 					
-					Challenge ch = new Challenge();
-					ch.setUser(user);
-					StringBuffer otpType = new StringBuffer();
-					if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
-					if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
-					if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
-					if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
-					ch.setOtpHandler(otpType.toString());
-					ch = v.selectToken(ch);
-					ctx.setChallenge(ch);
+					Challenge ch = ctx.getChallenge();
+					if (ch == null || ! isResendAvailable(ch)) {
+						ch = new Challenge();
+						ch.setUser(user);
+						StringBuffer otpType = new StringBuffer();
+						if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
+						if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
+						if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
+						if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
+						ch.setOtpHandler(otpType.toString());
+						ch = v.selectToken(ch);
+						ctx.setChallenge(ch);
+					}
 					if (ch.getCardNumber() == null)
 					{
 						if ( ctx.getNextFactor().size() == 1)
@@ -194,6 +199,8 @@ public class UserPasswordFormServlet extends BaseForm {
 					}
 					else 
 					{
+						g.addArgument("resendSms", isResendAvailable(ch) ? "true": "false") ;
+						g.addArgument("sendVoice", isAlterativeMethodAllowed(ch) ? "true": "false");
 						g.addArgument("otpAllowed",  "true"); //$NON-NLS-1$ //$NON-NLS-2$
 						g.addArgument("userAllowed", "true");
 						g.addArgument("otpToken",  ch.getCardNumber()+" "+ch.getCell()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -282,6 +289,24 @@ public class UserPasswordFormServlet extends BaseForm {
             throw new ServletException(e);
 		}
     }
+
+	protected boolean isAlterativeMethodAllowed(Challenge ch) {
+		try {
+			return Boolean.TRUE.equals( ch.getClass().getMethod("isAlternativeMethodAvailable").invoke(ch) );
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			return false;
+		}
+	}
+
+	protected boolean isResendAvailable(Challenge ch) {
+		try {
+			return Boolean.TRUE.equals( ch.getClass().getMethod("isResendAvailable").invoke(ch) );
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			return false;
+		}
+	}
 
     private boolean forwardToIdp(String requestedUser, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, InternalErrorException {
     	String idp = null;

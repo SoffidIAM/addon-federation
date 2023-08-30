@@ -37,6 +37,7 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 		if (u != null && u.getActive().equals("S")) {
 			for (UserCredentialEntity cred: getUserCredentialEntityDao().findByUserId(u.getId())) {
 				if (cred.getType() == UserCredentialType.PUSH) {
+					getUserCredentialChallengeEntityDao().remove(cred.getChallenges());
 					UserCredentialChallengeEntity ch = getUserCredentialChallengeEntityDao().newUserCredentialChallengeEntity();
 					ch.setCreated(new Date());
 					ch.setCredential(cred);
