@@ -61,12 +61,12 @@
 	var intervalId = setInterval(checkPush, 500);
 	{endif}
 	{if resendSms} 
-	setInterval(() => {
+	setTimeout(() => {
 		$("a.resend").css("display", "");
 	}, 5000);
 	{endif}
 	{if sendVoice} 
-	setInterval(() => {
+	setTimeout(() => {
 		$("a.voice").css("display", "");
 	}, 15000);
 	{endif}
@@ -134,8 +134,8 @@
 					<div class="upbutton">
 						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
 					</div>
-					<a href="${resendSmsUrl}" class="resend" style="display:none">Resend PIN</a>
-					<a href="${resendSmsUrl}?voice=true" class="voice" style="display:none">Send PIN by voice call</a>
+					<a href="${resendSmsUrl}" class="resend" style="display:none">${resendPin}</a>
+					<a href="${resendSmsUrl}?voice=true" class="voice" style="display:none">${voiceCall}</a>
 				</form>
 			</div>
 			<p/>

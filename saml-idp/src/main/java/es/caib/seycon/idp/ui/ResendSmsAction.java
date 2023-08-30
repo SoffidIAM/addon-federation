@@ -32,13 +32,13 @@ public class ResendSmsAction extends HttpServlet {
         try {
         	if ( ctx != null && ctx.getChallenge() != null &&
         			ctx.getChallenge().isResendAvailable()) {
-        		boolean voice = "true".equals(req.getParameter("voice"));
+        		boolean voice = "true".equals(req.getParameter("voice")); //$NON-NLS-1$ //$NON-NLS-2$
         		new RemoteServiceLocator().getOTPValidationService().resendToken(ctx.getChallenge(), voice);
-        		req.setAttribute("ERROR", voice ? "A voice system is going to call you. Please, wait": 
-        			"The PIN has ben resent by SMS"); //$NON-NLS-1$
+        		req.setAttribute("ERROR", voice ? Messages.getString("ResendSmsAction.3"):  //$NON-NLS-1$ //$NON-NLS-2$
+        			Messages.getString("ResendSmsAction.0")); //$NON-NLS-1$
         	}
 		} catch (Exception e1) {
-       		req.setAttribute("ERROR", "Cannot send SMS");
+       		req.setAttribute("ERROR", Messages.getString("ResendSmsAction.5")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
         RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
