@@ -325,12 +325,14 @@ public class Autenticator {
        		cookie.setMaxAge ( -1 );
         	cookie.setSecure(true);
         	cookie.setHttpOnly(true);
+			cookie.setPath("/");
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	resp.addCookie(cookie);
         	if (type != null && type.contains("K"))
         	{
         		Cookie cookie2 = new Cookie (ip.getSsoCookieName()+"_krb", "true");
+    			cookie2.setPath("/");
         		cookie2.setMaxAge(60 * 60 * 24 * 3 ); // 3 monthis to remember kerberos usage
             	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
             		cookie2.setDomain(ip.getSsoCookieDomain());
@@ -340,6 +342,7 @@ public class Autenticator {
         	if (! externalAuth && ! type.startsWith("C") && ! type.startsWith("E") &&
         			Boolean.TRUE.equals(ip.getStoreUser())) {
 	        	Cookie cookieUser = new Cookie(ip.getSsoCookieName()+"_user", principal);
+				cookieUser.setPath("/");
 	       		cookieUser.setMaxAge( 30 * 24 * 60 * 60_000  ); // Remember for one month
 	        	cookieUser.setSecure(true);
 	        	cookieUser.setHttpOnly(true);
@@ -351,6 +354,7 @@ public class Autenticator {
 	       		cookieUser.setMaxAge( 0 );
 	        	cookieUser.setSecure(true);
 	        	cookieUser.setHttpOnly(true);
+				cookieUser.setPath("/");
 	        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
 	        		cookieUser.setDomain(ip.getSsoCookieDomain());
 	        	resp.addCookie(cookieUser);
@@ -658,6 +662,7 @@ public class Autenticator {
        		cookie.setMaxAge ( -1 );
         	cookie.setHttpOnly(true);
         	cookie.setSecure(true);
+			cookie.setPath("/");
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	return cookie;

@@ -411,6 +411,7 @@ public class AuthenticationContext {
     				c2.setSecure(true);
     				c2.setMaxAge(Integer.MAX_VALUE);
     				c2.setHttpOnly(true);
+    				c2.setPath("/");
     				resp.addCookie(c2);
     			}
     			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
@@ -663,6 +664,7 @@ public class AuthenticationContext {
 				c2.setSecure(true);
 				c2.setMaxAge(Integer.MAX_VALUE);
 				c2.setHttpOnly(true);
+				c2.setPath("/");
 				resp.addCookie(c2);
 			}
 			
