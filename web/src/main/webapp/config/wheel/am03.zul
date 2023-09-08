@@ -5,7 +5,7 @@
 <window id="am02_w" position="top-center" closable="false" sizable="false"
 		title="${c:l('federation.mfa.title') }"
 		use="com.soffid.iam.web.addons.federation.web.wheel.Am03Handler"
-		style="width: 80%; height: 560px; max-width: 800px; top: 200px !important;">
+		style="width: 80%; height: 620px; max-width: 800px; top: 200px !important;">
 	<timer id="timer" delay="1000" repeats="true" onTimer="ref:am02_w.onTimer" running="false"/>
 	<wizard id="wizard">
 			<attribute name="steps">
@@ -15,7 +15,7 @@
 	- ${c:l('user_createaccount.Finish') }
 	</attribute>
 		<div id="step1">
-			<div style="height: 400px">
+			<div style="height: 460px">
 				<label value="${c:l('federation.mfa.type2') }"/>
 				<radiogroup id="radiogroup"  style="display:block; margin-top: 20px; padding-left: 50px">
 					<radio value="email" label="${c:l('com.soffid.iam.addons.otp.common.OtpDeviceType.EMAIL') }" style="display:block"/>
@@ -25,6 +25,7 @@
 					<radio value="pin" label="${c:l('com.soffid.iam.addons.otp.common.OtpDeviceType.PIN') }" style="display:block"/>
 					<radio value="cert" label="${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT') }" style="display:block"/>
 					<radio value="fido" label="${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO') }" style="display:block"/>
+					<radio value="push" label="${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.PUSH') }" style="display:block"/>
 				</radiogroup>
 			</div>
 			<div style="text-align: right; width: 100%">
@@ -42,7 +43,11 @@
 					<radio value="none" label="${c:l('federation.mfa.deliveryNot') }" style="display:block"/>
 				</radiogroup>
 				<customfield3 label="${c:l('user-groups.selectUser')}" id="users" dataType="USER"
-					required="true"
+					required="false"
+					multiValue="true"
+					maxrows="4"/>
+				<customfield3 label="${c:l('aplicacions.zul.Rols')}" id="roles" dataType="ROLE"
+					required="false"
 					multiValue="true"
 					maxrows="4"/>
 				<customfield3 label="${c:l('federation.mfa.message')}" id="message"

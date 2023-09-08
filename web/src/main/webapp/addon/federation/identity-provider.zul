@@ -611,7 +611,9 @@
 										"hasOtpPin":"java.lang.Boolean",
 										"hasOtpMail":"java.lang.Boolean",
 										"hasFidoToken":"java.lang.Boolean",
+										"hasPushToken":"java.lang.Boolean",
 										"hasCertificate":"java.lang.Boolean",
+										"serviceLocator":"com.soffid.iam.ServiceLocator",
 										"user": "com.soffid.iam.api.User"}'/>
 							
 							<customfield3 label="${c:l('federacio.zul.alwaysAskForCredentials')}"
