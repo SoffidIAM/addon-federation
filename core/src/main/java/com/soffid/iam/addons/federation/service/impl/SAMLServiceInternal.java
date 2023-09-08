@@ -22,6 +22,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -30,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -56,6 +58,7 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.joda.time.DateTime;
+import org.joda.time.DurationFieldType;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObject;
@@ -69,9 +72,12 @@ import org.opensaml.core.xml.io.Unmarshaller;
 import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
+import org.opensaml.core.xml.schema.XSString;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
+import org.opensaml.saml.common.AbstractSignableSAMLObject;
 import org.opensaml.saml.common.SAMLObjectBuilder;
 import org.opensaml.saml.common.SAMLObjectContentReference;
+import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.common.assertion.ValidationContext;
 import org.opensaml.saml.common.assertion.ValidationResult;
@@ -85,9 +91,11 @@ import org.opensaml.saml.saml2.assertion.impl.AudienceRestrictionConditionValida
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.AttributeStatement;
+import org.opensaml.saml.saml2.core.AttributeValue;
 import org.opensaml.saml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.saml.saml2.core.AuthnRequest;
+import org.opensaml.saml.saml2.core.Conditions;
 import org.opensaml.saml.saml2.core.EncryptedAssertion;
 import org.opensaml.saml.saml2.core.Extensions;
 import org.opensaml.saml.saml2.core.Issuer;
@@ -107,6 +115,7 @@ import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
+import org.opensaml.saml.saml2.metadata.RoleDescriptor;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SingleLogoutService;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
@@ -118,6 +127,7 @@ import org.opensaml.security.credential.impl.CollectionCredentialResolver;
 import org.opensaml.security.x509.BasicX509Credential;
 import org.opensaml.xml.Configuration;
 import org.opensaml.xml.security.BasicSecurityConfiguration;
+import org.opensaml.xml.signature.AbstractSignableXMLObject;
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
 import org.opensaml.xmlsec.keyinfo.impl.StaticKeyInfoCredentialResolver;
@@ -137,11 +147,16 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Entity;
+import org.w3c.dom.Node;
+import org.w3c.dom.TypeInfo;
 import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
+import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.model.SamlRequestEntity;
@@ -150,6 +165,7 @@ import com.soffid.iam.service.SessionService;
 import com.soffid.iam.service.saml.CustomSubjectConfirmationValidator;
 import com.soffid.iam.service.saml.SAML20ResponseValidator;
 
+import es.caib.seycon.ng.comu.Rol;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
@@ -455,7 +471,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			addEidasTags(req, idp);
 			
 			// Sign again
-			Element xml = sign (signatureOwner, builderFactory, req, idp);
+			Element xml = sign (signatureOwner, builderFactory, (SignableSAMLObject) req, idp);
 			String xmlString = generateString(xml);
 
 			// Encode base 64
@@ -643,7 +659,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			TransformerFactoryConfigurationError, TransformerException, UnsupportedEncodingException {
 		String encodedRequest;
 		req.setDestination( sss.getLocation() );
-		Element xml = sign (serviceProvider, builderFactory, req, idp);
+		Element xml = sign (serviceProvider, builderFactory,(SignableSAMLObject) req, idp);
 		String xmlString = generateString(xml);
 		encodedRequest  = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
 		return encodedRequest;
@@ -654,7 +670,9 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		return null;
 	}
 
-	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, org.opensaml.saml.saml2.core.RequestAbstractType req, EntityDescriptor idp) throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
+	private Element sign(String serviceProvider, XMLObjectBuilderFactory builderFactory, 
+			SignableSAMLObject req, EntityDescriptor idp) 
+					throws InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException, UnmarshallingException, SAXException, ParserConfigurationException {
 		// Get the marshaller factory
 		MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
 		Marshaller marshaller = marshallerFactory.getMarshaller(req);
@@ -1086,5 +1104,166 @@ public class SAMLServiceInternal extends AbstractFederationService {
     	signaturePrevalidator = new SAMLSignatureProfileValidator();
 
     	return new SAML20ResponseValidator(conditionValidators, subjectConfirmationValidators, statementValidators, signatureTrustEngine, signaturePrevalidator);
+	}
+
+	public SamlRequest generateWsFedLoginRequest(String serviceProvider, String identityProvider, String subject,
+			Map<String, Object> attributes) throws InternalErrorException {
+		try {
+			// Get the assertion builder based on the assertion element name
+
+			EntityDescriptor idp = getIdpMetadata(identityProvider);
+			if (idp == null)
+				throw new InternalErrorException(String.format("Unable to find Identity Provider metadata"));
+			IDPSSODescriptor idpssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
+
+			ServiceProviderEntity serviceProviderEntity = null;
+			for (FederationMemberEntity fm: federationMemberEntityDao.findFMByPublicId(serviceProvider)) {
+				if (fm instanceof ServiceProviderEntity) {
+					serviceProviderEntity = (ServiceProviderEntity) fm;
+				}
+			}
+			if (serviceProviderEntity == null)
+				throw new InternalErrorException(String.format("Unable to find Service Provider "+serviceProvider));
+			if (serviceProviderEntity.getServiceProviderType() != ServiceProviderType.WS_FEDERATION)
+				throw new InternalErrorException(String.format("Unable to generate WS-Federation response for non WS-Federation Service Provider "+serviceProvider));
+//			EntityDescriptor sp = getSpMetadata(serviceProvider);
+			
+			// Create the assertion
+			Element xml = generateAssertion(identityProvider, subject, attributes, idp);
+			
+			Document doc = xml.getOwnerDocument();
+			doc.removeChild(xml);
+			Element rstr = doc.createElementNS("http://schemas.xmlsoap.org/ws/2005/02/trust", "f:RequestSecurityTokenResponse");
+			doc.appendChild(rstr);
+			Element appliesTo = doc.createElementNS("http://schemas.xmlsoap.org/ws/2004/09/policy", "wsp:AppliesTo");
+			rstr.appendChild(appliesTo);
+			Element endpointReference = doc.createElementNS("http://www.w3.org/2005/08/addressing", "wsa:EndpointReference");
+			appliesTo.appendChild(endpointReference);
+			Element address = doc.createElement("wsa:Address");
+			address.setTextContent(getWsfedEndpoint(idp));
+			endpointReference.appendChild(address);
+			
+			Element requestedSecurityToken = doc.createElement("t:RequestedSecurityToken");
+			requestedSecurityToken.appendChild(xml);
+			rstr.appendChild(requestedSecurityToken);
+			requestedSecurityToken.appendChild(xml);
+			
+			String xmlString = generateString(rstr);
+//
+			System.out.println(xmlString);
+//			// Encode base 64
+			SamlRequest r = new SamlRequest();
+			r.setParameters(new HashMap<String, String>());
+//			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+//			r.getParameters().put("SAMLRequest", encodedRequest);
+//			r.getParameters().put("RelayState", newID);
+//
+//
+//			// Record
+//			SamlRequestEntity reqEntity = samlRequestEntityDao.newSamlRequestEntity();
+//			reqEntity.setHostName(serviceProvider);
+//			reqEntity.setDate(new Date());
+//			reqEntity.setExpirationDate(new Date(System.currentTimeMillis()+sessionSeconds * 1000L));
+//			reqEntity.setExternalId(newID);
+//			reqEntity.setFinished(false);
+//			samlRequestEntityDao.create(reqEntity);
+
+			return r;
+		} catch (Exception e) {
+			if (e instanceof InternalErrorException)
+				throw (InternalErrorException) e;
+			else
+				throw new InternalErrorException(e.getMessage(), e);
+		}
+	}
+
+	private String getWsfedEndpoint(EntityDescriptor idp) {
+		Element dom = idp.getDOM();
+		for (Node role = dom.getFirstChild(); role != null; role = role.getNextSibling() ) { 
+			if (role instanceof Element){
+				String t = ((Element)role).getAttribute("xsi:type");
+				if (((Element) role).getTagName().equals("RoleDescriptor") && 
+						"fed:SecurityTokenServiceType".equals( t )  ) {
+					for (Node passiveRequestorEndpoint = role.getFirstChild(); passiveRequestorEndpoint != null; passiveRequestorEndpoint = passiveRequestorEndpoint.getNextSibling()) {
+						if (passiveRequestorEndpoint instanceof Element){
+							if (((Element) passiveRequestorEndpoint).getTagName().endsWith("PassiveRequestorEndpoint") ) {
+								for (Node endpointReference = passiveRequestorEndpoint.getFirstChild(); endpointReference != null; endpointReference = endpointReference.getNextSibling()) {
+									if (endpointReference instanceof Element) {
+										if (((Element) endpointReference).getTagName().equals("wsa:EndpointReference") ) {
+											for (Node address = endpointReference.getFirstChild(); address != null; address = address.getNextSibling()) {
+												if (address instanceof Element &&
+													((Element) address).getTagName().equals("wsa:Address")) {
+														return address.getTextContent();
+												}	
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return idp.getEntityID();
+	}
+
+	protected Element generateAssertion(String identityProvider, String subject, Map<String, Object> attributes,
+			EntityDescriptor idp) throws NoSuchAlgorithmException, InvalidKeyException, KeyStoreException,
+			CertificateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException,
+			UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException,
+			UnmarshallingException, SAXException, ParserConfigurationException {
+		SAMLObjectBuilder<Assertion> builder = (SAMLObjectBuilder<Assertion>) builderFactory.getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
+		Assertion ass = builder.buildObject( );
+		
+		String newID = generateRandomId();
+		ass.setID(newID);
+		ass.setIssuer((Issuer) buildObject(Issuer.DEFAULT_ELEMENT_NAME));
+		ass.getIssuer().setValue(identityProvider);
+		ass.setSubject((Subject) buildObject(Subject.DEFAULT_ELEMENT_NAME));
+		ass.getSubject().setNameID((NameID) buildObject(NameID.DEFAULT_ELEMENT_NAME));
+		ass.getSubject().getNameID().setValue(subject);
+		ass.getSubject().getNameID().setFormat(NameID.PERSISTENT);
+		ass.setConditions((Conditions) buildObject(Conditions.DEFAULT_ELEMENT_NAME));
+		DateTime dt = new DateTime();
+		ass.getConditions().setNotBefore(dt );
+		DateTime dt2 = new DateTime()
+				.withFieldAdded(DurationFieldType.minutes(), 5);
+		ass.getConditions().setNotOnOrAfter(dt2);
+		if (attributes != null) {
+			AttributeStatement asm = (AttributeStatement) buildObject(AttributeStatement.DEFAULT_ELEMENT_NAME);
+			ass.getAttributeStatements().add(asm);
+			for (Entry<String, Object> entry: attributes.entrySet()) {
+				Attribute a = (Attribute) buildObject(Attribute.DEFAULT_ELEMENT_NAME);
+				a.setName(entry.getKey());
+				final Object value = entry.getValue();
+				if (value != null) {
+					if (value instanceof Collection) {
+						for (Object vv: (Collection)value)
+							addAttributeValue(a, vv);
+					}
+					else
+						addAttributeValue(a, value);
+				}
+				asm.getAttributes().add(a);
+			}
+		}
+		// Sign again
+		Element xml = sign (identityProvider, builderFactory, (SignableSAMLObject) ass, idp);
+		return xml;
+	}
+
+	protected void addAttributeValue(Attribute a, final Object value) {
+		XMLObjectBuilder<XSString> xsStringBuilder = (XMLObjectBuilder<XSString>) builderFactory
+			      .getBuilder(XSString.TYPE_NAME);
+		XSString attributeValue = xsStringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME,
+		        XSString.TYPE_NAME);
+		attributeValue.setValue(value.toString());
+		a.getAttributeValues().add(attributeValue);
+	}
+	
+	Object buildObject (QName name) {
+		SAMLObjectBuilder<?> builder = (SAMLObjectBuilder<?>) builderFactory.getBuilder(name);
+		return builder.buildObject();
 	}
 }

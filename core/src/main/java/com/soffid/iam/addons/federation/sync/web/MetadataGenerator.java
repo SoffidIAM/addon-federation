@@ -65,7 +65,6 @@ public class MetadataGenerator extends HttpServlet {
     final static String SECURITY_NAMESPACE = "urn:mace:shibboleth:2.0:security";
     final static String METADATA_NAMESPACE = "urn:oasis:names:tc:SAML:2.0:metadata";
     FederationService federacioService;
-    Document doc;
     private DocumentBuilder dBuilder;
 
     public MetadataGenerator() {
@@ -109,7 +108,7 @@ public class MetadataGenerator extends HttpServlet {
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         dbFactory.setNamespaceAware(true);
         dBuilder = dbFactory.newDocumentBuilder();
-        doc = dBuilder.newDocument();
+        Document doc = dBuilder.newDocument();
         
         Collection entityGroups = federacioService.findEntityGroupByNom("%");
         Element element = doc.createElementNS(METADATA_NAMESPACE, "EntitiesDescriptor");
@@ -142,7 +141,7 @@ public class MetadataGenerator extends HttpServlet {
     private boolean generateFederationMember(Element element, EntityGroupMember eg) throws SAXException, IOException, InternalErrorException {
         if (eg.getType().equals( "EG") ) {
             boolean anyChild = false;
-            Element node = doc.createElementNS(METADATA_NAMESPACE, "EntitiesDescriptor");
+            Element node = element.getOwnerDocument().createElementNS(METADATA_NAMESPACE, "EntitiesDescriptor");
             node.setAttribute("Name", eg.getDescription());
             
             if (generateChildEntities(eg, node)) {
@@ -164,7 +163,7 @@ public class MetadataGenerator extends HttpServlet {
                     NodeList nl = newDoc.getChildNodes();
                     while (nl.getLength()>0) {
                         Node n = nl.item(0);
-                        Node n2 = doc.adoptNode(n);
+                        Node n2 = element.getOwnerDocument().adoptNode(n);
                        	if (n2 instanceof Element) {
                        		((Element) n2).removeAttribute("validUntil");
                        	}
@@ -173,7 +172,7 @@ public class MetadataGenerator extends HttpServlet {
                     generateChildEntities(eg, element);
                     return true;
                 } catch (SAXParseException e) {
-                    Comment comment = doc.createComment(
+                    Comment comment = element.getOwnerDocument().createComment(
                             "*** ERROR ***\n"+
                             "Error parsing metadata for member "+fm.getPublicId()+" ("+fm.getId()+"): \n"+
                                     e.toString()+

@@ -10,5 +10,5 @@ public class SessionConstants {
     public static final String SEU_TEMP_USER = "seu-temp-user"; //$NON-NLS-1$
     public static final String SEU_TEMP_PASSWORD = "seu-temp-password"; //$NON-NLS-1$
 	public static final String OPENID_REQUEST = "openid-request";
-
+	public static final String WSFED_REQUEST = "wsfed-request";
 }

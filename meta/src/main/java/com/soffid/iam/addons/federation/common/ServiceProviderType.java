@@ -12,4 +12,5 @@ public class ServiceProviderType {
 	public static String RADIUS = "radius";
 	public static String CAS = "cas";
 	public static String TACACSP = "tacacs+";
+	public static String WS_FEDERATION = "ws-fed";
 }

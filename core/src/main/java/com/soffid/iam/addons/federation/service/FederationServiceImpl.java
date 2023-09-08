@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -22,7 +21,6 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -45,7 +43,6 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -59,11 +56,6 @@ import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
-import org.eclipse.jdt.internal.compiler.lookup.Scope;
-import org.jbpm.JbpmContext;
-import org.jbpm.graph.def.ProcessDefinition;
-import org.jbpm.graph.exe.ExecutionContext;
-import org.jbpm.graph.exe.ProcessInstance;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONTokener;
@@ -114,14 +106,14 @@ import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenScopeEntity;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
 import com.soffid.iam.addons.federation.model.PolicyEntity;
+import com.soffid.iam.addons.federation.model.ProfileEntity;
+import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2ArtifactResolutionProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity;
-import com.soffid.iam.addons.federation.model.ProfileEntity;
-import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
@@ -162,13 +154,11 @@ import com.soffid.iam.model.RoleEntity;
 import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDataEntity;
 import com.soffid.iam.model.UserEntity;
-import com.soffid.iam.model.UserEntityDao;
 import com.soffid.iam.model.criteria.CriteriaSearchConfiguration;
 import com.soffid.iam.service.AdditionalDataJSONConfiguration;
 import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.service.impl.bshjail.SecureInterpreter;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
-import com.soffid.iam.utils.MailUtils;
 import com.soffid.iam.utils.Security;
 import com.soffid.scimquery.EvalException;
 import com.soffid.scimquery.parser.ParseException;
@@ -2832,6 +2822,13 @@ public class FederationServiceImpl
 			throw new InternalErrorException("Only LOGIN events can be recorded");
 		AuditEntity entity = getAuditEntityDao().auditToEntity(audit);
 		getAuditEntityDao().create(entity);
+	}
+
+	@Override
+	protected SamlRequest handleGenerateWsFedLoginResponse(String serviceProvider, String identityProvider, String subject,
+			Map<String, Object> attributes) throws Exception {
+		// TODO Auto-generated method stub
+		return getDelegate().generateWsFedLoginResponse (serviceProvider, identityProvider, subject, attributes);
 	}
 	
 }

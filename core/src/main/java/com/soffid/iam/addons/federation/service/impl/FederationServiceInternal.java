@@ -820,5 +820,18 @@ public class FederationServiceInternal {
 		this.bpmEngine = bpmEngine;
 	}
 
+	public SamlRequest generateWsFedLoginResponse(String serviceProvider, String identityProvider, String subject,
+			Map<String, Object> attributes) throws InternalErrorException {
+		IdentityProviderEntity fm = findIdentityProvider (identityProvider);
+
+		if (fm == null)
+			throw new InternalErrorException ("Cannot find identity provider with public id "+identityProvider);
+		
+		if (fm.getIdpType() == IdentityProviderType.SOFFID)
+			return samlService.generateWsFedLoginRequest(serviceProvider, identityProvider, subject, attributes);
+		else 
+			throw new InternalErrorException ("Cannot find identity provider with public id "+identityProvider);
+	}
+
 }
 
