@@ -279,6 +279,26 @@
 			label="${c:l('federacio.zul.openidLogoutUrl')}"/>
 
 	</div>
+	<div sclass="section" id="wsfedSection" >
+		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.wsfed') }" />
+
+		<customfield3 dataType="STRING" 
+			bind="/federationMember/openidUrl"
+			multiValue="true"
+			maxLength="100"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.openidUrl')}"/>
+
+<!-- 
+ 		<customfield3 dataType="STRING" 
+			bind="/federationMember/openidLogoutUrl"
+			multiValue="true"
+			maxLength="100"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.openidLogoutUrl')}"/>
+ -->
+
+	</div>
 	<div sclass="section" id="radiusSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.radius') }" />
 

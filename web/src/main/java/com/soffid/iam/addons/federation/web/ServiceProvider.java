@@ -92,6 +92,7 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		getFellow("casSection").setVisible(spType == ServiceProviderType.CAS);
 		getFellow("configurationSection").setVisible( spType != ServiceProviderType.OPENID_CONNECT &&
 				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS  &&
+				spType != ServiceProviderType.WS_FEDERATION &&
 				spType != ServiceProviderType.TACACSP &&
 				spType != ServiceProviderType.OPENID_REGISTER);
 		getFellow("tacacsPlusSection").setVisible(spType == ServiceProviderType.TACACSP);
@@ -104,7 +105,9 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 //		((CustomField3)getFellow("contact")).setReadonly(ServiceProviderType.SOFFID_SAML != spType);
 		
 		((CustomField3)getFellow("metadades")).setVisible(spType != ServiceProviderType.OPENID_CONNECT &&
-				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS &&
+				spType != ServiceProviderType.CAS && 
+				spType != ServiceProviderType.RADIUS &&
+				spType != ServiceProviderType.WS_FEDERATION &&
 				spType != ServiceProviderType.TACACSP &&
 				spType != ServiceProviderType.OPENID_REGISTER);
 		((CustomField3)getFellow("metadades")).setDisabled(spType != ServiceProviderType.SAML);

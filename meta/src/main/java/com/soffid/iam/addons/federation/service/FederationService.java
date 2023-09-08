@@ -509,7 +509,13 @@ public abstract class FederationService {
 	SamlRequest generateSamlRequest (String serviceProvider, String identityProvider,
 			@Nullable String subject,
 			long sessionSeconds) {return null;}
-	
+
+	@Operation(grantees={federation_serviceProvider.class})
+	@Description("Generates a SAML request to formard to the IdP")
+	SamlRequest generateWsFedLoginResponse (String serviceProvider, String identityProvider,
+			@Nullable String subject,
+			@Nullable Map<String,Object> attributes) {return null;}
+
 	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Generates a SAML request to perform global logout. Use forced when "
 			+ "is the system admin who enforces the logout. Leave to false when is "
