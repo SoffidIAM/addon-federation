@@ -72,6 +72,7 @@ import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.shibext.UidEvaluator;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
+import es.caib.seycon.idp.wsfed.WsfedResponse;
 import es.caib.seycon.ng.comu.TipusSessio;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -471,6 +472,13 @@ public class Autenticator {
         	String sessionHash = generateRandomSessionId();
         	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
         	LoginResponse.generateResponse(ctx, req, resp, type, sessionHash);
+        }
+        else if ("ws-fed".equals(session.getAttribute("soffid-session-type")))
+        {
+        	LOG.info("Generating ws-fed response");
+        	String sessionHash = generateRandomSessionId();
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
+        	WsfedResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else
         {

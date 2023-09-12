@@ -157,7 +157,7 @@ public class IdpConfig {
     
     
     public FederationMember findIdentityProviderForRelyingParty (String relyingPartyId) throws InternalErrorException {
-    	if (lastQuery + 60000 < System.currentTimeMillis())
+    	if (lastQuery + 60000 < System.currentTimeMillis() || virtualFederationMembers == null)
     	{
     		lastQuery = System.currentTimeMillis();
     		federationMember = federationService.findFederationMemberByPublicId(publicId);

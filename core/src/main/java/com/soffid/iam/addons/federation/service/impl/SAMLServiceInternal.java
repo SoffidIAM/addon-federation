@@ -21,6 +21,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,6 +83,10 @@ import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.common.assertion.ValidationContext;
 import org.opensaml.saml.common.assertion.ValidationResult;
 import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.saml1.core.Audience;
+import org.opensaml.saml.saml1.core.AudienceRestrictionCondition;
+import org.opensaml.saml.saml1.core.ConfirmationMethod;
+import org.opensaml.saml.saml1.core.SubjectConfirmation;
 import org.opensaml.saml.saml2.assertion.ConditionValidator;
 import org.opensaml.saml.saml2.assertion.SAML20AssertionValidator;
 import org.opensaml.saml.saml2.assertion.SAML2AssertionValidationParameters;
@@ -157,6 +162,7 @@ import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
+import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.model.SamlRequestEntity;
@@ -1127,35 +1133,75 @@ public class SAMLServiceInternal extends AbstractFederationService {
 			if (serviceProviderEntity.getServiceProviderType() != ServiceProviderType.WS_FEDERATION)
 				throw new InternalErrorException(String.format("Unable to generate WS-Federation response for non WS-Federation Service Provider "+serviceProvider));
 //			EntityDescriptor sp = getSpMetadata(serviceProvider);
+			String audience = serviceProviderEntity.getPublicId();
+			for (ServiceProviderReturnUrlEntity ru: serviceProviderEntity.getReturnUrls()) {
+				audience = (ru.getUrl());
+				break;
+			}
 			
 			// Create the assertion
-			Element xml = generateAssertion(identityProvider, subject, attributes, idp);
+			Element xml = generateAssertion(identityProvider, subject, attributes, idp, audience);
 			
 			Document doc = xml.getOwnerDocument();
 			doc.removeChild(xml);
-			Element rstr = doc.createElementNS("http://schemas.xmlsoap.org/ws/2005/02/trust", "f:RequestSecurityTokenResponse");
+			Element rstr = doc.createElementNS("http://schemas.xmlsoap.org/ws/2005/02/trust", "t:RequestSecurityTokenResponse");
 			doc.appendChild(rstr);
 			Element appliesTo = doc.createElementNS("http://schemas.xmlsoap.org/ws/2004/09/policy", "wsp:AppliesTo");
 			rstr.appendChild(appliesTo);
 			Element endpointReference = doc.createElementNS("http://www.w3.org/2005/08/addressing", "wsa:EndpointReference");
 			appliesTo.appendChild(endpointReference);
 			Element address = doc.createElement("wsa:Address");
-			address.setTextContent(getWsfedEndpoint(idp));
+			address.setTextContent(audience);
 			endpointReference.appendChild(address);
 			
-			Element requestedSecurityToken = doc.createElement("t:RequestedSecurityToken");
+			Element requestedSecurityToken = doc.createElementNS("http://schemas.xmlsoap.org/ws/2005/02/trust", "t:RequestedSecurityToken");
 			requestedSecurityToken.appendChild(xml);
 			rstr.appendChild(requestedSecurityToken);
 			requestedSecurityToken.appendChild(xml);
 			
+			Element tokenType = doc.createElement("t:TokenType");
+			tokenType.setTextContent("urn:oasis:names:tc:SAML:1.0:assertion");
+			rstr.appendChild(tokenType);
+			
+			Element requestType = doc.createElement("t:RequestType");
+			requestType.setTextContent("http://schemas.xmlsoap.org/ws/2005/02/trust/Issue");
+			rstr.appendChild(requestType);
+			
+			Element keyType = doc.createElement("t:KeyType");
+			keyType.setTextContent("http://schemas.xmlsoap.org/ws/2005/05/identity/NoProofKey");
+			rstr.appendChild(keyType);
+
+			Element lifetime = doc.createElement("t:Lifetime");
+			rstr.appendChild(lifetime);
+			Element created = doc.createElementNS("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", 
+					"wsu:Created");
+			lifetime.appendChild(created);
+			Calendar now = Calendar.getInstance();
+			SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss'Z'");
+			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+			created.setTextContent(sdf.format(now.getTime()));
+			now.add(Calendar.HOUR, 1);
+			Element expires = doc.createElementNS("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", 
+					"wsu:Expires");
+			lifetime.appendChild(expires);
+			expires.setTextContent(sdf.format(now.getTime()));
+			
+				
+
 			String xmlString = generateString(rstr);
 //
-			System.out.println(xmlString);
+//			System.out.println(xmlString);
 //			// Encode base 64
 			SamlRequest r = new SamlRequest();
 			r.setParameters(new HashMap<String, String>());
 //			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
-//			r.getParameters().put("SAMLRequest", encodedRequest);
+			r.getParameters().put("wresult", xmlString.replace("\n", ""));
+			for (ServiceProviderReturnUrlEntity ru: serviceProviderEntity.getReturnUrls()) {
+				r.getParameters().put("target", ru.getUrl());
+				break;
+			}
+			r.getParameters().put("wa", "wsignin1.0");
+			r.getParameters().put("method", "POST");
 //			r.getParameters().put("RelayState", newID);
 //
 //
@@ -1209,33 +1255,52 @@ public class SAMLServiceInternal extends AbstractFederationService {
 	}
 
 	protected Element generateAssertion(String identityProvider, String subject, Map<String, Object> attributes,
-			EntityDescriptor idp) throws NoSuchAlgorithmException, InvalidKeyException, KeyStoreException,
+			EntityDescriptor idp, String spUrl) throws NoSuchAlgorithmException, InvalidKeyException, KeyStoreException,
 			CertificateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException,
 			UnrecoverableKeyException, MarshallingException, org.opensaml.xmlsec.signature.support.SignatureException,
 			UnmarshallingException, SAXException, ParserConfigurationException {
-		SAMLObjectBuilder<Assertion> builder = (SAMLObjectBuilder<Assertion>) builderFactory.getBuilder(Assertion.DEFAULT_ELEMENT_NAME);
-		Assertion ass = builder.buildObject( );
+		SAMLObjectBuilder<org.opensaml.saml.saml1.core.Assertion> builder = 
+				(SAMLObjectBuilder<org.opensaml.saml.saml1.core.Assertion>) builderFactory
+				.getBuilder(org.opensaml.saml.saml1.core.Assertion.DEFAULT_ELEMENT_NAME);
+		org.opensaml.saml.saml1.core.Assertion ass = builder.buildObject( );
 		
 		String newID = generateRandomId();
 		ass.setID(newID);
-		ass.setIssuer((Issuer) buildObject(Issuer.DEFAULT_ELEMENT_NAME));
-		ass.getIssuer().setValue(identityProvider);
-		ass.setSubject((Subject) buildObject(Subject.DEFAULT_ELEMENT_NAME));
-		ass.getSubject().setNameID((NameID) buildObject(NameID.DEFAULT_ELEMENT_NAME));
-		ass.getSubject().getNameID().setValue(subject);
-		ass.getSubject().getNameID().setFormat(NameID.PERSISTENT);
-		ass.setConditions((Conditions) buildObject(Conditions.DEFAULT_ELEMENT_NAME));
+		ass.setIssuer(identityProvider);
+		ass.setIssueInstant(new DateTime());
+		ass.setConditions((org.opensaml.saml.saml1.core.Conditions) 
+				buildObject(org.opensaml.saml.saml1.core.Conditions.DEFAULT_ELEMENT_NAME));
 		DateTime dt = new DateTime();
 		ass.getConditions().setNotBefore(dt );
 		DateTime dt2 = new DateTime()
-				.withFieldAdded(DurationFieldType.minutes(), 5);
+				.withFieldAdded(DurationFieldType.hours(), 1);
 		ass.getConditions().setNotOnOrAfter(dt2);
+		AudienceRestrictionCondition arc = (AudienceRestrictionCondition) buildObject(AudienceRestrictionCondition.DEFAULT_ELEMENT_NAME);
+		Audience audience = (Audience) buildObject(Audience.DEFAULT_ELEMENT_NAME);
+		arc.getAudiences().add(audience);
+		audience.setUri(spUrl);
+		ass.getConditions().getAudienceRestrictionConditions().add(arc);
+
+		org.opensaml.saml.saml1.core.AttributeStatement asm = (org.opensaml.saml.saml1.core.AttributeStatement) buildObject(org.opensaml.saml.saml1.core.AttributeStatement.DEFAULT_ELEMENT_NAME);
+		ass.getAttributeStatements().add(asm);
+		
+		final org.opensaml.saml.saml1.core.Subject sub = generateSubject();
+		asm.setSubject(sub);
 		if (attributes != null) {
-			AttributeStatement asm = (AttributeStatement) buildObject(AttributeStatement.DEFAULT_ELEMENT_NAME);
-			ass.getAttributeStatements().add(asm);
 			for (Entry<String, Object> entry: attributes.entrySet()) {
-				Attribute a = (Attribute) buildObject(Attribute.DEFAULT_ELEMENT_NAME);
-				a.setName(entry.getKey());
+				org.opensaml.saml.saml1.core.Attribute a = 
+						(org.opensaml.saml.saml1.core.Attribute) buildObject(
+								org.opensaml.saml.saml1.core.Attribute.DEFAULT_ELEMENT_NAME);
+				final String key = entry.getKey();
+				if ( key.contains("#")) {
+					int i = key.indexOf("#");
+					a.setAttributeNamespace(key.substring(0, i));
+					a.setAttributeName(key.substring(i+1));
+				}
+				else {
+					a.setAttributeNamespace("http://schemas.xmlsoap.org/ws/2005/05/identity/claims");
+					a.setAttributeName(key);
+				}
 				final Object value = entry.getValue();
 				if (value != null) {
 					if (value instanceof Collection) {
@@ -1248,15 +1313,34 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				asm.getAttributes().add(a);
 			}
 		}
+		
+		org.opensaml.saml.saml1.core.AuthenticationStatement auth = 
+				(org.opensaml.saml.saml1.core.AuthenticationStatement) buildObject(
+						org.opensaml.saml.saml1.core.AuthenticationStatement.DEFAULT_ELEMENT_NAME);
+		ass.getAuthenticationStatements().add(auth);
+		auth.setAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport");
+		auth.setAuthenticationInstant(new DateTime());
+		auth.setSubject(generateSubject());
+		
 		// Sign again
 		Element xml = sign (identityProvider, builderFactory, (SignableSAMLObject) ass, idp);
 		return xml;
 	}
 
-	protected void addAttributeValue(Attribute a, final Object value) {
+	protected org.opensaml.saml.saml1.core.Subject generateSubject() {
+		final org.opensaml.saml.saml1.core.Subject sub = (org.opensaml.saml.saml1.core.Subject) buildObject(org.opensaml.saml.saml1.core.Subject.DEFAULT_ELEMENT_NAME);
+		sub.setSubjectConfirmation(
+				(SubjectConfirmation) buildObject(SubjectConfirmation.DEFAULT_ELEMENT_NAME));
+		ConfirmationMethod cm = (ConfirmationMethod) buildObject(ConfirmationMethod.DEFAULT_ELEMENT_NAME);
+		cm.setConfirmationMethod("urn:oasis:names:tc:SAML:1.0:cm:bearer");
+		sub.getSubjectConfirmation().getConfirmationMethods().add(cm);
+		return sub;
+	}
+
+	protected void addAttributeValue(org.opensaml.saml.saml1.core.Attribute a, final Object value) {
 		XMLObjectBuilder<XSString> xsStringBuilder = (XMLObjectBuilder<XSString>) builderFactory
 			      .getBuilder(XSString.TYPE_NAME);
-		XSString attributeValue = xsStringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME,
+		XSString attributeValue = xsStringBuilder.buildObject(org.opensaml.saml.saml1.core.AttributeValue.DEFAULT_ELEMENT_NAME,
 		        XSString.TYPE_NAME);
 		attributeValue.setValue(value.toString());
 		a.getAttributeValues().add(attributeValue);

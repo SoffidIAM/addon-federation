@@ -53,11 +53,14 @@ public class UserAttributesGenerator {
 				if (name == null || name.isEmpty())
 					name = attribute.getShortName();
 			}
-			if (cas) {
+			else if (cas) {
 				name = attribute.getShortName();
 			}
-			if (radius) {
+			else if (radius) {
 				name = attribute.getRadiusIdentifier();
+			}
+			else {
+				name = attribute.getOid();
 			}
 			
 			BaseAttribute samlAttribute = att.get(attribute.getShortName());

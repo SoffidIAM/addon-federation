@@ -2681,11 +2681,6 @@ public class FederationServiceImpl
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		try {
-			getDelegate();
-		} catch (Exception e) {
-			throw new RuntimeException("Error initializing federation addon", e);
-		}
 	}
 
 	@Override
