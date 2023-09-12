@@ -141,6 +141,7 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
+import es.caib.seycon.idp.wsfed.WsfedEndpoint;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class Main {
@@ -248,7 +249,7 @@ public class Main {
     
     }
 
-    private void createRadiusServer(SAMLProfile radius, ServletContext ctx ) throws Exception {
+	private void createRadiusServer(SAMLProfile radius, ServletContext ctx ) throws Exception {
     	RadiusServer rs = new RadiusServer();
     	if (radius.getAcctPort() != null)
     		rs.setAcctPort(radius.getAcctPort());
@@ -459,6 +460,10 @@ public class Main {
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
         ServletHolder servlet;
+        SAMLProfile wsfed = useWsfedProfile();
+        if (wsfed != null && Boolean.TRUE.equals(wsfed.getEnabled())) {
+        	configureWsfedProfile(ctx, wsfed);
+        }
         if (useSamldProfile())
         {
 	        configureSamlProfile(ctx);
@@ -472,6 +477,8 @@ public class Main {
 		if (casProfile != null) {
         	configureCasProfile(ctx, casProfile);
         }
+		
+
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
         ctx.addServlet(UserInfoForm.class, UserInfoForm.URI);
         ctx.addServlet(ConsentAction.class, ConsentAction.URI);
@@ -707,6 +714,16 @@ public class Main {
 		ctx.addServlet(servlet, "/cas/p3/serviceValidate"); //$NON-NLS-1$
 	}
 
+	private void configureWsfedProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
+		ServletHolder servlet;
+		servlet = new ServletHolder(WsfedEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("wsfed-loginEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/profile/wsfed/*"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/profile/wsfed"); //$NON-NLS-1$
+	}
+
+
 
 	private void configureSamlProfile(ServletContextHandler ctx) {
 		ServletHolder servlet;
@@ -794,6 +811,23 @@ public class Main {
             SAMLProfile profile = (SAMLProfile) it.next();
             SamlProfileEnumeration type = profile.getClasse();
             if (type.equals(SamlProfileEnumeration.RADIUS)  && Boolean.TRUE.equals(profile.getEnabled())) {
+            	return profile;
+            }
+        }
+        return null;
+	}
+
+	private SAMLProfile useWsfedProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederationService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.WS_FEDERATION)  && Boolean.TRUE.equals(profile.getEnabled())) {
             	return profile;
             }
         }

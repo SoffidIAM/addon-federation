@@ -34,7 +34,7 @@
 			</div>
 		</div>
 		<div id="step2">
-			<div style="height: 400px; overflow: auto">
+			<div style="height: 460px; overflow: auto">
 				<label value="${c:l('federation.mfa.deliveryMethod2') }"/>
 				<radiogroup id="radiogroup2"  style="display:block; margin-top: 20px; padding-left: 50px"
 					onCheck="ref:am02_w.changeMethod">
@@ -59,7 +59,7 @@
 			</div>
 		</div>
 		<div id="step3">
-			<div style="height: 400px; overflow: auto">
+			<div style="height: 460px; overflow: auto">
 				<label value="${c:l('federation.mfa.activation2') }"/>
 				<radiogroup id="radiogroup3"  style="display:block; margin-top: 20px; padding-left: 50px"
 					onCheck="ref:am02_w.changeActivation">

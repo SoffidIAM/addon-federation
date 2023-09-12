@@ -27,6 +27,7 @@ import org.json.JSONException;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.api.SamlRequest;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -34,8 +35,8 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
-import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthorizationHandler;
+import es.caib.seycon.idp.ui.HtmlGenerator;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -55,7 +56,7 @@ public class WsfedResponse  {
 			unauthorized(request, response, r, user);
 		} else  {
 			log.info("Returnig authorization flow");
-			wsfedFLow (request, response, authType, sessionHash);			
+			wsfedFlow(ctx, request, response, authType, sessionHash);			
 		}
 	}
 
@@ -64,9 +65,9 @@ public class WsfedResponse  {
 		throw new ServletException("Access denied fo user "+user);
 	}
 
-	private static boolean checkAuthorization(String user, OpenIdRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	private static boolean checkAuthorization(String user, WsfedRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		FederationService fs = new RemoteServiceLocator().getFederacioService();
-    	FederationMember member = fs.findFederationMemberByClientID(r.getClientId());
+    	FederationMember member = fs.findFederationMemberByClientID(r.getPublicId());
     	return new AuthorizationHandler().checkAuthorization(user, member);
 	}
 
@@ -88,7 +89,7 @@ public class WsfedResponse  {
 			t.setRequest(oidr);
 			oidr.setFederationMember(r.getFederationMember());
 
-			att = new UserAttributesGenerator().generateAttributes(ctx, t, false, false, true);
+			att = new UserAttributesGenerator().generateAttributes(ctx, t, false, false, false);
 		} catch (AttributeResolutionException e) {
 			log.warn("Error resolving attributes", e);
 			buildError(response, r, "Error resolving attributes");
@@ -108,10 +109,21 @@ public class WsfedResponse  {
 		}
 
 		try {
-			String response = generateResponse(r, user, att);
+			FederationService rfs = (FederationService) new RemoteServiceLocator().getRemoteService(FederationService.REMOTE_PATH);
+			SamlRequest wsfedResponse = rfs.generateWsFedLoginResponse(r.getPublicId(), 
+					IdpConfig.getConfig().getPublicId(), user, att);
+			HtmlGenerator g = new HtmlGenerator(ctx, request);
+			g.addArguments(wsfedResponse.getParameters());
+			response.setContentType("text/html; charset=utf-8");
+			response.setStatus(response.SC_OK);
+			if (r.getState() != null)
+				g.addArgument("wctx", r.getState());
+			if (wsfedResponse.getUrl() != null)
+				g.addArgument("target", wsfedResponse.getUrl());
+			g.generate(response, "wsfed-response.html");
 		} catch (InternalErrorException e) {
-			log.warn("Error evaluating claims", e);
-			buildError(response, r, "Error resolving attributes");
+			log.warn("Error generating response", e);
+			buildError(response, r, "Error generating response");
 			return;
 		} catch (JSONException e) {
 			log.warn("Error generating response", e);
@@ -125,10 +137,6 @@ public class WsfedResponse  {
 
 
 		
-	}
-
-	private static String generateResponse(WsfedRequest r, String user, Map<String, Object> att) {
-		return null;
 	}
 
 	private static void buildError(HttpServletResponse resp, WsfedRequest r, String description) throws IOException, ServletException {

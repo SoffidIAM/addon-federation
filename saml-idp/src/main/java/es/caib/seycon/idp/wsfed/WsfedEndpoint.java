@@ -1,5 +1,6 @@
 package es.caib.seycon.idp.wsfed;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
@@ -23,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
+import com.soffid.iam.addons.federation.common.FederationMember;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -55,12 +57,18 @@ public class WsfedEndpoint extends HttpServlet {
 	    	r = new WsfedRequest();
 	    	
 	    	String publicId = req.getPathInfo();
+	    	String replyUrl = req.getParameter("wreply");
+	    	if (publicId == null) {
+	    		publicId = req.getParameter("wtrealm");
+	    	}
+	    	if (publicId == null) {
+	    		publicId = findByReturnUrl(replyUrl);
+	    	}
 	    	if (publicId.startsWith("/")) publicId = publicId.substring(1);
 			r.setPublicId(publicId);
 			r.setType(req.getParameter("wa"));
-			String replyUrl = req.getParameter("wreply");
 			r.setReplyUrl(replyUrl);
-			r.setState(req.getParameter("state"));
+			r.setState(req.getParameter("wctx"));
 	    	r.setFederationMember( config.getFederationService().findFederationMemberByPublicId(r.getPublicId()) );
 	    	if (r.getFederationMember() != null && r.getReplyUrl() == null) {
 	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
@@ -92,8 +100,26 @@ public class WsfedEndpoint extends HttpServlet {
 			dispatcher.forward(req, resp);
 	    	
     	} catch (Exception e) {
+    		log.warn("Error processing ws-fed request", e);
             generateError(r, "server_error", e.toString(), resp);
 		}
+	}
+
+	private String findByReturnUrl(String replyUrl) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+		for (FederationMember fm: IdpConfig.getConfig().getFederationService()
+				.findFederationMembersByJsonQuery(null, 
+					"serviceProviderType eq 'ws-fed' and returnUrls.url eq '"+quote(replyUrl)+"'",
+					null, null)
+				.getResources()) {
+			return fm.getPublicId();
+		}
+		return null;
+	}
+
+	private String quote(String replyUrl) {
+		return replyUrl.replace("\\","\\\\")
+				.replace("\"", "\\\"")
+				.replace("\'", "\\\'");
 	}
 
 	private void generateError(WsfedRequest r, String error, String description, HttpServletResponse resp) throws IOException, ServletException {
@@ -134,12 +160,6 @@ public class WsfedEndpoint extends HttpServlet {
     		return false;
     	}
     	
-    	Set<String> mechs = r.getFederationMember().getOpenidMechanism();
-    	if (! mechs.contains("IM") && ! mechs.contains("AC"))
-    	{
-            generateError(r, "unauthorized_client", "Client must use token endpoint with password grant_type", resp);
-            return false;
-    	}
     	return true;
 	}
 

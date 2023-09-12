@@ -328,6 +328,7 @@ public class RelyingPartyGenerator {
             		! profile.getClasse().equals( SamlProfileEnumeration.TACACS_PLUS) &&
             		! profile.getClasse().equals( SamlProfileEnumeration.CAS) &&
             		! profile.getClasse().equals( SamlProfileEnumeration.RADIUS) &&
+            		! profile.getClasse().equals( SamlProfileEnumeration.WS_FEDERATION) &&
             		! profile.getClasse().equals( SamlProfileEnumeration.SAML_PRO))
             {
 	            Element profileNode = doc.createElementNS(RP_NAMESPACE,

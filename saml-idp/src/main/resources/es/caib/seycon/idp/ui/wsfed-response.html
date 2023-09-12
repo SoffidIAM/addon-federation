@@ -1,0 +1,29 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+		<title>Soffid SAML Identity Provider</title> <script>
+			function onLoad() {
+				document.getElementById("form").submit();
+			}
+		</script>
+</head>
+
+<body onLoad="onLoad()">
+	<div style="display: none">
+		<form method="${method}" action="${target}" id="form">
+			<input name="wa"
+				type="text" autocomplete="off" value="${wa}" /> 
+			<input name="wresult"
+				type="text" autocomplete="off" value="${wresult}" /> 
+			<input name="wctx"
+				type="text" autocomplete="off" value="${wctx}" /> 
+		</form>
+	</div>
+</body>
+
+</html>
