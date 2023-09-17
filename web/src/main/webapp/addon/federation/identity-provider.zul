@@ -614,6 +614,9 @@
 										"hasPushToken":"java.lang.Boolean",
 										"hasCertificate":"java.lang.Boolean",
 										"serviceLocator":"com.soffid.iam.ServiceLocator",
+										"serviceLocator":"com.soffid.iam.ServiceLocator",
+										"deviceCertificate":"java.lang.Boolean",
+										"remoteHost":"com.soffid.iam.api.Host",
 										"user": "com.soffid.iam.api.User"}'/>
 							
 							<customfield3 label="${c:l('federacio.zul.alwaysAskForCredentials')}"

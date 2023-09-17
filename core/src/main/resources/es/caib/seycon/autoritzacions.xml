@@ -166,6 +166,24 @@
 	</autoritzacio>
 
 	<autoritzacio>
+		<codi>hostcertificate:create</codi>
+		<descripcio>Create a new host certificate</descripcio>
+		<ambit>Identity Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>hostcertificate:remove</codi>
+		<descripcio>Remove a new host certificate</descripcio>
+		<ambit>Identity Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
+		<codi>hostcertificate:query</codi>
+		<descripcio>Query host certificates</descripcio>
+		<ambit>Identity Federation</ambit>
+	</autoritzacio>
+
+	<autoritzacio>
 		<codi>federation:token:user</codi>
 		<descripcio>Register a new fido token for himself</descripcio>
 		<ambit>Self service</ambit>

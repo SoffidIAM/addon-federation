@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Calendar;
 
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -18,6 +19,15 @@ public class AdaptiveEnvironment implements Serializable {
 	public boolean newDevice() throws InternalErrorException {
 		return true;
 	}
+	
+	public Host remoteHost() throws InternalErrorException {
+		return new Host();
+	}
+	
+	public boolean deviceCertificate() throws InternalErrorException {
+		return false;
+	}
+
 	public int failuresForSameIp() {
 		return 0;
 	}

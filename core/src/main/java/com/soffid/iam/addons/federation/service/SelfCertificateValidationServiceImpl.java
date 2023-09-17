@@ -1,6 +1,7 @@
 package com.soffid.iam.addons.federation.service;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
@@ -20,8 +21,10 @@ import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.RootCertificate;
 import com.soffid.iam.addons.federation.common.SelfCertificate;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.iam.addons.federation.model.HostCredentialEntity;
 import com.soffid.iam.addons.federation.model.RootCertificateEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 import com.soffid.iam.interp.Evaluator;
 import com.soffid.iam.service.CertificateValidationModule;
@@ -71,6 +74,35 @@ public class SelfCertificateValidationServiceImpl extends
 		return true;
 	}
 	
+	private boolean validate (HostCredentialEntity cert)
+	{
+		if (cert == null || cert.getType() != UserCredentialType.CERT)
+			return false;
+		Date now = new Date ();
+		if (now.after(cert.getExpirationDate()))
+			return false;
+		if (now.before(cert.getCreated()))
+			return false;
+		HostCredentialEntity certEntity = getHostCredentialEntityDao().load(cert.getId());
+		if (certEntity.getRoot() == null)
+			return false;
+		RootCertificateEntity root = certEntity.getRoot();
+		if (root.isObsolete())
+			return false;
+		
+		if (root.isExternal())
+			return true;
+		
+		Calendar c = Calendar.getInstance();
+		c.setTime(root.getExpirationDate());
+		c.add(Calendar.MONTH, root.getUserCertificateMonths());
+		if (now.after(c.getTime()))
+			return false;
+		
+		return true;
+	}
+	
+
 	@Override
 	protected User handleGetCertificateUser(List<X509Certificate> certs)
 			throws Exception {
@@ -104,10 +136,9 @@ public class SelfCertificateValidationServiceImpl extends
 		return null;
 	}
 
-	private User getCertificateUser(RootCertificateEntity ac, X509Certificate cert) throws InternalErrorException, IOException, Exception {
+	private String getCertificateUserName(RootCertificateEntity ac, X509Certificate cert) throws InternalErrorException, IOException, Exception {
 		if (ac.getGuessUserScript() != null && !ac.getGuessUserScript().trim().isEmpty())
 		{
-			log.info("Executing script "+ac.getGuessUserScript());
 			Map<String, Object> newNs = new HashMap<>();
 			newNs.put("certificate", cert);
 			LdapName subject = new LdapName(cert.getSubjectX500Principal().getName());
@@ -115,12 +146,43 @@ public class SelfCertificateValidationServiceImpl extends
 			
 			Object result = Evaluator.instance().evaluate(ac.getGuessUserScript(), 
 					newNs , "Certificate parser for "+ac.getOrganizationName());
-			if (result != null) {
-				User u =getUserService().findUserByUserName(result.toString());
-				if (u == null)
-					log.warn("Cannot find user "+result.toString());
-				return u;
+			if (result != null)
+				return result.toString();
+		}
+		return null;
+	}
+
+	private User getCertificateUser(RootCertificateEntity ac, X509Certificate cert) throws InternalErrorException, IOException, Exception {
+		String s = getCertificateUserName(ac, cert);
+		if (s != null) {
+			User u =getUserService().findUserByUserName(s);
+			if (u == null)
+				log.warn("Cannot find user "+s);
+			return u;
+		}
+		return null;
+	}
+
+	private Host getCertificateHost(RootCertificateEntity ac, X509Certificate cert, String serialNumber) throws InternalErrorException, IOException, Exception {
+		String s = getCertificateUserName(ac, cert);
+		if (s != null) {
+			Host u =getNetworkService().findHostByName(s);
+			if (u == null) {
+				u = new Host();
+				u.setName(s);
+				if (serialNumber == null) {
+					byte b[] = new byte[24];
+					SecureRandom r = new SecureRandom();
+					r.nextBytes(b);
+					serialNumber = System.currentTimeMillis()+"_"+Base64.encodeBytes(b);
+				}
+				u.setSerialNumber(serialNumber);
+				u.setDescription(cert.getSubjectDN().toString());
+				if (u.getDescription().length() > 50)
+					u.setDescription(u.getDescription().substring(0, 50));
+				u = getNetworkService().create(u);
 			}
+			return u;
 		}
 		return null;
 	}
@@ -143,7 +205,7 @@ public class SelfCertificateValidationServiceImpl extends
  		final X509Certificate userCert = certs.get(0);
 		String pk = Base64.encodeBytes(userCert.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES);
 		for (UserCredentialEntity cred: getUserCredentialEntityDao().findByPublicKey(pk)) {
-			if (validate(cred)) {
+			if (!cred.getRoot().isDevice() && validate(cred)) {
 				cred.setLastUse(new Date());
 				getUserCredentialEntityDao().update(cred);
 				return true;
@@ -151,7 +213,7 @@ public class SelfCertificateValidationServiceImpl extends
 		}
 		
 		for (RootCertificateEntity ac: getRootCertificateEntityDao().loadAll()) {
-			if (ac.isExternal()) {
+			if (! ac.isDevice() && ac.isExternal()) {
 				X509Certificate cacert = getRootCertificateEntityDao().toRootCertificate(ac).getCertificate();
 				if (userCert.getIssuerX500Principal().equals(cacert.getSubjectX500Principal()))
 				{
@@ -179,6 +241,82 @@ public class SelfCertificateValidationServiceImpl extends
 			}
 		}
 		return false;
+	}
+
+	@Override
+	protected Host handleGetCertificateHost(List<X509Certificate> certs,
+			String serialNumber)
+			throws Exception {
+		
+		final X509Certificate cert = certs.get(0);
+		String pk = Base64.encodeBytes(cert.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES);
+		for (HostCredentialEntity cred: getHostCredentialEntityDao().findByPublicKey(pk)) {
+			if (cred.getRoot().isDevice() && validate(cred))
+			{
+				return getNetworkService().findHostById(cred.getHostId());
+			}
+		}
+		for (RootCertificateEntity ac: getRootCertificateEntityDao().loadAll()) {
+			if (ac.isDevice() && ac.isExternal()) {
+				X509Certificate cacert = getRootCertificateEntityDao().toRootCertificate(ac).getCertificate();
+				if (cert.getIssuerX500Principal().equals(cacert.getSubjectX500Principal()))
+				{
+					try {
+						cert.verify(cacert.getPublicKey());
+						Host host = getCertificateHost(ac, cert, serialNumber);
+						if (host != null)
+							return host;
+					} catch (CertificateException e) {
+						log.info("Certificate not valid", e);
+					}
+					
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	protected Date handleGetCertificateExpirationWarning(List<X509Certificate> certs) throws Exception {
+ 		final X509Certificate userCert = certs.get(0);
+ 		Date expiration = userCert.getNotAfter();
+ 		long time = expiration.getTime() - System.currentTimeMillis();
+ 		long days = time / 1000 / 60 / 60 / 24;
+		String pk = Base64.encodeBytes(userCert.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES);
+		for (UserCredentialEntity cred: getUserCredentialEntityDao().findByPublicKey(pk)) {
+			if (validate(cred)) {
+				if (cred.getRoot().getExpirationWarningDays() != null &&
+						cred.getRoot().getExpirationWarningDays().intValue() > days) {
+					return expiration;
+				}
+			}
+		}
+
+		for (HostCredentialEntity cred: getHostCredentialEntityDao().findByPublicKey(pk)) {
+			if (validate(cred)) {
+				if (cred.getRoot().getExpirationWarningDays() != null &&
+						cred.getRoot().getExpirationWarningDays().intValue() > days) {
+					return expiration;
+				}
+			}
+		}
+
+		for (RootCertificateEntity ac: getRootCertificateEntityDao().loadAll()) {
+			if (ac.isExternal()) {
+				X509Certificate cacert = getRootCertificateEntityDao().toRootCertificate(ac).getCertificate();
+				if (userCert.getIssuerX500Principal().equals(cacert.getSubjectX500Principal()))
+				{
+					try {
+						userCert.verify(cacert.getPublicKey());
+						if (ac.getExpirationWarningDays() != null &&
+								ac.getExpirationWarningDays().intValue() > days) {
+							return expiration;
+						}
+					} catch (CertificateException e) {} // Not valid
+				}
+			}
+		}
+		return null;
 	}
 
 }

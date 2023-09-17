@@ -10,7 +10,9 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -116,9 +118,16 @@ public class LoginServlet extends LangSupportServlet {
 	    		if (certUser != null) {
     				authCtx.authenticated(certUser, "C", resp);
     				authCtx.store(req);
+    				Date warning = IdpConfig.getConfig().getFederationService()
+    						.getCertificateExpirationWarning(Arrays.asList( v.getCerts(req) ));
+    				if (warning != null) 
+    					authCtx.setCertificateWarning(warning);
     				if ( authCtx.isFinished())
     				{
-    					new Autenticator().autenticate2(certUser, getServletContext(),req, resp, authCtx.getUsedMethod(), true, authCtx.getHostId(resp));
+    					if (authCtx.getCertificateWarning() != null)
+    	        			resp.sendRedirect(CertificateAction.URI);
+    					else
+    						new Autenticator().autenticate2(certUser, getServletContext(),req, resp, authCtx.getUsedMethod(), true, authCtx.getHostId(resp));
     					return true;
     				}
     			}

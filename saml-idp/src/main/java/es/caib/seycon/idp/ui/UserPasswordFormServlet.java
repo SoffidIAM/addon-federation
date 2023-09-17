@@ -281,6 +281,12 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("externalLogin", generateExternalLogin(ip, ctx));
+            Date w = ctx.getCertificateWarning();
+            if (w != null) {
+            	long days = (w.getTime() - System.currentTimeMillis()) / 1000 / 60 / 60 / 24; 
+            	String msg = String.format(Messages.getString("certificateWarning"), days);
+            	g.addArgument("certificateWarning", msg);
+            }
         	if ( ctx.getStep() > 0 || ctx.getUser() != null)
         		g.generate(resp, "loginPage2.html"); //$NON-NLS-1$
         	else

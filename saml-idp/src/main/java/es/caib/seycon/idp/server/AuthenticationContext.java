@@ -11,8 +11,12 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,16 +43,20 @@ import com.soffid.iam.addons.federation.idp.radius.attribute.RadiusAttribute;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.addons.federation.service.impl.IssueHelper;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Challenge;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.ui.CertificateValidator;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
 import nl.basjes.parse.useragent.UserAgent;
 import nl.basjes.parse.useragent.UserAgent.ImmutableUserAgent;
@@ -61,6 +69,8 @@ public class AuthenticationContext {
 	String firstFactor;
 	String secondFactor;
 	Set<String> nextFactor;
+	private Date certificateWarning;
+	private boolean certificateWarningDone;
 	private String user;
 	private Set<String> allowedAuthenticationMethods;
 	private String remoteIp;
@@ -68,6 +78,7 @@ public class AuthenticationContext {
 	private User currentUser;
 	private Account currentAccount;
 	private UserCredential newCredential;
+	private boolean deviceCertificate = false;
 	long timestamp = 0;
 	private Challenge challenge;
 	private Collection<UserCredentialChallenge> pushChallenge;
@@ -134,7 +145,7 @@ public class AuthenticationContext {
 	}
 
 	public void initialize (HttpServletRequest request) 
-		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
+		throws Exception
 	{
 		IdpConfig config = IdpConfig.getConfig();
     	remoteIp = getClientRequest(request);
@@ -161,12 +172,50 @@ public class AuthenticationContext {
 			}
     	}
     	
+    	fetchHostIdFromCert(request);
+    	
     	currentUser = null;
 
     	updateAllowedAuthenticationMethods();
         if (allowedAuthenticationMethods.isEmpty())
         	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         onInitialStep();
+	}
+
+
+	private void fetchHostIdFromCert(HttpServletRequest request) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException, UnknownUserException {
+		CertificateValidator v = new CertificateValidator();
+		X509Certificate[] certs = null;
+		try {
+			certs = v.getCerts(request);
+		} catch (InternalErrorException e) {
+			// Ignore
+		}
+		if (certs != null) {
+			Host host = v.validateHost(certs, hostId);
+			if (host != null) {
+				Date warning = IdpConfig.getConfig().getFederationService()
+						.getCertificateExpirationWarning(Arrays.asList( certs ));
+				if (warning != null) 
+					this.certificateWarning = warning;
+				deviceCertificate = true;
+				if (hostId == null) {
+					hostId = host.getSerialNumber();
+				}
+				else if (!hostId.equals(host.getSerialNumber())) {
+					Host host2 = new RemoteServiceLocator()
+							.getUserBehaviorService()
+							.findHostBySerialNumber(hostId);
+					if (host2 != null) {
+						try {
+							IssueHelper.deviceCertificateBorrowed(host, host2);
+						} catch (Throwable th) {
+							// Ignore
+						}
+					}
+				}
+			}
+		}
 	}
 
 
@@ -277,7 +326,7 @@ public class AuthenticationContext {
 		IdpConfig config = IdpConfig.getConfig();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
     		
-    	ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(currentUser, remoteIp, hostId);
+    	ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(currentUser, remoteIp, hostId, deviceCertificate);
     	Integer f = failuresByIp.get(remoteIp);
     	env.setFailuresForSameIp(f == null ? 0: f.intValue());
     	env.setFailuresRatio(worstAthenticationRatio());
@@ -690,7 +739,7 @@ public class AuthenticationContext {
 	static Map<String, AuthenticationContext> auths = new Hashtable<>();
 	static long lastPurge = 0;
 
-	public static AuthenticationContext fromRequest(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+	public static AuthenticationContext fromRequest(AccessRequest accessRequest, InetAddress sourceAddress, String publicId, boolean secure) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
 		expireOldContexts();
 		
 		if (accessRequest == null)
@@ -709,13 +758,13 @@ public class AuthenticationContext {
 			new SecureRandom().nextBytes(random);
 			String s = Base64.encodeBytes(random, Base64.DONT_BREAK_LINES);
 			auth.radiusState = s;
-			auth.initialize(accessRequest, sourceAddress, publicId);
+			auth.initialize(accessRequest, sourceAddress, publicId, secure);
 			auths.put(auth.getRadiusState(), auth);
 		}
 		return auth;
 	}
 
-	private void initialize(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	private void initialize(AccessRequest accessRequest, InetAddress sourceAddress, String publicId, boolean secure) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		IdpConfig config = IdpConfig.getConfig();
     	remoteIp = accessRequest.getAttributeValue("Framed-IP-Address");
     	if (remoteIp == null)
@@ -723,6 +772,7 @@ public class AuthenticationContext {
     	os = "Unknown";
     	browser = "Radius";
     	cpu = null;
+    	deviceCertificate = secure;
     	
     	hostId = null;
     	currentUser = null;
@@ -850,6 +900,26 @@ public class AuthenticationContext {
 
 	public void setPushChallenge(Collection<UserCredentialChallenge> pushChallenge) {
 		this.pushChallenge = pushChallenge;
+	}
+
+
+	public Date getCertificateWarning() {
+		return certificateWarningDone ? null: certificateWarning;
+	}
+
+
+	public void setCertificateWarning(Date certificateWarning) {
+		this.certificateWarning = certificateWarning;
+	}
+
+
+	public boolean isCertificateWarningDone() {
+		return certificateWarningDone;
+	}
+
+
+	public void setCertificateWarningDone(boolean certificateWarningDone) {
+		this.certificateWarningDone = certificateWarningDone;
 	}
 
 

@@ -172,6 +172,7 @@ public class RootCertificateHandler extends FrameHandler {
 		if ("external".equals(type)) {
 			InputField3 o = (InputField3) w.getFellow("organizationName2");
 			InputField3 s = (InputField3) w.getFellow("guessScript");
+			InputField3 d = (InputField3) w.getFellow("device2");
 			if (cert == null) {
 				s.setWarning(0, "Please, upload the root certifiate");
 			} else {
@@ -186,6 +187,7 @@ public class RootCertificateHandler extends FrameHandler {
 				rc.setGuessUserScript((String) s.getValue());
 				rc.setObsolete(false);
 				rc.setOrganizationName((String) o.getValue());
+				rc.setDevice(Boolean.TRUE.equals(d.getValue()));
 				String path = XPathUtils.createPath(getModel(), "/certificate", rc);
 				try {
 					getModel().commit();
@@ -199,6 +201,7 @@ public class RootCertificateHandler extends FrameHandler {
 			InputField3 ed = (InputField3) w.getFellow("expirationDate");
 			InputField3 o = (InputField3) w.getFellow("organizationName");
 			InputField3 month = (InputField3) w.getFellow("userCertificateMonths");
+			InputField3 d = (InputField3) w.getFellow("device3");
 			if (ed.attributeValidateAll() && o.attributeValidateAll() && month.attributeValidateAll()) {
 				RootCertificate rc = new RootCertificate();
 				Calendar c = Calendar.getInstance();
@@ -210,6 +213,7 @@ public class RootCertificateHandler extends FrameHandler {
 				rc.setObsolete(false);
 				rc.setOrganizationName((String) o.getValue());
 				rc.setUserCertificateMonths( Integer.parseInt(month.getValue().toString()));
+				rc.setDevice(Boolean.TRUE.equals(d.getValue()));
 				String path = XPathUtils.createPath(getModel(), "/certificate", rc);
 				try {
 					getModel().commit();

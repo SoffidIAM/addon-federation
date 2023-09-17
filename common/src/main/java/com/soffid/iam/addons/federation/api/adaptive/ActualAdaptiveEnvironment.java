@@ -9,6 +9,7 @@ import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -26,15 +27,17 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	private double failuresRatio;
 	private String identityProvider;
 	private String serviceProvider;
-
+	private boolean deviceCertificate;
+	
 	private Collection<UserCredentialType> tokens;
 
 	private Collection<String> otps;
 	
-	public ActualAdaptiveEnvironment(User user, String sourceIp, String hostId) throws IOException, InternalErrorException {
+	public ActualAdaptiveEnvironment(User user, String sourceIp, String hostId, boolean deviceCertificate) throws IOException, InternalErrorException {
 		this.user = user;
 		this.sourceIp = sourceIp;
 		this.hostId = hostId;
+		this.deviceCertificate = deviceCertificate;
 	}
 
 	@Override
@@ -43,6 +46,10 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 			return true;
 		Date last = getService().getLastLogon(user.getId(), hostId);
 		return last == null;
+	}
+
+	public Host remoteHost() throws InternalErrorException {
+		return service.findHostBySerialNumber(hostId);
 	}
 
 	@Override
@@ -265,6 +272,11 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 			return false;
 		loadOtps();
 		return otps.contains("EMAIL");
+	}
+
+	@Override
+	public boolean deviceCertificate() throws InternalErrorException {
+		return deviceCertificate;
 	}
 
 }

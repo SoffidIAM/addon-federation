@@ -27,6 +27,7 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -131,6 +132,7 @@ import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Configuration;
 import com.soffid.iam.api.DataType;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.MailDomain;
 import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.PagedResult;
@@ -2827,8 +2829,18 @@ public class FederationServiceImpl
 	@Override
 	protected SamlRequest handleGenerateWsFedLoginResponse(String serviceProvider, String identityProvider, String subject,
 			Map<String, Object> attributes) throws Exception {
-		// TODO Auto-generated method stub
 		return getDelegate().generateWsFedLoginResponse (serviceProvider, identityProvider, subject, attributes);
+	}
+
+	@Override
+	protected Host handleGetCertificateHost(List<X509Certificate> certs, String serialNumber) throws Exception {
+		return getSelfCertificateValidationService().getCertificateHost(certs, serialNumber);
+	}
+
+	@Override
+	public Date handleGetCertificateExpirationWarning(List<X509Certificate> certs)
+			throws InternalErrorException, InternalErrorException {
+		return getSelfCertificateValidationService().getCertificateExpirationWarning(certs);
 	}
 	
 }
