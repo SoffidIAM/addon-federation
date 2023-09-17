@@ -11,6 +11,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.LinkedList;
 
@@ -22,6 +23,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.openssl.PEMParser;
 
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 
@@ -34,7 +36,17 @@ public class CertificateValidator {
 	org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
 	
     public String validate(HttpServletRequest req) throws InternalErrorException, IOException, UnknownUserException {
-        X509Certificate certs[] = (X509Certificate[]) req
+        X509Certificate[] certs = getCerts(req);
+        if (certs == null) {
+        	log.info("No cert found");
+        	return null;
+        }
+        return validate (certs);
+
+    }
+
+	public X509Certificate[] getCerts(HttpServletRequest req) throws InternalErrorException {
+		X509Certificate certs[] = (X509Certificate[]) req
                 .getAttribute("javax.servlet.request.X509Certificate"); //$NON-NLS-1$
         if (certs == null) {
         	String header;
@@ -42,10 +54,8 @@ public class CertificateValidator {
 				header = IdpConfig.getConfig().getFederationMember().getSslClientCertificateHeader();
 				if (header != null && !header.trim().isEmpty()) {
 					String cert = req.getHeader(header);
-					log.info("Headers: ");
 					for (Enumeration<String> e = req.getHeaderNames(); e.hasMoreElements(); ) {
 						String name = e.nextElement();
-						log.info(">> "+name+": "+req.getHeader(name));
 					}
 					if (cert != null && ! cert.trim().isEmpty()) {
 						certs = parseCerts(cert);
@@ -57,13 +67,8 @@ public class CertificateValidator {
 				throw new InternalErrorException ("Error getting configuration", e);
 			}
         }
-        if (certs == null) {
-        	log.info("No cert found");
-        	return null;
-        }
-        return validate (certs);
-
-    }
+		return certs;
+	}
 
 	protected X509Certificate[] parseCerts(String pemCerts) throws IOException, CertificateException {
 		Object object;
@@ -107,6 +112,16 @@ public class CertificateValidator {
     				LogFactory.getLog(getClass()).warn("User "+ui.getUserName()+" cannot login because account "+account.getName()+" is not enabled");
     		}
     		return null;
+        }
+
+    }
+
+	public Host validateHost(X509Certificate certs[], String hostId) throws InternalErrorException, IOException, UnknownUserException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+        if (certs == null || certs.length == 0) {
+            return null;
+        } else {
+        	return IdpConfig.getConfig().getFederationService()
+        		.getCertificateHost(Arrays.asList(certs), hostId);
         }
 
     }

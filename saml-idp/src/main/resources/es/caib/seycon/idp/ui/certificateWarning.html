@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge" >
+	<title>Soffid SAML Identity Provider</title>
+	
+	<!-- css -->
+	<link href="/estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
+	<style>
+		${raw:htmlCSS}
+	</style>
+	<!-- /css -->
+	
+	<script>
+
+	function onLoad()
+	{
+		{if certificateWarning}
+		alert("${certificateWarning}");
+		location.href = "${certificateLoginUrl}?confirm=true";
+		{endif}
+	}
+
+	</script>
+
+	<script src="/js/jquery-3.6.0.slim.min.js"></script>
+	<script src="/js/fingerprint.js"></script>
+	{if enableCaptcha} 
+		<script src="https://www.google.com/recaptcha/api.js?render=${captchaKey}"></script>
+	{endif}
+
+</head>
+
+<body onLoad="onLoad(); activateFingerprint();" class="bodylogin2">
+
+
+	${raw:htmlHeader}
+
+	<div class="login">
+		<p class="loginheader"><a href="https://www.soffid.com/"  target="_blank"><img src="/img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
+		<div class="loginbox"> 
+			<p class="header">${title}</p>
+			<p/>
+			<div class="logintype2"  id ="certlogin">
+				<form method="post" action="${certificateLoginUrl}">
+					<input name="j_method"  id="j_method_usu-pas" type="hidden" value="C"/>
+					<div class="upinput">
+						${You can use a valid digital certificate}
+					</div>
+					<div class="upbutton">
+						<input id="logincertbutton" name="formUCboton" type="submit" value="${Login}"/>
+					</div>
+				</form>
+			</div>
+			<p/>
+			{if ERROR}
+			<p id="errormsg" style="color:red;">${ERROR}</p>
+			{endif}
+			<p>${header}</p>
+		</div>
+		<p/>
+	</div>
+
+	
+	${raw:htmlFooter}
+
+</body>
+	
+</html>

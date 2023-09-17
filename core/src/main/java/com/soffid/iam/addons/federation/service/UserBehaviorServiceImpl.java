@@ -45,6 +45,7 @@ import bsh.Interpreter;
 import bsh.NameSpace;
 import bsh.Primitive;
 import bsh.TargetError;
+import es.caib.seycon.ng.comu.Maquina;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
@@ -341,6 +342,11 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 		} else {
 			throw new InternalErrorException("Wrong password");
 		}
+	}
+
+	@Override
+	protected Host handleFindHostBySerialNumber (String serialNumber) throws InternalErrorException {
+		return getNetworkService().findHostBySerialNumber(serialNumber);
 	}
 
 }

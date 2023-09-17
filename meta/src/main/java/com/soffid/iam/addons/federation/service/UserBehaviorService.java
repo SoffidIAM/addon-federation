@@ -13,6 +13,7 @@ import com.soffid.mda.annotation.Depends;
 import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.Service;
 
+import es.caib.seycon.ng.comu.Maquina;
 import es.caib.seycon.ng.comu.Password;
 import es.caib.seycon.ng.comu.PasswordValidation;
 import es.caib.seycon.ng.model.AccountEntity;
@@ -46,6 +47,7 @@ public class UserBehaviorService {
 	public void registerLogon (Long userId, String hostIp, @Nullable String hostId) {}
 	public String registerHost (String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {return null;}
 	public void updateHost (String hostId, String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {}
+	public Maquina findHostBySerialNumber (String serialNumber) {return null;}
 	
 	public AuthenticationMethod getAuthenticationMethod ( FederationMember fm, AdaptiveEnvironment env) {return null;}
 	

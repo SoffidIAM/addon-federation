@@ -43,6 +43,7 @@ import org.bouncycastle.jce.provider.X509CertificateObject;
 import org.bouncycastle.mozilla.SignedPublicKeyAndChallenge;
 import org.bouncycastle.openssl.PEMDecryptorProvider;
 import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.PEMWriter;
@@ -65,11 +66,14 @@ import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
+import com.soffid.iam.addons.federation.api.HostCredential;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.RootCertificate;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.iam.addons.federation.model.HostCredentialEntity;
 import com.soffid.iam.addons.federation.model.RootCertificateEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
+import com.soffid.iam.model.HostEntity;
 import com.soffid.iam.model.UserEntity;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.utils.Security;
@@ -88,7 +92,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		RootCertificateEntity last = null;
 		for (RootCertificateEntity root: getRootCertificateEntityDao().loadAll())
 		{
-			if (! root.isObsolete() && !root.isExternal())
+			if (! root.isObsolete() && !root.isExternal() && !root.isDevice())
 			{
 				if (lastDate == null || lastDate.before(root.getCreationDate()))
 				{
@@ -100,9 +104,38 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		return last;
 	}
 	
+	private RootCertificateEntity getCurrentHostRoot ()
+	{
+		Date lastDate = null;
+		RootCertificateEntity last = null;
+		for (RootCertificateEntity root: getRootCertificateEntityDao().loadAll())
+		{
+			if (! root.isObsolete() && !root.isExternal() && root.isDevice())
+			{
+				if (lastDate == null || lastDate.before(root.getCreationDate()))
+				{
+					last = root;
+					lastDate = root.getCreationDate();
+				}
+			}
+		}
+		return last;
+	}
+
 	private PrivateKey getPrivateKey () throws IOException, PKCSException, OperatorCreationException
 	{
 		RootCertificateEntity root = getCurrentRoot ();
+		return extractPrivateKey(root);
+	}
+
+	private PrivateKey getHostPrivateKey () throws IOException, PKCSException, OperatorCreationException
+	{
+		RootCertificateEntity root = getCurrentHostRoot ();
+		return extractPrivateKey(root);
+	}
+
+	protected PrivateKey extractPrivateKey(RootCertificateEntity root)
+			throws IOException, PEMException, OperatorCreationException, PKCSException {
 		if (root != null)
 		{
 			byte[] material = root.getPrivateKey();
@@ -154,12 +187,11 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
         java.security.Security.addProvider(new BouncyCastleProvider());
 	}
 
-    private X509V3CertificateGenerator getX509Generator() throws InternalErrorException {
+    private X509V3CertificateGenerator getX509Generator(X509Certificate rootCert) throws InternalErrorException {
 
         long now = System.currentTimeMillis() - 1000 * 60 * 10; // 10 minutos
         long l = now + 1000L * 60L * 60L * 24L * 365L * 5L; // 5 años
         X509V3CertificateGenerator generator = new X509V3CertificateGenerator();
-        X509Certificate rootCert = getRootCertificate();
         
         generator.setIssuerDN(rootCert.getSubjectX500Principal());
         generator.setNotAfter(new Date(l));
@@ -211,7 +243,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
         getUserCredentialEntityDao().create(entity);
 
         // Now, generate the certificate
-        X509V3CertificateGenerator generator = getX509Generator();
+        X509V3CertificateGenerator generator = getX509Generator(getRootCertificate());
         generator.setSubjectDN(new X509Name(name));
         generator.setPublicKey(pk);
         generator.setNotAfter(entity.getExpirationDate());
@@ -276,7 +308,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		} else {
 	        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "BC");
 	
-	        keyGen.initialize(2048, random);
+	        keyGen.initialize(3096, random);
 	
 	        // Generar clave raiz
 	        KeyPair pair = keyGen.generateKeyPair();
@@ -302,6 +334,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 	        rootEntity.setOrganizationName(root.getOrganizationName());
 	        rootEntity.setUserCertificateMonths(root.getUserCertificateMonths());
 	        rootEntity.setPrivateKey(new byte[] {0});
+	        rootEntity.setDevice(root.isDevice());
 	        getRootCertificateEntityDao().create(rootEntity);
 	        
 	        StringWriter writer = new StringWriter();
@@ -348,6 +381,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		RootCertificateEntity rootEntity = getRootCertificateEntityDao().load(root.getId());
 		rootEntity.setUserCertificateMonths(root.getUserCertificateMonths());
 		rootEntity.setGuessUserScript(root.getGuessUserScript());
+		rootEntity.setExpirationWarningDays(root.getExpirationWarningDays());
 		getRootCertificateEntityDao().update(rootEntity);
 	}
 
@@ -402,7 +436,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 
 	private KeyPair generateKeyPair() throws NoSuchAlgorithmException {
 		 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-         keyGen.initialize(2048, random);
+         keyGen.initialize(3076, random);
          KeyPair keypair = keyGen.generateKeyPair();
          return keypair;
     }
@@ -412,6 +446,95 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		RootCertificateEntity rootEntity = getRootCertificateEntityDao().load(root.getId());
 		rootEntity.setObsolete(true);
 		getRootCertificateEntityDao().update(rootEntity);
+	}
+
+	@Override
+	protected byte[] handleCreatePkcs12ForHost(String host, String description, String password) throws Exception {
+		KeyPair keypair = generateKeyPair ();
+		X509Certificate cert = generateHostCertificate(host, description, keypair.getPublic());
+		
+        KeyStore store = KeyStore.getInstance("PKCS12");
+        store.load(null, null);
+
+        RootCertificateEntity r = getCurrentHostRoot();
+        X509Certificate[] chain = new X509Certificate[2];
+        // first the client, then the CA certificate
+        chain[0] = cert;
+        chain[1] = getRootCertificateEntityDao().toRootCertificate(r).getCertificate();
+        
+        store.setKeyEntry("mykey", keypair.getPrivate(), password.toCharArray(), chain);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        store.store(out, password.toCharArray());
+        out.close();
+        return out.toByteArray();
+	}
+
+	private X509Certificate generateHostCertificate(String hostName, String description, PublicKey pk)
+			throws InternalErrorException, NoSuchProviderException,
+			SignatureException, InvalidKeyException, IOException,
+			CertificateEncodingException, SecurityException, OperatorCreationException, PKCSException {
+		RootCertificateEntity root = getCurrentHostRoot();
+		if (root == null)
+			throw new InternalErrorException("There is no valid certificate authority. Please, contact your administrator");
+
+		HostEntity user = getHostEntityDao().findByName(hostName);
+        String name = "CN=" + hostName + ",O="+root.getOrganizationName();
+        
+        // Register certificate on data base
+        HostCredentialEntity entity = getHostCredentialEntityDao().newHostCredentialEntity();
+        entity.setDescription(description);
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.MONTH, root.getUserCertificateMonths());
+        entity.setExpirationDate(c.getTime());
+        entity.setCreated(new Date());
+        entity.setHostId(user.getId());
+        entity.setRoot(root);
+        entity.setType(UserCredentialType.CERT);
+        entity.setKey("-");
+        entity.setSerialNumber(getHostCredentialService().generateNextSerial());
+        getHostCredentialEntityDao().create(entity);
+
+        // Now, generate the certificate
+        X509Certificate rootCert = getRootCertificateEntityDao().toRootCertificate(root).getCertificate();
+        X509V3CertificateGenerator generator = getX509Generator(rootCert);
+        generator.setSubjectDN(new X509Name(name));
+        generator.setPublicKey(pk);
+        generator.setNotAfter(entity.getExpirationDate());
+        c = Calendar.getInstance();
+        c.add(Calendar.MINUTE, -10);
+        generator.setNotBefore(c.getTime());
+        generator.setSerialNumber(new BigInteger(entity.getSerialNumber()));
+        
+        X509Certificate cert = generator.generateX509Certificate(getHostPrivateKey(), "BC");
+        
+        entity.setKey( Base64.encodeBytes(cert.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES));
+        entity.setCertificate( Base64.encodeBytes(cert.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES));
+        getHostCredentialEntityDao().update(entity);
+		return cert;
+	}
+
+
+	@Override
+	protected List<HostCredential> handleFindByHost(String hostName) throws Exception {
+		HostEntity host = getHostEntityDao().findByName(hostName);
+		List<HostCredential> certs = new LinkedList<>();
+		for (HostCredentialEntity entity: getHostCredentialEntityDao().findByHostId(host.getId())) {
+			if (entity.getType() == UserCredentialType.CERT) 
+				certs.add(getHostCredentialEntityDao().toHostCredential(entity));
+		}
+		
+		Collections.sort(certs, new Comparator<HostCredential>() {
+			public int compare(HostCredential o1, HostCredential o2) {
+				if (o1.getCreated().after(o2.getCreated()))
+					return -1;
+				else if (o2.getCreated().after(o1.getCreated()))
+					return +1;
+				else
+					return 0;
+			};
+		});
+		return certs;
 	}
 
 	

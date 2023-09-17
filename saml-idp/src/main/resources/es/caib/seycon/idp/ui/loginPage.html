@@ -50,6 +50,9 @@
 				form.setAttribute("action", form.getAttribute("action")+document.location.hash);	
 			}			
 		}
+		{if certificateWarning}
+		alert("${certificateWarning}");
+		{endif}
 	}
 	
 	var fingerprintChallenge = "${fingerprintChallenge}";

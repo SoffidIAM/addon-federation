@@ -150,11 +150,11 @@ public class RadiusServer {
 	 * @throws InvalidKeyException 
 	 * @throws UnrecoverableKeyException 
 	 */
-	public RadiusPacket accessRequestReceived(AccessRequest accessRequest, InetSocketAddress client, FederationMember member)
+	public RadiusPacket accessRequestReceived(AccessRequest accessRequest, InetSocketAddress client, FederationMember member, boolean secure)
 	throws RadiusException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		AuthenticationContext ctx;
 		try {
-			ctx = AuthenticationContext.fromRequest(accessRequest, client.getAddress(), member.getPublicId());
+			ctx = AuthenticationContext.fromRequest(accessRequest, client.getAddress(), member.getPublicId(), secure);
 			
 	    	log.info("Trying to login "+ctx.getUser());
 	    	log.info("Authentication methods: "+ctx.getAllowedAuthenticationMethods());
@@ -656,7 +656,7 @@ public class RadiusServer {
 
 				// handle packet
 				logger.trace("about to call RadiusServer.handlePacket()");
-				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, member.getRadiusSecret().getPassword(), member);
+				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, member.getRadiusSecret().getPassword(), member, false);
 				
 				// send response
 				if (response != null) {
@@ -718,7 +718,7 @@ public class RadiusServer {
 
 				// handle packet
 				logger.trace("about to call RadiusServer.handlePacket()");
-				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, "radsec", member);
+				RadiusPacket response = handlePacket(localAddress, remoteAddress, request, "radsec", member, xcert != null && xcert.length > 0);
 				
 				// send response
 				if (response != null) {
@@ -762,7 +762,8 @@ public class RadiusServer {
 	 * @throws InvalidKeyException 
 	 * @throws UnrecoverableKeyException 
 	 */
-	protected RadiusPacket handlePacket(InetSocketAddress localAddress, InetSocketAddress remoteAddress, RadiusPacket request, String sharedSecret, FederationMember member) 
+	protected RadiusPacket handlePacket(InetSocketAddress localAddress, InetSocketAddress remoteAddress, RadiusPacket request, String sharedSecret, FederationMember member,
+			boolean secure) 
 	throws RadiusException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
 		RadiusPacket response = null;
 		
@@ -771,7 +772,7 @@ public class RadiusServer {
 			if (localAddress.getPort() == getAuthPort()) {
 				// handle packets on auth port
 				if (request instanceof AccessRequest)
-					response = accessRequestReceived((AccessRequest)request, remoteAddress, member);
+					response = accessRequestReceived((AccessRequest)request, remoteAddress, member, secure);
 				else
 					logger.error("unknown Radius packet type: " + request.getPacketType());
 			} else if (localAddress.getPort() == getAcctPort()) {

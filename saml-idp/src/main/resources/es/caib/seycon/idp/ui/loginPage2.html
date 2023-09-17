@@ -19,6 +19,9 @@
 
 	function onLoad()
 	{
+		{if certificateWarning}
+		alert("${certificateWarning}");
+		{endif}
 		if (${fingerprintEnforced})
 			fingerprintSign();
 		if (${kerberosEnforced})
