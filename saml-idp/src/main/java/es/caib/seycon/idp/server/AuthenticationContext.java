@@ -2,6 +2,7 @@ package es.caib.seycon.idp.server;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -443,47 +444,11 @@ public class AuthenticationContext {
 		nextFactor.clear();
     	if ( allowedAuthenticationMethods.contains(m))
     	{
+    		regesterLogonAudit(resp);
     		step = 2;
     		timestamp = System.currentTimeMillis();
     		registerNewCredential();
     		feedRatio(false);
-    		if (currentUser != null)
-    		{
-    			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
-    			long f = ubh.getUserFailures(currentUser.getId());
-    			ubh.setUserFailures(currentUser.getId(), 0);
-    			if (hostId != null)
-    				updateHost(ubh);
-    			if (hostId == null && resp != null)
-    			{
-    				registerHost(ubh);
-    				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
-    				c2.setSecure(true);
-    				c2.setMaxAge(Integer.MAX_VALUE);
-    				c2.setHttpOnly(true);
-    				c2.setPath("/");
-    				resp.addCookie(c2);
-    			}
-    			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
-    			if (currentAccount != null) {
-    				currentAccount = new RemoteServiceLocator().getAccountService().findAccountById(currentAccount.getId());
-    				currentAccount.setLastLogin(Calendar.getInstance());
-    				try {
-						new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
-					} catch (AccountAlreadyExistsException e) {
-					}
-    				Audit a = new Audit();
-    				a.setAccount(currentAccount.getName());
-    				a.setUser(currentUser.getUserName());
-    				a.setAction("S");
-    				a.setObject("LOGIN");
-    				a.setDatabase(currentAccount.getSystem());
-    				a.setCalendar(Calendar.getInstance());
-    				a.setSourceIp(remoteIp);
-    				a.setHost(hostId);
-    				new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
-    			}
-    		}
     	}
     	else
     	{
@@ -500,6 +465,67 @@ public class AuthenticationContext {
         
         if (step == 0)
         	throw new InternalErrorException ("Internal error. No authentication method is allowed");
+	}
+
+
+	protected void regesterLogonAudit(HttpServletResponse resp) throws IOException, InternalErrorException,
+			UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException,
+			NoSuchAlgorithmException, CertificateException, NoSuchProviderException, SignatureException {
+		if (currentUser != null)
+		{
+			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
+			long f = ubh.getUserFailures(currentUser.getId());
+			ubh.setUserFailures(currentUser.getId(), 0);
+			if (hostId != null)
+				updateHost(ubh);
+			if (hostId == null && resp != null)
+			{
+				registerHost(ubh);
+				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
+				c2.setSecure(true);
+				c2.setMaxAge(Integer.MAX_VALUE);
+				c2.setHttpOnly(true);
+				c2.setPath("/");
+				resp.addCookie(c2);
+			}
+			if (hostId != null) {
+				checkLockedHost(ubh);
+			}
+			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
+			if (currentAccount != null) {
+				currentAccount = new RemoteServiceLocator().getAccountService().findAccountById(currentAccount.getId());
+				currentAccount.setLastLogin(Calendar.getInstance());
+				try {
+					new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
+				} catch (AccountAlreadyExistsException e) {
+				}
+				Audit a = new Audit();
+				a.setAccount(currentAccount.getName());
+				a.setUser(currentUser.getUserName());
+				a.setAction("S");
+				a.setObject("LOGIN");
+				a.setDatabase(currentAccount.getSystem());
+				a.setCalendar(Calendar.getInstance());
+				a.setSourceIp(remoteIp);
+				a.setHost(hostId);
+				new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
+			}
+		}
+	}
+
+
+	private void checkLockedHost(UserBehaviorService ubh) throws InternalErrorException {
+		Host h = ubh.findHostBySerialNumber(hostId);
+		if (h != null) {
+			Boolean locked;
+			try {
+				locked = (Boolean) h.getClass().getMethod("getLocked").invoke(h);
+				if (locked != null && locked.booleanValue()) {
+					throw new InternalErrorException("Your device is locked");
+				}
+			} catch (Exception e) {
+			}
+		}
 	}
 
 
