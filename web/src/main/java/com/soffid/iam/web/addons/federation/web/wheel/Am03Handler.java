@@ -28,6 +28,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.RootCertificate;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.addons.federation.service.GeoInformationService;
 import com.soffid.iam.addons.federation.service.SelfCertificateService;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
@@ -326,8 +327,15 @@ public class Am03Handler extends Window implements AfterCompose {
 	}
 
 	private boolean alreadyHasToken(User user) throws IOException, InternalErrorException {
-		ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment (user, "", "");
-		env.setService((UserBehaviorService) ServiceLocator.instance().getService(UserBehaviorService.SERVICE_NAME));
+		ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment (user, "", "", false);
+		env.setService((UserBehaviorService) 
+				ServiceLocator
+				.instance()
+				.getService(UserBehaviorService.SERVICE_NAME));
+		env.setGeoInformationService((GeoInformationService) 
+				ServiceLocator
+				.instance()
+				.getService(GeoInformationService.SERVICE_NAME));
 		if ("sms".equals(radiogroup.getSelectedItem().getValue()))
 		{
 			return env.hasOtpSms();

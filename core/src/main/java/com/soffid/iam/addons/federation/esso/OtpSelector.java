@@ -13,6 +13,7 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.addons.federation.service.GeoInformationService;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.utils.ConfigurationCache;
 
@@ -29,7 +30,12 @@ public class OtpSelector {
 			idp = fs.findFederationMemberByPublicId(idpName);
 		if ( idp != null ) {
 			ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(challenge.getUser(), challenge.getHost().getName(), challenge.getHost().getIp(), false);
-			env.setService((UserBehaviorService)ServiceLocator.instance().getService(UserBehaviorService.SERVICE_NAME));
+			env.setService((UserBehaviorService)
+					ServiceLocator.instance()
+					.getService(UserBehaviorService.SERVICE_NAME));
+			env.setGeoInformationService((GeoInformationService) 
+					ServiceLocator.instance()
+					.getService(GeoInformationService.SERVICE_NAME));
 			AuthenticationMethod m = ubs.getAuthenticationMethod(idp, env );
 			boolean accepted = false;
 			StringBuffer otpType = new StringBuffer();

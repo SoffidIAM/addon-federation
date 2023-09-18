@@ -5,6 +5,7 @@
 
 <div  xmlns:h="http://www.w3.org/1999/xhtml"
 	use="com.soffid.iam.addons.federation.web.IdentityProvider" id="handler" dataPath="/." > 
+	<script src='~./js/codemirror/java-classes-federation.js' />
 	<style>
 		div.auth.grid td:first-child div {
 			white-space: nowrap;
@@ -617,6 +618,9 @@
 										"serviceLocator":"com.soffid.iam.ServiceLocator",
 										"deviceCertificate":"java.lang.Boolean",
 										"remoteHost":"com.soffid.iam.api.Host",
+										"geoInformation":"com.soffid.iam.addons.federation.api.GeoInformation",
+										"displacement":"java.lang.Double",
+										"displacementSpeed":"java.lang.Double",
 										"user": "com.soffid.iam.api.User"}'/>
 							
 							<customfield3 label="${c:l('federacio.zul.alwaysAskForCredentials')}"

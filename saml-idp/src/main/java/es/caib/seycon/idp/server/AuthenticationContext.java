@@ -177,8 +177,8 @@ public class AuthenticationContext {
     	currentUser = null;
 
     	updateAllowedAuthenticationMethods();
-        if (allowedAuthenticationMethods.isEmpty())
-        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+//        if (allowedAuthenticationMethods.isEmpty())
+//        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         onInitialStep();
 	}
 
@@ -341,7 +341,8 @@ public class AuthenticationContext {
 		HashSet<String> methods = new HashSet<String>(); 
 		for ( String s: m.getAuthenticationMethods().split(" "))
 		{
-			methods.add(s);
+			if (!s.trim().isEmpty())
+				methods.add(s);
 		}
 		this.allowedAuthenticationMethods = methods;
 	}
@@ -786,8 +787,8 @@ public class AuthenticationContext {
         	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
         }
         
-        if (allowedAuthenticationMethods.isEmpty())
-        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+//        if (allowedAuthenticationMethods.isEmpty())
+//        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         
         nextFactor = new HashSet<String>();
         firstFactor = null;

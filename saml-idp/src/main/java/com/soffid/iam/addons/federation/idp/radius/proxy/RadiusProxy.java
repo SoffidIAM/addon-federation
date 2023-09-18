@@ -166,7 +166,7 @@ extends RadiusServer {
 			return null;
 		} else
 			// normal processing
-			return super.handlePacket(localAddress, remoteAddress, request, sharedSecret, null);
+			return super.handlePacket(localAddress, remoteAddress, request, sharedSecret, null, false);
 	}
     
     /**

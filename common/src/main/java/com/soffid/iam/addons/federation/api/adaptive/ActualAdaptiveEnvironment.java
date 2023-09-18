@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 
+import com.soffid.iam.addons.federation.api.GeoInformation;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -33,7 +34,8 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 
 	private Collection<String> otps;
 	
-	public ActualAdaptiveEnvironment(User user, String sourceIp, String hostId, boolean deviceCertificate) throws IOException, InternalErrorException {
+	public ActualAdaptiveEnvironment(User user, String sourceIp, String hostId, 
+			boolean deviceCertificate) throws IOException, InternalErrorException {
 		this.user = user;
 		this.sourceIp = sourceIp;
 		this.hostId = hostId;
@@ -49,7 +51,7 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	}
 
 	public Host remoteHost() throws InternalErrorException {
-		return service.findHostBySerialNumber(hostId);
+		return hostId == null || hostId.trim().isEmpty() ? null: service.findHostBySerialNumber(hostId);
 	}
 
 	@Override
@@ -279,4 +281,15 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 		return deviceCertificate;
 	}
 
+	public GeoInformation geoInformation() throws InternalErrorException { 
+		return geoService.getGeoInformation(sourceIp);
+	};
+
+	public Double displacement() throws InternalErrorException {
+		return service.getDisplacement(user, sourceIp);
+	}
+
+	public Double displacementSpeed() throws InternalErrorException {
+		return service.getDisplacementSpeed(user, sourceIp);
+	}
 }
