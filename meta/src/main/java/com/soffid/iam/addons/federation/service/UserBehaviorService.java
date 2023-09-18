@@ -16,6 +16,7 @@ import com.soffid.mda.annotation.Service;
 import es.caib.seycon.ng.comu.Maquina;
 import es.caib.seycon.ng.comu.Password;
 import es.caib.seycon.ng.comu.PasswordValidation;
+import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.model.AccountEntity;
 import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.UsuariEntity;
@@ -33,7 +34,8 @@ import es.caib.seycon.ng.servei.XarxaService;
 		FederationMemberEntity.class,
 		AccountEntity.class,
 		DispatcherEntity.class,
-		InternalPasswordService.class})
+		InternalPasswordService.class,
+		GeoInformationService.class})
 public class UserBehaviorService {
 	public String getCountryForIp(String ip) { return null; }
 	public String getLastCountry(Long userId) {return null; }
@@ -48,6 +50,8 @@ public class UserBehaviorService {
 	public String registerHost (String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {return null;}
 	public void updateHost (String hostId, String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {}
 	public Maquina findHostBySerialNumber (String serialNumber) {return null;}
+	public Double getDisplacement (Usuari user, String newIp) {return null;}
+	public Double getDisplacementSpeed (Usuari user, String newIp) {return null;}
 	
 	public AuthenticationMethod getAuthenticationMethod ( FederationMember fm, AdaptiveEnvironment env) {return null;}
 	

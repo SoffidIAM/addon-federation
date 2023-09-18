@@ -16,6 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.maxmind.geoip2.model.CountryResponse;
+import com.soffid.iam.addons.federation.api.GeoInformation;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
@@ -31,6 +32,7 @@ import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordValidation;
+import com.soffid.iam.api.User;
 import com.soffid.iam.model.AccountEntity;
 import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserAccountEntity;
@@ -63,6 +65,9 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 				f = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
 			if ( ! new File(f).canRead())
 			{
+				GeoInformation geo = getGeoInformationService().getGeoInformation(ip);
+				if (geo.getCountry() != null)
+					return geo.getCountry();
 				log.warn("Cannot read GeoIP database "+f+". Upload it from https://dev.maxmind.com/geoip/geoip2/geolite2/");
 				return "?";
 			}
@@ -72,8 +77,6 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 
 		InetAddress ipAddress = InetAddress.getByName(ip);
 
-		// Replace "city" with the appropriate method for your database, e.g.,
-		// "country".
 		try { 
 			CountryResponse response = reader.country(ipAddress);
 			if (response == null || response.getCountry() == null || response.getCountry().getIsoCode() == null)
@@ -170,8 +173,8 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 		setValue (userId, "failures", "0");
 		setValue (userId, "lastFail", "");
 		setValue (userId, "lastLogon", now);
+
 		String country = handleGetCountryForIp(hostIp);
-			
 		if (country != null && !country.equals("??")) {
 			String lastCountry = getValue(userId, "lastCountry");
 			if (lastCountry != null && !lastCountry.equals(country))
@@ -185,6 +188,16 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 			setValue (userId, "lastCountry", country);
 			
 		}
+		
+		GeoInformation geo = getGeoInformationService().getGeoInformation(hostIp);
+		if (geo != null && geo.getLatitude() != null && geo.getLongitude() != null) {
+			setValue(userId, "longitude", geo.getLongitude().toString());
+			setValue(userId, "latitude", geo.getLatitude().toString());
+			setValue(userId, "pos_accuracy", geo.getAccuracy() == null ? "": geo.getAccuracy().toString());
+			setValue(userId, "pos_time", now);
+		}
+		
+
 		if (hostId != null) {
 			String lastLogon = getValue(userId, "lastLogon_"+hostId);
 			if (lastLogon == null) {
@@ -226,6 +239,7 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 
 	public AuthenticationMethod handleGetAuthenticationMethod(FederationMember fm, AdaptiveEnvironment env) throws InternalErrorException {
 		env.setService(this);
+		env.setGeoInformationService(getGeoInformationService());
 		
 		for (AuthenticationMethod method: fm.getExtendedAuthenticationMethods())
 		{
@@ -349,4 +363,42 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 		return getNetworkService().findHostBySerialNumber(serialNumber);
 	}
 
+	@Override
+	protected Double handleGetDisplacement(User user, String newIp) throws Exception {
+		GeoInformation geo = getGeoInformationService().getGeoInformation(newIp);
+		if (geo.getLatitude() == null || geo.getLongitude() == null)
+			return null;
+		double oldLatitude = Double.parseDouble( getValue(user.getId(), "latitude") );
+		double oldLongitude = Double.parseDouble(getValue(user.getId(), "longitude") );
+		String oldAccuracyString = getValue(user.getId(), "pos_accuracy");
+		Double oldAccuracy = oldAccuracyString == null || oldAccuracyString.isBlank() ?
+				0: Double.parseDouble(oldAccuracyString);
+		
+		double difLatitudeRad = (geo.getLatitude().doubleValue() - oldLatitude) * Math.PI / 180.0;
+		double difLongitudeRad = (geo.getLongitude().doubleValue() - oldLongitude) * Math.PI / 180.0;
+		double dfs = Math.sin(difLatitudeRad / 2);
+		double dfs2 = Math.sin(difLongitudeRad/2);
+		double a = dfs * dfs +
+				Math.cos(geo.getLatitude() * Math.PI / 180.0) *
+				Math.cos(oldLatitude * Math.PI / 180.0) *
+				dfs2 * dfs2;
+		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+		c = Math.abs(6378.0 * c);
+		if (oldAccuracy != null)
+			c = c - oldAccuracy.doubleValue();
+		if (geo.getAccuracy() != null)
+			c = c - geo.getAccuracy();
+		if (c < 0) c = 0;
+		return c;
+	}
+
+	@Override
+	protected Double handleGetDisplacementSpeed(User user, String newIp) throws Exception {
+		Double dis = handleGetDisplacement(user, newIp);
+		if (dis == null)
+			return null;
+		long oldTime = Long.parseLong(getValue(user.getId(), "pos_time"));
+		return dis.doubleValue() / (System.currentTimeMillis() - oldTime) 
+				/ 60.0 * 60.0 * 1000.0;
+	}
 }

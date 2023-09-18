@@ -10,6 +10,7 @@ public class AuthenticationMethod {
 	
 	String description;
 
+	@Nullable
 	String authenticationMethods;
 
 	@Nullable 

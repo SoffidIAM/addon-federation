@@ -48,9 +48,7 @@ public class CancelAction extends HttpServlet {
     		authCtx.setUser(null);
     		try {
 				authCtx.initialize(req);
-			} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
-					| CertificateException | IllegalStateException | NoSuchProviderException | SignatureException
-					| InternalErrorException | IOException e) {
+			} catch (Exception e) {
 				new AuthenticationContext().store(req);
 			}
        		getServletContext().getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);

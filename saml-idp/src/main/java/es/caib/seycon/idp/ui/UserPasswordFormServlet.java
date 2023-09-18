@@ -287,6 +287,8 @@ public class UserPasswordFormServlet extends BaseForm {
             	String msg = String.format(Messages.getString("certificateWarning"), days);
             	g.addArgument("certificateWarning", msg);
             }
+            if ( ctx.getAllowedAuthenticationMethods().isEmpty())
+            	g.addArgument("ERROR", Messages.getString("accessDenied"));
         	if ( ctx.getStep() > 0 || ctx.getUser() != null)
         		g.generate(resp, "loginPage2.html"); //$NON-NLS-1$
         	else
