@@ -48,7 +48,7 @@ public class CancelAction extends HttpServlet {
     		authCtx.setUser(null);
     		try {
 				authCtx.initialize(req);
-			} catch (Exception e) {
+			} catch (																															Exception e) {
 				new AuthenticationContext().store(req);
 			}
        		getServletContext().getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);
