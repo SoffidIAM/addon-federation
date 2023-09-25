@@ -73,7 +73,26 @@ public class UserCredentialEntity {
 	@Nullable
 	public java.util.Date expirationDate;
 
+	@Nullable
+	@Column(name="UCR_SISOPE", length = 40)
+	String operatingSystem;
+	
+	@Nullable
+	@Column(name="UCR_MODEL", length = 128)
+	String model;
 
+	@Nullable
+	@Column(name="UCR_PUSTOK", length = 128)
+	String pushChannelToken;
+
+	@Nullable
+	@Column(name="UCR_PUSIMG", length = 8)
+	String pushImage;
+
+	@Nullable
+	@Column(name="UCR_VERSION", length = 25)
+	String version;
+	
 	public Collection<UserCredentialEntity> findByUserId(Long userId) { return null;}
 	
 	public List<UserCredentialEntity> findBySerialNumber(String serialNumber) { return null;}

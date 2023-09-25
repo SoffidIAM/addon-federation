@@ -1,6 +1,7 @@
 package com.soffid.iam.addons.federation.service;
 
 import java.security.Key;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import com.soffid.iam.model.UserEntity;
 
 public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase {
 	Log log = LogFactory.getLog(getClass());
+	SecureRandom random  = new SecureRandom();
 
 	@Override
 	protected boolean handleIsPushAuthenticationAccepted(UserCredentialChallenge challenge) throws Exception {
@@ -42,12 +44,30 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 					ch.setCreated(new Date());
 					ch.setCredential(cred);
 					ch.setSolved(false);
+					if (cred.getVersion() != null && !cred.getVersion().isEmpty()) {
+						String images[] = new String[4];
+						int pos = random.nextInt(4);
+						ch.setImage(generateRandom());
+						images[pos] = ch.getImage();
+						for (int i = 0; i < images.length; i++)
+							if (images[i] == null)
+								images [i] = generateRandom();
+						ch.setImage1(images[0]);
+						ch.setImage2(images[1]);
+						ch.setImage3(images[2]);
+						ch.setImage4(images[3]);
+					}							
 					getUserCredentialChallengeEntityDao().create(ch);
 					currentChallenge.add( getUserCredentialChallengeEntityDao().toUserCredentialChallenge(ch) );
 				}
 			}
 		}
 		return currentChallenge;
+	}
+
+	private String generateRandom() {
+		int n = random.nextInt(100);
+		return Integer.toString(n);
 	}
 
 	@Override
@@ -91,6 +111,17 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 					now = now - now % 30000; 
 					
 					long lastUsed = cred.getLastUse() == null? 0: cred.getLastUse().getTime();
+					// Check trail
+					if (entity.getImage() != null) {
+						if (! response.endsWith(entity.getImage())) {
+							cred.setFails(cred.getFails() == null ? 1: cred.getFails() + 1);
+							if (cred.getFails().intValue() > 10)
+								cred.setExpirationDate(new Date());
+							getUserCredentialEntityDao().update(cred);
+							return;
+						}
+						response = response.substring(response.length() - entity.getImage().length());
+					}
 					// 5 minutes offset allowed
 					int intValue;
 					try {
@@ -119,6 +150,20 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 					getUserCredentialEntityDao().update(cred);
 					
 				}
+			}
+		}
+	}
+
+	@Override
+	protected void handleUpdatePushAuthenticationToken(String credentialId, String pushChannelToken,
+			String operatingSystem, String model, String version) throws Exception {
+		for (UserCredentialEntity entity: getUserCredentialEntityDao().findBySerialNumber(credentialId)) {
+			if (entity.getType() == UserCredentialType.PUSH) {
+				entity.setPushChannelToken(pushChannelToken);
+				entity.setOperatingSystem(operatingSystem);
+				entity.setModel(model);
+				entity.setVersion(version);
+				getUserCredentialEntityDao().update(entity);
 			}
 		}
 	}

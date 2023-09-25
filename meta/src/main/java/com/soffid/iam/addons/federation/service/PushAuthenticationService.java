@@ -51,4 +51,6 @@ public class PushAuthenticationService
 
 	public void responsePushAuthentication ( UserCredentialChallenge challenge, @Nullable String response ) { }
 
+	public void updatePushAuthenticationToken (String credentialId, @Nullable String pushChannelToken, @Nullable String operatingSystem,
+			@Nullable String model, @Nullable String version) {}
 }
