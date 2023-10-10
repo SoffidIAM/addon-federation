@@ -163,6 +163,8 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 				entity.setOperatingSystem(operatingSystem);
 				entity.setModel(model);
 				entity.setVersion(version);
+				if (model != null && ! model.trim().isEmpty())
+					entity.setDescription(model);
 				getUserCredentialEntityDao().update(entity);
 			}
 		}
