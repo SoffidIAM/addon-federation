@@ -148,6 +148,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setCaptchaKey(idp.getCaptchaKey());
 			target.setCaptchaSecret(idp.getCaptchaSecret() == null ? null: Password.decode(idp.getCaptchaSecret()));
 			target.setCaptchaThreshold(idp.getCaptchaThreshold());
+			target.setLanguage(idp.getLanguage());
 		} else if (source instanceof VirtualIdentityProviderEntity) {
 			target.setClasse("V"); //$NON-NLS-1$
 			// VirtualIdentityProvider
@@ -491,6 +492,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setCaptchaSecret(source.getCaptchaSecret() == null ? null: source.getCaptchaSecret().toString());
 			idp.setCaptchaThreshold(source.getCaptchaThreshold());
 
+			idp.setLanguage(source.getLanguage());
+			
 			if (source.getServiceProvider() != null) {
 				// els transformem tots i es guarden a sps
 				List<FederationMemberEntity> sps = federationMemberToEntityList(source.getServiceProvider()); // federarionmember

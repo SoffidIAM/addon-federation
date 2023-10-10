@@ -358,6 +358,12 @@
 			multiline='true'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			bind="/federationMember/htmlFooter"/>
+		<customfield3 
+			label="${c:l('federacio.language')}"
+			maxLength="2"
+			dataType="STRING"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/language"/>
 	</div>
 
 	<div id="serviceProvidersSection" sclass="section">
