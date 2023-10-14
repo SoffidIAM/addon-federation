@@ -163,11 +163,14 @@ public class AuthenticationContext {
         	if (ip != null) idp = ip;
         }
 
+    	currentUser = null;
     	if (cookieName != null && request != null && request.getCookies() != null)
     	{
 			for (Cookie cookie: request.getCookies()) {
-				if (cookie.getName().equals(userCookie) && Boolean.TRUE.equals(idp.getStoreUser()))
-					user = cookie.getValue();
+				if (cookie.getName().equals(userCookie) && Boolean.TRUE.equals(idp.getStoreUser())) {
+					String u = cookie.getValue();
+					user = u;
+				}
     			if (cookie.getName().equals(cookieName))
     				hostId = cookie.getValue();
 			}
@@ -175,8 +178,12 @@ public class AuthenticationContext {
     	
     	fetchHostIdFromCert(request);
     	
-    	currentUser = null;
-
+    	try {
+    		if (user != null)
+    			getUserData(user);
+    	} catch (Exception e) {
+    		// User no longer exists
+    	}
     	updateAllowedAuthenticationMethods();
 //        if (allowedAuthenticationMethods.isEmpty())
 //        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
