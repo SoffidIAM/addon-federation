@@ -49,7 +49,7 @@
 					<menu2item if="${soffid:isUserInRole('federation-attribute:delete')}" image="/img/trash.svg" label="${c:l('plugins.zul.Delete') }" onClick="ref:frame.delete"/>
 				</menu2>
 				
-				<databutton image="/img/save.svg" label="${c:l('common.apply') }" datamodel="/model" onClick="ref:frame.applyNoClose" onlyIcon="true"/>
+				<databutton image="/img/save.svg" label="${c:l('common.apply') }" onClick="ref:frame.applyNoClose" onlyIcon="true"/>
 			</div>
 			<form2 id="form" onChangeXPath="ref:frame.onChangeDades"
 					dataPath="/listbox:/." width="100%">
@@ -182,7 +182,7 @@
 				<customfield3 id="regex" label="${c:l('federacio.zul.regex') }" dataType="STRING" onChange="ref:handler.updateRegex" />
 			</div>
 			<div style="text-align: right; width: 100%">
-				<databutton image="/img/ok-r.svg" label="${c:l('error.zul.Tancar') }" datamodel="/model" onClick="ref:handler.apply"/>
+				<databutton image="/img/ok-r.svg" label="${c:l('error.zul.Tancar') }" onClick="ref:handler.apply"/>
 			</div>
 		</div>
 	</window>
