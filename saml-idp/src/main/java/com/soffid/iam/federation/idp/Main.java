@@ -213,6 +213,8 @@ public class Main {
             		c.getFederationMember().getDisableSSL().booleanValue();
             if ("false".equals(System.getProperty("soffid.idp.listen.ssl")))
                 installPlainConnector(host, port);
+            else if ("false".equals(System.getProperty("soffid.idp.listen.client-cert")))
+            	installConnector(host, port, false);
             else
             	installClientCertConnector(host, port);
     
