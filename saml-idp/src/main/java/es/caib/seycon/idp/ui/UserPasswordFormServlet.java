@@ -166,8 +166,8 @@ public class UserPasswordFormServlet extends BaseForm {
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
         	g.addArgument("fingerprintRegister", "false");
         	g.addArgument("fingerprintEnforced", "false");
-        	
-        	
+        	// Hack for embedded internet explorer
+        	String userAgent = req.getHeader("User-Agent");
             boolean otpAllowed = ctx.getNextFactor().contains("O") || ctx.getNextFactor().contains("S") || ctx.getNextFactor().contains("I") || ctx.getNextFactor().contains("M");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {
