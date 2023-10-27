@@ -666,6 +666,7 @@ public class Main {
 		servlet.setInitOrder(2);
 		servlet.setName("ConfigurationEndpoint"); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/.well-known/openid-configuration"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/.well-known/openid-configuration"); //$NON-NLS-1$
 
 		servlet = new ServletHolder(JWKEndpoint.class);
 		servlet.setInitOrder(2);
