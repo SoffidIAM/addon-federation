@@ -26,6 +26,7 @@
 			fingerprintSign();
 		if (${kerberosEnforced})
 			location.href = "${kerberosUrl}";
+		activateFingerprint(); 
 	}
 
 	var fingerprintChallenge = "${fingerprintChallenge}";
@@ -35,41 +36,43 @@
 	var fingerprintRegisterUrl = "${fingerprintRegisterUrl}";
 
 	{if pushAllowed}
-	async function checkPush() {
-	    const response = await fetch('${pushLoginUrl}', {
+	function checkPush() {
+	    fetch('${pushLoginUrl}', {
 	      method: 'GET',
 	      headers: {
 	        'Accept': 'application/json'
 	      }
-	    });
-	    const data = await response.json();
-	    if (data.done)
-	    {
-	    	clearInterval(intervalId);
-		    $("#progressdiv").css("visibility", "visible");
-		    $("#registerlogin").fadeOut("slow");
-		    $("#recoverlogin").fadeOut("slow");
-		    $("#certlogin").fadeOut("slow");
-		    $("#errormsg").fadeOut("slow");
-		    $("#kerberoslogin").fadeOut("slow");
-		    $("#loginfingerprintbutton").fadeOut("slow");
-	    	$("#openidlogin").fadeOut("slow");
-		    $("#otplogin").fadeOut("slow");
-		    $("#passlogin").fadeOut("slow");
-		    $("#canceldiv").fadeOut("slow");
-  		    $("#pushlogin").fadeOut("slow");
-			document.getElementById("pushForm").submit();
-	    }
+	    })
+	    .then (function (response) {
+		    const data = response.json();
+		    if (data.done)
+		    {
+		    	clearInterval(intervalId);
+			    $("#progressdiv").css("visibility", "visible");
+			    $("#registerlogin").fadeOut("slow");
+			    $("#recoverlogin").fadeOut("slow");
+			    $("#certlogin").fadeOut("slow");
+			    $("#errormsg").fadeOut("slow");
+			    $("#kerberoslogin").fadeOut("slow");
+			    $("#loginfingerprintbutton").fadeOut("slow");
+		    	$("#openidlogin").fadeOut("slow");
+			    $("#otplogin").fadeOut("slow");
+			    $("#passlogin").fadeOut("slow");
+			    $("#canceldiv").fadeOut("slow");
+	  		    $("#pushlogin").fadeOut("slow");
+				document.getElementById("pushForm").submit();
+		    }
+	     });
 	}
 	var intervalId = setInterval(checkPush, 500);
 	{endif}
 	{if resendSms} 
-	setTimeout(() => {
+	setTimeout(function () {
 		$("a.resend").css("display", "");
 	}, 5000);
 	{endif}
 	{if sendVoice} 
-	setTimeout(() => {
+	setTimeout(function () {
 		$("a.voice").css("display", "");
 	}, 15000);
 	{endif}
@@ -83,7 +86,7 @@
 
 </head>
 
-<body onLoad="onLoad(); activateFingerprint();" class="bodylogin2">
+<body onLoad="onLoad();" class="bodylogin2">
 
 
 	${raw:htmlHeader}

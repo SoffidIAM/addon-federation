@@ -26,6 +26,7 @@ import org.opensaml.saml2.metadata.OrganizationURL;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.lang.MessageFactory;
 import com.soffid.iam.utils.Security;
 
 import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfigurationManager;
@@ -83,12 +84,9 @@ public class HtmlGenerator {
         internalParams = new HashMap<String, String>();
         langs = new LinkedList<Locale>();
 
-        String selectedLang = (String) request.getSession()
-                .getAttribute("lang"); //$NON-NLS-1$
+        String selectedLang = MessageFactory.getLocale().getLanguage(); //$NON-NLS-1$
         if (selectedLang != null)
             langs.add(new Locale(selectedLang));
-        
-        
 
         @SuppressWarnings("rawtypes")
         Enumeration e;
@@ -207,11 +205,13 @@ public class HtmlGenerator {
         if (fm != null && fm.getHtmlHeader() != null && ! fm.getHtmlHeader().trim().isEmpty()) {
         	internalParams.put("htmlHeader", fm.getHtmlHeader());
         } else {
+        	String url = internalParams.get("refreshUrl");
+        	if (url == null) url = "/login";
         	internalParams.put("htmlHeader", "	<div id=\"language\">\n"
         			+ "		<ul class=\"qtrans_language_chooser\" id=\"qtranslate-chooser\">\n"
-        			+ "			<li class=\"lang-en ${lang.active.en}\"><a href=\""+internalParams.get("refreshUrl")+"?lang=en\" hreflang=\"en\" title=\"English\"><span>English</span></a></li>\n"
-        			+ "			<li class=\"lang-es ${lang.active.es}\"><a href=\""+internalParams.get("refreshUrl")+"?lang=es\" hreflang=\"es\" title=\"Español\"><span>Español</span></a></li>\n"
-        			+ "			<li class=\"lang-ca ${lang.active.ca}\"><a href=\""+internalParams.get("refreshUrl")+"?lang=ca\" hreflang=\"ca\" title=\"Català\"><span>Català</span></a></li>\n"
+        			+ "			<li class=\"lang-en ${lang.active.en}\"><a href=\""+url+"?lang=en\" hreflang=\"en\" title=\"English\"><span>English</span></a></li>\n"
+        			+ "			<li class=\"lang-es ${lang.active.es}\"><a href=\""+url+"?lang=es\" hreflang=\"es\" title=\"Español\"><span>Español</span></a></li>\n"
+        			+ "			<li class=\"lang-ca ${lang.active.ca}\"><a href=\""+url+"?lang=ca\" hreflang=\"ca\" title=\"Català\"><span>Català</span></a></li>\n"
         			+ "		</ul>\n"
         			+ "	</div>\n"
         			+ "<p class='biglogo'><img src=\"/imgs/logo.png\"/></div>"

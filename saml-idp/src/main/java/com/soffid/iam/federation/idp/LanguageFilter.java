@@ -1,6 +1,13 @@
 package com.soffid.iam.federation.idp;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Locale;
 
 import javax.servlet.Filter;
@@ -12,8 +19,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.comu.lang.MessageFactory;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class LanguageFilter implements Filter {
 
@@ -30,6 +39,15 @@ public class LanguageFilter implements Filter {
 		currentIp.set(req.getRemoteAddr());
 		
 		Locale localeToUse = request.getLocale();
+		String l = null;
+		try {
+			l = IdpConfig.getConfig().getFederationMember().getLanguage();
+		} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
+				| CertificateException | IllegalStateException | NoSuchProviderException | SignatureException
+				| IOException | InternalErrorException e1) {
+		}
+		if (l != null &&  !l.trim().isEmpty())
+			localeToUse = new Locale(l);
 		HttpSession s = req.getSession(false);
 		if (s != null)
 		{

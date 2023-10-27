@@ -123,8 +123,28 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 		h.getAttributes().put("browser", browser);
 		h.getAttributes().put("cpu", cpu);
 		h.setLastSeen(Calendar.getInstance());
+		updateOs(h, device, os);
 		getNetworkService().update(h);
 		return serialNumber;
+	}
+
+	private void updateOs(Host h, String device, String os) throws InternalErrorException {
+		if (h.getOs() == null)
+			updateOs(h, "ALT");
+		if (os.toLowerCase().contains("windows")) {
+			if ("Desktop".equalsIgnoreCase(device)) 
+				updateOs(h, "WNT");
+			else
+				updateOs(h, "NTS");
+		}
+		if (os.toLowerCase().contains("linux")) {
+			updateOs(h, "LIN");
+		}
+	}
+
+	private void updateOs(Host h, String string) throws InternalErrorException {
+		if (getNetworkService().findOSTypeByName(string) != null)
+			h.setOs(string);
 	}
 
 	@Override
@@ -136,6 +156,7 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 			h.getAttributes().put("detectedOs", os);
 			h.getAttributes().put("browser", browser);
 			h.getAttributes().put("cpu", cpu);
+			updateOs(h, device, os);
 			getNetworkService().update(h);
 		}
 	}

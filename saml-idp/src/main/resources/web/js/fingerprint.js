@@ -59,9 +59,10 @@ function arrayToBase64(array)
 }
 
 
-async function registerCredential (cred) 
+function registerCredential (cred) 
 {
-    const response = await fetch(fingerprintRegisterUrl, {
+    const response = await 
+	fetch(fingerprintRegisterUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -70,22 +71,22 @@ async function registerCredential (cred)
       body: "clientJSON="+encodeURIComponent( arrayToBase64(cred.response.clientDataJSON) )+
 	      "&attestation="+encodeURIComponent( arrayToBase64(cred.response.attestationObject)) +
 	    		  "&rawId="+encodeURIComponent( arrayToBase64(cred.rawId))
-    });
-    const data = await response.json();
-    if (data.status == 'success')
-    {
-    	var serial = data.serial;
-    	localStorage.setItem("soffid.credential.serial", serial);
-  	  	$("#fingerprintregister").fadeOut("slow");
-  	  	$("#fingerprintinprogress").fadeIn("slow");
-		if (fingerprintRegister)
-			window.close();
-    }
-    else
-    {
-    	alert("ERROR: "+data.cause);
-    }
-    return "";
+    }).then ( function (response) {
+	    const data = response.json();
+	    if (data.status == 'success')
+	    {
+	    	var serial = data.serial;
+	    	localStorage.setItem("soffid.credential.serial", serial);
+	  	  	$("#fingerprintregister").fadeOut("slow");
+	  	  	$("#fingerprintinprogress").fadeIn("slow");
+			if (fingerprintRegister)
+				window.close();
+	    }
+	    else
+	    {
+	    	alert("ERROR: "+data.cause);
+	    }
+	});
 }
 
 function validateCredential (cred) 
@@ -116,14 +117,14 @@ function fingerprintCreate() {
 	createCredentialDefaultArgs.publicKey.challenge = base64toArray(fingerprintChallenge).buffer;
 	// register / create a new credential
 	navigator.credentials.create(createCredentialDefaultArgs)
-	    .then((cred) => {
+	    .then(function (cred) {
 	        rawId = arrayToBase64( cred.rawId );
 	        localStorage.setItem("soffid.credential.id", rawId);
 	        localStorage.removeItem("soffid.credential.serial");
 	        localStorage.setItem("soffid.credential.enabled", "false");
 	        registerCredential ( cred );
 	    })
-	    .catch((err) => {
+	    .catch(function (err)  {
 	        alert ("ERROR"+ err);
 			window.close();
 	    });
@@ -141,10 +142,10 @@ function fingerprintSign() {
 		}
 	    publicKeyCredential.publicKey.allowCredentials = ac;
 		navigator.credentials.get(publicKeyCredential)	    
-	    .then((assertion) => {
+	    .then(function (assertion) {
 	        validateCredential ( assertion );
 	    })
-	    .catch((err) => {
+	    .catch(function (err) {
 	        alert("ERROR "+ err);
 			window.location.reload();
 	    });  

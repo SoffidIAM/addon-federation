@@ -88,8 +88,13 @@ public class Autenticator {
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         
         IdpConfig config = IdpConfig.getConfig();
-        
-        User user = server.getUserInfo(principal, config.getSystem().getName());
+
+        User user;
+        try {
+        	user = server.getUserInfo(principal, config.getSystem().getName());
+        } catch (UnknownUserException e) {
+        	return "";
+        }
         
         server.updateExpiredPasswords(user, externalAuth);
         

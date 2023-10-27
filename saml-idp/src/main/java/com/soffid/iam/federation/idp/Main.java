@@ -213,6 +213,8 @@ public class Main {
             		c.getFederationMember().getDisableSSL().booleanValue();
             if ("false".equals(System.getProperty("soffid.idp.listen.ssl")))
                 installPlainConnector(host, port);
+            else if ("false".equals(System.getProperty("soffid.idp.listen.client-cert")))
+            	installConnector(host, port, false);
             else
             	installClientCertConnector(host, port);
     
@@ -664,6 +666,7 @@ public class Main {
 		servlet.setInitOrder(2);
 		servlet.setName("ConfigurationEndpoint"); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/.well-known/openid-configuration"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/.well-known/openid-configuration"); //$NON-NLS-1$
 
 		servlet = new ServletHolder(JWKEndpoint.class);
 		servlet.setInitOrder(2);
