@@ -44,7 +44,9 @@
 	      }
 	    })
 	    .then (function (response) {
-		    const data = response.json();
+		    return response.json();
+	    })
+	    .then( function(data) {
 		    if (data.done)
 		    {
 		    	clearInterval(intervalId);
