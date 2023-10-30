@@ -56,7 +56,7 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 						ch.setImage2(images[1]);
 						ch.setImage3(images[2]);
 						ch.setImage4(images[3]);
-					}							
+					}
 					getUserCredentialChallengeEntityDao().create(ch);
 					currentChallenge.add( getUserCredentialChallengeEntityDao().toUserCredentialChallenge(ch) );
 				}
@@ -120,7 +120,7 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 							getUserCredentialEntityDao().update(cred);
 							return;
 						}
-						response = response.substring(response.length() - entity.getImage().length());
+						response = response.substring(0, response.length() - entity.getImage().length());
 					}
 					// 5 minutes offset allowed
 					int intValue;

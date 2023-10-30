@@ -37,6 +37,7 @@
 
 	{if pushAllowed}
 	function checkPush() {
+		console.log("Invoking ${pushLoginUprl}");
 	    fetch('${pushLoginUrl}', {
 	      method: 'GET',
 	      headers: {
@@ -44,7 +45,9 @@
 	      }
 	    })
 	    .then (function (response) {
-		    const data = response.json();
+		    return response.json();
+	    })
+	    .then( function(data) {
 		    if (data.done)
 		    {
 		    	clearInterval(intervalId);
@@ -149,6 +152,7 @@
 			{if pushAllowed} 
 			<div class="logintype2"  id ="pushlogin">
 					${pushlogininprogress.message}
+					<img class="pushImage" src="${pushImage}" />
 			</div>
 			<p/>
 			{endif}

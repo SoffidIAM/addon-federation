@@ -379,3 +379,11 @@ a.voice {
 	font-weight: bold;
 	float: right;
 }
+
+img.pushImage {
+	max-height: 105px;
+    max-width: 150px;
+    margin-left: auto;
+    display: block;
+    margin-right: auto;
+}

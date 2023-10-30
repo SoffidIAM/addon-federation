@@ -17,6 +17,8 @@ public class UserCredentialChallenge {
 	
 	@Nullable String deviceVersion;
 	
+	@Nullable String imageUrl;
+	
 	Date created;
 	
 	boolean solved;

@@ -72,7 +72,8 @@ function registerCredential (cred)
 	      "&attestation="+encodeURIComponent( arrayToBase64(cred.response.attestationObject)) +
 	    		  "&rawId="+encodeURIComponent( arrayToBase64(cred.rawId))
     }).then ( function (response) {
-	    const data = response.json();
+		return response.json();
+	}).then (function(data) {
 	    if (data.status == 'success')
 	    {
 	    	var serial = data.serial;
