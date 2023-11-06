@@ -37,11 +37,6 @@ public class UserAction extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         
-        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (! amf.allowUserPassword())
-            throw new ServletException ("Authentication method not allowed"); //$NON-NLS-1$
-        
-
         String u = req.getParameter("j_username"); //$NON-NLS-1$
         String error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
        

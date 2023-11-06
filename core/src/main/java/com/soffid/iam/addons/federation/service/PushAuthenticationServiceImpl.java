@@ -1,5 +1,14 @@
 package com.soffid.iam.addons.federation.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.util.Collection;
@@ -33,7 +42,7 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 	}
 
 	@Override
-	protected Collection<UserCredentialChallenge> handleSendPushAuthentication(String user) throws Exception {
+	protected Collection<UserCredentialChallenge> handleSendPushAuthentication(String user, String domain) throws Exception {
 		List<UserCredentialChallenge> currentChallenge = new LinkedList<>(); 
 		UserEntity u = getUserEntityDao().findByUserName(user);
 		if (u != null && u.getActive().equals("S")) {
@@ -50,8 +59,17 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 						ch.setImage(generateRandom());
 						images[pos] = ch.getImage();
 						for (int i = 0; i < images.length; i++)
-							if (images[i] == null)
-								images [i] = generateRandom();
+							if (images[i] == null) {
+								boolean repeat;
+								do {
+									repeat = false;
+									String r = generateRandom();
+									for (int j = 0; j < images.length; j++ )
+										if (r.equals(images[j]))
+											repeat = true;
+									images[i] = r;
+								} while (repeat);
+							}
 						ch.setImage1(images[0]);
 						ch.setImage2(images[1]);
 						ch.setImage3(images[2]);
@@ -59,10 +77,39 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 					}
 					getUserCredentialChallengeEntityDao().create(ch);
 					currentChallenge.add( getUserCredentialChallengeEntityDao().toUserCredentialChallenge(ch) );
+					if (cred.getVersion() != null && !cred.getVersion().isEmpty() && domain != null &&
+							cred.getPushChannelToken() != null) {
+						notify(cred, domain);
+					}
 				}
 			}
 		}
 		return currentChallenge;
+	}
+
+	private void notify(UserCredentialEntity cred, String domain) throws IOException {
+		final String token = cred.getPushChannelToken();
+		new Thread( () -> {
+			try {
+				Thread.sleep(500);
+				URL u = new URL("https://push-otp-notifier.tools.soffid.net/push-otp-tracker/notify");
+				HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+				conn.setDoInput(true);
+				conn.setDoOutput(true);
+				conn.setRequestMethod("POST");
+				conn.addRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+				OutputStream out = conn.getOutputStream();
+				byte[] data = ("domain="+URLEncoder.encode(domain, "UTF-8")+"&token="+
+						URLEncoder.encode(token, StandardCharsets.UTF_8)).getBytes(StandardCharsets.UTF_8);
+				out.write(data);
+				out.close();
+				InputStream in = conn.getInputStream();
+				while (in.read() >= 0);
+				in.close();
+			} catch (Exception e) {
+				// Ignore
+			}
+		}).start();
 	}
 
 	private String generateRandom() {

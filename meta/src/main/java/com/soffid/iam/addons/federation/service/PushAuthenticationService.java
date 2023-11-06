@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 	UserCredentialChallengeEntity.class})
 public class PushAuthenticationService 
 {
-	public Collection<UserCredentialChallenge> sendPushAuthentication( String user ) { return null; }
+	public Collection<UserCredentialChallenge> sendPushAuthentication( String user, @Nullable String domain ) { return null; }
 
 	public boolean isPushAuthenticationAccepted ( UserCredentialChallenge challenge ) { return false; }
 

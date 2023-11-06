@@ -82,7 +82,7 @@ public class UserCredentialEntity {
 	String model;
 
 	@Nullable
-	@Column(name="UCR_PUSTOK", length = 128)
+	@Column(name="UCR_PUSTOK", length = 256)
 	String pushChannelToken;
 
 	@Nullable
