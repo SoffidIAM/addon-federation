@@ -21,6 +21,21 @@ public class UserCredentialChallengeEntity {
 	@Column(name = "UCR_CREATED")
 	Date created;
 	
+	@Nullable @Column(name = "UCR_IMAGE")
+	String image;
+	
+	@Nullable @Column(name = "UCR_IMAGE1")
+	String image1;
+
+	@Nullable @Column(name = "UCR_IMAGE2")
+	String image2;
+
+	@Nullable @Column(name = "UCR_IMAGE3")
+	String image3;
+
+	@Nullable @Column(name = "UCR_IMAGE4")
+	String image4;
+
 	@Column(name = "UCR_SOLVED", defaultValue = "false")
 	boolean solved;
 }

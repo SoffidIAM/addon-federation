@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 	UserCredentialChallengeEntity.class})
 public class PushAuthenticationService 
 {
-	public Collection<UserCredentialChallenge> sendPushAuthentication( String user ) { return null; }
+	public Collection<UserCredentialChallenge> sendPushAuthentication( String user, @Nullable String domain ) { return null; }
 
 	public boolean isPushAuthenticationAccepted ( UserCredentialChallenge challenge ) { return false; }
 
@@ -51,4 +51,6 @@ public class PushAuthenticationService
 
 	public void responsePushAuthentication ( UserCredentialChallenge challenge, @Nullable String response ) { }
 
+	public void updatePushAuthenticationToken (String credentialId, @Nullable String pushChannelToken, @Nullable String operatingSystem,
+			@Nullable String model, @Nullable String version) {}
 }
