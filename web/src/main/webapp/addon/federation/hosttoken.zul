@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?taglib uri="/WEB-INF/tld/web/core.dsp.tld" prefix="c" ?>
+<?taglib uri="/WEB-INF/tld/soffid.dsp.tld" prefix="soffid" ?>
+
+<frame xmlns:h="http://www.w3.org/1999/xhtml" mold="div" style="position: relative" 
+	parentPath="${arg.listbox }"
+	model="${arg.model }"
+	use="com.soffid.iam.addons.federation.web.HostTokenHandler" id="frame">
+
+	<div class="navigation-bar dummy">
+		<label bind="//host/listbox:/@name"></label> - <label bind="//host/listbox:/@description"/>
+	</div>
+
+	<script>
+	function doCopy2 (uuid) {
+		document.getElementById(uuid).style.display="inline"; 
+		document.getElementById(uuid).focus(); 
+		document.getElementById(uuid).select();
+		document.execCommand('copy');
+		document.getElementById(uuid).setSelectionRange (0,0); 
+		document.getElementById(uuid).style.display="none"; 
+	}
+	</script>
+
+	<style>
+		div.datatable table.tbody tr td.typeColumn {
+			width: 150px;
+			text-align: left;
+		}
+	</style>
+
+	<timer delay="10000" repeats="true" running="true"  onTimer="ref:frame.refresh"/>
+	
+	<datatable enablefilter="true" id="listbox"
+		autocommit="true"
+		multiselect="true"
+		onSelect="ref:frame.multiSelectToken" 
+		onMultiSelect="ref:frame.multiSelectToken" 
+	    dataPath="${arg.listbox }:/token" >
+	<attribute name="columns"><![CDATA[
+- name: ${c:l('selfcertificate.type')}
+  filter: false
+  value: type
+  className: typeColumn
+  template: <img class='small-icon' src='${execution.contextPath }/addon/federation/img/#{type.value}.svg' />#{type.value == 'cert'? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.CERT')}' :type.value == 'fido' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.FIDO')}' :type.value == 'push' ? '${c:l('com.soffid.iam.addons.federation.common.UserCredentialType.PUSH')}' :''}
+- name: ${c:l('federation.token.serial')}
+  value: serialNumber
+- name: ${c:l('federation.token.description')}
+  value: description
+- name: ${c:l('federation.token.lastUse')}
+  value: lastUse
+  template: #{lastUse_datetime}
+  $class: datetimeColumn
+			]]></attribute>
+	</datatable>
+	<div width="100%" style="text-align: right"  >
+		<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false"  if="${soffid:isUserInRole('otp:cancel')}">-</div>
+		<div class="addButton" onClick="ref:frame.addNew">+</div>
+	</div>
+
+	<window closable="false"
+		xmlns:h="http://www.w3.org/1999/xhtml"
+		id="add-window"
+		position="top, center" sizable="true"
+		title="${c:l('otp.newToken')}" visible="false"
+		style="width: 80%; max-width: 800px">
+	
+		<wizard id="wizard">
+			<attribute name="steps">
+	- ${c:l("selfcertificate.selectType")}
+	- ${c:l("user-account-new.Finish")}
+			</attribute>
+			<div id="step1">
+
+				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
+					id="type"
+					onChange="ref:frame.changeType"
+					label="${c:l('selfcertificate.selectType') }"
+					required="true" >
+				</customfield3>		
+			
+				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
+					id="idp"
+					label="${c:l('selfcertificate.selectIdentityProvider') }"
+					visible="false"
+					required="true" >
+				</customfield3>		
+
+				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
+					id="method"
+					label="${c:l('selfcertificate.registrationMethod') }"
+					listOfValues="now: ${c:l('selfcertificate.registerNow') }, secure: ${c:l('selfcertificate.registerSecuryLink') }, insecure: ${c:l('selfcertificate.registerInsecureLink')}"
+					visible="false"
+					onChange="ref:frame.changeRegistrationMethod"
+					required="true" >
+				</customfield3>		
+
+				<customfield3 dataType="DATE"
+					sclass="databox longlabel"
+					id="date"
+					label="${c:l('selfcertificate.registrationLimit') }"
+					visible="false"
+					required="true" >
+				</customfield3>		
+
+				<customfield3 dataType="STRING"
+					sclass="databox longlabel"
+					id="description"
+					label="${c:l('selfCertificate.description') }"
+					visible="false"
+					required="true" >
+				</customfield3>		
+
+
+				<div style="text-align: right; width: 100%">
+					<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:frame.addUndo" />
+					<button image="/img/next-r.svg" label="${c:l('aplicaIntranet_autoritzacio.Next')}" onClick="ref:frame.addApply"/>
+				</div>
+						
+			</div>
+			<div>
+				<div style="display: block; width: calc(100% - 48px); text-align: center; margin: 24px;" id="pinblock">
+					<div id="forFido" style="margn-bottom: 24px">
+						<label id="fidoinstructions" style="display:block;word-break: break-word;overflow-wrap: anywhere;"/>
+					</div>
+					<div id="forcert"  style="margn-bottom: 24px">
+						<label value="${c:l('federation.certificate.instructions') } :" style="display:block;word-break: break-word;overflow-wrap: anywhere;"/>					
+						<label value="" id="password" style='font-weight: bold; '/>
+						<imageclic src="/img/copy.svg" 
+							action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
+							style="vertical-align: middle"
+							title="${c:l('vault.account.copy')}"/>
+						<textbox readonly="true" style="display:none;" 
+							id="qpassword"/>
+					</div>
+					<div style="display: block; width: 100%; text-align: center" id="forpush">
+						<label value="${c:l('federation.push.urlmessage') }" style="display:block; word-break: break-word"/>
+						<image id="image" style="width: 250px; height: 250px"/>
+						<div>
+							<label id="url" />
+							<label value="" id="pushurl" style='font-weight: bold; '/>
+							<imageclic src="/img/copy.svg" 
+								action="onClick: {var d=this.nextElementSibling; d.style.display='inline'; d.focus();d.select();document.execCommand('copy');d.setSelectionRange (0,0);d.style.display='none';}"
+								style="vertical-align: middle"
+								title="${c:l('vault.account.copy')}"/>
+							<textbox readonly="true" style="display:none;" 
+								id="pushurl2"/>
+						</div>
+					</div>
+				</div>
+
+				<div style="text-align: right; width: 100%">
+					<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar')}" onClick="ref:frame.addUndo" if="${soffid:isUserInRole('federation:certificate:user') || soffid:isUserInRole('federation:certificate:user') }"/>
+				</div>
+			</div>
+		</wizard>
+	</window>
+
+</frame>
+

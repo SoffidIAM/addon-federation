@@ -19,10 +19,14 @@
 
 	function onLoad()
 	{
+		{if certificateWarning}
+		alert("${certificateWarning}");
+		{endif}
 		if (${fingerprintEnforced})
 			fingerprintSign();
 		if (${kerberosEnforced})
 			location.href = "${kerberosUrl}";
+		activateFingerprint(); 
 	}
 
 	var fingerprintChallenge = "${fingerprintChallenge}";
@@ -32,33 +36,48 @@
 	var fingerprintRegisterUrl = "${fingerprintRegisterUrl}";
 
 	{if pushAllowed}
-	async function checkPush() {
-	    const response = await fetch('${pushLoginUrl}', {
+	function checkPush() {
+		console.log("Invoking ${pushLoginUprl}");
+	    fetch('${pushLoginUrl}', {
 	      method: 'GET',
 	      headers: {
 	        'Accept': 'application/json'
 	      }
-	    });
-	    const data = await response.json();
-	    if (data.done)
-	    {
-	    	clearInterval(intervalId);
-		    $("#progressdiv").css("visibility", "visible");
-		    $("#registerlogin").fadeOut("slow");
-		    $("#recoverlogin").fadeOut("slow");
-		    $("#certlogin").fadeOut("slow");
-		    $("#errormsg").fadeOut("slow");
-		    $("#kerberoslogin").fadeOut("slow");
-		    $("#loginfingerprintbutton").fadeOut("slow");
-	    	$("#openidlogin").fadeOut("slow");
-		    $("#otplogin").fadeOut("slow");
-		    $("#passlogin").fadeOut("slow");
-		    $("#canceldiv").fadeOut("slow");
-  		    $("#pushlogin").fadeOut("slow");
-			document.getElementById("pushForm").submit();
-	    }
+	    })
+	    .then (function (response) {
+		    return response.json();
+	    })
+	    .then( function(data) {
+		    if (data.done)
+		    {
+		    	clearInterval(intervalId);
+			    $("#progressdiv").css("visibility", "visible");
+			    $("#registerlogin").fadeOut("slow");
+			    $("#recoverlogin").fadeOut("slow");
+			    $("#certlogin").fadeOut("slow");
+			    $("#errormsg").fadeOut("slow");
+			    $("#kerberoslogin").fadeOut("slow");
+			    $("#loginfingerprintbutton").fadeOut("slow");
+		    	$("#openidlogin").fadeOut("slow");
+			    $("#otplogin").fadeOut("slow");
+			    $("#passlogin").fadeOut("slow");
+			    $("#canceldiv").fadeOut("slow");
+	  		    $("#pushlogin").fadeOut("slow");
+				document.getElementById("pushForm").submit();
+		    }
+	     });
 	}
 	var intervalId = setInterval(checkPush, 500);
+	{endif}
+	{if resendSms} 
+	setTimeout(function () {
+		$("a.resend").css("display", "");
+	}, 5000);
+	{endif}
+	{if sendVoice} 
+	setTimeout(function () {
+		$("a.voice").css("display", "");
+	}, 15000);
 	{endif}
 	</script>
 
@@ -70,7 +89,7 @@
 
 </head>
 
-<body onLoad="onLoad(); activateFingerprint();" class="bodylogin2">
+<body onLoad="onLoad();" class="bodylogin2">
 
 
 	${raw:htmlHeader}
@@ -124,6 +143,8 @@
 					<div class="upbutton">
 						<input id="loginotpbutton" name="formUCboton" type="submit" value="${Login}" />
 					</div>
+					<a href="${resendSmsUrl}" class="resend" style="display:none">${resendPin}</a>
+					<a href="${resendSmsUrl}?voice=true" class="voice" style="display:none">${voiceCall}</a>
 				</form>
 			</div>
 			<p/>
@@ -131,6 +152,7 @@
 			{if pushAllowed} 
 			<div class="logintype2"  id ="pushlogin">
 					${pushlogininprogress.message}
+					<img class="pushImage" src="${pushImage}" />
 			</div>
 			<p/>
 			{endif}
@@ -213,20 +235,24 @@
 			$("form.captcha-form").submit(function(event) {
 				var currentForm = event.target;
 				var ok = true;
-				$("input.captcha-token").each( function(pos, el) {
-					if (el.value == null || el.value == "") ok = false;			
-				});
-				if (!ok) {
-		          event.preventDefault();
-		          grecaptcha.ready(function() {
-		            grecaptcha.execute('${captchaKey}', {action: 'submit'}).then(function(token) {
-						$("input.captcha-token").each( function(pos, el) {
-							el.value = token;			
-						});
-						currentForm.submit();
-		            });
-		          });
-					
+				if (typeof grecaptcha == 'undefined') { // Possible recaptcha is out of service 
+					currentForm.submit();
+				} else {
+					$("input.captcha-token").each( function(pos, el) {
+						if (el.value == null || el.value == "") ok = false;			
+					});
+					if (!ok) {
+			          event.preventDefault();
+			          grecaptcha.ready(function() {
+			            grecaptcha.execute('${captchaKey}', {action: 'submit'}).then(function(token) {
+							$("input.captcha-token").each( function(pos, el) {
+								el.value = token;			
+							});
+							currentForm.submit();
+			            });
+			          });
+						
+					}					
 				}
 			});
 			{endif}

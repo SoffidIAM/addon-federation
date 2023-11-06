@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -73,7 +74,7 @@ public class UserPasswordFormServlet extends BaseForm {
         
         
         try {
-        	if ( ctx.getStep() > 0 ) {
+        	if ( ctx != null && ctx.getStep() > 0 ) {
         		requestedUser = ctx.getUser();
         	}
         	else {
@@ -142,6 +143,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("userUrl", UserAction.URI); //$NON-NLS-1$
             g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
             g.addArgument("changeUserUrl", ChangeUserAction.URI); //$NON-NLS-1$
+            g.addArgument("resendSmsUrl", ResendSmsAction.URI);
             g.addArgument("cancelUrl", CancelAction.URI); //$NON-NLS-1$
             g.addArgument("otpLoginUrl", OTPAction.URI); //$NON-NLS-1$
             g.addArgument("pushLoginUrl", ValidateUserPushCredentialServlet.URI); //$NON-NLS-1$
@@ -155,6 +157,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userAllowed",  ctx.getNextFactor().contains("P") || 
+            		ctx.getNextFactor().contains("Z") ||
             		ctx.getNextFactor().contains("O") ||
             		ctx.getNextFactor().contains("M") ||
             		ctx.getNextFactor().contains("I") ||
@@ -163,8 +166,8 @@ public class UserPasswordFormServlet extends BaseForm {
         	g.addArgument("otpToken",  ""); //$NON-NLS-1$ //$NON-NLS-2$
         	g.addArgument("fingerprintRegister", "false");
         	g.addArgument("fingerprintEnforced", "false");
-        	
-        	
+        	// Hack for embedded internet explorer
+        	String userAgent = req.getHeader("User-Agent");
             boolean otpAllowed = ctx.getNextFactor().contains("O") || ctx.getNextFactor().contains("S") || ctx.getNextFactor().contains("I") || ctx.getNextFactor().contains("M");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {
@@ -173,16 +176,19 @@ public class UserPasswordFormServlet extends BaseForm {
 					user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
 					OTPValidationService v = new com.soffid.iam.remote.RemoteServiceLocator().getOTPValidationService();
 					
-					Challenge ch = new Challenge();
-					ch.setUser(user);
-					StringBuffer otpType = new StringBuffer();
-					if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
-					if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
-					if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
-					if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
-					ch.setOtpHandler(otpType.toString());
-					ch = v.selectToken(ch);
-					ctx.setChallenge(ch);
+					Challenge ch = ctx.getChallenge();
+					if (ch == null || ! isResendAvailable(ch)) {
+						ch = new Challenge();
+						ch.setUser(user);
+						StringBuffer otpType = new StringBuffer();
+						if (ctx.getNextFactor().contains("O")) otpType.append("OTP ");
+						if (ctx.getNextFactor().contains("M")) otpType.append("EMAIL ");
+						if (ctx.getNextFactor().contains("I")) otpType.append("PIN ");
+						if (ctx.getNextFactor().contains("S")) otpType.append("SMS ");
+						ch.setOtpHandler(otpType.toString());
+						ch = v.selectToken(ch);
+						ctx.setChallenge(ch);
+					}
 					if (ch.getCardNumber() == null)
 					{
 						if ( ctx.getNextFactor().size() == 1)
@@ -193,6 +199,8 @@ public class UserPasswordFormServlet extends BaseForm {
 					}
 					else 
 					{
+						g.addArgument("resendSms", isResendAvailable(ch) ? "true": "false") ;
+						g.addArgument("sendVoice", isAlterativeMethodAllowed(ch) ? "true": "false");
 						g.addArgument("otpAllowed",  "true"); //$NON-NLS-1$ //$NON-NLS-2$
 						g.addArgument("userAllowed", "true");
 						g.addArgument("otpToken",  ch.getCardNumber()+" "+ch.getCell()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -212,9 +220,16 @@ public class UserPasswordFormServlet extends BaseForm {
             	User user;
 				try {
 					user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
-					Collection<UserCredentialChallenge> ch = new RemoteServiceLocator().getPushAuthenticationService().sendPushAuthentication(user.getUserName());
+					Collection<UserCredentialChallenge> ch = new RemoteServiceLocator()
+							.getPushAuthenticationService()
+							.sendPushAuthentication(user.getUserName(), ip.getHostName());
 					ctx.setPushChallenge(ch);
 					g.addArgument("pushAllowed", ch.isEmpty() ? "false": "true");
+					g.addArgument("pushImage", "/img/transparent.png");
+					for (UserCredentialChallenge challenge: ch) {
+						if (challenge.getImageUrl() != null)
+							g.addArgument("pushImage", challenge.getImageUrl());
+					}
 				} catch (UnknownUserException e) {
 	            	g.addArgument("pushAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
@@ -273,6 +288,14 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("externalLogin", generateExternalLogin(ip, ctx));
+            Date w = ctx.getCertificateWarning();
+            if (w != null) {
+            	long days = (w.getTime() - System.currentTimeMillis()) / 1000 / 60 / 60 / 24; 
+            	String msg = String.format(Messages.getString("certificateWarning"), days);
+            	g.addArgument("certificateWarning", msg);
+            }
+            if ( ctx.getAllowedAuthenticationMethods().isEmpty())
+            	g.addArgument("ERROR", Messages.getString("accessDenied"));
         	if ( ctx.getStep() > 0 || ctx.getUser() != null)
         		g.generate(resp, "loginPage2.html"); //$NON-NLS-1$
         	else
@@ -281,6 +304,24 @@ public class UserPasswordFormServlet extends BaseForm {
             throw new ServletException(e);
 		}
     }
+
+	protected boolean isAlterativeMethodAllowed(Challenge ch) {
+		try {
+			return Boolean.TRUE.equals( ch.getClass().getMethod("isAlternativeMethodAvailable").invoke(ch) );
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			return false;
+		}
+	}
+
+	protected boolean isResendAvailable(Challenge ch) {
+		try {
+			return Boolean.TRUE.equals( ch.getClass().getMethod("isResendAvailable").invoke(ch) );
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			return false;
+		}
+	}
 
     private boolean forwardToIdp(String requestedUser, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, InternalErrorException {
     	String idp = null;

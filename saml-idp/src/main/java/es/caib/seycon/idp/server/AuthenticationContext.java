@@ -2,11 +2,8 @@ package es.caib.seycon.idp.server;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.ref.WeakReference;
-import java.net.HttpCookie;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -15,18 +12,20 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -39,28 +38,30 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
-import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
-import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.idp.radius.attribute.RadiusAttribute;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.addons.federation.service.impl.IssueHelper;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Challenge;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
-import com.soffid.iam.config.Config;
-import com.soffid.iam.utils.ConfigurationCache;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.ui.SessionConstants;
+import es.caib.seycon.idp.ui.CertificateValidator;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
+import nl.basjes.parse.useragent.UserAgent;
+import nl.basjes.parse.useragent.UserAgent.ImmutableUserAgent;
+import nl.basjes.parse.useragent.UserAgentAnalyzer;
 
 public class AuthenticationContext {
 	String publicId;
@@ -69,6 +70,8 @@ public class AuthenticationContext {
 	String firstFactor;
 	String secondFactor;
 	Set<String> nextFactor;
+	private Date certificateWarning;
+	private boolean certificateWarningDone;
 	private String user;
 	private Set<String> allowedAuthenticationMethods;
 	private String remoteIp;
@@ -76,6 +79,7 @@ public class AuthenticationContext {
 	private User currentUser;
 	private Account currentAccount;
 	private UserCredential newCredential;
+	private boolean deviceCertificate = false;
 	long timestamp = 0;
 	private Challenge challenge;
 	private Collection<UserCredentialChallenge> pushChallenge;
@@ -84,8 +88,13 @@ public class AuthenticationContext {
 
 	private boolean alwaysAskForCredentials;
 	private String radiusState;
-	private long created; 
-	
+	private long created;
+	boolean underAttack = false;
+	private String device; 
+	private String os;
+	private String browser;
+	private String cpu;
+
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
 		if (r == null)
@@ -137,10 +146,11 @@ public class AuthenticationContext {
 	}
 
 	public void initialize (HttpServletRequest request) 
-		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
+		throws Exception
 	{
 		IdpConfig config = IdpConfig.getConfig();
     	remoteIp = getClientRequest(request);
+    	parseUserAgent(request);
     	hostId = null;
     	String cookieName = getHostIdCookieName();
     	String userCookie = getUserCookieName();
@@ -153,22 +163,69 @@ public class AuthenticationContext {
         	if (ip != null) idp = ip;
         }
 
+    	currentUser = null;
     	if (cookieName != null && request != null && request.getCookies() != null)
     	{
 			for (Cookie cookie: request.getCookies()) {
-				if (cookie.getName().equals(userCookie) && Boolean.TRUE.equals(idp.getStoreUser()))
-					user = cookie.getValue();
+				if (cookie.getName().equals(userCookie) && Boolean.TRUE.equals(idp.getStoreUser())) {
+					String u = cookie.getValue();
+					user = u;
+				}
     			if (cookie.getName().equals(cookieName))
     				hostId = cookie.getValue();
 			}
     	}
     	
+    	fetchHostIdFromCert(request);
+    	
     	currentUser = null;
 
+    	try {
+    		if (user != null)
+    			getUserData(user);
+    	} catch (Exception e) {
+    		// User no longer exists
+    	}
     	updateAllowedAuthenticationMethods();
-        if (allowedAuthenticationMethods.isEmpty())
-        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+//        if (allowedAuthenticationMethods.isEmpty())
+//        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         onInitialStep();
+	}
+
+
+	private void fetchHostIdFromCert(HttpServletRequest request) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException, UnknownUserException {
+		CertificateValidator v = new CertificateValidator();
+		X509Certificate[] certs = null;
+		try {
+			certs = v.getCerts(request);
+		} catch (InternalErrorException e) {
+			// Ignore
+		}
+		if (certs != null) {
+			Host host = v.validateHost(certs, hostId);
+			if (host != null) {
+				Date warning = IdpConfig.getConfig().getFederationService()
+						.getCertificateExpirationWarning(Arrays.asList( certs ));
+				if (warning != null) 
+					this.certificateWarning = warning;
+				deviceCertificate = true;
+				if (hostId == null) {
+					hostId = host.getSerialNumber();
+				}
+				else if (!hostId.equals(host.getSerialNumber())) {
+					Host host2 = new RemoteServiceLocator()
+							.getUserBehaviorService()
+							.findHostBySerialNumber(hostId);
+					if (host2 != null) {
+						try {
+							IssueHelper.deviceCertificateBorrowed(host, host2);
+						} catch (Throwable th) {
+							// Ignore
+						}
+					}
+				}
+			}
+		}
 	}
 
 
@@ -193,6 +250,32 @@ public class AuthenticationContext {
 	{
 		String ip = req.getRemoteAddr();
 		return ip;
+	}
+	
+	static UserAgentAnalyzer uaa = UserAgentAnalyzer
+			.newBuilder()
+			.withField(UserAgent.DEVICE_NAME)
+			.withField(UserAgent.OPERATING_SYSTEM_NAME)
+			.withField(UserAgent.DEVICE_CPU)
+			.withField(UserAgent.AGENT_NAME_VERSION)
+			.hideMatcherLoadStats()
+			.withCache(500)
+			.build();
+
+	public void parseUserAgent(HttpServletRequest req) {
+		
+		Map<String,String> headers = new HashMap<>();
+		for (Enumeration<String> e = req.getHeaderNames(); e.hasMoreElements(); ) {
+			String key = e.nextElement();
+			headers.put(key, req.getHeader(key));
+		}
+		synchronized (uaa) {
+			ImmutableUserAgent p = uaa.parse(headers);
+			os = p.get(UserAgent.OPERATING_SYSTEM_NAME).getValue();
+			cpu = p.get(UserAgent.DEVICE_CPU).getValue();
+			browser = p.get(UserAgent.AGENT_NAME_VERSION).getValue();
+			device = p.get(UserAgent.DEVICE_NAME).getValue();
+		}
 	}
 
 	public boolean isPreviousAuthenticationMethodAllowed (HttpServletRequest request) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException
@@ -253,7 +336,7 @@ public class AuthenticationContext {
 		IdpConfig config = IdpConfig.getConfig();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
     		
-    	ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(currentUser, remoteIp, hostId);
+    	ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(currentUser, remoteIp, hostId, deviceCertificate);
     	Integer f = failuresByIp.get(remoteIp);
     	env.setFailuresForSameIp(f == null ? 0: f.intValue());
     	env.setFailuresRatio(worstAthenticationRatio());
@@ -268,7 +351,8 @@ public class AuthenticationContext {
 		HashSet<String> methods = new HashSet<String>(); 
 		for ( String s: m.getAuthenticationMethods().split(" "))
 		{
-			methods.add(s);
+			if (!s.trim().isEmpty())
+				methods.add(s);
 		}
 		this.allowedAuthenticationMethods = methods;
 	}
@@ -369,44 +453,11 @@ public class AuthenticationContext {
 		nextFactor.clear();
     	if ( allowedAuthenticationMethods.contains(m))
     	{
+    		regesterLogonAudit(resp);
     		step = 2;
     		timestamp = System.currentTimeMillis();
     		registerNewCredential();
     		feedRatio(false);
-    		if (currentUser != null)
-    		{
-    			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
-    			long f = ubh.getUserFailures(currentUser.getId());
-    			ubh.setUserFailures(currentUser.getId(), 0);
-    			if (hostId == null && resp != null)
-    			{
-    				hostId = ubh.registerHost(remoteIp);
-    				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
-    				c2.setSecure(true);
-    				c2.setMaxAge(Integer.MAX_VALUE);
-    				c2.setHttpOnly(true);
-    				resp.addCookie(c2);
-    			}
-    			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
-    			if (currentAccount != null) {
-    				currentAccount = new RemoteServiceLocator().getAccountService().findAccountById(currentAccount.getId());
-    				currentAccount.setLastLogin(Calendar.getInstance());
-    				try {
-						new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
-					} catch (AccountAlreadyExistsException e) {
-					}
-    				Audit a = new Audit();
-    				a.setAccount(currentAccount.getName());
-    				a.setUser(currentUser.getUserName());
-    				a.setAction("S");
-    				a.setObject("LOGIN");
-    				a.setDatabase(currentAccount.getSystem());
-    				a.setCalendar(Calendar.getInstance());
-    				a.setSourceIp(remoteIp);
-    				a.setHost(hostId);
-    				new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
-    			}
-    		}
     	}
     	else
     	{
@@ -425,6 +476,76 @@ public class AuthenticationContext {
         	throw new InternalErrorException ("Internal error. No authentication method is allowed");
 	}
 
+
+	protected void regesterLogonAudit(HttpServletResponse resp) throws IOException, InternalErrorException,
+			UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException,
+			NoSuchAlgorithmException, CertificateException, NoSuchProviderException, SignatureException {
+		if (currentUser != null)
+		{
+			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
+			long f = ubh.getUserFailures(currentUser.getId());
+			ubh.setUserFailures(currentUser.getId(), 0);
+			if (hostId != null)
+				updateHost(ubh);
+			if (hostId == null && resp != null)
+			{
+				registerHost(ubh);
+				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
+				c2.setSecure(true);
+				c2.setMaxAge(Integer.MAX_VALUE);
+				c2.setHttpOnly(true);
+				c2.setPath("/");
+				resp.addCookie(c2);
+			}
+			if (hostId != null) {
+				checkLockedHost(ubh);
+			}
+			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
+			if (currentAccount != null) {
+				currentAccount = new RemoteServiceLocator().getAccountService().findAccountById(currentAccount.getId());
+				currentAccount.setLastLogin(Calendar.getInstance());
+				try {
+					new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
+				} catch (AccountAlreadyExistsException e) {
+				}
+				Audit a = new Audit();
+				a.setAccount(currentAccount.getName());
+				a.setUser(currentUser.getUserName());
+				a.setAction("S");
+				a.setObject("LOGIN");
+				a.setDatabase(currentAccount.getSystem());
+				a.setCalendar(Calendar.getInstance());
+				a.setSourceIp(remoteIp);
+				a.setHost(hostId);
+				new RemoteServiceLocator().getFederacioService().registerLoginAudit(a);
+			}
+		}
+	}
+
+
+	private void checkLockedHost(UserBehaviorService ubh) throws InternalErrorException {
+		Host h = ubh.findHostBySerialNumber(hostId);
+		if (h != null) {
+			Boolean locked;
+			try {
+				locked = (Boolean) h.getClass().getMethod("getLocked").invoke(h);
+				if (locked != null && locked.booleanValue()) {
+					throw new InternalErrorException("Your device is locked");
+				}
+			} catch (Exception e) {
+			}
+		}
+	}
+
+
+	protected void registerHost(UserBehaviorService ubh) throws InternalErrorException {
+		hostId = ubh.registerHost(remoteIp, device, browser, os, cpu);
+	}
+
+	protected void updateHost(UserBehaviorService ubh) throws InternalErrorException {
+		ubh.updateHost(hostId, remoteIp, device, browser, os, cpu);
+	}
+
 	private void registerNewCredential() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
 		if (currentUser !=null && newCredential != null)
 		{
@@ -433,7 +554,6 @@ public class AuthenticationContext {
 		}
 	}
 
-	boolean underAttack = false;
 	public void authenticationFailure (String u, String comments) throws IOException, InternalErrorException
 	{
 		getUserData(u);
@@ -624,11 +744,12 @@ public class AuthenticationContext {
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
 			if (hostId == null)
 			{
-				hostId = ubh.registerHost(remoteIp);
+				registerHost(ubh);
 				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);
 				c2.setSecure(true);
 				c2.setMaxAge(Integer.MAX_VALUE);
 				c2.setHttpOnly(true);
+				c2.setPath("/");
 				resp.addCookie(c2);
 			}
 			
@@ -654,7 +775,7 @@ public class AuthenticationContext {
 	static Map<String, AuthenticationContext> auths = new Hashtable<>();
 	static long lastPurge = 0;
 
-	public static AuthenticationContext fromRequest(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
+	public static AuthenticationContext fromRequest(AccessRequest accessRequest, InetAddress sourceAddress, String publicId, boolean secure) throws UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, IOException {
 		expireOldContexts();
 		
 		if (accessRequest == null)
@@ -673,17 +794,22 @@ public class AuthenticationContext {
 			new SecureRandom().nextBytes(random);
 			String s = Base64.encodeBytes(random, Base64.DONT_BREAK_LINES);
 			auth.radiusState = s;
-			auth.initialize(accessRequest, sourceAddress, publicId);
+			auth.initialize(accessRequest, sourceAddress, publicId, secure);
 			auths.put(auth.getRadiusState(), auth);
 		}
 		return auth;
 	}
 
-	private void initialize(AccessRequest accessRequest, InetAddress sourceAddress, String publicId) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	private void initialize(AccessRequest accessRequest, InetAddress sourceAddress, String publicId, boolean secure) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		IdpConfig config = IdpConfig.getConfig();
     	remoteIp = accessRequest.getAttributeValue("Framed-IP-Address");
     	if (remoteIp == null)
     		remoteIp = sourceAddress.getHostAddress();
+    	os = "Unknown";
+    	browser = "Radius";
+    	cpu = null;
+    	deviceCertificate = secure;
+    	
     	hostId = null;
     	currentUser = null;
     	this.publicId = publicId;
@@ -694,10 +820,10 @@ public class AuthenticationContext {
         if (requestedAuthenticationMethod != null)
         {
         	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
+        	if (allowedAuthenticationMethods.isEmpty())
+        		throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         }
         
-        if (allowedAuthenticationMethods.isEmpty())
-        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         
         nextFactor = new HashSet<String>();
         firstFactor = null;
@@ -720,6 +846,9 @@ public class AuthenticationContext {
 		this.remoteIp = remoteIp;
     	hostId = null;
     	currentUser = null;
+    	os = "Unknown";
+    	browser = "Radius";
+    	cpu = null;
 
     	String system = IdpConfig.getConfig().getSystem().getName();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
@@ -740,10 +869,10 @@ public class AuthenticationContext {
         if (requestedAuthenticationMethod != null)
         {
         	allowedAuthenticationMethods.retainAll(requestedAuthenticationMethod);
+        	if (allowedAuthenticationMethods.isEmpty())
+        		throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+        	
         }
-        
-        if (allowedAuthenticationMethods.isEmpty())
-        	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
         
         nextFactor = new HashSet<String>();
         firstFactor = null;
@@ -807,6 +936,26 @@ public class AuthenticationContext {
 
 	public void setPushChallenge(Collection<UserCredentialChallenge> pushChallenge) {
 		this.pushChallenge = pushChallenge;
+	}
+
+
+	public Date getCertificateWarning() {
+		return certificateWarningDone ? null: certificateWarning;
+	}
+
+
+	public void setCertificateWarning(Date certificateWarning) {
+		this.certificateWarning = certificateWarning;
+	}
+
+
+	public boolean isCertificateWarningDone() {
+		return certificateWarningDone;
+	}
+
+
+	public void setCertificateWarningDone(boolean certificateWarningDone) {
+		this.certificateWarningDone = certificateWarningDone;
 	}
 
 

@@ -5,6 +5,7 @@
 
 <div  xmlns:h="http://www.w3.org/1999/xhtml"
 	use="com.soffid.iam.addons.federation.web.IdentityProvider" id="handler" dataPath="/." > 
+	<script src='~./js/codemirror/java-classes-federation.js' />
 	<style>
 		div.auth.grid td:first-child div {
 			white-space: nowrap;
@@ -357,6 +358,12 @@
 			multiline='true'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 			bind="/federationMember/htmlFooter"/>
+		<customfield3 
+			label="${c:l('federacio.language')}"
+			maxLength="2"
+			dataType="STRING"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/language"/>
 	</div>
 
 	<div id="serviceProvidersSection" sclass="section">
@@ -611,7 +618,15 @@
 										"hasOtpPin":"java.lang.Boolean",
 										"hasOtpMail":"java.lang.Boolean",
 										"hasFidoToken":"java.lang.Boolean",
+										"hasPushToken":"java.lang.Boolean",
 										"hasCertificate":"java.lang.Boolean",
+										"serviceLocator":"com.soffid.iam.ServiceLocator",
+										"serviceLocator":"com.soffid.iam.ServiceLocator",
+										"deviceCertificate":"java.lang.Boolean",
+										"remoteHost":"com.soffid.iam.api.Host",
+										"geoInformation":"com.soffid.iam.addons.federation.api.GeoInformation",
+										"displacement":"java.lang.Double",
+										"displacementSpeed":"java.lang.Double",
 										"user": "com.soffid.iam.api.User"}'/>
 							
 							<customfield3 label="${c:l('federacio.zul.alwaysAskForCredentials')}"

@@ -72,6 +72,7 @@ import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.shibext.UidEvaluator;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
+import es.caib.seycon.idp.wsfed.WsfedResponse;
 import es.caib.seycon.ng.comu.TipusSessio;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -87,8 +88,13 @@ public class Autenticator {
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         
         IdpConfig config = IdpConfig.getConfig();
-        
-        User user = server.getUserInfo(principal, config.getSystem().getName());
+
+        User user;
+        try {
+        	user = server.getUserInfo(principal, config.getSystem().getName());
+        } catch (UnknownUserException e) {
+        	return "";
+        }
         
         server.updateExpiredPasswords(user, externalAuth);
         
@@ -197,7 +203,8 @@ public class Autenticator {
 	private boolean checkExternalCookie(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, IdpConfig config, Cookie c, FederationMember ip, String hostId) 
 			throws Exception {
 		String value = c.getValue();
-		FederationService fs = new RemoteServiceLocator().getFederacioService();
+		// User remote version to avoid class cast exception error
+		FederationService fs = (FederationService) new RemoteServiceLocator().getRemoteService(FederationService.REMOTE_PATH);
 		SamlValidationResults check = fs.validateSessionCookie(value);
 		if (check.isValid() && check.getUser() != null)
 		{
@@ -324,12 +331,14 @@ public class Autenticator {
        		cookie.setMaxAge ( -1 );
         	cookie.setSecure(true);
         	cookie.setHttpOnly(true);
+			cookie.setPath("/");
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	resp.addCookie(cookie);
         	if (type != null && type.contains("K"))
         	{
         		Cookie cookie2 = new Cookie (ip.getSsoCookieName()+"_krb", "true");
+    			cookie2.setPath("/");
         		cookie2.setMaxAge(60 * 60 * 24 * 3 ); // 3 monthis to remember kerberos usage
             	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
             		cookie2.setDomain(ip.getSsoCookieDomain());
@@ -339,6 +348,7 @@ public class Autenticator {
         	if (! externalAuth && ! type.startsWith("C") && ! type.startsWith("E") &&
         			Boolean.TRUE.equals(ip.getStoreUser())) {
 	        	Cookie cookieUser = new Cookie(ip.getSsoCookieName()+"_user", principal);
+				cookieUser.setPath("/");
 	       		cookieUser.setMaxAge( 30 * 24 * 60 * 60_000  ); // Remember for one month
 	        	cookieUser.setSecure(true);
 	        	cookieUser.setHttpOnly(true);
@@ -350,6 +360,7 @@ public class Autenticator {
 	       		cookieUser.setMaxAge( 0 );
 	        	cookieUser.setSecure(true);
 	        	cookieUser.setHttpOnly(true);
+				cookieUser.setPath("/");
 	        	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
 	        		cookieUser.setDomain(ip.getSsoCookieDomain());
 	        	resp.addCookie(cookieUser);
@@ -466,6 +477,13 @@ public class Autenticator {
         	String sessionHash = generateRandomSessionId();
         	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
         	LoginResponse.generateResponse(ctx, req, resp, type, sessionHash);
+        }
+        else if ("ws-fed".equals(session.getAttribute("soffid-session-type")))
+        {
+        	LOG.info("Generating ws-fed response");
+        	String sessionHash = generateRandomSessionId();
+        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
+        	WsfedResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else
         {
@@ -657,6 +675,7 @@ public class Autenticator {
        		cookie.setMaxAge ( -1 );
         	cookie.setHttpOnly(true);
         	cookie.setSecure(true);
+			cookie.setPath("/");
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	return cookie;

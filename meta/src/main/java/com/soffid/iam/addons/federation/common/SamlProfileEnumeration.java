@@ -33,4 +33,6 @@ public class SamlProfileEnumeration {
 	public java.lang.String TACACS_PLUS="Tacacs+Profile";
 
 	public java.lang.String SSE="Shared signals & events";
+
+	public java.lang.String WS_FEDERATION="Ws-Federation";
 }

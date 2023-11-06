@@ -5,13 +5,19 @@
 //
 
 package com.soffid.iam.addons.federation.service;
+import com.soffid.iam.addons.federation.api.HostCredential;
 import com.soffid.iam.addons.federation.api.UserCredential;
+import com.soffid.iam.addons.federation.model.HostCredentialEntity;
 import com.soffid.iam.addons.federation.model.RootCertificateEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
 import com.soffid.mda.annotation.*;
 
+import es.caib.seycon.ng.model.MaquinaEntity;
 import roles.Tothom;
+import roles.hostcertificate_query;
 import roles.selfcertificate_query;
+
+import java.util.Date;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 	UserCredentialEntity.class,
 	RootCertificateEntity.class,
 	es.caib.seycon.ng.model.UsuariEntity.class,
-	UserCredentialService.class})
+	MaquinaEntity.class,
+	HostCredentialEntity.class,
+	UserCredentialService.class,
+	HostCredentialService.class})
 public abstract class SelfCertificateService {
 
 	@Operation ( grantees={selfcertificate_query.class})
@@ -30,6 +39,15 @@ public abstract class SelfCertificateService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
+
+	@Operation ( grantees={hostcertificate_query.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public java.util.List<HostCredential> findByHost(
+		java.lang.String host)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
 	@Operation ( grantees={roles.selfcertificate_query.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public UserCredential findByCertificate(
@@ -58,6 +76,15 @@ public abstract class SelfCertificateService {
 	public byte[] createPkcs12(
 		String user,
 		java.lang.String description, 
+		java.lang.String pasword)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+	@Operation ( grantees={roles.hostcertificate_create.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public byte[] createPkcs12ForHost(
+		String host,
+		String description,
 		java.lang.String pasword)
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;

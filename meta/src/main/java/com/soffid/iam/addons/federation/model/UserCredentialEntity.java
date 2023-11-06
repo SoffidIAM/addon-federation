@@ -45,7 +45,7 @@ public class UserCredentialEntity {
 	
 	@Nullable
 	@Description("Public key for either FIDO token or digital certificates")
-	@Column(name="UCR_KEY", length = 512)
+	@Column(name="UCR_KEY", length = 1024)
 	String key;
 	
 	@Nullable
@@ -73,7 +73,26 @@ public class UserCredentialEntity {
 	@Nullable
 	public java.util.Date expirationDate;
 
+	@Nullable
+	@Column(name="UCR_SISOPE", length = 40)
+	String operatingSystem;
+	
+	@Nullable
+	@Column(name="UCR_MODEL", length = 128)
+	String model;
 
+	@Nullable
+	@Column(name="UCR_PUSTOK", length = 256)
+	String pushChannelToken;
+
+	@Nullable
+	@Column(name="UCR_PUSIMG", length = 8)
+	String pushImage;
+
+	@Nullable
+	@Column(name="UCR_VERSION", length = 25)
+	String version;
+	
 	public Collection<UserCredentialEntity> findByUserId(Long userId) { return null;}
 	
 	public List<UserCredentialEntity> findBySerialNumber(String serialNumber) { return null;}

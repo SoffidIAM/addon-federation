@@ -99,4 +99,8 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Description("Recaptcha acceptance threshold")
 	public java.lang.Double captchaThreshold;
 
+	@Description("Default language for UI. Leave empty to use browser language")
+	@Column(name="FED_LANG", length = 4)
+	@Nullable
+	String language;
 }

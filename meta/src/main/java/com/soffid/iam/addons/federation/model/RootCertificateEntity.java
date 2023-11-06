@@ -44,6 +44,13 @@ public abstract class RootCertificateEntity {
 	@Column (name="CAR_EXTERN")
 	public boolean external;
 
+	@Column (name="CAR_DEVICE")
+	public boolean device;
+
+	@Nullable
+	@Column (name="CAR_EXPWAR")
+	public Integer expirationWarningDays;
+
 	@Nullable
 	@Column (name="CAR_GUUSSC", length = 16000)
 	public String guessUserScript;

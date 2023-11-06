@@ -574,8 +574,8 @@ public class Am02Handler extends Window implements AfterCompose {
 		String cmd = "Set-MsolDomainAuthentication `\n"
 				+ "  -FederationBrandName \"Soffid IdP\" `\n"
 				+ "  -Authentication Federated `\n"
-				+ "  -PassiveLogOnUri \"https://"+fm.getHostName()+":"+fm.getStandardPort()+"/profile/SAML2/Redirect/SSO\" `\n"
-				+ "  -SigningCertificate $MySigningCert \""+cert+"\" `\n"
+				+ "  -PassiveLogOnUri \"https://"+fm.getHostName()+":"+fm.getStandardPort()+"/profile/SAML2/Post/SSO\" `\n"
+				+ "  -SigningCertificate \""+cert+"\" `\n"
 				+ "  -IssuerUri \""+publicId+"\" `\n"
 				+ "  -LogOffUri \"https://"+fm.getHostName()+":"+fm.getStandardPort()+"/logout.jsp\" `\n"
 				+ "  -PreferredAuthenticationProtocol \"SAMLP\" \n";

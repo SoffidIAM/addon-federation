@@ -115,6 +115,7 @@ import es.caib.seycon.idp.ui.PasswordRecoveryForm;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
+import es.caib.seycon.idp.ui.ResendSmsAction;
 import es.caib.seycon.idp.ui.RootServlet;
 import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
@@ -140,6 +141,7 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
+import es.caib.seycon.idp.wsfed.WsfedEndpoint;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class Main {
@@ -211,6 +213,8 @@ public class Main {
             		c.getFederationMember().getDisableSSL().booleanValue();
             if ("false".equals(System.getProperty("soffid.idp.listen.ssl")))
                 installPlainConnector(host, port);
+            else if ("false".equals(System.getProperty("soffid.idp.listen.client-cert")))
+            	installConnector(host, port, false);
             else
             	installClientCertConnector(host, port);
     
@@ -247,7 +251,7 @@ public class Main {
     
     }
 
-    private void createRadiusServer(SAMLProfile radius, ServletContext ctx ) throws Exception {
+	private void createRadiusServer(SAMLProfile radius, ServletContext ctx ) throws Exception {
     	RadiusServer rs = new RadiusServer();
     	if (radius.getAcctPort() != null)
     		rs.setAcctPort(radius.getAcctPort());
@@ -427,6 +431,8 @@ public class Main {
         f = new FilterHolder(TenantFilter.class);
         f.setName("TenantFilter");
         f.setInitParameter("tenant", Security.getCurrentTenantName());
+        f.setInitParameter("port", c.getFederationMember().getStandardPort());
+        f.setInitParameter("host", c.getFederationMember().getHostName());
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
         
         f = new FilterHolder(
@@ -456,6 +462,10 @@ public class Main {
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
 
         ServletHolder servlet;
+        SAMLProfile wsfed = useWsfedProfile();
+        if (wsfed != null && Boolean.TRUE.equals(wsfed.getEnabled())) {
+        	configureWsfedProfile(ctx, wsfed);
+        }
         if (useSamldProfile())
         {
 	        configureSamlProfile(ctx);
@@ -469,6 +479,8 @@ public class Main {
 		if (casProfile != null) {
         	configureCasProfile(ctx, casProfile);
         }
+		
+
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
         ctx.addServlet(UserInfoForm.class, UserInfoForm.URI);
         ctx.addServlet(ConsentAction.class, ConsentAction.URI);
@@ -497,6 +509,7 @@ public class Main {
         ctx.addServlet(UserAction.class, UserAction.URI);
         ctx.addServlet(ChangeUserAction.class, ChangeUserAction.URI);
         ctx.addServlet(OTPAction.class, OTPAction.URI);
+        ctx.addServlet(ResendSmsAction.class, ResendSmsAction.URI);
         ctx.addServlet(PasswordChangeRequiredForm.class,
                 PasswordChangeRequiredForm.URI);
         ctx.addServlet(PasswordChangeRequiredAction.class,
@@ -653,6 +666,7 @@ public class Main {
 		servlet.setInitOrder(2);
 		servlet.setName("ConfigurationEndpoint"); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/.well-known/openid-configuration"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/auth/realms/soffid/.well-known/openid-configuration"); //$NON-NLS-1$
 
 		servlet = new ServletHolder(JWKEndpoint.class);
 		servlet.setInitOrder(2);
@@ -702,6 +716,16 @@ public class Main {
 		servlet.setInitParameter("version", "3");
 		ctx.addServlet(servlet, "/cas/p3/serviceValidate"); //$NON-NLS-1$
 	}
+
+	private void configureWsfedProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
+		ServletHolder servlet;
+		servlet = new ServletHolder(WsfedEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("wsfed-loginEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/profile/wsfed/*"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/profile/wsfed"); //$NON-NLS-1$
+	}
+
 
 
 	private void configureSamlProfile(ServletContextHandler ctx) {
@@ -790,6 +814,23 @@ public class Main {
             SAMLProfile profile = (SAMLProfile) it.next();
             SamlProfileEnumeration type = profile.getClasse();
             if (type.equals(SamlProfileEnumeration.RADIUS)  && Boolean.TRUE.equals(profile.getEnabled())) {
+            	return profile;
+            }
+        }
+        return null;
+	}
+
+	private SAMLProfile useWsfedProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederationService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.WS_FEDERATION)  && Boolean.TRUE.equals(profile.getEnabled())) {
             	return profile;
             }
         }

@@ -52,4 +52,18 @@ public class IssueHelper {
 		svc.createInternalIssue(i);
 	}
 
+	public static void deviceCertificateBorrowed(Host host1, Host host2) throws InternalErrorException, IOException {
+		IssueService svc = com.soffid.iam.ServiceLocator.instance().getIssueService();
+		Issue i = new Issue();
+		i.setCreated(new Date());
+		i.setStatus(IssueStatus.NEW);
+		i.setType("device-certificate-borrowed");
+		IssueHost iu = new IssueHost();
+		iu.setHostId(host1.getId());
+		IssueHost iu2 = new IssueHost();
+		iu2.setHostId(host2.getId());
+		i.setHosts(Arrays.asList(iu));
+		svc.createInternalIssue(i);
+	}
+
 }

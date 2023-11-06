@@ -3,7 +3,10 @@ package com.soffid.iam.addons.federation.api.adaptive;
 import java.io.Serializable;
 import java.util.Calendar;
 
+import com.soffid.iam.addons.federation.api.GeoInformation;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
+import com.soffid.iam.addons.federation.service.GeoInformationService;
+import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -14,10 +17,20 @@ public class AdaptiveEnvironment implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 	protected transient UserBehaviorService service;
+	protected GeoInformationService geoService;
 	
 	public boolean newDevice() throws InternalErrorException {
 		return true;
 	}
+	
+	public Host remoteHost() throws InternalErrorException {
+		return new Host();
+	}
+	
+	public boolean deviceCertificate() throws InternalErrorException {
+		return false;
+	}
+
 	public int failuresForSameIp() {
 		return 0;
 	}
@@ -99,5 +112,24 @@ public class AdaptiveEnvironment implements Serializable {
 	}
 	public void setService(UserBehaviorService service) {
 		this.service = service;
+	}
+	
+	public GeoInformationService getGeoInformationService() {
+		return geoService;
+	}
+	public void setGeoInformationService(GeoInformationService service) {
+		this.geoService = service;
+	}
+
+	public GeoInformation geoInformation() throws InternalErrorException { 
+		return new GeoInformation();
+	};
+	
+	public Double displacementSpeed() throws InternalErrorException {
+		return null;
+	}
+
+	public Double displacement() throws InternalErrorException {
+		return null;
 	}
 }

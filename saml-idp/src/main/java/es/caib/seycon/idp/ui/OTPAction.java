@@ -108,6 +108,7 @@ public class OTPAction extends HttpServlet {
 	                    logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
 	            	}
 	            	else if (v.validatePin(ch, p)) {
+	            		ctx.setChallenge(null);
 	            		Set<String> nf = ctx.getNextFactor();
 	            		if (nf.contains("I"))
 	            			ctx.authenticated(u, "I", resp); //$NON-NLS-1$

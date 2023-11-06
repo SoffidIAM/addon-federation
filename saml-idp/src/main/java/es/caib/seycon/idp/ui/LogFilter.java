@@ -63,7 +63,8 @@ public class LogFilter implements Filter {
 		{
 			resp.sendError(HttpServletResponse.SC_FORBIDDEN);
 		} else {
-			String path = req.getContextPath()+req.getServletPath()+req.getPathInfo();
+			String path = req.getContextPath()+req.getServletPath()+
+					(req.getPathInfo() == null ? "" : req.getPathInfo());
 			if (req.getQueryString() != null) path += "?"+req.getQueryString();
 			try {
 				chain.doFilter(request, response);

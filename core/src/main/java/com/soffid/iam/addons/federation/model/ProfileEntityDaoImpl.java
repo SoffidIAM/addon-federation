@@ -140,6 +140,11 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setClasse(SamlProfileEnumeration.CAS);
 			CasProfileEntity entity = (CasProfileEntity) source;
 			target.setEnabled(entity.isEnabled());
+		} else if (source instanceof WsfedProfileEntity) {
+			// heretats
+			target.setClasse(SamlProfileEnumeration.WS_FEDERATION);
+			WsfedProfileEntity entity = (WsfedProfileEntity) source;
+			target.setEnabled(entity.isEnabled());
 		} else if (source instanceof SamlProfileEntity) {
 			// En teoria aquesta és abstracta
 			target.setClasse(SamlProfileEnumeration.SAML_PRO);
@@ -181,6 +186,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 				samlProfileEntity = newTacacsProfileEntity();
 			} else if (SamlProfileEnumeration.CAS.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newCasProfileEntity();
+			} else if (SamlProfileEnumeration.WS_FEDERATION.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newWsfedProfileEntity();
 			} else {
 				samlProfileEntity = newSamlProfileEntity();
 			}

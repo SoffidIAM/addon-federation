@@ -4,6 +4,7 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 
 import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Description;
 import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.ValueObject;
@@ -45,4 +46,20 @@ public class UserCredential {
 	@Nullable
 	public java.util.Calendar expirationDate;
 
+
+	@Nullable
+	String operatingSystem;
+	
+	@Nullable
+	String model;
+
+	@Nullable
+	String pushChannelToken;
+
+	@Nullable
+	String pushImage;
+
+	@Nullable
+	String version;
+	
 }

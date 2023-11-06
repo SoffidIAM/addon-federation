@@ -1,10 +1,12 @@
 package com.soffid.iam.web.addons.federation.web.wheel;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -20,12 +22,15 @@ import org.zkoss.zul.Timer;
 import org.zkoss.zul.Window;
 
 import com.soffid.iam.ServiceLocator;
+import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.RootCertificate;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.addons.federation.service.GeoInformationService;
 import com.soffid.iam.addons.federation.service.SelfCertificateService;
+import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.addons.otp.common.OtpConfig;
 import com.soffid.iam.addons.otp.service.OtpService;
@@ -57,6 +62,7 @@ public class Am03Handler extends Window implements AfterCompose {
 	private Exception lastException;
 	private boolean finished = false;
 	private String publicId;
+	private CustomField3 roles;
 
 	@Override
 	public void afterCompose() {
@@ -66,6 +72,7 @@ public class Am03Handler extends Window implements AfterCompose {
 		radiogroup3 = (Radiogroup) getFellow("radiogroup3");
 		message = (CustomField3) getFellow("message");
 		users = (CustomField3) getFellow("users");
+		roles = (CustomField3) getFellow("roles");
 		date = (CustomField3) getFellow("date");
 		timer = (Timer) getFellow("timer");
 	}
@@ -99,6 +106,13 @@ public class Am03Handler extends Window implements AfterCompose {
 			{
 				if (! users.attributeValidateAll())
 					break;
+				if (! roles.attributeValidateAll())
+					break;
+				if ((users.getValueObjects() == null || users.getValueObjects().isEmpty()) &&
+						(roles.getValueObjects() == null || roles.getValueObjects().isEmpty())) {
+					Missatgebox.avis(Labels.getLabel("selfcertificate.selectUserOrRole"));
+					break;
+				}
 			}
 			wizard.next();
 			Calendar c = Calendar.getInstance();
@@ -213,6 +227,10 @@ public class Am03Handler extends Window implements AfterCompose {
 			{
 				am.setExpression(dateLimit+" && hasFidoToken;");				
 			}
+			else if ("push".equals(radiogroup.getSelectedItem().getValue()))
+			{
+				am.setExpression(dateLimit+" && hasPushToken;");				
+			}
 			else if ("cert".equals(radiogroup.getSelectedItem().getValue()))
 			{
 				am.setExpression(dateLimit+" && hasCertificate;");				
@@ -242,6 +260,10 @@ public class Am03Handler extends Window implements AfterCompose {
 		{
 			am.setAuthenticationMethods("PF");
 		}
+		else if ("push".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			am.setAuthenticationMethods("PZ");
+		}
 		else if ("cert".equals(radiogroup.getSelectedItem().getValue()))
 		{
 			am.setAuthenticationMethods("PC");
@@ -264,17 +286,90 @@ public class Am03Handler extends Window implements AfterCompose {
 			} while (true);
 		}
 		if ("some".equals(radiogroup2.getSelectedItem().getValue())) {
-			for (Object user: users.getValueObjects()) {
-				notifyUser((User) user);
+			notifiedUsers = new HashSet<>();
+			if (users.getValueObjects() != null) {
+				for (Object user: users.getValueObjects()) {
+					if (user != null)
+						notifyUser((User) user);
+				}
+			}
+			if (roles.getValueObjects() != null) {
+				for (Object role: roles.getValueObjects()) {
+					if (role != null)
+						notifyRole((Role) role);
+				}
 			}
 		}
 	}
 
+	private void notifyRole(Role role) throws Exception {
+		for (RoleGrant grant: ServiceLocator.instance().getApplicationService()
+				.findEffectiveRoleGrantsByRoleId(role.getId())) {
+			if (grant.getUser() != null)
+			{
+				User u = ServiceLocator.instance().getUserService().findUserByUserName(grant.getUser());
+				notifyUser(u);
+			}
+		}
+	}
+
+	java.util.Set<String> notifiedUsers = null;
+	
 	private void notifyUser(User user) throws Exception {
-		ServiceLocator.instance().getMailService().sendHtmlMailToActors(
-				new String[] {user.getUserName()}, 
-				Labels.getLabel("federation.mfa.mailSubject"),
-				translate(message.getValue().toString(), user));
+		if (! notifiedUsers.contains(user.getUserName())) {
+			notifiedUsers.add(user.getUserName());
+			if (! alreadyHasToken (user))
+				ServiceLocator.instance().getMailService().sendHtmlMailToActors(
+					new String[] {user.getUserName()}, 
+					Labels.getLabel("federation.mfa.mailSubject"),
+					translate(message.getValue().toString(), user));
+		}
+	}
+
+	private boolean alreadyHasToken(User user) throws IOException, InternalErrorException {
+		ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment (user, "", "", false);
+		env.setService((UserBehaviorService) 
+				ServiceLocator
+				.instance()
+				.getService(UserBehaviorService.SERVICE_NAME));
+		env.setGeoInformationService((GeoInformationService) 
+				ServiceLocator
+				.instance()
+				.getService(GeoInformationService.SERVICE_NAME));
+		if ("sms".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasOtpSms();
+		}
+		else if ("email".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasOtpMail();
+		}
+		else if ("totp".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasOtpTotp();
+		}
+		else if ("hotp".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasOtpHotp();
+		}
+		else if ("pin".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasOtpPin();
+		}
+		else if ("fido".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasFidoToken();
+		}
+		else if ("push".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasPushToken();
+		}
+		else if ("cert".equals(radiogroup.getSelectedItem().getValue()))
+		{
+			return env.hasCertificate();
+		}
+		else
+			return false;
 	}
 
 	protected String translate(String string, User user) throws Exception {
@@ -348,6 +443,10 @@ public class Am03Handler extends Window implements AfterCompose {
 	private void grantPermission(Role role) throws InternalErrorException {
 		if ("fido".equals(radiogroup.getSelectedItem().getValue())) {
 			grant("federation:token:user", role);
+			grant("selfservice:federation-credentials:show", role);
+		}
+		else if ("push".equals(radiogroup.getSelectedItem().getValue())) {
+			grant("federation:push:user", role);
 			grant("selfservice:federation-credentials:show", role);
 		}
 		else if ("cert".equals(radiogroup.getSelectedItem().getValue())) {
@@ -445,17 +544,28 @@ public class Am03Handler extends Window implements AfterCompose {
 					+ "It will be asked by Soffid to verify your identity.";
 			
 		}
+		if ("push".equals(type)) {
+			uri.setPath("/soffid/addon/federation/tokens.zul?wizard=push");
+			t = "Please, follow this <a href='"+uri.toString()+"'>link</a>"
+					+ " to register your Push token.<br>"
+					+ "It will be asked by Soffid to verify your identity.";
+			
+		}
 		message.setValue("Dear ${fullName},<br><br>"+t+"<br><br>Sincerely yours, "+
 				Security.getSoffidPrincipal().getFullName());
 		radiogroup2.setSelectedItem(null);
 		users.setVisible(false);
+		roles.setVisible(false);
 	}
 	
 	public void changeMethod(Event e) {
 		users.setVisible(false);
+		roles.setVisible(false);
 		if (radiogroup2 != null) {
-			if ("some".equals(radiogroup2.getSelectedItem().getValue()))
+			if ("some".equals(radiogroup2.getSelectedItem().getValue())) {
 				users.setVisible(true);
+				roles.setVisible(true);
+			}
 		}
 	}
 	

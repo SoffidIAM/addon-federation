@@ -71,6 +71,15 @@
 						bind="external"
 						readonly="true"
 						label="${c:l('selfcertificate.external')}"/>
+					<customfield3 dataType="BOOLEAN" id="device"
+						bind="device"
+						readonly="true"
+						label="${c:l('selfcertificate.device')}"/>
+					<customfield3 
+						id="expirationWarningDays"
+						label="${c:l('selfCertificate.expirationWarnindDays')}"
+						dataType="NUMBER"
+						bind="expirationWarningDays" />
 					<customfield3 
 						id="userCertificateMonths"
 						label="${c:l('selfCertificate.userCertificateMonts')}"
@@ -144,6 +153,8 @@
 						readonly="true" 
 						id="organizationName2"
 						label="${c:l('selfCertificate.organizationName')}"/>
+					<customfield3 dataType="BOOLEAN" id="device2"
+						label="${c:l('selfcertificate.device')}"/>
 					<customfield3 dataType="STRING" maxlength="16000" multiline="true"
 						id="guessScript"
 						javascript='{"certificate":"java.security.cert.X509Certificat","subject":"javax.naming.ldap.LdapName"}'
@@ -160,6 +171,8 @@
 						id="expirationDate"
 						required="true"
 						label="${c:l('selfCertificate.expirationDate')}"/>
+					<customfield3 dataType="BOOLEAN" id="device3"
+						label="${c:l('selfcertificate.device')}"/>
 					<customfield3 id="userCertificateMonths"
 						required="true"
 						label="${c:l('selfCertificate.userCertificateMonts')}"

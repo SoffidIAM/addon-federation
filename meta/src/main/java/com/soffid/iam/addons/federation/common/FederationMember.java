@@ -324,4 +324,8 @@ public class FederationMember {
 	@Nullable
 	@Description("Store user name in browser cookie")
 	public java.lang.Boolean storeUser;
+
+	@Description("Default language for UI. Leave empty to use browser language")
+	@Nullable
+	String language;
 }

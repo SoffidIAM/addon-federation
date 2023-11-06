@@ -43,6 +43,7 @@ import com.soffid.iam.api.PasswordPolicy;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
+import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.UserType;
 import com.soffid.iam.bpm.service.BpmEngine;
@@ -579,23 +580,23 @@ public class FederationServiceInternal {
 	public User findAccountOwner(String principalName, String identityProvider, Map<String, ? extends Object> map,
 			boolean autoProvision) throws Exception
 	{
-		log.info("searchUser()");
-		
 		com.soffid.iam.api.System dispatcher = createSamlDispatcher(identityProvider);
-		Account account = accountService.findAccount( principalName , dispatcher.getName());
-		log.info("searchUser() - account: "+account);
-		if (account != null)
-		{
-			if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
+		if (principalName != null) {
+			Account account = accountService.findAccount( principalName , dispatcher.getName());
+			log.info("searchUser() - account: "+account);
+			if (account != null)
 			{
-				log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
-				updateAccountAttributes ( account, map);
-				return getUserService().findUserByUserName(account.getOwnerUsers().iterator().next());
+				if (account.getType().equals(AccountType.USER) && account.getOwnerUsers().size() == 1)
+				{
+					log.info("searchUser() - return: account.getOwnerUsers().iterator().next()");
+					updateAccountAttributes ( account, map);
+					return getUserService().findUserByUserName(account.getOwnerUsers().iterator().next());
+				}
+				if ( ! account.getType().equals(AccountType.IGNORED))
+					throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+							principalName,
+							dispatcher.getName()));
 			}
-			if ( ! account.getType().equals(AccountType.IGNORED))
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						principalName,
-						dispatcher.getName()));
 		}
 		// Update account attributes
 		
@@ -610,7 +611,7 @@ public class FederationServiceInternal {
 			}
 		}
 
-		if (autoProvision || provisionScript != null )
+		if (autoProvision || provisionScript != null)
 		{
 			User u = new User();
 			u.setActive(true);
@@ -627,28 +628,30 @@ public class FederationServiceInternal {
 			u.setMailServer("null");
 			Map<String,Object> attributes = (Map<String, Object>) map;
 
-			try {
-				Interpreter interpreter = new Interpreter();
-				interpreter.set("user", u); //$NON-NLS-1$
-				interpreter.set("attributes", attributes); //$NON-NLS-1$
-				interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
-				log.info("searchUser() - execute scriptParse");
-				Object r = interpreter.eval( provisionScript );
-				if ( r == null || r.equals(Boolean.FALSE))
-				{
-					return null;
+			if (provisionScript != null) {
+				try {
+					Interpreter interpreter = new Interpreter();
+					interpreter.set("user", u); //$NON-NLS-1$
+					interpreter.set("attributes", attributes); //$NON-NLS-1$
+					interpreter.set("serviceLocator", ServiceLocator.instance()); //$NON-NLS-1$
+					log.info("searchUser() - execute scriptParse");
+					Object r = interpreter.eval( provisionScript );
+					if ( r == null || r.equals(Boolean.FALSE))
+					{
+						return null;
+					}
+					else if ( ! (r instanceof String))
+					{
+						throw new InternalErrorException("Autoprovision script for "+identityProvider+" returned an object of class "+r.getClass().toString()+" when it should return a String object");
+					}
+					else
+					{
+						u.setUserName((String) r);
+					}
+				} catch (EvalError e) {
+					throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", identityProvider),
+							e);
 				}
-				else if ( ! (r instanceof String))
-				{
-					throw new InternalErrorException("Autoprovision script for "+identityProvider+" returned an object of class "+r.getClass().toString()+" when it should return a String object");
-				}
-				else
-				{
-					u.setUserName((String) r);
-				}
-			} catch (EvalError e) {
-				throw new InternalErrorException(String.format("Error evaluating provisioning script for identity provider %s", identityProvider),
-						e);
 			}
 			
 			log.info("searchUser() - trying to create the user...");
@@ -696,18 +699,20 @@ public class FederationServiceInternal {
 				}
 			}
 			// Register account
-			try {
-				account = accountService.createAccount(u, dispatcher, principalName);
-				updateAccountAttributes ( account, map);
-				log.info("searchUser() - account created");
-			} catch (NeedsAccountNameException e) {
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						principalName,
-						dispatcher.getName()));
-			} catch (AccountAlreadyExistsException e) {
-				throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
-						principalName,
-						dispatcher.getName()));
+			if (principalName != null) {
+				try {
+					UserAccount account = accountService.createAccount(u, dispatcher, principalName);
+					updateAccountAttributes ( account, map);
+					log.info("searchUser() - account created");
+				} catch (NeedsAccountNameException e) {
+					throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+							principalName,
+							dispatcher.getName()));
+				} catch (AccountAlreadyExistsException e) {
+					throw new InternalErrorException( String.format("Account %s at system %s is reserved", 
+							principalName,
+							dispatcher.getName()));
+				}
 			}
 			return u;
 		}
@@ -813,6 +818,19 @@ public class FederationServiceInternal {
 
 	public void setBpmEngine(BpmEngine bpmEngine) {
 		this.bpmEngine = bpmEngine;
+	}
+
+	public SamlRequest generateWsFedLoginResponse(String serviceProvider, String identityProvider, String subject,
+			Map<String, Object> attributes) throws InternalErrorException {
+		IdentityProviderEntity fm = findIdentityProvider (identityProvider);
+
+		if (fm == null)
+			throw new InternalErrorException ("Cannot find identity provider with public id "+identityProvider);
+		
+		if (fm.getIdpType() == IdentityProviderType.SOFFID)
+			return samlService.generateWsFedLoginRequest(serviceProvider, identityProvider, subject, attributes);
+		else 
+			throw new InternalErrorException ("Cannot find identity provider with public id "+identityProvider);
 	}
 
 }

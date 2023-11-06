@@ -37,6 +37,7 @@ import com.soffid.mda.annotation.*;
 
 import es.caib.bpm.servei.BpmEngine;
 import es.caib.seycon.ng.comu.Auditoria;
+import es.caib.seycon.ng.comu.Maquina;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.RolEntity;
@@ -52,6 +53,7 @@ import es.caib.seycon.ng.sync.servei.LogonService;
 import roles.Tothom;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -128,7 +130,8 @@ import org.springframework.transaction.annotation.Transactional;
 	ServiceProviderReturnUrlEntity.class,
 	FederationMemberSessionEntity.class,
 	AsyncRunnerService.class,
-	TacacsPlusAuthRuleEntity.class
+	TacacsPlusAuthRuleEntity.class,
+	SelfCertificateValidationService.class
 })
 public abstract class FederationService {
 
@@ -509,7 +512,13 @@ public abstract class FederationService {
 	SamlRequest generateSamlRequest (String serviceProvider, String identityProvider,
 			@Nullable String subject,
 			long sessionSeconds) {return null;}
-	
+
+	@Operation(grantees={federation_serviceProvider.class})
+	@Description("Generates a SAML request to formard to the IdP")
+	SamlRequest generateWsFedLoginResponse (String serviceProvider, String identityProvider,
+			@Nullable String subject,
+			@Nullable Map<String,Object> attributes) {return null;}
+
 	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Generates a SAML request to perform global logout. Use forced when "
 			+ "is the system admin who enforces the logout. Leave to false when is "
@@ -666,4 +675,18 @@ public abstract class FederationService {
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void registerLoginAudit (Auditoria audit) {} 
 	
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public Maquina getCertificateHost(
+		java.util.List<java.security.cert.X509Certificate> certs,
+		@Nullable String serialNumber)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
+
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public Date getCertificateExpirationWarning(
+		java.util.List<java.security.cert.X509Certificate> certs)
+		throws es.caib.seycon.ng.exception.InternalErrorException {
+	 return null;
+	}
 }

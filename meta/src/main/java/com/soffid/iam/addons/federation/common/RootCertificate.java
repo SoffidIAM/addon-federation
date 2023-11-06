@@ -31,4 +31,10 @@ public class RootCertificate {
 
 	@Nullable
 	public String guessUserScript;
+
+	public boolean device;
+
+	@Nullable
+	public Integer expirationWarningDays;
+
 }
