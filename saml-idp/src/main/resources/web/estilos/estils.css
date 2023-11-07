@@ -381,6 +381,7 @@ a.voice {
 }
 
 img.pushImage {
+	margin-top: 20px;
 	max-height: 105px;
     max-width: 150px;
     margin-left: auto;
