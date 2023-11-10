@@ -479,6 +479,11 @@ public class Main {
 		if (casProfile != null) {
         	configureCasProfile(ctx, casProfile);
         }
+        SAMLProfile sseProfile = useSseProfile();
+        if (sseProfile != null && Boolean.TRUE.equals(sseProfile.getEnabled()))
+        {
+        	configureSseProfile(ctx, openIdProfile);
+        }
 		
 
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
@@ -687,6 +692,16 @@ public class Main {
 		ctx.addServlet(servlet, KeepAliveServlet.URI); //$NON-NLS-1$
 	}
 
+	private void configureSseProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
+		ServletHolder servlet;
+		servlet = new ServletHolder(
+		        es.caib.seycon.idp.sse.server.ConfigurationEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("sse-configuration"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/sse-confguration/*"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/sse-confguration"); //$NON-NLS-1$
+	}
+
 	private void configureCasProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
 		ServletHolder servlet;
 		servlet = new ServletHolder(LoginEndpoint.class);
@@ -796,7 +811,24 @@ public class Main {
         for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
             SAMLProfile profile = (SAMLProfile) it.next();
             SamlProfileEnumeration type = profile.getClasse();
-            if (type.equals(SamlProfileEnumeration.OPENID) && Boolean.TRUE.equals(profile.getEnabled())) {
+            if (type.equals(SamlProfileEnumeration.CAS) && Boolean.TRUE.equals(profile.getEnabled())) {
+            	return profile;
+            }
+        }
+        return null;
+	}
+
+	private SAMLProfile useSseProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederationService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.SSE) && Boolean.TRUE.equals(profile.getEnabled())) {
             	return profile;
             }
         }

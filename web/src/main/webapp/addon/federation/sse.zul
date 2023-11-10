@@ -71,6 +71,60 @@
 				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.sourceIps')}"
 					bind="sourceIps"
 					dataType="STRING" required="false" />
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.queueSize')}"
+					bind="queueSize"
+					dataType="NUMBER" required="false" />
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.subjectType')}"
+					bind="subjectType" enumeration="com.soffid.iam.addons.federation.api.SubjectFormatEnumeration"
+					dataType="STRING" required="true" id="subjectType"/>
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.sourceType')}"
+					bind="sourceType" enumeration="com.soffid.iam.addons.federation.api.SubjectSourceEnumeration"
+					dataType="STRING" required="true" id="sourceType"  onChange="ref:frame.changeSourceType"/>
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.sourceExpression')}"
+					bind="sourceExpression" id="sourceExpression"
+					multiline='true'
+					placeholder="Script to compute the subject name to pass to the event subscriber"
+					dataType="STRING"
+					readonly="${!soffid:isUserInRole('federation:sse:create') &amp;&amp; !soffid:isUserInRole('federation:sse:update')}"
+					selectIcon="/img/pencil.svg"
+					javascript='{"user":"com.soffid.iam.api.User", "account":"com.soffid.iam.api.Account", "serviceLocator":"com.soffid.iam.ServiceLocator"}' />
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.sourceOauth')}"
+					bind="sourceOAuth"
+					dataType="STRING" required="false" id="sourceOAuth"
+					uiHandler="com.soffid.iam.addons.federation.web.OauthFieldHandler"/>
+				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.system')}"
+					bind="system" 
+					dataType="SYSTEM" required="false" id="system"
+					uiHandler="com.soffid.iam.addons.federation.web.SystemFieldHandler"/>
+				<div sclass="databox" id="sslKey">
+					<label sclass="label" value="${c:l('federacio.zul.publicKeySSL')}"/>
+					<div sclass="container">
+						<divVisible bind="/sslPublicKey" valorVisible="null" style="white-space:normal">
+							<label sclass="etiqueta" value="${c:l('federacio.zul.NOtaclauspablica/pri')}"/>
+							<separator/>
+							<button disabled="${!soffid:isUserInRole('federation:sse:update') &amp;&amp; !soffid:isUserInRole('federation:sse:create')}" 
+								image="/addon/federation/img/key.png" label="${c:l('federacio.zul.Generaclauspablica/p')}" onClick="ref:frame.generateSslKey()"/>
+							<button disabled="${!soffid:isUserInRole('federation:sse:update') &amp;&amp; !soffid:isUserInRole('federation:sse:create')}" 
+								image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.loadPkcs12')}" onClick="ref:frame.uploadSslPkcs12()" />
+						</divVisible>
+						<divVisible bind="/sslPublicKey" valorNoVisible="null" style="white-space:normal">
+							<button disabled="${!soffid:isUserInRole('federation:sse:create') &amp;&amp; !soffid:isUserInRole('federation:sse:update')}" 
+								image="/addon/federation/img/key_add.png" label="${c:l('federacio.zul.Canviaclauspablica/p')}" 
+								onClick="ref:frame.generateSslKey()"/>
+							<button disabled="${!soffid:isUserInRole('federation:sse:create') &amp;&amp; !soffid:isUserInRole('federation:sse:update')}"
+								image="/addon/federation/img/key_delete.png" label="${c:l('federacio.zul.Esborraclauspablica/')}" 
+								onClick="ref:frame.deleteSslKey()" />
+							<button disabled="${!soffid:isUserInRole('federation:sse:create') &amp;&amp; !soffid:isUserInRole('federation:sse:update')}" 
+								image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="ref:frame.generateSslPKCS10()"/>
+						</divVisible>
+					</div>
+				</div>
+				<customfield3 id="certificatechainSsl"
+					label="${c:l('federacio.zul.certificateChainSSL')}"
+					dataType="STRING"
+					multiline='true'
+					readonly="${!soffid:isUserInRole('federation:sse:create') &amp;&amp; !soffid:isUserInRole('federation:sse:update')}"
+					bind="/sslCertificate"/>
 				<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.url')}"
 					bind="url"
 					dataType="STRING" required="false" readonly="true" />
@@ -90,4 +144,32 @@
 			</div>
 		</div>
 	</div>
+	<window id="pkcs12" closable="true" position="top, center"
+		sizable="false" 
+		visible="false"
+		style="min-width: 40em; width: 80%">
+	
+		<wizard id="wizard">
+				<attribute name="steps">
+		- ${c:l("fileupload.selectFile")}
+		- ${c:l("federacio.zul.enterPin")}
+		- ${c:l("user-account-new.Finish")}
+				</attribute>
+			<div id="step1" >
+				<fileupload style="width: 600px; height: 120px; padding: 20px 0px 20px 100px"
+					id="${c:l('csvimport.upload') }" 
+					onUpload="ref:frame.onUpload"
+					onClose="ref:frame.cancelUpload"
+					mold="compact"/>
+			</div>
+			<div id="step2" visible="false" style="min-width: 600px; padding: 20px; width: 100%">
+				<customfield3 label="${c:l('federacio.zul.pin') }" dataType="PASSWORD" maxlength="64" id="pin"/> 				
+				<div style="text-align: right; width: 100%">
+					<button label="${c:l('user_createaccount.Back')}" image="/img/undo-r.svg" onClick="ref:frame.step2back" />
+					<button label="${c:l('altaDocumento.btnBrowse')}" image="/img/save-r.svg" onClick="ref:frame.doUploadPcks12" />
+				</div>
+			</div>
+		</wizard>	
+	</window>
+
 </frame>

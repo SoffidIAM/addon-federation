@@ -20,7 +20,7 @@ import roles.sse_update;
 
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Service(serverPath = "/seycon/SharedSignalEventsService", serverRole="agent")
 @Depends ({com.soffid.iam.addons.federation.service.FederationService.class, UserBehaviorService.class, UserCredentialService.class,
 	CertificateValidationService.class, 
 	SelfCertificateValidationService.class,
@@ -45,4 +45,5 @@ public class SharedSignalEventsService  {
 	
 	@Operation(grantees = {sse_update.class})
 	public void delete(SseReceiver receiver) {}
+	
 }

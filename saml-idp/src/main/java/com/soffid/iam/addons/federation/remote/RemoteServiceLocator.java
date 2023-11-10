@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.PushAuthenticationService;
+import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
 
@@ -43,5 +44,13 @@ public class RemoteServiceLocator extends com.soffid.iam.remote.RemoteServiceLoc
 			return (PushAuthenticationService) ServiceLocator.instance().getService(PushAuthenticationService.SERVICE_NAME);
 		else
 			return (PushAuthenticationService) getRemoteService(PushAuthenticationService.REMOTE_PATH);
+	}
+
+	public SharedSignalEventsService getSharedSignalEventsService () throws IOException, InternalErrorException 
+	{
+		if ("server".equals(Config.getConfig().getRole()))
+			return (SharedSignalEventsService) ServiceLocator.instance().getService(SharedSignalEventsService.SERVICE_NAME);
+		else
+			return (SharedSignalEventsService) getRemoteService(SharedSignalEventsService.REMOTE_PATH);
 	}
 }

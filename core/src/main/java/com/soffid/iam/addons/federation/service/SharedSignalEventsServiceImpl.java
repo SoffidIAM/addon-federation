@@ -1,10 +1,19 @@
 package com.soffid.iam.addons.federation.service;
 
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.json.JSONException;
 
 import com.soffid.iam.addons.federation.api.SseReceiver;
@@ -120,4 +129,5 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 		pr.setResources(result);
 		return pr;
 	}
+
 }
