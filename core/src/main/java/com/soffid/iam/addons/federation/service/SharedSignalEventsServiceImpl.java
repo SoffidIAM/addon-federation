@@ -6,6 +6,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,7 +27,11 @@ import com.soffid.iam.addons.federation.model.SseReceiverEventEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEventEntityDao;
 import com.soffid.iam.api.AsyncList;
 import com.soffid.iam.api.PagedResult;
+import com.soffid.iam.api.UserDomain;
 import com.soffid.iam.bpm.service.scim.ScimHelper;
+import com.soffid.iam.model.PasswordDomainEntity;
+import com.soffid.iam.model.SystemEntity;
+import com.soffid.iam.model.UserDomainEntity;
 import com.soffid.iam.model.criteria.CriteriaSearchConfiguration;
 import com.soffid.iam.service.AdditionalDataJSONConfiguration;
 import com.soffid.scimquery.EvalException;
@@ -41,10 +46,58 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 	protected SseReceiver handleCreate(SseReceiver receiver) throws Exception {
 		SseReceiverEntityDao dao = getSseReceiverEntityDao();
 		SseReceiverEntity entity = dao.sseReceiverToEntity(receiver);
-		dao.create(entity);
+		
+		SystemEntity s = registerSystem(receiver);
+		
+		entity.setSystem(s);
+		getSseReceiverEntityDao().create(entity);
 		
 		updateEvents(entity, receiver);
 		return getSseReceiverEntityDao().toSseReceiver(entity);
+	}
+
+	protected SystemEntity registerSystem(SseReceiver receiver) {
+		SystemEntity s = getSystemEntityDao().newSystemEntity();
+		s.setName(findEmptyName(receiver.getName()));
+		s.setAuthoritative(false);
+		s.setClassName("com.soffid.iam.federation.agent.SseAgent");
+		s.setDescription("SSE Receiver "+receiver.getName());
+		s.setEnableAccessControl("N");
+		s.setSharedDispatcher(true);
+		s.setManualAccountCreation(true);
+		s.setPasswordDomain(findDefaultPasswordDomain());
+		s.setTimeStamp(new Date());
+		s.setTrusted("N");
+		s.setUrl("local");
+		s.setUserDomain(findDefaultUserDomain());
+		getSystemEntityDao().create(s);
+		return s;
+	}
+
+	private PasswordDomainEntity findDefaultPasswordDomain() {
+		PasswordDomainEntity def = getPasswordDomainEntityDao().findByName("DEFAULT");
+		if (def != null)
+			return def;
+		return getPasswordDomainEntityDao().loadAll().iterator().next();
+	}
+
+	private UserDomainEntity findDefaultUserDomain() {
+		UserDomainEntity def = getUserDomainEntityDao().findByName("DEFAULT");
+		if (def != null)
+			return def;
+		return getUserDomainEntityDao().loadAll().iterator().next();
+	}
+
+	private String findEmptyName(String name) {
+		String prefix = "sse:"+name;
+		String candidate = prefix;
+		int i = 1;
+		do {
+			if ( getSystemEntityDao().findByName(candidate) == null)
+				return candidate;
+			i ++;
+			candidate = prefix+"_"+i;
+		} while (true);
 	}
 
 	protected void updateEvents(SseReceiverEntity entity, SseReceiver receiver) {
@@ -71,6 +124,18 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 		SseReceiverEntityDao dao = getSseReceiverEntityDao();
 		SseReceiverEntity entity = dao.sseReceiverToEntity(receiver);
 		dao.update(entity);
+		
+		SystemEntity system = entity.getSystem();
+		if (system == null) {
+			system = registerSystem(receiver);
+			entity.setSystem(system);
+		}
+		else if (! system.getName().startsWith("sse:"+receiver.getName()+"_") &&
+				!system.getName().equals("sse:"+receiver.getName())) {
+			system.setName(findEmptyName("sse:"+receiver.getName()));
+			system.setTimeStamp(new Date());
+			getSystemEntityDao().update(system);
+		}
 		
 		updateEvents(entity, receiver);
 		return getSseReceiverEntityDao().toSseReceiver(entity);
@@ -99,8 +164,15 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 	@Override
 	protected void handleDelete(SseReceiver receiver) throws Exception {
 		SseReceiverEntity entity = getSseReceiverEntityDao().load(receiver.getId());
-		if (entity != null)
+		if (entity != null) {
+			com.soffid.iam.api.System system = null;
+			if (entity.getSystem() != null) {
+				system = getSystemEntityDao().toSystem(entity.getSystem());
+			}
 			getSseReceiverEntityDao().remove(receiver.getId());
+			if (system != null)
+				getDispatcherService().delete(system);
+		}
 	}
 
 	private PagedResult<SseReceiver> internalSearchByJson(String textQuery, String query, List<SseReceiver> result, 

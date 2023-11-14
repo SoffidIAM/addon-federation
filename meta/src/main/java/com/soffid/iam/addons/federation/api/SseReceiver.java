@@ -77,6 +77,6 @@ public class SseReceiver {
 	String sourceOAuth;
 	
 	@Nullable
-	String system;
+	String sourceSystem;
 }
 

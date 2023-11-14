@@ -22,6 +22,9 @@ public class SseReceiverEntityDaoImpl extends SseReceiverEntityDaoBase {
 	public void sseReceiverToEntity(SseReceiver source, SseReceiverEntity target, boolean copyIfNull) {
 		super.sseReceiverToEntity(source, target, copyIfNull);
 		target.setToken(source.getToken() == null ? null: source.getToken().toString());
+		target.setSourceSystem(source.getSourceSystem() == null || source.getSourceSystem().trim().isEmpty()? 
+				null :
+				getSystemEntityDao().findByName(source.getSourceSystem()));
 	}
 
 

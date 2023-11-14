@@ -67,6 +67,9 @@ public class SseReceiverEntity {
 	String sourceOAuth;
 	
 	@Nullable @Column(name="SSR_SRC_DIS_ID")
+	DispatcherEntity sourceSystem;
+
+	@Nullable @Column(name="SSR_DIS_ID")
 	DispatcherEntity system;
 
 	@Column(name="SSR_TEN_ID")

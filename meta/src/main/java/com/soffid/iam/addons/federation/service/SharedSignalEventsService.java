@@ -15,6 +15,11 @@ import com.soffid.iam.service.CertificateValidationService;
 import com.soffid.iam.service.CrudRegistryService;
 import com.soffid.mda.annotation.*;
 
+import es.caib.seycon.ng.servei.DispatcherService;
+import es.caib.seycon.ng.model.DispatcherEntity;
+import es.caib.seycon.ng.model.DominiContrasenyaEntity;
+import es.caib.seycon.ng.model.DominiUsuariEntity;
+import es.caib.seycon.ng.servei.DominiUsuariService;
 import roles.sse_read;
 import roles.sse_update;
 
@@ -28,7 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 	PushAuthenticationService.class,
 	SseReceiverEntity.class,
 	SseReceiverEventEntity.class,
-	AsyncRunnerService.class})
+	DispatcherService.class,
+	AsyncRunnerService.class,
+	DispatcherEntity.class,
+	DominiContrasenyaEntity.class,
+	DominiUsuariEntity.class})
 public class SharedSignalEventsService  {
 	@Operation(grantees = {sse_read.class})
 	public AsyncList<SseReceiver> findReceiverAsync(@Nullable String textQuery, @Nullable String query) { return null;}
