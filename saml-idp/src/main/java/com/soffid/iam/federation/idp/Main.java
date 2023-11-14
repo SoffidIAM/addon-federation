@@ -567,8 +567,7 @@ public class Main {
         for (int i = 500; i <= 505; i++)
         	errorHandler.addErrorPage(i, ErrorServlet.URI);
         
-        if (needsKerberos(c))
-        	configureSpnego(ctx, c);
+       	configureSpnego(ctx, c);
         	
         ctx.setSessionHandler(new SessionHandler());
         int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
