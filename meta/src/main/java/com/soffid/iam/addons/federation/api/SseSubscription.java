@@ -16,16 +16,8 @@ public class SseSubscription {
 	String receiver;
 	
 	@Nullable
-	String userName;
+	String subject;
 	
-	@Nullable
-	String accountName;
-
-	@Nullable
-	String system;
-
-	String type;
-
 	Date date;
 
 }

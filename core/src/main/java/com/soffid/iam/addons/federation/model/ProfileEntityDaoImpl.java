@@ -145,6 +145,11 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setClasse(SamlProfileEnumeration.WS_FEDERATION);
 			WsfedProfileEntity entity = (WsfedProfileEntity) source;
 			target.setEnabled(entity.isEnabled());
+		} else if (source instanceof SseProfileEntity) {
+			// heretats
+			target.setClasse(SamlProfileEnumeration.SSE);
+			SseProfileEntity entity = (SseProfileEntity) source;
+			target.setEnabled(entity.isEnabled());
 		} else if (source instanceof SamlProfileEntity) {
 			// En teoria aquesta és abstracta
 			target.setClasse(SamlProfileEnumeration.SAML_PRO);
@@ -186,6 +191,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 				samlProfileEntity = newTacacsProfileEntity();
 			} else if (SamlProfileEnumeration.CAS.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newCasProfileEntity();
+			} else if (SamlProfileEnumeration.SSE.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newSseProfileEntity();
 			} else if (SamlProfileEnumeration.WS_FEDERATION.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newWsfedProfileEntity();
 			} else {
@@ -361,6 +368,16 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			entity.setMsChap(source.getMsChap());
 			entity.setAscii(source.getAscii());
 			entity.setSsl(source.getSsl());
+			entity.setEnabled(source.getEnabled());
+			target = entity;
+		} else if (SamlProfileEnumeration.WS_FEDERATION.equals(source.getClasse())) {
+			// heretats
+			WsfedProfileEntity entity = (WsfedProfileEntity) target;
+			entity.setEnabled(source.getEnabled());
+			target = entity;
+		} else if (SamlProfileEnumeration.SSE.equals(source.getClasse())) {
+			// heretats
+			SseProfileEntity entity = (SseProfileEntity) target;
 			entity.setEnabled(source.getEnabled());
 			target = entity;
 		} else {

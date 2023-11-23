@@ -78,8 +78,8 @@ public class ConfigurationEndpoint extends HttpServlet {
 			}));
 			att.put("configuration_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/stream");
 			att.put("status_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/status");
-			att.put("add_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/subject:add");
-			att.put("remove_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/subject:remove");
+			att.put("add_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/subject-add");
+			att.put("remove_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/subject-remove");
 			att.put("verification_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/verification");
 			att.put("critical_subject_members", new JSONArray(new String[] { "user" }));
 			JSONObject o = new JSONObject( att );

@@ -1,39 +1,31 @@
 package com.soffid.iam.addons.federation.service;
 
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.json.JSONException;
 
+import com.soffid.iam.addons.federation.api.SseEvent;
 import com.soffid.iam.addons.federation.api.SseReceiver;
-import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.model.FederationMemberEntity;
-import com.soffid.iam.addons.federation.model.FederationMemberEntityDao;
+import com.soffid.iam.addons.federation.api.SseSubscription;
+import com.soffid.iam.addons.federation.model.SseEventEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEntityDao;
 import com.soffid.iam.addons.federation.model.SseReceiverEventEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEventEntityDao;
+import com.soffid.iam.addons.federation.model.SseSubscriptionEntity;
 import com.soffid.iam.api.AsyncList;
 import com.soffid.iam.api.PagedResult;
-import com.soffid.iam.api.UserDomain;
 import com.soffid.iam.bpm.service.scim.ScimHelper;
 import com.soffid.iam.model.PasswordDomainEntity;
 import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserDomainEntity;
 import com.soffid.iam.model.criteria.CriteriaSearchConfiguration;
-import com.soffid.iam.service.AdditionalDataJSONConfiguration;
 import com.soffid.scimquery.EvalException;
 import com.soffid.scimquery.parser.ParseException;
 import com.soffid.scimquery.parser.TokenMgrError;
@@ -47,31 +39,11 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 		SseReceiverEntityDao dao = getSseReceiverEntityDao();
 		SseReceiverEntity entity = dao.sseReceiverToEntity(receiver);
 		
-		SystemEntity s = registerSystem(receiver);
-		
-		entity.setSystem(s);
 		getSseReceiverEntityDao().create(entity);
 		
 		updateEvents(entity, receiver);
+		getSyncServerService().updateDispatcherConfiguration();
 		return getSseReceiverEntityDao().toSseReceiver(entity);
-	}
-
-	protected SystemEntity registerSystem(SseReceiver receiver) {
-		SystemEntity s = getSystemEntityDao().newSystemEntity();
-		s.setName(findEmptyName(receiver.getName()));
-		s.setAuthoritative(false);
-		s.setClassName("com.soffid.iam.federation.agent.SseAgent");
-		s.setDescription("SSE Receiver "+receiver.getName());
-		s.setEnableAccessControl("N");
-		s.setSharedDispatcher(true);
-		s.setManualAccountCreation(true);
-		s.setPasswordDomain(findDefaultPasswordDomain());
-		s.setTimeStamp(new Date());
-		s.setTrusted("N");
-		s.setUrl("local");
-		s.setUserDomain(findDefaultUserDomain());
-		getSystemEntityDao().create(s);
-		return s;
 	}
 
 	private PasswordDomainEntity findDefaultPasswordDomain() {
@@ -88,22 +60,10 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 		return getUserDomainEntityDao().loadAll().iterator().next();
 	}
 
-	private String findEmptyName(String name) {
-		String prefix = "sse:"+name;
-		String candidate = prefix;
-		int i = 1;
-		do {
-			if ( getSystemEntityDao().findByName(candidate) == null)
-				return candidate;
-			i ++;
-			candidate = prefix+"_"+i;
-		} while (true);
-	}
-
 	protected void updateEvents(SseReceiverEntity entity, SseReceiver receiver) {
 		SseReceiverEventEntityDao eventDao = getSseReceiverEventEntityDao();
 		if (entity.getEvents() != null) {
-			eventDao.remove(entity.getEvents());
+			eventDao.remove(entity.getAllowedEvents());
 			entity.getEvents().clear();
 		}
 		if (receiver.getEvents() != null) {
@@ -113,7 +73,7 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 					e.setName(event);
 					e.setReceiver(entity);
 					eventDao.create(e);
-					entity.getEvents().add(e);
+					entity.getAllowedEvents().add(e);
 				}
 			}
 		}
@@ -125,19 +85,8 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 		SseReceiverEntity entity = dao.sseReceiverToEntity(receiver);
 		dao.update(entity);
 		
-		SystemEntity system = entity.getSystem();
-		if (system == null) {
-			system = registerSystem(receiver);
-			entity.setSystem(system);
-		}
-		else if (! system.getName().startsWith("sse:"+receiver.getName()+"_") &&
-				!system.getName().equals("sse:"+receiver.getName())) {
-			system.setName(findEmptyName("sse:"+receiver.getName()));
-			system.setTimeStamp(new Date());
-			getSystemEntityDao().update(system);
-		}
-		
 		updateEvents(entity, receiver);
+		getSyncServerService().updateDispatcherConfiguration();
 		return getSseReceiverEntityDao().toSseReceiver(entity);
 	}
 
@@ -165,13 +114,8 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 	protected void handleDelete(SseReceiver receiver) throws Exception {
 		SseReceiverEntity entity = getSseReceiverEntityDao().load(receiver.getId());
 		if (entity != null) {
-			com.soffid.iam.api.System system = null;
-			if (entity.getSystem() != null) {
-				system = getSystemEntityDao().toSystem(entity.getSystem());
-			}
 			getSseReceiverEntityDao().remove(receiver.getId());
-			if (system != null)
-				getDispatcherService().delete(system);
+			getSyncServerService().updateDispatcherConfiguration();
 		}
 	}
 
@@ -200,6 +144,76 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 		pr.setTotalResults(h.count());
 		pr.setResources(result);
 		return pr;
+	}
+
+	@Override
+	protected List<SseEvent> handleFetchEvents(SseReceiver receiver, Integer max) throws Exception {
+		CriteriaSearchConfiguration criteria = new CriteriaSearchConfiguration();
+		criteria.setMaximumResultSize(max);
+		List<SseEventEntity> l = getSseEventEntityDao().findByReceiver(receiver.getName());
+		List<SseEvent> l2 = getSseEventEntityDao().toSseEventList(l);
+		return l2;
+	}
+
+	@Override
+	protected List<SseEvent> handlePopEvents(SseReceiver receiver, Integer max) throws Exception {
+		CriteriaSearchConfiguration criteria = new CriteriaSearchConfiguration();
+		criteria.setMaximumResultSize(max);
+		List<SseEventEntity> l = getSseEventEntityDao().findByReceiver(criteria , receiver.getName());
+		List<SseEvent> l2 = getSseEventEntityDao().toSseEventList(l);
+		getSseEventEntityDao().remove(l);
+		return l2;
+	}
+
+	@Override
+	protected List<SseSubscription> handleFindSubscriptions(SseReceiver receiver) throws Exception {
+		List<SseSubscriptionEntity> l = getSseSubscriptionEntityDao().findByReceiver(receiver.getName());
+		List<SseSubscription> r = getSseSubscriptionEntityDao().toSseSubscriptionList(l);
+		return r;
+	}
+
+	@Override
+	protected void handleAddEvent(SseEvent s) throws Exception {
+		SseReceiverEntity r = getSseReceiverEntityDao().findByName(s.getReceiver());
+		if (r == null)
+			throw new InternalErrorException("Wrong receiver "+s.getReceiver());
+		Long count = getSseEventEntityDao().countByReceiver(s.getReceiver());
+		if (count != null && r.getQueueSize() != null && count.intValue() >= r.getQueueSize()) {
+			CriteriaSearchConfiguration criteria = new CriteriaSearchConfiguration();
+			criteria.setMaximumResultSize(count.intValue() - r.getQueueSize() + 1);
+			List<SseEventEntity> l = getSseEventEntityDao().findByReceiver(criteria , s.getReceiver());
+			getSseEventEntityDao().remove(l);
+		}
+		SseEventEntity entity = getSseEventEntityDao().sseEventToEntity(s);
+		getSseEventEntityDao().create(entity);
+	}
+
+	@Override
+	protected void handleAddSubscription(SseSubscription s) throws Exception {
+		SseSubscriptionEntity entity = getSseSubscriptionEntityDao().sseSubscriptionToEntity(s);
+		getSseSubscriptionEntityDao().create(entity);
+	}
+
+	@Override
+	protected void handleRemoveSubscription(SseSubscription s) throws Exception {
+		getSseSubscriptionEntityDao().remove(s.getId());
+	}
+
+	@Override
+	protected List<SseSubscription> handleFindSubscriptions(SseReceiver receiver, String subject) throws Exception {
+		List<SseSubscriptionEntity> l = getSseSubscriptionEntityDao()
+				.findByReceiverAndUserName(receiver.getName(), subject);
+		return getSseSubscriptionEntityDao().toSseSubscriptionList(l);
+	}
+
+	@Override
+	protected void handleClearSubscriptions(SseReceiver receiver) throws Exception {
+		getSseSubscriptionEntityDao().removeByReceiver(receiver.getName());
+	}
+
+	@Override
+	protected void handleRemoveEvent(Long eventId) throws Exception {
+		getSseEventEntityDao().remove(eventId);
 	}
 
 }

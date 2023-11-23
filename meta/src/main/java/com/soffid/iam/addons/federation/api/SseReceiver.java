@@ -3,6 +3,7 @@ package com.soffid.iam.addons.federation.api;
 import java.util.Date;
 import java.util.List;
 
+import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEntity;
 import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.Attribute;
@@ -26,6 +27,13 @@ public class SseReceiver {
 	@Description("Receiver notes")
 	String description;
 	
+	@Description("Identity provider that serves this receiver")
+	String identityProvider;
+	
+	@Description("Service provider bound to this SSE Receiver")
+	@Nullable
+	String serviceProvider;
+
 	@Nullable
 	@Description("Security token")
 	Digest token;
@@ -39,7 +47,7 @@ public class SseReceiver {
 	String sourceIps;
 
 	@Nullable
-	@Attribute(readonly = true)
+	@Attribute(readonly = true, defaultValue = "com.soffid.iam.addons.federation.api.SseReceiverMethod.POLL")
 	@Description("Subscription mechanism")
 	SseReceiverMethod method;
 	
@@ -63,6 +71,9 @@ public class SseReceiver {
 	
 	@Nullable @Column(name="SSR_SSLCER", length = 64000)
 	String sslCertificate;
+	
+	@Nullable @Column(name="SSR_AUTHEA", length=64000)
+	String authorizationHeader;
 
 	@Nullable
 	Integer queueSize;
@@ -78,5 +89,11 @@ public class SseReceiver {
 	
 	@Nullable
 	String sourceSystem;
+	
+	@Description("Communication is paused")
+	boolean pause;
+
+	@Description("All subjects are subscribed")
+	boolean subscribeAll;
 }
 

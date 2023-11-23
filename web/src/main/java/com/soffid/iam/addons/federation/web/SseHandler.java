@@ -1,8 +1,11 @@
 package com.soffid.iam.addons.federation.web;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -14,6 +17,7 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Window;
 
+import com.soffid.iam.EJBLocator;
 import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.api.SseReceiver;
 import com.soffid.iam.addons.federation.api.SubjectSourceEnumeration;
@@ -264,6 +268,37 @@ public class SseHandler extends FrameHandler {
 		Window w = (Window) getFellow("pkcs12");
 		w.setVisible(false);
 		Missatgebox.info (org.zkoss.util.resource.Labels.getLabel("federacio.GeneradoOK"));	
+	}
+
+	@Override
+	public void afterCompose() {
+		super.afterCompose();
+		List<String> list = new LinkedList<>();
+		FederationService svc;
+		try {
+			svc = (FederationService) new InitialContext().lookup(FederationServiceHome.JNDI_NAME);
+			for (FederationMember fm: svc.findFederationMembersByJsonQuery(null, 
+					"idpType eq 'soffid' or idpType eq 'soffid-cloud'", null, null)
+					.getResources()) {
+				list.add(URLEncoder.encode(fm.getPublicId(),"UTF-8")+":"+fm.getName()+ " "+fm.getPublicId());
+			}
+			CustomField3 cf = (CustomField3) getFellow("identityProvider");
+			cf.setValues(list);
+			cf.createField();
+		} catch (Exception e) {
+		}
+		try {
+			svc = (FederationService) new InitialContext().lookup(FederationServiceHome.JNDI_NAME);
+			for (FederationMember fm: svc.findFederationMembersByJsonQuery(null, 
+					"serviceProviderType eq 'openid-connect'", null, null)
+					.getResources()) {
+				list.add(URLEncoder.encode(fm.getPublicId(),"UTF-8")+":"+fm.getName()+ " "+fm.getPublicId());
+			}
+			CustomField3 cf = (CustomField3) getFellow("serviceProvider");
+			cf.setValues(list);
+			cf.createField();
+		} catch (Exception e) {
+		}
 	}
 	
 

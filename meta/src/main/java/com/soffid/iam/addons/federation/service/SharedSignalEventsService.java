@@ -5,9 +5,13 @@
 //
 
 package com.soffid.iam.addons.federation.service;
+import com.soffid.iam.addons.federation.api.SseEvent;
 import com.soffid.iam.addons.federation.api.SseReceiver;
+import com.soffid.iam.addons.federation.api.SseSubscription;
+import com.soffid.iam.addons.federation.model.SseEventEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEventEntity;
+import com.soffid.iam.addons.federation.model.SseSubscriptionEntity;
 import com.soffid.iam.api.AsyncList;
 import com.soffid.iam.api.PagedResult;
 import com.soffid.iam.service.AsyncRunnerService;
@@ -20,24 +24,26 @@ import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.DominiContrasenyaEntity;
 import es.caib.seycon.ng.model.DominiUsuariEntity;
 import es.caib.seycon.ng.servei.DominiUsuariService;
+import es.caib.seycon.ng.servei.SeyconServerService;
 import roles.sse_read;
 import roles.sse_update;
+
+import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
 
 @Service(serverPath = "/seycon/SharedSignalEventsService", serverRole="agent")
-@Depends ({com.soffid.iam.addons.federation.service.FederationService.class, UserBehaviorService.class, UserCredentialService.class,
-	CertificateValidationService.class, 
-	SelfCertificateValidationService.class,
-	CrudRegistryService.class,
-	PushAuthenticationService.class,
+@Depends ({
+	SseSubscriptionEntity.class,
 	SseReceiverEntity.class,
 	SseReceiverEventEntity.class,
+	SseEventEntity.class,
 	DispatcherService.class,
 	AsyncRunnerService.class,
 	DispatcherEntity.class,
 	DominiContrasenyaEntity.class,
-	DominiUsuariEntity.class})
+	DominiUsuariEntity.class,
+	SeyconServerService.class})
 public class SharedSignalEventsService  {
 	@Operation(grantees = {sse_read.class})
 	public AsyncList<SseReceiver> findReceiverAsync(@Nullable String textQuery, @Nullable String query) { return null;}
@@ -55,4 +61,16 @@ public class SharedSignalEventsService  {
 	@Operation(grantees = {sse_update.class})
 	public void delete(SseReceiver receiver) {}
 	
+	// Subscriptions
+	public void addSubscription (SseSubscription s) {}
+	public void removeSubscription (SseSubscription s) {}
+	public void clearSubscriptions (SseReceiver receiver) {}
+	public List<SseSubscription> findSubscriptions(SseReceiver receiver, String subject) {return null;}
+	public List<SseSubscription> findSubscriptions(SseReceiver receiver) {return null;}
+	
+	// Events
+	public void addEvent (SseEvent s) {}
+	public List<SseEvent> popEvents (SseReceiver receiver, @Nullable Integer maxEvents) {return null;}
+	public List<SseEvent> fetchEvents (SseReceiver receiver, @Nullable Integer maxEvents) {return null;}
+	public void removeEvent (Long eventId) {}
 }

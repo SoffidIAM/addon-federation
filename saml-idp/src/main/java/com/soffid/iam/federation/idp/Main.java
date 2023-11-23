@@ -85,6 +85,7 @@ import es.caib.seycon.idp.openid.server.TokenIntrospectionEndpoint;
 import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
+import es.caib.seycon.idp.sse.server.SseThreadManager;
 import es.caib.seycon.idp.ui.ActivateUserAction;
 import es.caib.seycon.idp.ui.ActivatedFormServlet;
 import es.caib.seycon.idp.ui.AuthenticatedFilter;
@@ -697,8 +698,40 @@ public class Main {
 		        es.caib.seycon.idp.sse.server.ConfigurationEndpoint.class);
 		servlet.setInitOrder(2);
 		servlet.setName("sse-configuration"); //$NON-NLS-1$
-		ctx.addServlet(servlet, "/.well-known/sse-confguration/*"); //$NON-NLS-1$
-		ctx.addServlet(servlet, "/.well-known/sse-confguration"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/sse-configuration/*"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/sse-configuration"); //$NON-NLS-1$
+		
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.StatusEndpoint.class);
+		servlet.setName("sse-status"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/sse/status"); //$NON-NLS-1$
+		
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.StreamEndpoint.class);
+		servlet.setName("sse-stream"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/sse/stream"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.SubjectAddEndpoint.class);
+		servlet.setName("sse-add-subject"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/sse/subject-add"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.SubjectRemoveEndpoint.class);
+		servlet.setName("sse-remove-subject"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/sse/subject-remove"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.VerifyEndpoint.class);
+		servlet.setName("sse-verify"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/sse/verify"); //$NON-NLS-1$
+		
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.EventPollEndpoint.class);
+		servlet.setName("sse-poll"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/sse/poll"); //$NON-NLS-1$
+		
+		new SseThreadManager(ctx.getServletContext()).start();
 	}
 
 	private void configureCasProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {

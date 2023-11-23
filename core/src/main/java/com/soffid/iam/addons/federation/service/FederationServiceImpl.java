@@ -119,6 +119,7 @@ import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.SseProfileEntity;
 import com.soffid.iam.addons.federation.model.TacacsPlusAuthRuleEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.model.VirtualIdentityProviderEntity;
@@ -855,6 +856,8 @@ public class FederationServiceImpl
 				getRadiusProfileEntityDao().update((RadiusProfileEntity) entity);
 			} else if (SamlProfileEnumeration.CAS.equals(samlProfile.getClasse())) {
 				getCasProfileEntityDao().update((CasProfileEntity) entity);
+			} else if (SamlProfileEnumeration.SSE.equals(samlProfile.getClasse())) {
+				getSseProfileEntityDao().update((SseProfileEntity) entity);
 			} else {
 				getProfileEntityDao().update(entity);
 			}

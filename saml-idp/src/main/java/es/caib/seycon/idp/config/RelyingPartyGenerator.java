@@ -324,12 +324,12 @@ public class RelyingPartyGenerator {
                 .findProfilesByFederationMember(fm);
         for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
             SAMLProfile profile = (SAMLProfile) it.next();
-            if (! profile.getClasse().equals( SamlProfileEnumeration.OPENID) &&
-            		! profile.getClasse().equals( SamlProfileEnumeration.TACACS_PLUS) &&
-            		! profile.getClasse().equals( SamlProfileEnumeration.CAS) &&
-            		! profile.getClasse().equals( SamlProfileEnumeration.RADIUS) &&
-            		! profile.getClasse().equals( SamlProfileEnumeration.WS_FEDERATION) &&
-            		! profile.getClasse().equals( SamlProfileEnumeration.SAML_PRO))
+            if (profile.getClasse() ==  SamlProfileEnumeration.SAML1_AQ ||
+            	profile.getClasse() ==  SamlProfileEnumeration.SAML1_AR ||
+            	profile.getClasse() ==  SamlProfileEnumeration.SAML2_AQ ||
+            	profile.getClasse() ==  SamlProfileEnumeration.SAML2_AR ||
+            	profile.getClasse() ==  SamlProfileEnumeration.SAML2_ECP ||
+            	profile.getClasse() ==  SamlProfileEnumeration.SAML2_SSO )
             {
 	            Element profileNode = doc.createElementNS(RP_NAMESPACE,
 	                    "ProfileConfiguration"); //$NON-NLS-1$

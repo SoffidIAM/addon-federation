@@ -23,6 +23,7 @@ public class SseReceiverCache {
 	}
 	
 	Hashtable<String, SseReceiver> receivers = new Hashtable<>();
+	Hashtable<String, SseReceiver> receiversByName = new Hashtable<>();
 	List<SseReceiver> receiverList = new LinkedList<>();
 	long timestamp = 0;
 	boolean refreshing = false;
@@ -32,9 +33,7 @@ public class SseReceiverCache {
 			refreshing = true;
 			new Thread (() -> {
 				try {
-			    	SharedSignalEventsService sseService = new RemoteServiceLocator().getSharedSignalEventsService();
-			    	receiverList = sseService.findReceiver(null, null, null, null).getResources();
-			    	receivers = new Hashtable<>();
+			    	refreshNow();
 				} catch (Exception e) {
 					log.warn("Error fetching list of SSE receivers", e);
 				} finally {
@@ -44,17 +43,53 @@ public class SseReceiverCache {
 		}
 	}
 
+	protected void refreshNow() throws IOException, InternalErrorException {
+		SharedSignalEventsService sseService = new RemoteServiceLocator().getSharedSignalEventsService();
+		receiverList = sseService.findReceiver(null, null, null, null).getResources();
+		receivers = new Hashtable<>();
+		receiversByName = new Hashtable<>();
+		timestamp = System.currentTimeMillis();
+	}
+
 	public SseReceiver findBySecret(String auth) throws IOException, InternalErrorException {
 		refresh();
+		if (auth.toLowerCase().startsWith("bearer"))
+			auth = auth.substring(7);
 		SseReceiver r = receivers.get(auth);
 		if (r != null) 
 			return r;
-		for (SseReceiver r2: receiverList) {
-			if (r2.getToken() != null && r2.getToken().validate(auth)) {
-				receivers.put(auth, r2);
-				return r2;
+		int step = 0;
+		do {
+			for (SseReceiver r2: receiverList) {
+				if (r2.getToken() != null && r2.getToken().validate(auth)) {
+					receivers.put(auth, r2);
+					return r2;
+				}
 			}
-		}
+			if (step == 0)
+				refreshNow();
+			step ++;
+		} while (step < 2);
+		return null;
+	}
+
+	public SseReceiver findByName(String receiver) throws IOException, InternalErrorException {
+		refresh();
+		SseReceiver r = receiversByName.get(receiver);
+		if (r != null) 
+			return r;
+		int step = 0;
+		do {
+			for (SseReceiver r2: receiverList) {
+				if (receiver.equals(r2.getName())) {
+					receiversByName.put(r2.getName(), r2);
+					return r2;
+				}
+			}
+			if (step == 0)
+				refreshNow();
+			step ++;
+		} while (step < 2);
 		return null;
 	}
 }

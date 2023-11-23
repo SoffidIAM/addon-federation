@@ -1,9 +1,12 @@
 package com.soffid.iam.addons.federation.model;
 
 import java.util.Date;
+import java.util.List;
 
 import com.soffid.iam.addons.federation.api.SseSubscription;
 import com.soffid.mda.annotation.Column;
+import com.soffid.mda.annotation.DaoFinder;
+import com.soffid.mda.annotation.DaoOperation;
 import com.soffid.mda.annotation.Depends;
 import com.soffid.mda.annotation.Entity;
 import com.soffid.mda.annotation.Identifier;
@@ -20,20 +23,25 @@ public class SseSubscriptionEntity {
 	
 	@Nullable
 	@Column(name="SSS_USER", length = 256)
-	String userName;
+	String subject;
 	
-	@Nullable
-	@Column(name="SSS_ACCNAM", length = 256)
-	String accountName;
-
-	@Nullable
-	@Column(name="SSS_SYSTEM", length = 256)
-	String system;
-
-	@Column(name="SSS_TYPE", length = 256)
-	String type;
-
 	@Column(name="SSS_DATE")
 	Date date;
+	
+	@DaoFinder("select e "
+			+ "from com.soffid.iam.addons.federation.model.SseSubscriptionEntity as e "
+			+ "where e.receiver.name = :receiver "
+			+ "order by e.id asc")
+	List<SseSubscriptionEntity> findByReceiver(String receiver) { return null; }
+
+	@DaoFinder("select e "
+			+ "from com.soffid.iam.addons.federation.model.SseSubscriptionEntity as e "
+			+ "where e.receiver.name = :receiver and e.subject=:subject "
+			+ "order by e.id asc")
+	List<SseSubscriptionEntity> findByReceiverAndUserName(String receiver, 
+			String subject) { return null; }
+	
+	@DaoOperation
+	void removeByReceiver(String receiver) {}
 }
 

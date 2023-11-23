@@ -23,6 +23,7 @@ import com.soffid.iam.addons.federation.model.OauthTokenScopeEntity;
 import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
+import com.soffid.iam.addons.federation.model.SseProfileEntity;
 import com.soffid.iam.addons.federation.model.TacacsPlusAuthRuleEntity;
 import com.soffid.iam.addons.federation.model.UserConsentEntity;
 import com.soffid.iam.addons.federation.roles.federation_serviceProvider;
@@ -102,6 +103,7 @@ import org.springframework.transaction.annotation.Transactional;
 	com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity.class,
+	SseProfileEntity.class,
 	RadiusProfileEntity.class,
 	CasProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml2SSOProfileEntity.class,
