@@ -61,6 +61,16 @@ public class SseEvent {
 	@Description("Previous level for assurance-level-change event")
 	@Nullable @Column(name="SEV_PRVLVL", length = 256)
 	String previousLevel;
+	
+	@Nullable String action;
+	
+	@Nullable String message;
+	
+	@Nullable String role;
+	
+	@Nullable String author;
+	
+	@Nullable String sourceIp;
 
 	Date date;
 

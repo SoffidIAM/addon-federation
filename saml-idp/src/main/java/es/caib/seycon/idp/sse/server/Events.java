@@ -12,7 +12,7 @@ public class Events {
 
 	public static final String RISC_ACCOUNT_CREDENTIAL_CHANGE_REQUIRED = "https://schemas.openid.net/secevent/risc/event-type/account-credential-change-required";
 	public static final String RISC_ACCOUNT_PURGED = "https://schemas.openid.net/secevent/risc/event-type/account-purged";
-	public static final String RISC_ACCOUND_DISABLED = "https://schemas.openid.net/secevent/risc/event-type/account-disabled";
+	public static final String RISC_ACCOUNT_DISABLED = "https://schemas.openid.net/secevent/risc/event-type/account-disabled";
 	public static final String RISC_ACCOUNT_ENABLED = "https://schemas.openid.net/secevent/risc/event-type/account-enabled";
 	public static final String RISC_IDENTIFIER_CHANGED = "https://schemas.openid.net/secevent/risc/event-type/identifier-changed";
 	public static final String RISC_IDENTIFIER_RECYCLED = "https://schemas.openid.net/secevent/risc/event-type/identifier-recycled";
@@ -24,4 +24,7 @@ public class Events {
 	public static final String RISC_OPT_IN = "https://schemas.openid.net/secevent/risc/event-type/opt-in";
 	public static final String RISC_RECOVERY_ACTIVATED = "https://schemas.openid.net/secevent/risc/event-type/recovery-activated";
 	public static final String RISC_RECOVERY_INFORMATION_CHANGED = "https://schemas.openid.net/secevent/risc/event-type/recovery-information-changed";
+	
+	public static final String SOFFID_AUDIT = "https://schemas.soffid.com/secevent/risc/event-type/audit";
+	public static final String SOFFID_LOG = "https://schemas.soffid.com/secevent/risc/event-type/log";
 }

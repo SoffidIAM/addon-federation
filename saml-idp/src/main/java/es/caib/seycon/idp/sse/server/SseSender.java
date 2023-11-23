@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -107,10 +108,6 @@ public class SseSender {
 		if (event.getSubject() == null) {
 			calculateSubject(event, r, account, user, servletContext);
 		}
-		if (event.getSubject() == null) {
-			// Subject is not present
-			return o;
-		}
 		if (event.getType().equals(Events.VERIFY)) {
 			o2.put("state", event.getSubject());
 		} else if (event.getType().endsWith(Events.CAEP_SESSION_REVOKED)) {
@@ -119,10 +116,39 @@ public class SseSender {
 		} else if (event.getType().endsWith(Events.CAEP_TOKEN_CLAIMS_CHANGE)) {
 			JSONObject subject = encodeSubject(r, event);
 			o2.put("subject", subject);
-			o2.put("claims", new JSONObject());
+			JSONObject claims = new JSONObject();
+			try {
+				TokenInfo t = new TokenInfo();
+				t.setAuthentication(System.currentTimeMillis());
+				t.setAuthenticationMethod("P");
+				t.setCreated(System.currentTimeMillis());
+				t.setExpires(System.currentTimeMillis());
+				t.setUser(event.getAccountName());
+				final OpenIdRequest request = new OpenIdRequest();
+				t.setRequest(request);
+				if (r.getServiceProvider() == null)
+					request.setFederationMember(IdpConfig.getConfig().getFederationMember());
+				else
+					request.setFederationMember(IdpConfig.getConfig().getFederationService().findFederationMemberByPublicId(r.getServiceProvider()));
+
+				for (Entry<String, Object> entry: new UserAttributesGenerator().generateAttributes(servletContext, t, true, false, false).entrySet()) {
+					claims.put(entry.getKey(), entry.getValue());
+				}
+			} catch (AttributeResolutionException e) {
+				log.warn("Error resolving attributes", e);
+			} catch (AttributeFilteringException e) {
+				log.warn("Error filtering attributes", e);
+			} catch (InternalErrorException e) {
+				log.warn("Error evaluating claims", e);
+			} catch (Exception e) {
+				log.warn("Error generating response", e);
+			}
+			o2.put("claims", claims);
 		} else if (event.getType().endsWith(Events.CAEP_CREDENTIAL_CHANGE)) {
 			JSONObject subject = encodeSubject(r, event);
 			o2.put("subject", subject);
+			o2.put("x509_issuer", event.getX509Issuer());
+			o2.put("x509_serial", event.getX509Serial());
 			o2.put("credential_type", event.getCredentialType());
 			o2.put("change_type", event.getChangeType());
 			o2.put("fido2_aaguid", event.getFido2aaGuid());
@@ -131,7 +157,7 @@ public class SseSender {
 			JSONObject subject = encodeSubject(r, event);
 			o2.put("subject", subject);
 			o2.put("current_level", event.getCurrentLevel());
-			o2.put("provious_level", event.getPreviousLevel());
+			o2.put("previous_level", event.getPreviousLevel());
 			o2.put("initiating_entity", "user");
 			o2.put("change_direction",event.getPreviousLevel() == null ? "increase" :
 					event.getPreviousLevel().compareTo(event.getCurrentLevel() ) < 0 ? "increase":
@@ -146,6 +172,23 @@ public class SseSender {
 			o2.put("subject", subject);
 			o2.put("current_status", event.getCurrentLevel());
 			o2.put("previous_status", event.getPreviousLevel());
+		} else if (event.getType().endsWith(Events.RISC_CREDENTIAL_COMPROMISED)) {
+			JSONObject subject = encodeSubject(r, event);
+			o2.put("subject", subject);
+			o2.put("credential_type", event.getCredentialType());
+		} else if (event.getType().endsWith(Events.SOFFID_AUDIT)) {
+			JSONObject subject = encodeSubject(r, event);
+			o2.put("subject", subject);
+			o2.put("action", event.getAction());
+			o2.put("message", event.getMessage());
+			o2.put("role", event.getRole());
+			o2.put("author", event.getAuthor());
+			o2.put("source_ip", event.getSourceIp());
+		} else if (event.getType().endsWith(Events.SOFFID_LOG)) {
+			JSONObject subject = encodeSubject(r, event);
+			o2.put("subject", subject);
+			o2.put("action", event.getAction());
+			o2.put("source_ip", event.getSourceIp());
 		} else {
 			JSONObject subject = encodeSubject(r, event);
 			o2.put("subject", subject);
@@ -292,6 +335,8 @@ public class SseSender {
 
 	protected JSONObject encodeSubject(SseReceiver r, SseEvent event) {
 		JSONObject subject = new JSONObject();
+		if (event.getSubject() == null)
+			return null;
 		if (r.getSubjectType() == SubjectFormatEnumeration.ISS_SUB) {
 			subject.put("format", "iss_sub");
 			subject.put("sub", event.getSubject());

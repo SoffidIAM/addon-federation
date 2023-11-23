@@ -37,6 +37,9 @@ public class SignalServiceInterceptor implements MethodInterceptor{
 		if (m.getMethod().getName().equals("signalUser")) {
 			signalUser(m.getArguments());
 		}
+		if (m.getMethod().getName().equals("signal")) {
+			signal(m.getArguments());
+		}
 		return r;
 	}
 
@@ -51,13 +54,30 @@ public class SignalServiceInterceptor implements MethodInterceptor{
 			ev.setDate(new Date());
 			populateEvent(ev, (String[])arguments[2]);
 			getSharedSignalEventsService().addEvent(ev);
-			break;
 		}
 	}
 
+	private void signal(Object[] arguments) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, InternalErrorException {
+		String signal = (String) arguments[0];
+		for (SseReceiverEntity receiver: getSseReceiverEntityDao().findByEventType(signal)) {
+			SseEvent ev = new SseEvent();
+			ev.setType(signal);
+			ev.setReceiver(receiver.getName());
+			ev.setDate(new Date());
+			populateEvent(ev, (String[])arguments[1]);
+			getSharedSignalEventsService().addEvent(ev);
+		}
+	}
+
+
 	private void populateEvent(SseEvent ev, String[] arguments) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-		for (int n = 0; n < arguments.length - 1; n += 2)
-			PropertyUtils.setProperty(ev, (String) arguments[n], arguments[n+1]);
+		for (int n = 0; n < arguments.length - 1; n += 2) {
+			String key = arguments[n];
+			if ("date".equals(key))
+				ev.setDate(new Date(Long.parseLong(arguments[n+1])));
+			else
+				PropertyUtils.setProperty(ev, arguments[n], arguments[n+1]);
+		}
 	}
 
 	private void signalAccount(Object[] arguments) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, InternalErrorException {
@@ -73,7 +93,6 @@ public class SignalServiceInterceptor implements MethodInterceptor{
 			ev.setDate(new Date());
 			populateEvent(ev, (String[])arguments[3]);
 			getSharedSignalEventsService().addEvent(ev);
-			break;
 		}
 	}
 

@@ -216,4 +216,13 @@ public class SharedSignalEventsServiceImpl extends SharedSignalEventsServiceBase
 		getSseEventEntityDao().remove(eventId);
 	}
 
+	@Override
+	protected void handleAddEventTemplate(SseEvent s) throws Exception {
+		for (SseReceiverEntity receiver: getSseReceiverEntityDao().findByEventType(s.getType())) {
+			SseEvent ev = new SseEvent(s);
+			ev.setReceiver(receiver.getName());
+			handleAddEvent(ev);
+		}
+	}
+
 }

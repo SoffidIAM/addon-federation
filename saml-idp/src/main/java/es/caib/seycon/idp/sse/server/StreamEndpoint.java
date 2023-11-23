@@ -216,18 +216,23 @@ public class StreamEndpoint extends HttpServlet {
 	}
 
 	protected static String[] eventsList = new String[] {
-				"https://schemas.openid.net/secevent/caep/event-type/session-revoked",
-				"https://schemas.openid.net/secevent/caep/event-type/token-claims-change",
-				"https://schemas.openid.net/secevent/caep/event-type/credential-change",
-				"https://schemas.openid.net/secevent/risc/event-type/account-credential-change-required",
-				"https://schemas.openid.net/secevent/risc/event-type/account-purged",
-				"https://schemas.openid.net/secevent/risc/event-type/account-disabled",
-				"https://schemas.openid.net/secevent/risc/event-type/account-enabled",
-				"https://schemas.openid.net/secevent/risc/event-type/identifier-changed",
-				"https://schemas.openid.net/secevent/risc/event-type/identifier-recycled",
-				"https://schemas.openid.net/secevent/risc/event-type/credential-compromise",
-				"https://schemas.openid.net/secevent/risc/event-type/recovery-activated"
-				
+			Events.VERIFY,
+			Events.CAEP_ASSURANCE_LEVEL_CHANGE,
+			Events.CAEP_CREDENTIAL_CHANGE,
+			Events.CAEP_DEVICE_COMPLIANCE_CHANGE,
+			Events.CAEP_SESSION_REVOKED,
+			Events.CAEP_TOKEN_CLAIMS_CHANGE,
+			Events.RISC_ACCOUNT_DISABLED,
+			Events.RISC_ACCOUNT_ENABLED,
+			Events.RISC_ACCOUNT_CREDENTIAL_CHANGE_REQUIRED,
+			Events.RISC_ACCOUNT_PURGED,
+			Events.RISC_CREDENTIAL_COMPROMISED,
+			Events.RISC_IDENTIFIER_CHANGED,
+			Events.RISC_IDENTIFIER_RECYCLED,
+			Events.RISC_RECOVERY_ACTIVATED,
+			Events.RISC_RECOVERY_INFORMATION_CHANGED,
+			Events.SOFFID_AUDIT,
+			Events.SOFFID_LOG
 		};
 	
 

@@ -21,6 +21,7 @@ import org.json.JSONWriter;
 
 import com.soffid.iam.addons.federation.api.SseEvent;
 import com.soffid.iam.addons.federation.api.SseReceiver;
+import com.soffid.iam.addons.federation.api.SseReceiverMethod;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 
@@ -44,7 +45,7 @@ public class EventPollEndpoint extends HttpServlet {
         	IdpConfig c = IdpConfig.getConfig();
 
         	r = SseReceiverCache.instance().findBySecret(auth);
-        	if (r == null) {
+        	if (r == null || r.getMethod() != SseReceiverMethod.POLL) {
         		resp.setStatus(resp.SC_UNAUTHORIZED);
         		return;
         	}

@@ -69,6 +69,7 @@ public class SharedSignalEventsService  {
 	public List<SseSubscription> findSubscriptions(SseReceiver receiver) {return null;}
 	
 	// Events
+	public void addEventTemplate (SseEvent s) {}
 	public void addEvent (SseEvent s) {}
 	public List<SseEvent> popEvents (SseReceiver receiver, @Nullable Integer maxEvents) {return null;}
 	public List<SseEvent> fetchEvents (SseReceiver receiver, @Nullable Integer maxEvents) {return null;}

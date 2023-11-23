@@ -73,9 +73,24 @@ public class SseEventEntity {
 	@Nullable @Column(name="SEV_PRVLVL", length = 256)
 	String previousLevel;
 
-	@Column(name="SSS_DATE")
+	@Column(name="SEV_DATE")
 	Date date;
+
+	@Column(name="SEV_ACTION", length = 256)
+	@Nullable String action;
 	
+	@Column(name="SEV_MESSAGE", length=256)
+	@Nullable String message;
+	
+	@Column(name="SEV_ROLE", length=256)
+	@Nullable String role;
+	
+	@Column(name="SEV_AUTHOR", length=256)
+	@Nullable String author;
+	
+	@Column(name="SEV_SRCIP", length=256)
+	@Nullable String sourceIp;
+
 	@DaoFinder("select e "
 			+ "from com.soffid.iam.addons.federation.model.SseEventEntity as e "
 			+ "where e.receiver.name = :receiver "
