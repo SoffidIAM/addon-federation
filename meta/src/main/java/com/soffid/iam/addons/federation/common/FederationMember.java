@@ -77,6 +77,7 @@ public class FederationMember {
 	public com.soffid.iam.addons.federation.common.EntityGroup entityGroup;
 
 	@Nullable
+	@Attribute(defaultValue = "new java.util.LinkedList()")
 	public java.util.Collection<com.soffid.iam.addons.federation.common.FederationMember> serviceProvider;
 
 	@Nullable
