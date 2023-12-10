@@ -742,9 +742,14 @@ public class FederationServiceImpl
 				}
 				for (VirtualIdentityProviderEntity vip: idp.getVirtualIdentityProvider())
 				{
+					List<ServiceProviderVirtualIdentityProviderEntity> oldrps = 
+							getServiceProviderVirtualIdentityProviderEntityDao().findByVIP(vip.getId());
+					getServiceProviderVirtualIdentityProviderEntityDao().remove(oldrps);
 					for(ProfileEntity profile : vip.getProfiles()){
 						getProfileEntityDao().remove(profile);
 					}
+					vip.setDefaultIdentityProvider(null);
+					getKerberosKeytabEntityDao().remove(vip.getKeytabs());
 					getVirtualIdentityProviderEntityDao().remove(vip);
 					
 				}
@@ -763,6 +768,7 @@ public class FederationServiceImpl
 						getServiceProviderVirtualIdentityProviderEntityDao().findByVIP(vip.getId());
 				getServiceProviderVirtualIdentityProviderEntityDao().remove(oldrps);
 				vip.setServiceProviderVirtualIdentityProvider(null);
+				getProfileEntityDao().remove(vip.getProfiles());
 				getKerberosKeytabEntityDao().remove(vip.getKeytabs());
 				getVirtualIdentityProviderEntityDao().remove(vip);
 
