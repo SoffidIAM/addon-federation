@@ -1,11 +1,17 @@
 package es.caib.seycon.idp.shibext;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.List;
@@ -21,6 +27,7 @@ import org.opensaml.Configuration;
 import org.opensaml.common.IdentifierGenerator;
 import org.opensaml.common.SAMLObject;
 import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.common.binding.BasicSAMLMessageContext;
 import org.opensaml.common.binding.encoding.SAMLMessageEncoder;
 import org.opensaml.common.impl.AbstractSAMLObject;
 import org.opensaml.common.impl.SecureRandomIdentifierGenerator;
@@ -31,6 +38,7 @@ import org.opensaml.saml2.core.Issuer;
 import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.NameID;
+import org.opensaml.saml2.core.NameIDType;
 import org.opensaml.saml2.core.Status;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.impl.IssuerBuilder;
@@ -78,6 +86,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
@@ -95,6 +104,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.LogoutHandler;
 import es.caib.seycon.idp.ui.LogoutServlet;
+import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class SoffidSLOProfileHandler extends SLOProfileHandler {
 	IdentifierGenerator generator;
@@ -189,13 +199,8 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
         		return;
             }
         } catch (ProfileException e) {
-            if (requestContext.getPeerEntityEndpoint() != null) {
-                // This means it wasn't an Async LogoutRequest.
-                if (requestContext.getFailureStatus() == null) {
-                    requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, e.getMessage()));
-                }
-                samlResponse = buildLogoutResponse(requestContext, null);
-            } else if (!requestContext.isAsynchronous()
+            NameID nameId = requestContext.getSubjectNameIdentifier();
+            if (!requestContext.isAsynchronous()
                     && getInboundBinding().equals(SAMLConstants.SAML2_SOAP11_BINDING_URI)) {
                 log.debug("Returning SOAP fault", e);
                 try {
@@ -209,11 +214,24 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
                    log.error("Error returning SOAP fault", we);
                 }
                 return;
+            } else if (isGlobalSessionActive(httpRequest) && isOldSession(requestContext, nameId, httpRequest)){
+            	try {
+            		log.info("Error performing logout. Doing manual logout ", e);
+					httpResponse.sendRedirect("/logout.jsp");
+					return;
+				} catch (IOException e1) {
+					if (requestContext.getFailureStatus() == null) {
+						requestContext.setFailureStatus(buildStatus(StatusCode.RESPONDER_URI, null, e.getMessage()));
+					}
+					samlResponse = buildLogoutResponse(requestContext, null);
+				}
             } else {
-                throw e;
-            }
+            	requestContext.setFailureStatus(buildStatus(StatusCode.SUCCESS_URI, null, null));
+				samlResponse = buildLogoutResponse(requestContext, null);
+				deleteOldSession(requestContext, nameId, httpRequest);
+			}
         } catch (Exception e) {
-        	throw new ProfileException("Error performing logout", e);
+			throw new ProfileException("Error performing logout", e);
 		}
 
         requestContext.setOutboundSAMLMessage(samlResponse);
@@ -222,9 +240,43 @@ public class SoffidSLOProfileHandler extends SLOProfileHandler {
         encodeResponse(requestContext);
         writeAuditLogEntry(requestContext);
     }
-       
 
-    /** {@inheritDoc} */
+    private boolean isGlobalSessionActive(HttpServletRequest httpRequest) {
+    	try {
+			return new Autenticator().getSession(httpRequest, false) != null;
+		} catch (Exception e) {
+			return false;
+		}
+    }
+
+    private boolean isOldSession(BasicSAMLMessageContext<LogoutRequest, LogoutResponse, NameID> requestContext, 
+    		NameIDType nameId, HttpServletRequest httpRequest) {
+    	try {
+			FederationService fs = IdpConfig.getConfig().getFederationService();
+			for (FederationMemberSession fms: fs.findFederationMemberSessions(
+					requestContext.getPeerEntityId(), nameId.getValue())) {
+				return true;
+			}
+		} catch (Exception e) {
+			return false;
+		}
+    	return false;
+	}
+
+    private void deleteOldSession(BasicSAMLMessageContext<LogoutRequest, LogoutResponse, NameID> requestContext, 
+    		NameIDType nameId, HttpServletRequest httpRequest) {
+    	try {
+			FederationService fs = IdpConfig.getConfig().getFederationService();
+			for (FederationMemberSession fms: fs.findFederationMemberSessions(
+					requestContext.getPeerEntityId(), nameId.getValue())) {
+				fs.deleteFederatioMemberSession(fms);
+			}
+		} catch (Exception e) {
+		}
+	}
+
+
+	/** {@inheritDoc} */
     @Override
     protected void populateSAMLMessageInformation(BaseSAMLProfileRequestContext requestContext)
             throws ProfileException {
