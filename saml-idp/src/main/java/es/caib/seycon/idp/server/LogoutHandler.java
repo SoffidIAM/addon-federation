@@ -1,10 +1,13 @@
 package es.caib.seycon.idp.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -20,11 +23,21 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
 
 import javax.net.ssl.X509TrustManager;
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,12 +71,16 @@ import org.opensaml.ws.soap.soap11.Envelope;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.XMLObjectBuilderFactory;
 import org.opensaml.xml.io.Marshaller;
+import org.opensaml.xml.io.MarshallingException;
 import org.opensaml.xml.parse.BasicParserPool;
+import org.opensaml.xml.security.SecurityException;
 import org.opensaml.xml.security.SecurityHelper;
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
 import org.opensaml.xml.signature.SignatureConstants;
+import org.opensaml.xml.signature.SignatureException;
 import org.opensaml.xml.signature.Signer;
+import org.w3c.dom.Element;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
@@ -300,9 +317,16 @@ public class LogoutHandler {
 				{
 					if ( SAMLConstants.SAML2_SOAP11_BINDING_URI.equals ( slo.getBinding()) )
 					{
-					
-						status = sendSamlLogoutRequest(session, fms, slo, (SAMLMDRelyingPartyConfigurationManager) rpConfigMngr, userInitiated);
-				        
+						status = sendSamlLogoutRequest(session, fms, slo, 
+								(SAMLMDRelyingPartyConfigurationManager) rpConfigMngr, 
+								userInitiated);
+					}
+					else if ( SAMLConstants.SAML2_REDIRECT_BINDING_URI.equals ( slo.getBinding()) )
+					{
+						l.getFrontRequests().add(
+								generateSamlLogoutRedirectRequest(session, fms, slo, 
+										(SAMLMDRelyingPartyConfigurationManager) rpConfigMngr, 
+										userInitiated));
 					}
 				}
 			}
@@ -315,6 +339,98 @@ public class LogoutHandler {
 				l.getFailedLogouts().add(fm.getName());
 		}
     }
+
+	private FrontLogoutRequest generateSamlLogoutRedirectRequest(Session session, FederationMemberSession fms,
+			SingleLogoutService slo, SAMLMDRelyingPartyConfigurationManager rpConfigMngr, 
+			boolean userInitiated) 
+					throws InternalErrorException, IOException, MarshallingException, SignatureException, MessageEncodingException, TransformerConfigurationException, TransformerFactoryConfigurationError, TransformerException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, java.security.SignatureException, SecurityException, URISyntaxException {
+		FederationMember idp = IdpConfig.getConfig().findIdentityProviderForRelyingParty(fms.getFederationMember());
+		Issuer issuer = buildSamlObject(Issuer.DEFAULT_ELEMENT_NAME, IssuerBuilder.class);
+		issuer.setValue(idp.getPublicId());
+
+		LogoutRequest request = buildSamlObject(LogoutRequest.DEFAULT_ELEMENT_NAME, LogoutRequestBuilder.class);
+		request.setDestination(slo.getBinding());
+		request.setIssueInstant(DateTime.now());
+		request.setIssuer(issuer);
+		NameID nameid = buildSamlObject(NameID.DEFAULT_ELEMENT_NAME, NameIDBuilder.class);
+		nameid.setValue(fms.getUserName());
+		nameid.setFormat(fms.getUserNameFormat());
+		nameid.setNameQualifier(fms.getUserNameQualifier());
+		request.setNameID(nameid);
+		String reason;
+		if (userInitiated)
+			reason = LogoutRequest.USER_REASON;
+		else
+			reason = LogoutRequest.ADMIN_REASON;
+		request.setReason(reason);
+		request.setID( new SecureRandomIdentifierGenerator().generateIdentifier() );
+		
+      
+		RelyingPartyConfiguration rpc = rpConfigMngr.getRelyingPartyConfiguration(idp.getPublicId());
+		if (rpc == null)
+			rpc = rpConfigMngr.getDefaultRelyingPartyConfiguration();
+		
+		Credential signingCredential = rpc.getDefaultSigningCredential();
+		
+		if (signingCredential != null)
+		{
+			Signature signature =  (Signature) Configuration.getBuilderFactory()
+		            .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
+		            .buildObject(Signature.DEFAULT_ELEMENT_NAME);
+			
+		    request.setSignature(signature);
+			signature.setSigningCredential(signingCredential);
+			signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
+			signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+			
+		    SecurityHelper.prepareSignatureParams(signature, signingCredential, null, null);
+		    
+		    Marshaller marshaller = Configuration.getMarshallerFactory().getMarshaller(request);
+		    if (marshaller == null) {
+		        throw new MessageEncodingException("No marshaller registered for "
+		                + request.getElementQName() + ", unable to marshall in preperation for signing");
+		    }
+		    marshaller.marshall(request);
+		    
+		    Signer.signObject(signature);
+		}
+
+
+		String xmlString = generateString(request);
+		ByteArrayOutputStream ba = new ByteArrayOutputStream();
+		DeflaterOutputStream out = new DeflaterOutputStream(ba, new Deflater(Deflater.DEFAULT_COMPRESSION, true));
+		out.write(xmlString.getBytes("UTF-8"));
+		out.flush();
+		out.close();
+		String samlRequest = Base64.encodeBytes(ba.toByteArray());
+
+		FederationMember sp = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(fms.getFederationMember());
+
+		FrontLogoutRequest status = new FrontLogoutRequest();
+		status.setDescription(sp.getName());
+		status.setPublicId(sp.getPublicId());
+		status.setUrl(new URI(slo.getLocation()+"?SAMLRequest="+
+				URLEncoder.encode(samlRequest, "UTF-8")+"&RelayStaty="+
+				URLEncoder.encode(request.getID(), "UTF-8")));
+		return status ;
+	}
+
+	private String generateString(LogoutRequest request)
+			throws TransformerConfigurationException,
+			TransformerFactoryConfigurationError, TransformerException, MarshallingException {
+	    Marshaller marshaller = Configuration.getMarshallerFactory().getMarshaller(request);
+	    Element element = marshaller.marshall(request);
+
+	    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+		transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
+		
+		StreamResult result = new StreamResult(new StringWriter());
+		DOMSource source = new DOMSource(element);
+		transformer.transform(source, result);
+
+		String xmlString = result.getWriter().toString();
+		return xmlString;
+	}
 
 	private String sendSamlLogoutRequest(Session session, FederationMemberSession fms, 
 			SingleLogoutService slo, SAMLMDRelyingPartyConfigurationManager rpConfigMngr, boolean userInitiated) 
