@@ -99,7 +99,7 @@ public class CustomSpnegoLoginService extends AbstractLifeCycle implements Login
 						Subject subject = new Subject();
 						subject.getPrincipals().add(user);
 						
-						return _identityService.newUserIdentity(subject,user, new String[]{keytab.getDomain()});
+						return _identityService.newUserIdentity(subject,user, new String[]{keytab.getDomain(), "krblogin"});
 					}
 				} catch (Exception e) {
 					Log.info("Error validating token against "+keytab.getDomain()+": "+e.toString());

@@ -562,8 +562,7 @@ public class Main {
         for (int i = 500; i <= 505; i++)
         	errorHandler.addErrorPage(i, ErrorServlet.URI);
         
-        if (needsKerberos(c))
-        	configureSpnego(ctx, c);
+       	configureSpnego(ctx, c);
         	
         ctx.setSessionHandler(new SessionHandler());
         int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
@@ -893,6 +892,7 @@ public class Main {
 				domains.add (domain.getDomain().toLowerCase());
 				domains.add (domain.getDomain().toUpperCase());
 			}
+			domains.add("krblogin");
 			constraint.setRoles( domains.toArray(new String[0]));
 		}
         constraint.setAuthenticate(true);
