@@ -9,20 +9,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.Attribute;
-import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
-import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
-import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
-import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
-import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
-import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
-import com.soffid.iam.sync.engine.extobj.ValueObjectMapper;
-import com.soffid.iam.sync.intf.ExtensibleObject;
-import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
 import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
@@ -58,9 +48,6 @@ public class DataConnector extends BaseDataConnector {
         	String uid;
         	HashMap<String,BaseAttribute> m = new HashMap<String, BaseAttribute>();
         	User ui = null;
-        	Account account = server.getAccountInfo(principal, config.getSystem().getName());
-
-            log.info("Got account: "+(System.currentTimeMillis()-t));
         	try {
         		ui = server.getUserInfo(principal, config.getSystem().getName ());
         		uid = new UidEvaluator().evaluateUid (server, rpid, principal, ui);        		

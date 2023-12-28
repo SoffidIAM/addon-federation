@@ -9,11 +9,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.soffid.iam.addons.federation.api.SseEvent;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.SseReceiverEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialRequestEntity;
 import com.soffid.iam.api.User;
@@ -26,6 +28,8 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 
+	private static final String CAEP_EVENT_NAME = "https://schemas.openid.net/secevent/caep/event-type/credential-change";
+
 	@Override
 	protected UserCredential handleCheck(String challenge, Map<String, Object> response) throws Exception {
 		return null;
@@ -36,6 +40,9 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 		UserCredentialEntity entity = getUserCredentialEntityDao().newUserCredentialEntity();
 		getUserCredentialEntityDao().userCredentialToEntity(credential, entity, true);
 		getUserCredentialEntityDao().create(entity);
+
+		generateCaepEvent(credential, "create");
+		
 		return getUserCredentialEntityDao().toUserCredential(entity);
 	}
 
@@ -79,9 +86,37 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 	@Override
 	protected void handleRemove(UserCredential credential) throws Exception {
 		UserCredentialEntity entity = getUserCredentialEntityDao().load(credential.getId());
-		if (canRemove(entity))
+		if (canRemove(entity)) {
+			generateCaepEvent(credential, "remove");
 			getUserCredentialEntityDao().remove(entity);
+		}
+	}
 
+	protected void generateCaepEvent(UserCredential credential, String action) throws InternalErrorException {
+		UserEntity userEntity = getUserEntityDao().load(credential.getUserId());
+		if (userEntity != null) {
+			for (SseReceiverEntity receiver: getSseReceiverEntityDao().findByEventType(CAEP_EVENT_NAME)) {
+				SseEvent ev = new SseEvent();
+				ev.setType(CAEP_EVENT_NAME);
+				ev.setUser(userEntity.getUserName());
+				ev.setReceiver(receiver.getName());
+				ev.setDate(new Date());
+				ev.setCredentialType(credential.getType() == UserCredentialType.CERT ? "x509":
+								credential.getType() == UserCredentialType.FIDO ? "fido2-roaming":
+										"app");
+				ev.setChangeType(action);
+				
+				if (credential.getType() == UserCredentialType.CERT) {
+					ev.setX509Serial(credential.getCertificate().getSerialNumber().toString());
+					ev.setX509Issuer(credential.getCertificate().getIssuerX500Principal().getName());
+				}
+				if (credential.getType() == UserCredentialType.FIDO) {
+					ev.setFido2aaGuid(credential.getSerialNumber());
+				}
+				
+				getSharedSignalEventsService().addEvent(ev);
+			}
+		}
 	}
 
 	private boolean canRemove(UserCredentialEntity entity) throws InternalErrorException {

@@ -707,6 +707,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		signature.setKeyInfo(keyInfo);
 		req.setSignature(signature);
 		
+		((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(SignatureConstants.ALGO_ID_DIGEST_SHA256);
 		applyAlgorithms(signature, idp);
 		
 		// Marshal again

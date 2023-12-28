@@ -388,7 +388,6 @@ public class Autenticator {
     		String hostId) throws Exception {
 
         LOG.info("Remote user identified as "+user+". returning control back to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
-
         HttpSession session = req.getSession();
         
         String entityId = (String) session

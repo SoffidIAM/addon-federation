@@ -12,7 +12,8 @@ public class Digest implements Serializable{
 	private String digestString;
 
 	public Digest(String s) throws NoSuchAlgorithmException {
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		MessageDigest md;
+		md = MessageDigest.getInstance("SHA-256");
 		byte digest[] = md.digest(s.getBytes(StandardCharsets.UTF_8));
 		this.digestString = "{SHA-256}"+Base64.getEncoder().encodeToString(digest);
 	}

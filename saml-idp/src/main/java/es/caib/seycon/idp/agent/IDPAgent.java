@@ -4,18 +4,26 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Date;
 
+import com.soffid.iam.ServiceLocator;
+import com.soffid.iam.addons.federation.api.SseEvent;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
+import com.soffid.iam.api.Account;
+import com.soffid.iam.api.Password;
+import com.soffid.iam.api.User;
 import com.soffid.iam.federation.idp.Main;
 import com.soffid.iam.sync.agent.Agent;
 import com.soffid.iam.sync.intf.AccessLogMgr;
+import com.soffid.iam.sync.intf.UserMgr;
 
 import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.idp.sse.server.Events;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.sync.intf.LogEntry;
 
-public class IDPAgent extends Agent implements AccessLogMgr {
-
+public class IDPAgent extends Agent implements AccessLogMgr, UserMgr {
+	SharedSignalEventsService svc;
     static String name = null;
     static Main main = null;
     static Object lock = new Object();
@@ -70,6 +78,7 @@ public class IDPAgent extends Agent implements AccessLogMgr {
 		        }
         	}
         }
+        svc = new RemoteServiceLocator().getSharedSignalEventsService();
     }
 
 	protected Main createMain() {
@@ -92,6 +101,42 @@ public class IDPAgent extends Agent implements AccessLogMgr {
 			return null;
 		else
 			return LogRecorder.getInstance().getLogs(from);
+	}
+
+	@Override
+	public void removeUser(String arg0) throws RemoteException, InternalErrorException {
+	}
+
+	@Override
+	public void updateUser(Account arg0) throws RemoteException, InternalErrorException {
+		SseEvent ev = new SseEvent();
+		ev.setType(Events.CAEP_TOKEN_CLAIMS_CHANGE);
+		ev.setAccountName(arg0.getName());
+		ev.setAccountSystem(arg0.getSystem());
+		ev.setDate(new Date());
+		svc.addEventTemplate(ev);
+	}
+
+	@Override
+	public void updateUser(Account arg0, User arg1) throws RemoteException, InternalErrorException {
+		SseEvent ev = new SseEvent();
+		ev.setReceiver("-");
+		ev.setType(Events.CAEP_TOKEN_CLAIMS_CHANGE);
+		ev.setUser(arg1.getUserName());
+		ev.setAccountName(arg0.getName());
+		ev.setAccountSystem(arg0.getSystem());
+		ev.setDate(new Date());
+		svc.addEventTemplate(ev);
+	}
+
+	@Override
+	public void updateUserPassword(String arg0, User arg1, Password arg2, boolean arg3)
+			throws RemoteException, InternalErrorException {
+	}
+
+	@Override
+	public boolean validateUserPassword(String arg0, Password arg1) throws RemoteException, InternalErrorException {
+		return false;
 	}
 
 }

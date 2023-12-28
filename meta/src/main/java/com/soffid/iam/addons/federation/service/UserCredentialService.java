@@ -9,6 +9,7 @@ import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
+import com.soffid.iam.addons.federation.model.SseReceiverEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialRequestEntity;
 import com.soffid.iam.addons.federation.roles.federation_credential_create;
@@ -39,7 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 	ConfiguracioEntity.class,
 	UsuariService.class,
 	FederationMemberEntity.class,
-	UsuariEntity.class})
+	UsuariEntity.class,
+	SseReceiverEntity.class,
+	SharedSignalEventsService.class})
 public class UserCredentialService 
 {
 	@Operation ( grantees={federation_credential_query.class})

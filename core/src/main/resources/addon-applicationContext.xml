@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+	<!-- ========================= Interceptors ========================= -->
+	<bean id="signalService-v2Interceptor-federation" class="com.soffid.iam.addons.federation.interceptor.SignalServiceInterceptor" singleton="true">
+		<property name="sharedSignalEventsService"><ref bean="federation-sharedSignalEventsService"/></property>
+		<lookup-method name="getSseReceiverEntityDao" bean="federation-sseReceiverEntityDao"/>
+	</bean>
+
+	<!-- ========================= End of Interceptor DEFINITIONS ========================= -->
+
+</beans>

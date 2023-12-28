@@ -445,7 +445,7 @@ public class TokenHandler {
 					email = values.iterator().next().toString();
 				
 				if (!onlySubject) {
-					if (values.size() == 1)
+					if (values.size() == 1 && ! (value instanceof Collection))
 					{
 						value = values.iterator().next();
 						if (value != null)
