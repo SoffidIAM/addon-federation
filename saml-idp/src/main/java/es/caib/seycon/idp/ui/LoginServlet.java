@@ -26,6 +26,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSyste
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.LoginTimeoutHandler;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -50,6 +51,8 @@ public class LoginServlet extends LangSupportServlet {
         
 
        	try {
+       		new LoginTimeoutHandler().registerSession(req);
+       		
        		boolean timeout = checkSessionDuration(req, resp);
        		
        		Autenticator auth = new Autenticator();

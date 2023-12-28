@@ -60,11 +60,24 @@
 	var fingerprintRegister = ${fingerprintRegister};
 	var fingerprintRawIds = [${raw:fingerprintRawIds}];
 	var fingerprintRegisterUrl = "${fingerprintRegisterUrl}"
+	var timeout = Date.now() + ${timeout};
+	
+	function checkTimeout () {
+		var seconds = Math.floor((timeout - Date.now()) / 1000);
+		if (seconds < 0) {
+			document.location.href="${cancelUrl}";
+		} else if (seconds < 30) {
+			document.getElementById("autocancelDiv").style.display = '';
+			document.getElementById("timerSpan").innerText = seconds;
+		}
+	}
 	
 	function init() {
 		updateFormHash(); 
 		activateFingerprint(); 
 	}
+	
+	setInterval (checkTimeout, 1000);
 	</script>
 
 	<script src="/js/jquery-3.6.0.slim.min.js"></script>
@@ -166,10 +179,12 @@
 			<p>
 			{endif}
 			<p>${header}</p>
+			<p style="display: none" id="autocancelDiv">${autocancel} 
+				<span id="timerSpan"/> ${autocancelb}</p>
 		</div>
 		<p/>
 	</div>
-	
+
 	${raw:htmlFooter}
 
 	<div class="centered" style="visibility:hidden" id="progressdiv">

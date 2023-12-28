@@ -27,6 +27,7 @@ import com.soffid.iam.addons.federation.common.AllowedScope;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.LoginTimeoutHandler;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -51,7 +52,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 		try {
 			config = IdpConfig.getConfig();
 		
-	    	req.getSession().setAttribute("soffid-session-type", "openid");
+			req.getSession().setAttribute("soffid-session-type", "openid");
 	    	r = new OpenIdRequest();
 	    	
 	    	r.setScope(req.getParameter("scope"));

@@ -69,8 +69,23 @@
 		    }
 	     });
 	}
+	
+	
 	var intervalId = setInterval(checkPush, 500);
 	{endif}
+
+	var timeout = Date.now() + ${timeout};
+	function checkTimeout () {
+		var seconds = Math.floor((timeout - Date.now()) / 1000);
+		if (seconds < 0) {
+			document.location.href="${cancelUrl}";
+		} else if (seconds < 30) {
+			document.getElementById("autocancelDiv").style.display = '';
+			document.getElementById("timerSpan").innerText = seconds;
+		}
+	}
+	setInterval (checkTimeout, 1000);
+
 	{if resendSms} 
 	setTimeout(function () {
 		$("a.resend").css("display", "");
@@ -221,6 +236,8 @@
 			<p>
 			{endif}
 			<p>${header}</p>
+			<p style="display: none" id="autocancelDiv">${autocancel} 
+				<span id="timerSpan"/> ${autocancelb}</p>
 		</div>
 		<p/>
 	</div>

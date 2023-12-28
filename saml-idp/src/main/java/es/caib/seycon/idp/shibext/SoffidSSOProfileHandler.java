@@ -43,6 +43,7 @@ import edu.internet2.middleware.shibboleth.idp.profile.saml2.SSOProfileHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.LoginTimeoutHandler;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class SoffidSSOProfileHandler extends SSOProfileHandler {

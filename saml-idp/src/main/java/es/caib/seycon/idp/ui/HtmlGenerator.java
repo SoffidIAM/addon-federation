@@ -33,6 +33,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.session.LoginTimeoutHandler;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.idp.textformatter.TextFormatter;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -186,6 +187,7 @@ public class HtmlGenerator {
             internalParams.put("organizationUrl", (String) session.getAttribute(ORGANIZATION_URL)); //$NON-NLS-1$
         }
         internalParams.put("header", header); //$NON-NLS-1$
+        internalParams.put("timeout", Long.toString( new LoginTimeoutHandler().getTimeToTimeout(request)) );
     }
 
     private String getMessage(ResourceBundle rb, ResourceBundle rb2, String string) {
