@@ -17,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 	CertificateValidationService.class, 
 	SelfCertificateValidationService.class,
 	CrudRegistryService.class,
-	PushAuthenticationService.class})
+	PushAuthenticationService.class,
+	SharedSignalEventsService.class})
 public abstract class FederationBootService extends es.caib.seycon.ng.servei.ApplicationBootService {
 
 }
