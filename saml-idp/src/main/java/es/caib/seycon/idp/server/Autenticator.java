@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.Subject;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -35,6 +36,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.http.HttpRequest;
 import org.jfree.util.Log;
 import org.opensaml.saml2.core.AuthnContext;
+import org.opensaml.util.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,8 @@ import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
+import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
@@ -445,19 +449,33 @@ public class Autenticator {
 	        }
 	        
 			Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
-			if (saml2LoginContext != null) {
+			if (saml2LoginContext == null) {
+				saml2LoginContext = (Saml2LoginContext) session.getAttribute("$$soffid-old-login-context$$");
+				String saml2LoginContextId = (String) session.getAttribute("$$soffid-old-login-context-id$$");
+		        StorageService<String, LoginContextEntry> storageService = (StorageService<String, LoginContextEntry>) 
+		        		HttpServletHelper.getStorageService(ctx);
+	        	storageService.put(HttpServletHelper.DEFAULT_LOGIN_CTX_PARITION, 
+		        			saml2LoginContextId,
+		        			new LoginContextEntry(saml2LoginContext, 1800000));
+	        	Cookie cookie = new Cookie(HttpServletHelper.LOGIN_CTX_KEY_NAME, saml2LoginContextId);
+	            RequestDispatcher dispatcher = req.getRequestDispatcher(saml2LoginContext.getAuthenticationEngineURL());
+	            dispatcher.forward( new CookieRequest( req, cookie), resp);
+			}
+			else if (saml2LoginContext != null) {
 				List<String> set = saml2LoginContext.getRequestedAuthenticationMethods();
 				String actualLogin = toSamlAuthenticationMethod(type);
 				if (set.isEmpty() || set.contains(actualLogin))
 					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, actualLogin);
 				else
 					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, set.iterator().next());
+				session.setAttribute("$$soffid-old-login-context$$", saml2LoginContext);
+		        Cookie loginContextKeyCookie = HttpServletHelper.getCookie(req, HttpServletHelper.LOGIN_CTX_KEY_NAME);
+		        if (loginContextKeyCookie != null)
+		        	session.setAttribute("$$soffid-old-login-context-id$$", loginContextKeyCookie.getValue());
+				
+	            RequestDispatcher dispatcher = req.getRequestDispatcher(saml2LoginContext.getAuthenticationEngineURL());
+	            dispatcher.forward(req, resp);
 			}
-			
-	        if (returnPath == null) 
-	        {
-	            AuthenticationEngine.returnToAuthenticationEngine(req, resp);
-	        }
 	        else
 	        {
 	            resp.sendRedirect(returnPath);

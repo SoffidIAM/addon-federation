@@ -406,7 +406,17 @@ public class AuthenticationContext {
 		this.nextFactor = nextFactor;
 	}
 
-	
+
+	public String getPreviousFactor() {
+		if ( step == 1 )
+			return firstFactor;
+		if ( step == 2 )
+			return secondFactor;
+		
+		return null;
+	}
+
+
 	public String getUsedMethod()
 	{
 		if (firstFactor == null) return null;

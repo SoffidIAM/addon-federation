@@ -34,6 +34,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSyste
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
@@ -76,6 +77,10 @@ public class UserPasswordFormServlet extends BaseForm {
         try {
         	if ( ctx != null && ctx.getStep() > 0 ) {
         		requestedUser = ctx.getUser();
+        	}
+        	else if (ctx.isFinished()) {
+    			new Autenticator().autenticate2(ctx.getUser(), getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+    			return;
         	}
         	else {
         		try {

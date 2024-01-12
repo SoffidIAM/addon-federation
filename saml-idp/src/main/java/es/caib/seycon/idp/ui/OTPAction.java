@@ -124,6 +124,9 @@ public class OTPAction extends HttpServlet {
 	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
 	            			return;
 	            		}
+	            	} else if (ctx.isFinished()) { // User has pressed the login button twice
+            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+            			return;
 	                } else {
 	            		if (ctx != null)
 	            			ctx.authenticationFailure(u, Messages.getString("UserPasswordAction.wrong.password"));
@@ -152,4 +155,11 @@ public class OTPAction extends HttpServlet {
         dispatcher.forward(req, resp);
     }
 
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        req.setAttribute("ERROR", ""); //$NON-NLS-1$
+        RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+        dispatcher.forward(req, resp);
+    }
 }
