@@ -110,7 +110,7 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 			return 3650;
 		
 		long days = System.currentTimeMillis() - lastLogon.getTime();
-		return (int) (days / 1000 * 60 * 60 * 24);
+		return (int) (days / 1000L / 60L / 60L / 24L);
 	}
 
 //	@Override
