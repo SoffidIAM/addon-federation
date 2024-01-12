@@ -275,6 +275,9 @@
 				}
 			});
 			{endif}
+			  $("form").submit(function() {
+				   $(":submit", this).attr("disabled", "disabled");
+		      });
 			  $("#logincertbutton").click(function () {
 				  $("#progressdiv").css("visibility", "visible");
 				  $("#registerlogin").fadeOut("slow");

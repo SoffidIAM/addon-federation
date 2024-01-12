@@ -191,6 +191,9 @@
 		<img class="centeredimage" src="/img/progress.gif"/>
 	</div>
 	<script>
+  $("form").submit(function() {
+		   $(":submit", this).attr("disabled", "disabled");
+  });
   $("#logincertbutton").click(function () {
 	  $("#progressdiv").css("visibility", "visible");
 	  $("#registerlogin").fadeOut("slow");
