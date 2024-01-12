@@ -288,6 +288,7 @@ public class SseHandler extends FrameHandler {
 		} catch (Exception e) {
 		}
 		try {
+			list.clear();
 			svc = (FederationService) new InitialContext().lookup(FederationServiceHome.JNDI_NAME);
 			for (FederationMember fm: svc.findFederationMembersByJsonQuery(null, 
 					"serviceProviderType eq 'openid-connect'", null, null)
