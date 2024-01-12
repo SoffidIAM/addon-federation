@@ -132,23 +132,20 @@ public class LogoutHandler {
 		}
 		
 		if (! userInitiated || l.getFrontRequests().isEmpty()) {
+			FederationService svc = (FederationService) new RemoteServiceLocator().getRemoteService(FederationService.REMOTE_PATH);
 			if (req != null) {
 				FederationMember ip = IdpConfig.getConfig().getFederationMember();
 		    	for (Cookie c: req.getCookies())
 		    	{
 		    		if (c.getName().equals(ip.getSsoCookieName()))
 		    		{
-		    			new RemoteServiceLocator()
-		    				.getFederacioService()
-		    				.expireSessionCookie(c.getValue());
+		    			svc.expireSessionCookie(c.getValue());
 		    		}
 		    	}
 			}
 			try {
 				for ( FederationMemberSession fms: federationMemberSessions) {
-	    			new RemoteServiceLocator()
-	    				.getFederacioService()
-	    				.deleteFederatioMemberSession(fms);
+	    			svc.deleteFederatioMemberSession(fms);
 				}
 				new RemoteServiceLocator().getSessionService().destroySession(s);
 			} catch (InternalErrorException e) {
