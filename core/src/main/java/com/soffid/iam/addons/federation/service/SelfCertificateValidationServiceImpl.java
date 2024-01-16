@@ -213,7 +213,7 @@ public class SelfCertificateValidationServiceImpl extends
 		}
 		
 		for (RootCertificateEntity ac: getRootCertificateEntityDao().loadAll()) {
-			if (! ac.isDevice() && ac.isExternal()) {
+			if (! ac.isDevice() && ac.isExternal() && !ac.isObsolete()) {
 				X509Certificate cacert = getRootCertificateEntityDao().toRootCertificate(ac).getCertificate();
 				if (userCert.getIssuerX500Principal().equals(cacert.getSubjectX500Principal()))
 				{
@@ -257,7 +257,7 @@ public class SelfCertificateValidationServiceImpl extends
 			}
 		}
 		for (RootCertificateEntity ac: getRootCertificateEntityDao().loadAll()) {
-			if (ac.isDevice() && ac.isExternal()) {
+			if (ac.isDevice() && ac.isExternal() && !ac.isObsolete()) {
 				X509Certificate cacert = getRootCertificateEntityDao().toRootCertificate(ac).getCertificate();
 				if (cert.getIssuerX500Principal().equals(cacert.getSubjectX500Principal()))
 				{
