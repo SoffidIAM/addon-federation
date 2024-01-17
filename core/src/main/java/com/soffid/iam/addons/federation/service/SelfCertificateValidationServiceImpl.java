@@ -116,7 +116,7 @@ public class SelfCertificateValidationServiceImpl extends
 			}
 		}
 		for (RootCertificateEntity ac: getRootCertificateEntityDao().loadAll()) {
-			if (ac.isExternal()) {
+			if (ac.isExternal() && !ac.isObsolete()) {
 				X509Certificate cacert = getRootCertificateEntityDao().toRootCertificate(ac).getCertificate();
 				log.info("Check "+cert.getIssuerX500Principal().getName()+" with "+cacert.getSubjectX500Principal().getName());
 				if (cert.getIssuerX500Principal().equals(cacert.getSubjectX500Principal()))
