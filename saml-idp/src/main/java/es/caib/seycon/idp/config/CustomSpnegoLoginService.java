@@ -15,12 +15,13 @@ package es.caib.seycon.idp.config;
 //You may elect to redistribute this code under either of these licenses. 
 //========================================================================
 
+import java.util.Base64;
 import java.util.Properties;
 
 import javax.security.auth.Subject;
+import javax.servlet.ServletRequest;
 
 import org.apache.commons.logging.LogFactory;
-import org.eclipse.jetty.http.security.B64Code;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.SpnegoUserPrincipal;
@@ -74,11 +75,11 @@ public class CustomSpnegoLoginService extends AbstractLifeCycle implements Login
     /**
      * username will be null since the credentials will contain all the relevant info
      */
-    public UserIdentity login(String username, Object credentials)
+    public UserIdentity login(String username, Object credentials, ServletRequest request)
     {
         String encodedAuthToken = (String)credentials;
         
-        byte[] authToken = B64Code.decode(encodedAuthToken);
+        byte[] authToken = Base64.getDecoder().decode(encodedAuthToken);
         
         
         try {
@@ -89,10 +90,10 @@ public class CustomSpnegoLoginService extends AbstractLifeCycle implements Login
 					Account account = new RemoteServiceLocator().getServerService().parseKerberosToken(keytab.getDomain(), keytab.getPrincipal(), keytab.getKeyTab(), authToken);
 					if (account != null)
 					{
-						Log.info("SpnegoUserRealm: established a security context");
-						Log.info("Client Principal is: " + account);
-						Log.info("Server Principal is: " + keytab.getPrincipal());
-						Log.info("Client Default Role: " + keytab.getDomain());
+						log.info("SpnegoUserRealm: established a security context");
+						log.info("Client Principal is: " + account);
+						log.info("Server Principal is: " + keytab.getPrincipal());
+						log.info("Client Default Role: " + keytab.getDomain());
 						
 						SpnegoPrincipal user = new SpnegoPrincipal(account);
 						
@@ -102,11 +103,11 @@ public class CustomSpnegoLoginService extends AbstractLifeCycle implements Login
 						return _identityService.newUserIdentity(subject,user, new String[]{keytab.getDomain(), "krblogin"});
 					}
 				} catch (Exception e) {
-					Log.info("Error validating token against "+keytab.getDomain()+": "+e.toString());
+					log.info("Error validating token against "+keytab.getDomain()+": "+e.toString());
 				}
 			}
 		} catch (Exception e) {
-            Log.warn(e);
+            log.warn(e);
 		}
         
         return null;

@@ -11,8 +11,12 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ssl.SslSocketConnector;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
@@ -21,6 +25,7 @@ import com.soffid.iam.addons.federation.idp.radius.server.web.RadiusSslContextFa
 import com.soffid.iam.addons.federation.idp.radius.server.web.RadiusUserServlet;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.ssl.SeyconKeyStore;
+import com.soffid.iam.sync.jetty.ProxyConnectionFactory;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -54,10 +59,17 @@ public class FreeRadiusWebServer {
 		IdpConfig c = IdpConfig.getConfig();
 		
         log.info("Listening on socket " + profile.getFreeRadiusPort() + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        String actualAddress = System.getProperty("soffid.idp.listen.address");
 
-        RadiusSslContextFactory factory = new RadiusSslContextFactory(this.radiusServer.getCertificateCache());
-        factory.setKeyStore(SeyconKeyStore.getKeyStoreFile().getPath());
+    	HttpConfiguration httpConfig = new HttpConfiguration();
+    	httpConfig.setSendServerVersion(false);
+    	
+    	SecureRequestCustomizer src = new SecureRequestCustomizer(false);
+    	httpConfig.addCustomizer(src);
+    	
+    	HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
+
+    	RadiusSslContextFactory factory = new RadiusSslContextFactory(radiusServer.getCertificateCache());
+        factory.setKeyStorePath(SeyconKeyStore.getKeyStoreFile().getPath());
         factory.setKeyStorePassword(SeyconKeyStore.getKeyStorePassword()
                 .getPassword());
         factory.setKeyStoreType(SeyconKeyStore.getKeyStoreType());
@@ -66,30 +78,34 @@ public class FreeRadiusWebServer {
         factory.setExcludeCipherSuites(new String[] {
         		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",        		
         });
-//        factory.setIncludeCipherSuites(cipherSuites);
-        SslSocketConnector connector = new SslSocketConnector(factory);
+        
+    	SslConnectionFactory tls = new SslConnectionFactory(factory, http11.getProtocol());
+    	ServerConnector connector;
+    	if (enableProxyProtocol()) {
+    		String trustedProxy = System.getenv("PROXY_PROTOCOL_ENABLED");
+    		if ("true".equalsIgnoreCase(trustedProxy)) {
+	    		log.warn("Accepting proxy requests from ANY server. It is a potential security vulnerability");
+	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(tls.getProtocol());
+	    		connector = new ServerConnector(server, proxy, tls, http11);
+    		} else {
+    			log.info("Accepting proxy requests from "+trustedProxy);
+	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(tls.getProtocol(), trustedProxy);
+	    		connector = new ServerConnector(server, proxy, tls, http11);
+    		}
+    	} else {
+    		connector = new ServerConnector(server, tls, http11);
+    	}
+
+    	//        factory.setIncludeCipherSuites(cipherSuites);
 
         connector.setPort(profile.getFreeRadiusPort().intValue());
-        if (actualAddress != null)
-        	connector.setHost(actualAddress);
-        connector.setAcceptors(2);
         connector.setAcceptQueueSize(10);
-        connector.setMaxIdleTime(60000);
-        connector.setHandshakeTimeout(2000);
-        connector.setLowResourcesMaxIdleTime(2000);
-        connector.setSoLingerTime(10000);
-        connector.setHostHeader(c.getHostName());
-        connector.setRequestBufferSize( 64 * 1024);
-        connector.setHeaderBufferSize( 64 * 1024);
-        try {
-        	String s = new RemoteServiceLocator().getServerService().getConfig("soffid.syncserver.bufferSize");
-        	if (s != null) {
-        		connector.setRequestBufferSize( Integer.parseInt(s));
-        		connector.setHeaderBufferSize( Integer.parseInt(s));
-        	}
-        } catch (Throwable e) {}
 
         server.addConnector(connector);
+	}
+
+	private boolean enableProxyProtocol() {
+		return null != System.getenv("PROXY_PROTOCOL_ENABLED");
 	}
 
 	private void createContext() throws FileNotFoundException, IOException, UnrecoverableKeyException,
@@ -111,10 +127,8 @@ public class FreeRadiusWebServer {
 	private void createServer() {
 		QueuedThreadPool pool = new QueuedThreadPool();
 		pool.setMaxThreads(10);
-		pool.setMaxQueued(15);
-		server = new Server();
-        server.setThreadPool(pool);
-        server.setSendServerVersion(false);
+		pool.setLowThreadsThreshold(2);
+		server = new Server(pool);
 	}
 
 }

@@ -4,47 +4,53 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Provider;
 import java.security.SignatureException;
 import java.security.URIParameter;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
+import javax.servlet.DispatcherType;
 import javax.servlet.ServletContext;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.eclipse.jetty.http.security.Constraint;
+import org.apache.commons.logging.LogFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.security.SpnegoLoginService;
-import org.eclipse.jetty.security.authentication.SpnegoAuthenticator;
+import org.eclipse.jetty.security.authentication.ConfigurableSpnegoAuthenticator;
 import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.DispatcherType;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.SessionManager;
-import org.eclipse.jetty.server.bio.SocketConnector;
-import org.eclipse.jetty.server.session.HashSessionManager;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.server.ssl.SslSocketConnector;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle.Listener;
-import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
@@ -63,6 +69,9 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
+import com.soffid.iam.sync.jetty.ProxyConnectionFactory;
+import com.soffid.iam.sync.jetty.SoffidSslContextFactory;
+import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.idp.cas.LoginEndpoint;
@@ -143,10 +152,11 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordRememberForm;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetAction;
 import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
 import es.caib.seycon.idp.wsfed.WsfedEndpoint;
+import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class Main {
-
+	org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
     private Server server;
 	private Throwable lastException = null;
 	private Listener listener = new Listener() {
@@ -203,9 +213,10 @@ public class Main {
             createConfigurationFiles(c);
     
             QueuedThreadPool pool = new QueuedThreadPool();
-    
-            server = new Server();
-            server.setThreadPool(pool);
+            pool.setLowThreadsThreshold(2);
+            pool.setMaxThreads(200);
+
+            server = new Server(pool);
 //            server.setSessionIdManager(new PersistentSessionIdManager());
             String host = c.getHostName();
             Integer port = c.getStandardPort();
@@ -223,8 +234,7 @@ public class Main {
             ServletContextHandler ctx = deployWar(plainSocket);
     
             // Start
-            server.setSendServerVersion(false);
-            server.addLifeCycleListener(listener );
+            server.addEventListener(listener );
             lastException = null;
             server.start();
     
@@ -311,85 +321,138 @@ public class Main {
     }
 
     private void installConnector(String host, Integer port,
-            boolean wantClientAuth) throws IOException, FileNotFoundException {
-        System.out.println("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        Log.getLog().info("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
+            boolean wantClientAuth) throws IOException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
         Long actualPort = Long.getLong("soffid.idp.listen.port");
         String actualAddress = System.getProperty("soffid.idp.listen.address");
-
-        DelegateToApplicationSslContextFactory factory = new DelegateToApplicationSslContextFactory();
-        factory.setKeyStore(SeyconKeyStore.getKeyStoreFile().getPath());
-        factory.setKeyStorePassword(SeyconKeyStore.getKeyStorePassword()
-                .getPassword());
-        factory.setKeyStoreType(SeyconKeyStore.getKeyStoreType());
-        factory.setCertAlias("idp"); //$NON-NLS-1$
-        factory.setWantClientAuth(wantClientAuth && actualPort == null);
-        factory.setExcludeCipherSuites(new String[] {
-        		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",        		
-        });
-//        factory.setIncludeCipherSuites(cipherSuites);
-        SslSocketConnector connector = new SslSocketConnector(factory);
-
-        connector.setPort(actualPort != null ? actualPort.intValue():  port == null ? 443 : port.intValue());
-        if (actualAddress != null)
-        	connector.setHost(actualAddress);
-        connector.setAcceptors(2);
-        connector.setAcceptQueueSize(10);
-        connector.setMaxIdleTime(60000);
-        connector.setHandshakeTimeout(2000);
-        connector.setLowResourcesMaxIdleTime(2000);
-        connector.setSoLingerTime(10000);
-        connector.setHostHeader(host);
-
-        connector.setRequestBufferSize( 64 * 1024);
-        connector.setHeaderBufferSize( 64 * 1024);
-        try {
-        	String s = new RemoteServiceLocator().getServerService().getConfig("soffid.syncserver.bufferSize");
-        	if (s != null) {
-        		connector.setRequestBufferSize( Integer.parseInt(s));
-        		connector.setHeaderBufferSize( Integer.parseInt(s));
-        	}
-        } catch (Throwable e) {}
-
-        server.addConnector(connector);
-    }
-
-    private void installPlainConnector(String host, Integer port) throws IOException, FileNotFoundException {
-        System.out.println("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        Log.getLog().info("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
-        Long actualPort = Long.getLong("soffid.idp.listen.port");
-        String actualAddress = System.getProperty("soffid.idp.listen.address");
-
-        SocketConnector connector = new SocketConnector();
-
-        connector.setRequestBufferSize( 64 * 1024);
-        connector.setHeaderBufferSize( 64 * 1024);
-        try {
-        	String s = new RemoteServiceLocator().getServerService().getConfig("soffid.syncserver.bufferSize");
-        	if (s != null) {
-        		connector.setRequestBufferSize( Integer.parseInt(s));
-        		connector.setHeaderBufferSize( Integer.parseInt(s));
-        	}
-        } catch (Throwable e) {}
+        if (actualPort == null) actualPort = new Long(port);
+        if (actualAddress == null) actualAddress = host;
         
-        connector.setPort(actualPort != null ? actualPort.intValue():  port == null ? 443 : port.intValue());
-        if (actualAddress != null)
-        	connector.setHost(actualAddress);
-        // connector.setHost(host);
-        connector.setAcceptors(2);
+        log.info("Listening on socket " + actualAddress + ":" + actualPort + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+    	HttpConfiguration httpConfig = new HttpConfiguration();
+    	httpConfig.setSendServerVersion(false);
+    	httpConfig.setRelativeRedirectAllowed(true);    	
+    	SecureRequestCustomizer src = new SecureRequestCustomizer(false);
+    	httpConfig.addCustomizer(src);
+    	
+    	HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
+
+    	// Configure the SslContextFactory with the keyStore information.
+    	DelegateToApplicationSslContextFactory sslContextFactory = new DelegateToApplicationSslContextFactory();
+    	
+    	KeyStore ks = loadKeyStore();
+    	sslContextFactory.setKeyStore(ks);
+    	sslContextFactory.setTrustStore(ks);
+        sslContextFactory.setKeyManagerPassword(SeyconKeyStore.getKeyStorePassword().getPassword());
+        sslContextFactory.setKeyStorePassword(SeyconKeyStore.getKeyStorePassword().getPassword());
+        sslContextFactory.setTrustStorePassword(SeyconKeyStore.getKeyStorePassword().getPassword());
+        sslContextFactory.setWantClientAuth(wantClientAuth);
+    	
+    	// The ConnectionFactory for TLS.
+    	SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
+    	ServerConnector connector;
+    	if (enableProxyProtocol()) {
+    		String trustedProxy = System.getenv("PROXY_PROTOCOL_ENABLED");
+    		if ("true".equalsIgnoreCase(trustedProxy)) {
+	    		log.warn("Accepting proxy requests from ANY server. It is a potential security vulnerability");
+	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(tls.getProtocol());
+	    		connector = new ServerConnector(server, proxy, tls, http11);
+    		} else {
+    			log.info("Accepting proxy requests from "+trustedProxy);
+	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(tls.getProtocol(), trustedProxy);
+	    		connector = new ServerConnector(server, proxy, tls, http11);
+    		}
+    	} else {
+    		connector = new ServerConnector(server, tls, http11);
+    	}
+       if (wantClientAuth) {
+    	   DelegateToApplicationSslContextFactory factory = new DelegateToApplicationSslContextFactory();
+	        factory.setKeyStore(loadKeyStore());
+	        factory.setKeyStorePassword(SeyconKeyStore.getKeyStorePassword()
+	                .getPassword());
+	        factory.setKeyStoreType(SeyconKeyStore.getKeyStoreType());
+	        factory.setCertAlias("idp"); //$NON-NLS-1$
+	        factory.setWantClientAuth(wantClientAuth);
+	        factory.setExcludeCipherSuites(new String[] {
+	        		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",        		
+	        });
+        }
+        String s =  ConfigurationCache.getMasterProperty("soffid.syncserver.bufferSize") ;
+        if (s != null) {
+        	connector.setAcceptedReceiveBufferSize( Integer.parseInt(s));
+            connector.setAcceptedSendBufferSize( Integer.parseInt(s));
+        } else {
+        	connector.setAcceptedSendBufferSize( 64 * 1024);
+        	connector.setAcceptedReceiveBufferSize( 64 * 1024);
+        }
+
+//        connector.setHost(host); Listen on any IP address
+        connector.setPort(port == null ? 443 : port.intValue());
         connector.setAcceptQueueSize(10);
-        connector.setMaxIdleTime(60000);
-
-        connector.setHostHeader(host);
-
         server.addConnector(connector);
     }
 
+    private KeyStore loadKeyStore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+    	KeyStore keyStore = SeyconKeyStore.loadKeyStore(SeyconKeyStore.getKeyStoreFile());
+		List<String> keys = new LinkedList<String>();
+		for (Enumeration<String> e = keyStore.aliases(); e.hasMoreElements();)
+		{
+			String alias = e.nextElement();
+			if ( keyStore.isKeyEntry(alias) && ! alias.equalsIgnoreCase("idp"))
+				keys.add(alias);
+			if ( keyStore.isCertificateEntry(alias) && ! alias.equalsIgnoreCase(SeyconKeyStore.ROOT_CERT))
+				keys.add(alias);
+		}
+		for (String key: keys)
+			keyStore.deleteEntry(key);
+    	return keyStore;
+	}
+
+	private void installPlainConnector(String host, Integer port) throws IOException, FileNotFoundException {
+        log.info("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+    	HttpConfiguration httpConfig = new HttpConfiguration();
+    	httpConfig.setSendServerVersion(false);
+    	httpConfig.setRelativeRedirectAllowed(true);    	
+    	HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
+
+    	// The ConnectionFactory for TLS.
+    	ServerConnector connector;
+    	if (enableProxyProtocol()) {
+    		String trustedProxy = System.getenv("PROXY_PROTOCOL_ENABLED");
+    		if ("true".equalsIgnoreCase(trustedProxy)) {
+	    		log.warn("Accepting proxy requests from ANY server. It is a potential security vulnerability");
+	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(http11.getProtocol());
+	    		connector = new ServerConnector(server, proxy, http11);
+    		} else {
+    			log.info("Accepting proxy requests from "+trustedProxy);
+	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(http11.getProtocol(), trustedProxy);
+	    		connector = new ServerConnector(server, proxy, http11);
+    		}
+    	} else {
+    		connector = new ServerConnector(server, http11);
+    	}
+        String s =  ConfigurationCache.getMasterProperty("soffid.syncserver.bufferSize") ;
+        if (s != null) {
+        	connector.setAcceptedReceiveBufferSize( Integer.parseInt(s));
+            connector.setAcceptedSendBufferSize( Integer.parseInt(s));
+        } else {
+        	connector.setAcceptedSendBufferSize( 64 * 1024);
+        	connector.setAcceptedReceiveBufferSize( 64 * 1024);
+        }
+
+//        connector.setHost(host);
+        connector.setPort(port == null ? 443 : port.intValue());
+        connector.setAcceptQueueSize(10);
+        server.addConnector(connector);
+    }
+
+	public boolean enableProxyProtocol() {
+		return null != System.getenv("PROXY_PROTOCOL_ENABLED");
+	}
 
     private void installClientCertConnector(String host, Integer port)
-            throws IOException, FileNotFoundException {
+            throws IOException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
         installConnector(host, port, true);
     }
 
@@ -402,13 +465,13 @@ public class Main {
         ServletContextHandler ctx = new ServletContextHandler(
                 ServletContextHandler.SESSIONS);
         
-        ctx.addLifeCycleListener(listener );
+        ctx.addEventListener(listener );
 
         ctx.setContextPath("/"); //$NON-NLS-1$
         ctx.setClassLoader(Main.class.getClassLoader());
         server.setHandler(ctx);
         ctx.setDisplayName("Soffid SAML Identity Provider"); //$NON-NLS-1$
-        ctx.setInitParameter(SessionManager.__SessionCookieProperty, "SoffidIDPSessionId"); //$NON-NLS-1$
+        ctx.setInitParameter(SessionHandler.__SessionCookieProperty, "SoffidIDPSessionId"); //$NON-NLS-1$
         IdpConfig c = IdpConfig.getConfig();
 
         File f1 = c.extractConfigFile("internal.xml"); //$NON-NLS-1$
@@ -570,17 +633,16 @@ public class Main {
         
        	configureSpnego(ctx, c);
         	
-        ctx.setSessionHandler(new SessionHandler());
+        SessionHandler sessionHandler = new SessionHandler();
+ 		ctx.setSessionHandler(sessionHandler);
         int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
         				: 60 + c.getFederationMember().getSessionTimeout().intValue();
-        HashSessionManager sessionManager = new HashSessionManager();
         if (!plainSocket) {
-        	sessionManager.setHttpOnly(true);
-        	sessionManager.setSecureCookies(true);
+        	sessionHandler.setHttpOnly(true);
+        	sessionHandler.setSecureRequestOnly(true);
         }
-		sessionManager.setMaxInactiveInterval(timeout); // 20 minutes timeout
-        sessionManager.addEventListener(new SessionListener());
-        ctx.getSessionHandler().setSessionManager(sessionManager);
+        sessionHandler.setMaxInactiveInterval(timeout); // 20 minutes timeout
+        sessionHandler.addEventListener(new SessionListener());
         
         return ctx;
     }
@@ -968,15 +1030,8 @@ public class Main {
 
         ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
         LoginService loginService;
-        if (f.canRead() && c.getFederationMember().getKeytabs().isEmpty())
-        {
-        	loginService = new SpnegoLoginService("SpnegoLogin", new File(c.getConfDir(), "spnego.properties").toString());
-        }
-        else
-        {
-        	loginService = new CustomSpnegoLoginService("CustomSpnegoLogin");
-        }
-        csh.setAuthenticator(new SpnegoAuthenticator());
+       	loginService = new CustomSpnegoLoginService("CustomSpnegoLogin");
+        csh.setAuthenticator(new ConfigurableSpnegoAuthenticator());
         csh.setRealmName("Soffid");
         csh.setConstraintMappings(new ConstraintMapping[] {constraintMapping});
         csh.setLoginService( loginService );

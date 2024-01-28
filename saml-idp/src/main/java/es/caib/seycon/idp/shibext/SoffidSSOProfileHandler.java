@@ -38,6 +38,7 @@ import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AbstractSAML2ProfileConfiguration;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
+import edu.internet2.middleware.shibboleth.idp.profile.saml2.AbstractSAML2ProfileHandler;
 import edu.internet2.middleware.shibboleth.idp.profile.saml2.BaseSAML2ProfileRequestContext;
 import edu.internet2.middleware.shibboleth.idp.profile.saml2.SSOProfileHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
@@ -145,7 +146,8 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
     /** {@inheritDoc} */
     protected String getRequiredNameIDFormat(BaseSAMLProfileRequestContext requestContext) {
         String requiredNameFormat = super.getRequiredNameIDFormat(requestContext);
-        if (requiredNameFormat != null && ! isSupportedNameFormat(requiredNameFormat))
+        if (requiredNameFormat != null && ! isSupportedNameFormat(requiredNameFormat) ||
+        		"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified".equals(requiredNameFormat))
         	requiredNameFormat = null;
 
         return requiredNameFormat;

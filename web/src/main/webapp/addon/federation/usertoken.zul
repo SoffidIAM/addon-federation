@@ -5,10 +5,17 @@
 <frame xmlns:h="http://www.w3.org/1999/xhtml" mold="div" style="position: relative" 
 	parentPath="${arg.listbox }"
 	model="${arg.model }"
-	use="com.soffid.iam.addons.federation.web.UserTokenHandler" id="frame">
+	use="com.soffid.iam.addons.federation.web.UserTokenHandler" id="handler">
 
 	<div class="navigation-bar dummy">
 		<label bind="//user/listbox:/@userName"></label> - <label bind="//user/listbox:/@fullName"/>
+		<menu2>
+			<menu2item image="/img/printer.svg" label="${c:l('seu.impressores') }" id="printersMenu" onClick="ref:frame.userPrinters"/>
+			<menu2item image="/img/menu/audit.svg" label="${c:l('seu.auditoria') }" onClick="ref:frame.audit" if="${soffid:isUserInRole('seu:auditoria:show') }"/>
+			<menu2item image="/img/menu/access-record.svg" label="${c:l('seu.registresaccess') }" onClick="ref:frame.accessLog" if="${soffid:isUserInRole('seu:registreAcces:show') }"/>
+			<menu2item image="/img/sync.svg" label="${c:l('usuaris.PropagarCanvi') }" onClick="ref:frame.synchronize" />
+			<menu2item image="/img/refresh.svg" label="${c:l('debug.zul.Refrescar') }" onClick="ref:frame.refreshCurrentNode" />
+		</menu2>
 	</div>
 
 	<script>
@@ -29,13 +36,13 @@
 		}
 	</style>
 
-	<timer delay="10000" repeats="true" running="true"  onTimer="ref:frame.refresh"/>
+	<timer delay="10000" repeats="true" running="true"  onTimer="ref:handler.refresh"/>
 	
 	<datatable enablefilter="true" id="listbox"
 		autocommit="true"
 		multiselect="true"
-		onSelect="ref:frame.multiSelectToken" 
-		onMultiSelect="ref:frame.multiSelectToken" 
+		onSelect="ref:handler.multiSelectToken" 
+		onMultiSelect="ref:handler.multiSelectToken" 
 	    dataPath="${arg.listbox }:/token" >
 	<attribute name="columns"><![CDATA[
 - name: ${c:l('selfcertificate.type')}
@@ -54,8 +61,8 @@
 			]]></attribute>
 	</datatable>
 	<div width="100%" style="text-align: right"  >
-		<div class="deleteButton" onClick="ref:frame.deleteSelected" visible="false"  if="${soffid:isUserInRole('otp:cancel')}">-</div>
-		<div class="addButton" onClick="ref:frame.addNew">+</div>
+		<div class="deleteButton" onClick="ref:handler.deleteSelected" visible="false"  if="${soffid:isUserInRole('otp:cancel')}">-</div>
+		<div class="addButton" onClick="ref:handler.addNew">+</div>
 	</div>
 
 	<window closable="false"
@@ -75,7 +82,7 @@
 				<customfield3 dataType="STRING"
 					sclass="databox longlabel"
 					id="type"
-					onChange="ref:frame.changeType"
+					onChange="ref:handler.changeType"
 					label="${c:l('selfcertificate.selectType') }"
 					required="true" >
 				</customfield3>		
@@ -94,7 +101,7 @@
 					label="${c:l('selfcertificate.registrationMethod') }"
 					listOfValues="now: ${c:l('selfcertificate.registerNow') }, secure: ${c:l('selfcertificate.registerSecuryLink') }, insecure: ${c:l('selfcertificate.registerInsecureLink')}"
 					visible="false"
-					onChange="ref:frame.changeRegistrationMethod"
+					onChange="ref:handler.changeRegistrationMethod"
 					required="true" >
 				</customfield3>		
 
@@ -116,8 +123,8 @@
 
 
 				<div style="text-align: right; width: 100%">
-					<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:frame.addUndo" />
-					<button image="/img/next-r.svg" label="${c:l('aplicaIntranet_autoritzacio.Next')}" onClick="ref:frame.addApply"/>
+					<button image="/img/undo-r.svg" label="${c:l('common.undo')}" onClick="ref:handler.addUndo" />
+					<button image="/img/next-r.svg" label="${c:l('aplicaIntranet_autoritzacio.Next')}" onClick="ref:handler.addApply"/>
 				</div>
 						
 			</div>
@@ -153,7 +160,7 @@
 				</div>
 
 				<div style="text-align: right; width: 100%">
-					<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar')}" onClick="ref:frame.addUndo" if="${soffid:isUserInRole('federation:certificate:user') || soffid:isUserInRole('federation:certificate:user') }"/>
+					<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar')}" onClick="ref:handler.addUndo" if="${soffid:isUserInRole('federation:certificate:user') || soffid:isUserInRole('federation:certificate:user') }"/>
 				</div>
 			</div>
 		</wizard>

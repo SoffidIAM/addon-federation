@@ -148,16 +148,7 @@
 									<include>net.sf.ehcache:ehcache-core</include>
 									<include>net.sf.jgrapht:jgrapht</include>
 
-									<include>org.eclipse.jetty:jetty-security</include>
-									<include>org.eclipse.jetty:jetty-io</include>
-									<include>org.eclipse.jetty:jetty-server</include>
-									<include>org.eclipse.jetty:jetty-servlet</include>
-									<include>org.eclipse.jetty:jetty-http</include>
-									<include>org.eclipse.jetty:jetty-continuation</include>
-									<include>org.eclipse.jetty:jetty-util</include>
-
 									<include>ca.juliusdavies:not-yet-commons-ssl</include>
-									<include>net.shibboleth.utilities.jetty7:jetty7-dta-ssl</include>
 
 									<include>org.opensaml:openws</include>
 									<include>org.opensaml:opensaml</include>
@@ -286,10 +277,6 @@
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
-					<groupId>org.mortbay.jetty</groupId>
-					<artifactId>jetty</artifactId>
-				</exclusion>
-				<exclusion>
 					<groupId>com.soffid.iam.console</groupId>
 					<artifactId>iam-common</artifactId>
 				</exclusion>
@@ -299,26 +286,6 @@
 			<groupId>edu.internet2.middleware</groupId>
 			<artifactId>shibboleth-identityprovider</artifactId>
 			<version>2.4.0</version>
-		</dependency>
-		<dependency>
-			<groupId>net.shibboleth.utilities.jetty7</groupId>
-			<artifactId>jetty7-dta-ssl</artifactId>
-			<version>2.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-server</artifactId>
-			<version>7.3.1.v20110307</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-servlet</artifactId>
-			<version>7.3.1.v20110307</version>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-util</artifactId>
-			<version>7.3.1.v20110307</version>
 		</dependency>
 		<dependency>
 			<groupId>signaturacaib</groupId>

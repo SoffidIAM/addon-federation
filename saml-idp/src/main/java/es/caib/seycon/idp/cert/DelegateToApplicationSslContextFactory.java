@@ -19,7 +19,7 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 /** A Jetty SSL context factory that delegates X.509 trust evaluation to the application. */
-public class DelegateToApplicationSslContextFactory extends org.eclipse.jetty.http.ssl.SslContextFactory {
+public class DelegateToApplicationSslContextFactory extends org.eclipse.jetty.util.ssl.SslContextFactory.Server {
 	static long lastRefresh = 0;
 	static X509Certificate[] certs = new X509Certificate[0];
 	static String dummyCertBase64 = 

@@ -14,6 +14,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.soffid.iam.addons.federation.idp.radius.server.CertificateCache;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -21,7 +22,7 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 /** A Jetty SSL context factory that delegates X.509 trust evaluation to the application. */
-public class RadiusSslContextFactory extends org.eclipse.jetty.http.ssl.SslContextFactory {
+public class RadiusSslContextFactory extends org.eclipse.jetty.util.ssl.SslContextFactory.Server {
 	static X509Certificate[] certs = new X509Certificate[0];
 	static String dummyCertBase64 = 
 			  "MIID0TCCArmgAwIBAgIUHFuDINfO5TcDFjhqWprbd6w/hfcwDQYJKoZIhvcNAQEL\n"
@@ -62,7 +63,6 @@ public class RadiusSslContextFactory extends org.eclipse.jetty.http.ssl.SslConte
     public RadiusSslContextFactory(CertificateCache certificateCache) {
         super();
         this.certificateCache = certificateCache;
-        setNeedClientAuth(true);
         setValidateCerts(false);
     }
 
