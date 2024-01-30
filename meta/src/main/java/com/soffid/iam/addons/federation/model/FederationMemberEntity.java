@@ -22,6 +22,7 @@ import es.caib.seycon.ng.servei.ConfiguracioService;
 	com.soffid.iam.addons.federation.model.PolicyEntity.class,
 	com.soffid.iam.addons.federation.model.SamlProfileEntity.class,
 	com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity.class,
+	IdpNetworkConfigEntity.class,
 	AuthenticationMethodEntity.class,
 	KerberosKeytabEntity.class, 
 	ServiceProviderRoleEntity.class, DispatcherEntity.class,

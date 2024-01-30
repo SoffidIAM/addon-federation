@@ -100,11 +100,31 @@
 			bind="/federationMember/hostName"
 			dataType='STRING' maxlength="255"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
-		<customfield3 id="port1"
-			label="${c:l('federacio.zul.PortStandard')}"
-			bind="/federationMember/standardPort"
-			dataType='NUMBER'
-			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<div sclass="databox" id="networkDiv">
+			<label sclass="label" value="${c:l('federacio.zul.networkPorts')}"/>
+			<div sclass="container">
+				<datatable dataPath="/federationMember/networkConfig" id="networkconfiggrid"
+					multiselect="true"
+					onSelect="ref:handler.onSelectNetworkConfig"
+					onMultiSelect="ref:handler.onMultiSelectNetworkConfig">
+				<attribute name="columns"><![CDATA[
+- name: "${c:l('federacio.zul.BehindProxy')}"
+  value: proxy
+- name: "${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.port')}"
+  value: port
+- name: "${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.type')}"
+  value: type
+  template: #{type.value}
+- name: "${c:l('federacio.zul.acceptCertificates')}"
+  value: wantsCertificate
+				]]></attribute>
+				</datatable>
+				<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('network:all:create')}" >
+					<div class="deleteButton" id="deleteNetworkConfigButton" onClick="ref:handler.deleteNetworkConfig" visible="false">-</div>
+					<div class="addButton" onClick="ref:handler.addNewNetworkConfig">+</div>
+				</div>
+			</div>
+		</div>
 		<div sclass="databox" id="sslKey">
 			<label sclass="label" value="${c:l('federacio.zul.publicKeySSL')}"/>
 			<div sclass="container">
@@ -126,11 +146,6 @@
 						image="/addon/federation/img/lock.png" label="${c:l('federacio.zul.GeneraPKCS10')}" onClick="ref:handler.generateSslPKCS10()"/>
 				</divVisible>
 			</div>
-			<customfield3
-				label="${c:l('federacio.zul.ClientCertHeader')}"
-				bind="/federationMember/sslClientCertificateHeader"
-				dataType='STRING'
-				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		</div>
 		<customfield3 id="certificatechainSsl"
 			label="${c:l('federacio.zul.certificateChainSSL')}"
@@ -672,4 +687,60 @@
 		</div>
 	</window>
 	
+	<window id="networkConfigWindow" closable="true" position="top, center"
+		use="com.soffid.iam.addons.federation.web.NetworkConfigWindow"
+		sizable="false" 
+		visible="false"
+		style="min-width: 40em; width: 80%">
+		<form2 dataPath="../networkconfiggrid:/." id = "form">
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.proxy')}"
+						readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+						bind="proxy"  dataType="BOOLEAN"
+						id="proxy" ></customfield3>
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.proxyPort')}" dataType="number"
+				bind="proxyPort" required="true"
+				id="proxyPort"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.proxyInternalAddress')}" dataType="STRING"
+				bind="proxyInternalAddress" required="true"
+				placeholder="192.168.6.1, 192.168.6.0/24"
+				id="proxyInternalAddress"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+				
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.port')}" dataType="number"
+				bind="port" id="port" required="true"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+			<customfield3 id="type" label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.type')}"
+				bind="type" dataType="STRING" required="true"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				enumeration="com.soffid.iam.addons.federation.common.IdpNetworkEndpointType"></customfield3> 
+				
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.proxyProtocol')}"
+					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+					bind="proxyProtocol"  dataType="BOOLEAN"
+					id="proxyProtocol" ></customfield3>
+				
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.wantsCertificate')}"
+					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+					bind="wantsCertificate"  dataType="BOOLEAN"
+					id="wantsCertificate" ></customfield3>
+				
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.certificateHeader')}"
+					readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+					bind="certificateHeader"  dataType="STRING"
+					id="certificateHeader" ></customfield3>
+				
+			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.excludedProtocols')}" 
+				dataType="STRING" maxLength="512" multiline="true"
+				bind="excludedProtocols" id="excludedProtocols"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+
+
+			<div style="text-align: right; width: 100%">
+				<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar') }" onClick="ref:networkConfigWindow.apply"/>
+			</div>
+			
+			<label value="${c:l('federacio.warningSave') }" style="font-weight: bold;" />
+		</form2>
+	</window>
 </div>								

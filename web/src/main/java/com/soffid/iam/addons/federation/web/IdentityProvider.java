@@ -27,6 +27,7 @@ import com.soffid.iam.EJBLocator;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
@@ -441,13 +442,40 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		b.setVisible(dt.getSelectedIndexes().length > 0);
 	}
 
+	public void deleteNetworkConfig (Event ev) {
+		DataTable dt = (DataTable) getFellow("networkconfiggrid");
+		dt.deleteSelectedItem();
+		Component b =  getFellow("deleteNetworkConfigButton");
+		b.setVisible(false);
+	}
+	
+	public void addNewNetworkConfig(Event event) throws Exception {
+		DataTable dt = (DataTable) getFellow("networkconfiggrid");
+		FederationMember fm = (FederationMember) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember");
+		XPathUtils.createPath(getDataSource(), getXPath()+"federationMember/networkConfig", new IdpNetworkConfig());
+		dt.setSelectedIndex(fm.getNetworkConfig().size()-1);
+		Window w = (Window) getFellow("networkConfigWindow");
+		w.doHighlighted();
+	}
+	
+	public void onSelectNetworkConfig (Event ev) {
+		Window w = (Window) getFellow("networkConfigWindow");
+		w.doHighlighted();
+	}
+
+	public void onMultiSelectNetworkConfig (Event ev) {
+		DataTable dt = (DataTable) getFellow("networkconfiggrid");
+		Component b =  getFellow("deleteNetworkConfigButton");
+		b.setVisible(dt.getSelectedIndexes().length > 0);
+	}
+
 	public void deleteKeytab (Event ev) {
 		DataTable dt = (DataTable) getFellow("keytabsgrid");
 		dt.deleteSelectedItem();
 		Component b =  getFellow("deleteKeytabButton");
 		b.setVisible(false);
 	}
-	
+
 	public void onSelectProfile(Event ev) {
 		DataTable dt = (DataTable) getFellow("profilesgrid");
 		Window w = (Window) getFellow("profileWindow");

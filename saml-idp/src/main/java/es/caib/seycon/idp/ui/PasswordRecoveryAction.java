@@ -54,7 +54,7 @@ public class PasswordRecoveryAction extends HttpServlet {
 	        
 	        FederationMember fm = config.getFederationMember();
 	        
-    		String url = "https://"+fm.getHostName()+":"+fm.getStandardPort()+PasswordRecoveryAction2.URI;
+    		String url = "https://"+fm.getHostName()+":"+config.getStandardPort()+PasswordRecoveryAction2.URI;
     		
     		try
     		{

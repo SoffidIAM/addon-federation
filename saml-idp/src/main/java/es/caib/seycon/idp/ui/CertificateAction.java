@@ -92,12 +92,18 @@ public class CertificateAction extends HttpServlet {
                     LogFactory.getLog(getClass()).info("Error validating certificate ", e);
             	}
 	        }
-        } catch (InternalErrorException e) {
+            IdpConfig config = IdpConfig.getConfig();
+            if (req.getLocalPort() == config.getStandardPort())
+            	resp.sendRedirect(UserPasswordFormServlet.URI);
+            else
+            	resp.sendRedirect( 
+            			"https://"+config.getHostName()+":"+config.getStandardPort()+  //$NON-NLS-1$  //$NON-NLS-2$
+            			UserPasswordFormServlet.URI);
+        } catch (Exception e) {
 			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
             LogFactory.getLog(getClass()).info("Error validating certificate ", e);
         }
-       	RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
-        dispatcher.forward(req, resp);
+        
     }
 
 	private void generateWarningPage(HttpServletRequest req, HttpServletResponse resp, AuthenticationContext ctx) throws TextFormatException, IOException, ServletException {

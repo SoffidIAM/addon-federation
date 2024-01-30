@@ -294,4 +294,8 @@ public class HtmlGenerator {
                 internalParams);
     }
 
+	public String getArgument(String s) {
+		return internalParams.get(s);
+	}
+
 }

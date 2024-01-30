@@ -111,4 +111,9 @@ public class HttpServletRequestSourceIpWrapper extends HttpServletRequestWrapper
 		return hostName;
 	}
 
+	@Override
+	public int getLocalPort() {
+		return port;
+	}
+
 }

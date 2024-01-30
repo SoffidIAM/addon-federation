@@ -2,7 +2,7 @@
 	<parent>
 		<artifactId>root</artifactId>
 		<groupId>com.soffid.iam.addon.federation</groupId>
-		<version>3.5.20-SNAPSHOT</version>
+		<version>3.6.0-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>federation-addon</artifactId>
@@ -49,7 +49,7 @@
 						</goals>
 						<configuration>
 							<outputDirectory>${project.build.directory}/classes</outputDirectory>
-							<includeGroupIds>${pom.groupId}, com.github.scribejava, org.mortbay.jetty,com.maxmind.geoip2,com.maxmind.db,com.fasterxml.jackson.core</includeGroupIds>
+							<includeGroupIds>${pom.groupId}, com.github.scribejava, com.maxmind.geoip2,com.maxmind.db,com.fasterxml.jackson.core</includeGroupIds>
 							<overWriteIfNewer>true</overWriteIfNewer>
 						</configuration>
 					</execution>
@@ -186,11 +186,6 @@
 			<groupId>${pom.groupId}</groupId>
 			<artifactId>saml-idp</artifactId>
 			<version>${pom.version}</version>
-		</dependency>
-		<dependency>
-		    <groupId>org.mortbay.jetty</groupId>
-		    <version>6.1.22</version>
-		    <artifactId>jetty-util</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.maxmind.geoip2</groupId>

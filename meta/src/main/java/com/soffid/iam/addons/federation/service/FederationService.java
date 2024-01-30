@@ -16,6 +16,7 @@ import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.CasProfileEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberSessionEntity;
+import com.soffid.iam.addons.federation.model.IdpNetworkConfigEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
@@ -133,7 +134,8 @@ import org.springframework.transaction.annotation.Transactional;
 	FederationMemberSessionEntity.class,
 	AsyncRunnerService.class,
 	TacacsPlusAuthRuleEntity.class,
-	SelfCertificateValidationService.class
+	SelfCertificateValidationService.class,
+	IdpNetworkConfigEntity.class
 })
 public abstract class FederationService {
 

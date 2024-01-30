@@ -57,6 +57,7 @@ import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.Password;
@@ -487,23 +488,25 @@ public class IdpConfig {
     }
     
     public int getClientCertPort() {
-        if (federationMember.getClientCertificatePort()  == null ||
-        		federationMember.getClientCertificatePort().trim().isEmpty())
-            return 1443;
-        else {
-        	try {
-        		return Integer.decode(federationMember.getClientCertificatePort());
-        	} catch (NumberFormatException e) {
-        		return 1443;
-        	}
-        }
+		for (IdpNetworkConfig c: federationMember.getNetworkConfig()) {
+			if (c.isWantsCertificate()) {
+				if (c.isProxy() && c.getProxyPort() != null)
+					return c.getProxyPort().intValue();
+				else
+					return c.getPort();
+			}
+		}
+		return -1;
     }
     
     public int getStandardPort() {
-        if (federationMember.getStandardPort()  == null)
-            return 443;
-        else
-            return Integer.decode(federationMember.getStandardPort());
+		for (IdpNetworkConfig c: federationMember.getNetworkConfig()) {
+			if (c.isProxy() && c.getProxyPort() != null)
+				return c.getProxyPort().intValue();
+			else
+				return c.getPort();
+		}
+		return -1;
     }
     
     public String getHostName() {
@@ -615,6 +618,15 @@ public class IdpConfig {
             throw new InternalErrorException("Identity provider "+seyconConfig.getHostName()+" not configured"); //$NON-NLS-1$ //$NON-NLS-2$
 
        this.federationMember = federationMember;
+	}
+
+	public boolean acceptsClientCert() {
+		for (IdpNetworkConfig c: federationMember.getNetworkConfig()) {
+			if (c.isWantsCertificate()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

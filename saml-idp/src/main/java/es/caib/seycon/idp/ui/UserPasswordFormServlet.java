@@ -146,7 +146,18 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("kerberosUrl", NtlmAction.URI); //$NON-NLS-1$
             g.addArgument("passwordLoginUrl", UserPasswordAction.URI); //$NON-NLS-1$
             g.addArgument("userUrl", UserAction.URI); //$NON-NLS-1$
-            g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
+            if ( config.acceptsClientCert() ) {
+            	g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            	if (config.getClientCertPort() == req.getLocalPort())
+            		g.addArgument("certificateLoginUrl", CertificateAction.URI); //$NON-NLS-1$
+            	else
+            		g.addArgument("certificateLoginUrl",  //$NON-NLS-1$ 
+            				"https://"+config.getHostName()+":"+config.getClientCertPort()+  //$NON-NLS-1$  //$NON-NLS-2$
+            				CertificateAction.URI);
+            } else {
+            	g.addArgument("certAllowed",  "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            
             g.addArgument("changeUserUrl", ChangeUserAction.URI); //$NON-NLS-1$
             g.addArgument("resendSmsUrl", ResendSmsAction.URI);
             g.addArgument("cancelUrl", CancelAction.URI); //$NON-NLS-1$
@@ -159,7 +170,6 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("requestedUser", requestedUser);
             g.addArgument("kerberosAllowed", ctx.getNextFactor().contains("K") && session.getAttribute("disableKerberos") == null ? "true" : "false"); 
             g.addArgument("kerberosDomain", ip.getKerberosDomain());
-            g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("passwordAllowed",  ctx.getNextFactor().contains("P") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("userAllowed",  ctx.getNextFactor().contains("P") || 
             		ctx.getNextFactor().contains("Z") ||
@@ -299,8 +309,13 @@ public class UserPasswordFormServlet extends BaseForm {
             	String msg = String.format(Messages.getString("certificateWarning"), days);
             	g.addArgument("certificateWarning", msg);
             }
-            if ( ctx.getAllowedAuthenticationMethods().isEmpty())
-            	g.addArgument("ERROR", Messages.getString("accessDenied"));
+            if (g.getArgument("ERROR") == null) {
+            	if ( ctx.getAllowedAuthenticationMethods().isEmpty())
+            		g.addArgument("ERROR", Messages.getString("accessDenied"));
+            	else if (noAuthenticationMethod(g)) {
+            		g.addArgument("ERROR", Messages.getString("noAuthenticationMethod"));
+            	}
+            }
         	if ( ctx.getStep() > 0 || ctx.getUser() != null)
         		g.generate(resp, "loginPage2.html"); //$NON-NLS-1$
         	else
@@ -309,6 +324,23 @@ public class UserPasswordFormServlet extends BaseForm {
             throw new ServletException(e);
 		}
     }
+
+    final static String methods[] = new String[] {
+    		"registerAllowed", "fingerprintAllowed",
+    		"certAllowed", "kerberosAllowed",
+    		"passwordAllowed", "userAllowed",
+    		"otpAllowed", "pushAllowed",
+    		"externalAllowed"
+    };
+    
+	private boolean noAuthenticationMethod(HtmlGenerator g) {
+		for (String s: methods) {
+			String value = g.getArgument(s);
+			if ("true".equals(value))
+				return true;
+		}
+		return false;
+	}
 
 	protected boolean isAlterativeMethodAllowed(Challenge ch) {
 		try {

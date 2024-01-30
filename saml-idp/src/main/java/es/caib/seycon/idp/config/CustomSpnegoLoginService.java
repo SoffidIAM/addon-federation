@@ -24,6 +24,7 @@ import javax.servlet.ServletRequest;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.security.IdentityService;
 import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.security.SpnegoUserIdentity;
 import org.eclipse.jetty.security.SpnegoUserPrincipal;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
@@ -100,7 +101,9 @@ public class CustomSpnegoLoginService extends AbstractLifeCycle implements Login
 						Subject subject = new Subject();
 						subject.getPrincipals().add(user);
 						
-						return _identityService.newUserIdentity(subject,user, new String[]{keytab.getDomain(), "krblogin"});
+						final UserIdentity userIdentity = _identityService.newUserIdentity(subject,user, new String[]{keytab.getDomain(), "krblogin"});
+						return new SpnegoUserIdentity(subject, user, 
+								userIdentity);
 					}
 				} catch (Exception e) {
 					log.info("Error validating token against "+keytab.getDomain()+": "+e.toString());

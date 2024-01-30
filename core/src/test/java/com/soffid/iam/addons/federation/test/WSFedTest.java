@@ -35,6 +35,8 @@ import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
+import com.soffid.iam.addons.federation.common.IdpNetworkEndpointType;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.ssl.SeyconKeyStore;
@@ -94,7 +96,10 @@ public class WSFedTest extends AbstractHibernateTest{
 		idp.setEntityGroup(eg);
 		idp.setIdpType(IdentityProviderType.SOFFID);
 		idp.setHostName("localhost");
-		idp.setStandardPort("433");
+		IdpNetworkConfig nc = new IdpNetworkConfig();
+		nc.setPort(443);
+		nc.setType(IdpNetworkEndpointType.TLSV_1_3);
+		idp.getNetworkConfig().add(nc);
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance ("RSA", "BC"); //$NON-NLS-1$ //$NON-NLS-2$
         SecureRandom random = new SecureRandom ();
 
@@ -135,7 +140,6 @@ public class WSFedTest extends AbstractHibernateTest{
 		sp.setEntityGroup(eg);
 		sp.setServiceProviderType(ServiceProviderType.WS_FEDERATION);
 		sp.setHostName("localhost");
-		sp.setStandardPort("433");
 		sp.setOpenidUrl(Arrays.asList("https://serviceprovider.test.lab/"));
         return svc.create(sp);
 	}
@@ -191,8 +195,6 @@ public class WSFedTest extends AbstractHibernateTest{
         subst.put("${kerberosDomain}", kerberosDomain); //$NON-NLS-1$
         subst.put("${hostName}", hostname); //$NON-NLS-1$
         subst.put("${protocol}", "https"); //$NON-NLS-1$
-        subst.put("${sslport}", fm.getClientCertificatePort()); //$NON-NLS-1$
-        subst.put("${port}", fm.getStandardPort()); //$NON-NLS-1$
         subst.put("${conf}", "."); //$NON-NLS-1$
         subst.put("${logDir}", "."); //$NON-NLS-1$
         subst.put("${keyPassword}", "***"); //$NON-NLS-1$

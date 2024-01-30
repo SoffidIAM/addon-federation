@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,6 +25,8 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
+import com.soffid.iam.addons.federation.common.IdpNetworkEndpointType;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.model.GroupEntity;
@@ -72,7 +75,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 		target.setInternal(source.isInternal());
 		target.setDisableSSL(source.getDisableSSL());
 		target.setHostName(source.getHostName());
-		target.setStandardPort(source.getStandardPort());
 
 		if (source instanceof IdentityProviderEntity) {
 			target.setClasse("I"); //$NON-NLS-1$
@@ -91,9 +93,6 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setLoginHintScript(idp.getLoginHintScript());
 			target.setOauthKey(idp.getOauthKey());
 			target.setOauthSecret(idp.getOauthSecret() == null ? null: Password.decode(idp.getOauthSecret()));
-			// Propis
-			target.setClientCertificatePort(idp.getClientCertificatePort());
-			
 			target.setAuthenticationMethods(idp.getAuthenticationMethods());
 			if (target.getAuthenticationMethods() == null)
 			{
@@ -134,6 +133,19 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 					sps.add(toFederationMember(sp));
 				}
 				target.setServiceProvider(sps);
+			}
+			
+			if (idp.getNetworkConfigs().isEmpty() && idp.getStandardPort() != null)
+				generateDefaultNetworkConfigs(idp, target);
+			else {
+				target.setNetworkConfig(getIdpNetworkConfigEntityDao().toIdpNetworkConfigList(idp.getNetworkConfigs()));
+				Collections.sort(target.getNetworkConfig(), new Comparator<IdpNetworkConfig>() {
+					public int compare(IdpNetworkConfig o1, IdpNetworkConfig o2) {
+						int p1 = o1.isProxy() && o1.getProxyPort() != null ? o1.getProxyPort().intValue(): o1.getPort();
+						int p2 = o2.isProxy() && o2.getProxyPort() != null ? o2.getProxyPort().intValue(): o2.getPort();
+						return p1 - p2;
+					}
+				});
 			}
 			
 			generateRegisterValues(target, idp);
@@ -286,6 +298,42 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 
 	}
 
+	private void generateDefaultNetworkConfigs(IdentityProviderEntity idp, FederationMember target) {
+		target.getNetworkConfig().clear();
+
+		IdpNetworkConfig cfg = new IdpNetworkConfig();
+		if (idp.getSslClientCertificateHeader() != null && !idp.getSslClientCertificateHeader().trim().isEmpty()) {
+			cfg.setProxy(true);
+			cfg.setProxyPort(Integer.parseInt(idp.getStandardPort()));
+			cfg.setCertificateHeader(idp.getSslClientCertificateHeader());
+			cfg.setProxyProtocol(true);
+		} else {
+			cfg.setProxy(false);
+		}
+		cfg.setPort(Integer.parseInt(idp.getStandardPort()));
+		cfg.setCertificateHeader(null);
+		cfg.setExcludedProtocols(null);
+		cfg.setId(0L);
+		cfg.setProxyProtocol(false);
+		cfg.setType(IdpNetworkEndpointType.TLSV_1_3);
+		cfg.setWantsCertificate(false);
+		target.getNetworkConfig().add(cfg);
+		if (idp.getClientCertificatePort() != null && ! idp.getClientCertificatePort().isEmpty() && 
+				!idp.getClientCertificatePort().equals(idp.getStandardPort()) &&
+				!cfg.isProxy()) {
+			cfg = new IdpNetworkConfig();
+			cfg.setProxy(false);
+			cfg.setPort(Integer.parseInt(idp.getClientCertificatePort()));
+			cfg.setCertificateHeader(null);
+			cfg.setExcludedProtocols(null);
+			cfg.setId(0L);
+			cfg.setProxyProtocol(false);
+			cfg.setType(IdpNetworkEndpointType.TLSV_1_2);
+			cfg.setWantsCertificate(true);
+			target.getNetworkConfig().add(cfg);
+		}
+	}
+	
 	private String getBlob(IdentityProviderEntity idp, String tag) {
 		try {
 			byte[] data;
@@ -472,8 +520,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			if (source.getInternal() != null)
 				idp.setInternal(source.getInternal());
 			idp.setHostName(source.getHostName());
-			idp.setStandardPort(source.getStandardPort());
-			idp.setClientCertificatePort(source.getClientCertificatePort());
+			idp.setStandardPort(null);
+			idp.setClientCertificatePort(null);
 			idp.setDisableSSL(source.getDisableSSL());
 			
 			idp.setKerberosDomain(source.getKerberosDomain());

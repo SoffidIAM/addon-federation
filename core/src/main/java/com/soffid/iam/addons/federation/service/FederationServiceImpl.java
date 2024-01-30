@@ -76,6 +76,7 @@ import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.Policy;
@@ -101,6 +102,7 @@ import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntityDao;
 import com.soffid.iam.addons.federation.model.FederationMemberSessionEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.IdpNetworkConfigEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
@@ -249,6 +251,7 @@ public class FederationServiceImpl
 					+ (federationMember.getName() != null ? " - " + federationMember.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 			if (entity instanceof IdentityProviderEntity) {
 				updateUi(entity, federationMember);
+				updateIdpConfigs((IdentityProviderEntity) entity, federationMember);
 			}
 			if (entity instanceof VirtualIdentityProviderEntity)
 			{
@@ -595,6 +598,7 @@ public class FederationServiceImpl
 				}
 				// update ketyabs
 				updateKeytabs (idp, federationMember);
+				updateIdpConfigs(idp, federationMember);
 				idp.setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) idp, federationMember);
 				updateUi(entity, federationMember);
@@ -680,6 +684,20 @@ public class FederationServiceImpl
 		}
 	}
 
+	private void updateIdpConfigs(IdentityProviderEntity vip, FederationMember federationMember) {
+		getIdpNetworkConfigEntityDao().remove(vip.getNetworkConfigs());
+		vip.getNetworkConfigs().clear();
+		if (vip.getIdpType() == IdentityProviderType.SOFFID) {
+			for ( IdpNetworkConfig kt: federationMember.getNetworkConfig())
+			{
+				IdpNetworkConfigEntity entity = getIdpNetworkConfigEntityDao().idpNetworkConfigToEntity(kt);
+				entity.setIdentityProvider(vip);
+				getIdpNetworkConfigEntityDao().create(entity);
+				vip.getNetworkConfigs().add(entity);
+			}
+		}
+	}
+
 	private void updateAuthenticationMethods(VirtualIdentityProviderEntity vip, FederationMember federationMember) throws InternalErrorException, MalformedURLException, UtilEvalError {
 		getAuthenticationMethodEntityDao().remove(vip.getExtendedAuthenticationMethods());
 		vip.getExtendedAuthenticationMethods().clear();
@@ -754,6 +772,7 @@ public class FederationServiceImpl
 					getVirtualIdentityProviderEntityDao().remove(vip);
 					
 				}
+				getIdpNetworkConfigEntityDao().remove(idp.getNetworkConfigs());
 				getKerberosKeytabEntityDao().remove(idp.getKeytabs());
 				getIdentityProviderEntityDao().remove(idp);
 

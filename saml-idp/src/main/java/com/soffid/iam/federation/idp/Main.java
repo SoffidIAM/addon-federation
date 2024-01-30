@@ -36,6 +36,7 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.ConfigurableSpnegoAuthenticator;
+import org.eclipse.jetty.server.AbstractConnectionFactory;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -51,6 +52,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle.Listener;
 import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
@@ -60,6 +62,8 @@ import org.xml.sax.SAXException;
 import com.soffid.iad.addons.federation.idp.tacacs.TacacsServer;
 import com.soffid.iad.addons.federation.idp.tacacs.TacacsServerListener;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
+import com.soffid.iam.addons.federation.common.IdpNetworkEndpointType;
 import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
@@ -220,18 +224,14 @@ public class Main {
 //            server.setSessionIdManager(new PersistentSessionIdManager());
             String host = c.getHostName();
             Integer port = c.getStandardPort();
+
             
-            boolean plainSocket = c.getFederationMember().getDisableSSL() != null &&
-            		c.getFederationMember().getDisableSSL().booleanValue();
-            if ("false".equals(System.getProperty("soffid.idp.listen.ssl")))
-                installPlainConnector(host, port);
-            else if ("false".equals(System.getProperty("soffid.idp.listen.client-cert")))
-            	installConnector(host, port, false);
-            else
-            	installClientCertConnector(host, port);
+            for (IdpNetworkConfig nc: c.getFederationMember().getNetworkConfig()) {
+            	installConnector(nc);
+            }
     
             // Deploy war
-            ServletContextHandler ctx = deployWar(plainSocket);
+            ServletContextHandler ctx = deployWar();
     
             // Start
             server.addEventListener(listener );
@@ -320,14 +320,8 @@ public class Main {
         loggerContext.getLogger(Main.class.getName()).info("Starting server"); //$NON-NLS-1$
     }
 
-    private void installConnector(String host, Integer port,
-            boolean wantClientAuth) throws IOException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-        Long actualPort = Long.getLong("soffid.idp.listen.port");
-        String actualAddress = System.getProperty("soffid.idp.listen.address");
-        if (actualPort == null) actualPort = new Long(port);
-        if (actualAddress == null) actualAddress = host;
-        
-        log.info("Listening on socket " + actualAddress + ":" + actualPort + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    private void installConnector(IdpNetworkConfig nc) throws IOException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
+        log.info("Listening on socket :" + nc.getPort() + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     	HttpConfiguration httpConfig = new HttpConfiguration();
     	httpConfig.setSendServerVersion(false);
@@ -336,47 +330,64 @@ public class Main {
     	httpConfig.addCustomizer(src);
     	
     	HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
-
+    	AbstractConnectionFactory factory ;
     	// Configure the SslContextFactory with the keyStore information.
-    	DelegateToApplicationSslContextFactory sslContextFactory = new DelegateToApplicationSslContextFactory();
-    	
-    	KeyStore ks = loadKeyStore();
-    	sslContextFactory.setKeyStore(ks);
-    	sslContextFactory.setTrustStore(ks);
-        sslContextFactory.setKeyManagerPassword(SeyconKeyStore.getKeyStorePassword().getPassword());
-        sslContextFactory.setKeyStorePassword(SeyconKeyStore.getKeyStorePassword().getPassword());
-        sslContextFactory.setTrustStorePassword(SeyconKeyStore.getKeyStorePassword().getPassword());
-        sslContextFactory.setWantClientAuth(wantClientAuth);
-    	
-    	// The ConnectionFactory for TLS.
-    	SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
     	ServerConnector connector;
-    	if (enableProxyProtocol()) {
-    		String trustedProxy = System.getenv("PROXY_PROTOCOL_ENABLED");
-    		if ("true".equalsIgnoreCase(trustedProxy)) {
-	    		log.warn("Accepting proxy requests from ANY server. It is a potential security vulnerability");
-	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(tls.getProtocol());
-	    		connector = new ServerConnector(server, proxy, tls, http11);
-    		} else {
-    			log.info("Accepting proxy requests from "+trustedProxy);
-	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(tls.getProtocol(), trustedProxy);
-	    		connector = new ServerConnector(server, proxy, tls, http11);
-    		}
+    	if (nc.getType() == IdpNetworkEndpointType.PLAIN) {
+    		factory = http11;
     	} else {
-    		connector = new ServerConnector(server, tls, http11);
-    	}
-       if (wantClientAuth) {
-    	   DelegateToApplicationSslContextFactory factory = new DelegateToApplicationSslContextFactory();
-	        factory.setKeyStore(loadKeyStore());
-	        factory.setKeyStorePassword(SeyconKeyStore.getKeyStorePassword()
-	                .getPassword());
-	        factory.setKeyStoreType(SeyconKeyStore.getKeyStoreType());
-	        factory.setCertAlias("idp"); //$NON-NLS-1$
-	        factory.setWantClientAuth(wantClientAuth);
-	        factory.setExcludeCipherSuites(new String[] {
-	        		"TLS_RSA_WITH_3DES_EDE_CBC_SHA",        		
-	        });
+    		SslContextFactory.Server sslContextFactory;
+    		if (nc.isWantsCertificate())  {
+    			sslContextFactory = new DelegateToApplicationSslContextFactory();
+    		} else {
+    			sslContextFactory = new SslContextFactory.Server();
+    		}
+	    	KeyStore ks = loadKeyStore();
+	    	sslContextFactory.setKeyStore(ks);
+	    	sslContextFactory.setTrustStore(ks);
+	        sslContextFactory.setKeyManagerPassword(SeyconKeyStore.getKeyStorePassword().getPassword());
+	        sslContextFactory.setKeyStorePassword(SeyconKeyStore.getKeyStorePassword().getPassword());
+	        sslContextFactory.setTrustStorePassword(SeyconKeyStore.getKeyStorePassword().getPassword());
+	        sslContextFactory.setWantClientAuth(nc.isWantsCertificate());
+	        sslContextFactory.setNeedClientAuth(false);
+	        sslContextFactory.setCertAlias("idp"); //$NON-NLS-1$
+	    	
+	    	// The ConnectionFactory for TLS.
+	    	SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, http11.getProtocol());
+	    	String[] exc = new String[0];
+	    	if (nc.getType() == IdpNetworkEndpointType.TLSV_1_2) {
+	    		exc = new String[] {"TLS_AES_256_GCM_SHA384", 
+	    				"TLS_AES_256_GCM_SHA256", 
+	    				"TLS_AES_128_GCM_SHA256", 
+	    				"TLS_CHACHA20_POLY1305_SHA256"
+	    		};
+	    	}
+	    	if (nc.getExcludedProtocols() != null && ! nc.getExcludedProtocols().trim().isEmpty()) {
+	    		String[] exc2 = nc.getExcludedProtocols().split("[ ,]+");
+	    		String[] exc3 = new String[exc.length + exc2.length];
+	    		int i = 0;
+	    		for (String s: exc) exc3[i++] = s;
+	    		for (String s: exc2) exc3[i++] = s;
+	    		exc = exc3;
+	    	}
+	    	if (exc.length > 0)
+	    		sslContextFactory.setExcludeCipherSuites(exc);
+	    	factory = tls;
         }
+		if (nc.isProxy() && nc.isProxyProtocol()) {
+			if (nc.getProxyInternalAddress() == null || 
+					nc.getProxyInternalAddress().trim().isEmpty() ||
+					nc.getProxyInternalAddress().trim().equals("*")) {
+				log.warn("Accepting proxy requests from ANY server. It is a potential security vulnerability");
+				ProxyConnectionFactory proxy = new ProxyConnectionFactory(factory.getProtocol());
+				connector = new ServerConnector(server, proxy, factory, http11);
+			} else {
+				ProxyConnectionFactory proxy = new ProxyConnectionFactory(factory.getProtocol(), nc.getProxyInternalAddress());
+				connector = new ServerConnector(server, proxy, factory, http11);
+			}
+		} else {
+			connector = new ServerConnector(server, factory, http11);
+		}
         String s =  ConfigurationCache.getMasterProperty("soffid.syncserver.bufferSize") ;
         if (s != null) {
         	connector.setAcceptedReceiveBufferSize( Integer.parseInt(s));
@@ -386,8 +397,7 @@ public class Main {
         	connector.setAcceptedReceiveBufferSize( 64 * 1024);
         }
 
-//        connector.setHost(host); Listen on any IP address
-        connector.setPort(port == null ? 443 : port.intValue());
+        connector.setPort(nc.getPort());
         connector.setAcceptQueueSize(10);
         server.addConnector(connector);
     }
@@ -408,55 +418,7 @@ public class Main {
     	return keyStore;
 	}
 
-	private void installPlainConnector(String host, Integer port) throws IOException, FileNotFoundException {
-        log.info("Listening on socket " + host + ":" + port + "..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
-    	HttpConfiguration httpConfig = new HttpConfiguration();
-    	httpConfig.setSendServerVersion(false);
-    	httpConfig.setRelativeRedirectAllowed(true);    	
-    	HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
-
-    	// The ConnectionFactory for TLS.
-    	ServerConnector connector;
-    	if (enableProxyProtocol()) {
-    		String trustedProxy = System.getenv("PROXY_PROTOCOL_ENABLED");
-    		if ("true".equalsIgnoreCase(trustedProxy)) {
-	    		log.warn("Accepting proxy requests from ANY server. It is a potential security vulnerability");
-	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(http11.getProtocol());
-	    		connector = new ServerConnector(server, proxy, http11);
-    		} else {
-    			log.info("Accepting proxy requests from "+trustedProxy);
-	    		ProxyConnectionFactory proxy = new ProxyConnectionFactory(http11.getProtocol(), trustedProxy);
-	    		connector = new ServerConnector(server, proxy, http11);
-    		}
-    	} else {
-    		connector = new ServerConnector(server, http11);
-    	}
-        String s =  ConfigurationCache.getMasterProperty("soffid.syncserver.bufferSize") ;
-        if (s != null) {
-        	connector.setAcceptedReceiveBufferSize( Integer.parseInt(s));
-            connector.setAcceptedSendBufferSize( Integer.parseInt(s));
-        } else {
-        	connector.setAcceptedSendBufferSize( 64 * 1024);
-        	connector.setAcceptedReceiveBufferSize( 64 * 1024);
-        }
-
-//        connector.setHost(host);
-        connector.setPort(port == null ? 443 : port.intValue());
-        connector.setAcceptQueueSize(10);
-        server.addConnector(connector);
-    }
-
-	public boolean enableProxyProtocol() {
-		return null != System.getenv("PROXY_PROTOCOL_ENABLED");
-	}
-
-    private void installClientCertConnector(String host, Integer port)
-            throws IOException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-        installConnector(host, port, true);
-    }
-
-    protected ServletContextHandler deployWar(boolean plainSocket) throws FileNotFoundException, IOException,
+    protected ServletContextHandler deployWar() throws FileNotFoundException, IOException,
             UnrecoverableKeyException, KeyStoreException,
             NoSuchAlgorithmException, CertificateException,
             InternalErrorException, InvalidKeyException, IllegalStateException,
@@ -495,8 +457,6 @@ public class Main {
         f = new FilterHolder(TenantFilter.class);
         f.setName("TenantFilter");
         f.setInitParameter("tenant", Security.getCurrentTenantName());
-        f.setInitParameter("port", c.getFederationMember().getStandardPort());
-        f.setInitParameter("host", c.getFederationMember().getHostName());
         ctx.addFilter(f, "/*", EnumSet.of(DispatcherType.REQUEST)); //$NON-NLS-1$
         
         f = new FilterHolder(
@@ -637,11 +597,11 @@ public class Main {
  		ctx.setSessionHandler(sessionHandler);
         int timeout = c.getFederationMember().getSessionTimeout() == null ? 1200
         				: 60 + c.getFederationMember().getSessionTimeout().intValue();
-        if (!plainSocket) {
-        	sessionHandler.setHttpOnly(true);
-        	sessionHandler.setSecureRequestOnly(true);
-        }
-        sessionHandler.setMaxInactiveInterval(timeout); // 20 minutes timeout
+        
+       	sessionHandler.setHttpOnly(true);
+       	sessionHandler.setSecureRequestOnly(true);
+
+       	sessionHandler.setMaxInactiveInterval(timeout); // 20 minutes timeout
         sessionHandler.addEventListener(new SessionListener());
         
         return ctx;

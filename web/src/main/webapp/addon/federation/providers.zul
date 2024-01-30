@@ -37,7 +37,7 @@
       type == "VIP"?  "/addon/federation/img/document-v.png" : 
       type == "IDP"?  "/addon/federation/img/document-i.png" : 
       null}  
-  value: /description
+  template: #{ type == 'IDP' && federationMember.idpType == 'soffid' ? c:cat3('<b>', c:escapeXML(description), "</b>"): c:escapeXML(description) }
   leaf: #{type != "SP_ROOT" && type != "IDP_ROOT" && type != "ARREL" && type != "EG"  && (type != "IDP" || federationMember.idpType != "soffid-cloud") &&(type != "IDP" || federationMember.idpType != "soffid") && (type != "SP" || federationMember.serviceProviderType != "openid-dynamic-register")}
   ${soffid:isUserInRole('federation:create') ? "tail":"no-tail"}: >-
       #{type=="SP_ROOT" || type =="IDP_ROOT" || (type == "IDP" && federationMember.idpType == "soffid-cloud") || (type == "IDP" && federationMember.idpType == "soffid") || type == "ARREL" ? "<button class='small-button' onclick='zkDatatree2.sendClientAction(this, &quot;onAddChild&quot)'>" : ""}

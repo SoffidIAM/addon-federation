@@ -2,6 +2,7 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URLDecoder;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -22,6 +23,7 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.openssl.PEMParser;
 
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
@@ -51,14 +53,21 @@ public class CertificateValidator {
         if (certs == null) {
         	String header;
 			try {
-				header = IdpConfig.getConfig().getFederationMember().getSslClientCertificateHeader();
-				if (header != null && !header.trim().isEmpty()) {
-					String cert = req.getHeader(header);
-					for (Enumeration<String> e = req.getHeaderNames(); e.hasMoreElements(); ) {
-						String name = e.nextElement();
-					}
-					if (cert != null && ! cert.trim().isEmpty()) {
-						certs = parseCerts(cert);
+				for (IdpNetworkConfig nc: IdpConfig.getConfig().getFederationMember().getNetworkConfig()) {
+					if (nc.isProxy() && 
+							req.getLocalPort() == nc.getProxyPort() &&
+							nc.isWantsCertificate() && 
+							nc.getCertificateHeader() != null &&
+							!nc.getCertificateHeader().trim().isEmpty()) 
+					{
+						header = nc.getCertificateHeader();
+						if (header != null && !header.trim().isEmpty()) {
+							String cert = req.getHeader(header);
+							if (cert != null && ! cert.trim().isEmpty()) {
+								certs = parseCerts(cert);
+							}
+						}
+						
 					}
 				}
 			} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
@@ -74,13 +83,13 @@ public class CertificateValidator {
 		Object object;
 		JcaX509CertificateConverter converter2 = new JcaX509CertificateConverter().setProvider( "BC" );
 		LinkedList<Certificate> certs = new LinkedList<Certificate>();
+		if (pemCerts.contains("%"))
+			pemCerts = URLDecoder.decode(pemCerts, "UTF-8");
 		pemCerts = pemCerts.replace(" ", "\n").replace("---BEGIN\n", "---BEGIN ").replace("---END\n", "---END ");
 		PEMParser pemParser = new PEMParser(new StringReader(pemCerts));
 		do {
 			object = pemParser.readObject();
 			if (object == null) break;
-			System.out.println(">>> object  ="+object);
-			System.out.println(">>> instance of ="+object.getClass());
 			if (object instanceof X509CertificateHolder)
 			{
 				certs.add(converter2.getCertificate((X509CertificateHolder) object));

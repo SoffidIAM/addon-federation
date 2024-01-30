@@ -63,6 +63,8 @@ import com.soffid.iam.addons.federation.common.EntityGroup;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
+import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
+import com.soffid.iam.addons.federation.common.IdpNetworkEndpointType;
 import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
@@ -414,7 +416,10 @@ public class Am02Handler extends Window implements AfterCompose {
 		m.setRegisterExternalIdentities(false);
 		m.setSessionTimeout(120L * 60L);
 		m.setSsoCookieName("_idp_session");
-		m.setStandardPort(port.getValue().toString());
+		IdpNetworkConfig nc = new IdpNetworkConfig();
+		nc.setPort(Integer.parseInt(port.getValue().toString()));
+		nc.setType(IdpNetworkEndpointType.TLSV_1_3);
+		m.getNetworkConfig().add(nc);
 		m = svc.create(m);
 		
 		// Create SAML Profile
@@ -491,7 +496,7 @@ public class Am02Handler extends Window implements AfterCompose {
 		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
 		s = s.replace("{signinurl}", 
 				 "<span>"
-				+ encode("https://"+fm.getHostName()+":"+fm.getStandardPort()+"/profile/SAML2/Redirect/SSO")
+				+ encode("https://"+fm.getHostName()+":"+getStandardPort(fm)+"/profile/SAML2/Redirect/SSO")
 				+"</span>"
 				+ copyButton2())
 			.replace("{issuer}", 
@@ -515,12 +520,22 @@ public class Am02Handler extends Window implements AfterCompose {
 		
 		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
 		s = s.replace("{url}", 
-				encode("https://"+fm.getHostName()+":"+fm.getStandardPort()+"/SAML/metadata.xml"));
+				encode("https://"+fm.getHostName()+":"+getStandardPort(fm)+"/SAML/metadata.xml"));
 		explanation.setContent(s);
 		
 		AMedia m = new AMedia(fm.getHostName()+"-metadata.xml", null, "binary/octect-stream", 
 				fm.getMetadades().getBytes(StandardCharsets.UTF_8));
 		Filedownload.save(m);
+	}
+
+	private String getStandardPort(FederationMember fm) {
+		for (IdpNetworkConfig c: fm.getNetworkConfig()) {
+			if (c.isProxy() && c.getProxyPort() != null)
+				return c.getProxyPort().toString();
+			else
+				return String.valueOf(c.getPort());
+		}
+		return "443";
 	}
 
 	public void addGoogle(Event e) throws InternalErrorException {
@@ -533,17 +548,17 @@ public class Am02Handler extends Window implements AfterCompose {
 		FederationMember fm = svc.findFederationMemberByPublicId(publicId);
 		s = s.replace("{signinurl}", 
 				 "<span>"
-				+ encode("https://"+fm.getHostName()+":"+fm.getStandardPort()+"/profile/SAML2/Redirect/SSO")
+				+ encode("https://"+fm.getHostName()+":"+getStandardPort(fm)+"/profile/SAML2/Redirect/SSO")
 				+"</span>"
 				+ copyButton2())
 			.replace("{logouturl}", 
 				 "<span>"
-				+ encode("https://"+fm.getHostName()+":"+fm.getStandardPort()+"/logout.jsp")
+				+ encode("https://"+fm.getHostName()+":"+getStandardPort(fm)+"/logout.jsp")
 				+"</span>"
 				+ copyButton2())
 			.replace("{passwordurl}", 
 				 "<span>"
-				+ encode("https://"+fm.getHostName()+":"+fm.getStandardPort()+"/protected/passwordChange")
+				+ encode("https://"+fm.getHostName()+":"+getStandardPort(fm)+"/protected/passwordChange")
 				+"</span>"
 				+ copyButton2());
 		explanation.setContent(s);
@@ -574,10 +589,10 @@ public class Am02Handler extends Window implements AfterCompose {
 		String cmd = "Set-MsolDomainAuthentication `\n"
 				+ "  -FederationBrandName \"Soffid IdP\" `\n"
 				+ "  -Authentication Federated `\n"
-				+ "  -PassiveLogOnUri \"https://"+fm.getHostName()+":"+fm.getStandardPort()+"/profile/SAML2/Post/SSO\" `\n"
+				+ "  -PassiveLogOnUri \"https://"+fm.getHostName()+":"+getStandardPort(fm)+"/profile/SAML2/Post/SSO\" `\n"
 				+ "  -SigningCertificate \""+cert+"\" `\n"
 				+ "  -IssuerUri \""+publicId+"\" `\n"
-				+ "  -LogOffUri \"https://"+fm.getHostName()+":"+fm.getStandardPort()+"/logout.jsp\" `\n"
+				+ "  -LogOffUri \"https://"+fm.getHostName()+":"+getStandardPort(fm)+"/logout.jsp\" `\n"
 				+ "  -PreferredAuthenticationProtocol \"SAMLP\" \n";
 		
 		String s = Labels.getLabel("federation.sso.azure1");

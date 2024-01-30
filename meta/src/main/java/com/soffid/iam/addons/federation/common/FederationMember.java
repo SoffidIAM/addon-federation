@@ -103,11 +103,10 @@ public class FederationMember {
 	@Nullable
 	public java.lang.String hostName;
 
+	@Description("Network listeners")
 	@Nullable
-	public java.lang.String standardPort;
-
-	@Nullable
-	public java.lang.String clientCertificatePort;
+	@Attribute(defaultValue = "new java.util.LinkedList()")
+	public List<IdpNetworkConfig> networkConfig;
 
 	@Nullable
 	public java.util.Collection<java.lang.String> virtualIdentityProviderPublicId;
