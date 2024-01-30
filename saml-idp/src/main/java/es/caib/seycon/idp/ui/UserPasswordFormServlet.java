@@ -230,7 +230,7 @@ public class UserPasswordFormServlet extends BaseForm {
             }
             
             boolean pushAllowed = ctx.getNextFactor().contains("Z");
-            if (pushAllowed && !requestedUser.trim().isEmpty())
+            if (pushAllowed && requestedUser != null && !requestedUser.trim().isEmpty())
             {
             	User user;
 				try {
@@ -312,7 +312,7 @@ public class UserPasswordFormServlet extends BaseForm {
             if (g.getArgument("ERROR") == null) {
             	if ( ctx.getAllowedAuthenticationMethods().isEmpty())
             		g.addArgument("ERROR", Messages.getString("accessDenied"));
-            	else if (noAuthenticationMethod(g)) {
+            	else if (noAuthenticationMethod(g, ctx)) {
             		g.addArgument("ERROR", Messages.getString("noAuthenticationMethod"));
             	}
             }
@@ -326,20 +326,22 @@ public class UserPasswordFormServlet extends BaseForm {
     }
 
     final static String methods[] = new String[] {
-    		"registerAllowed", "fingerprintAllowed",
+    		"fingerprintAllowed",
     		"certAllowed", "kerberosAllowed",
-    		"passwordAllowed", "userAllowed",
+    		"passwordAllowed",
     		"otpAllowed", "pushAllowed",
     		"externalAllowed"
     };
     
-	private boolean noAuthenticationMethod(HtmlGenerator g) {
+	private boolean noAuthenticationMethod(HtmlGenerator g, AuthenticationContext ctx) {
+		if (ctx.getStep() == 0 && ctx.getUser() == null)
+			return false;
 		for (String s: methods) {
 			String value = g.getArgument(s);
 			if ("true".equals(value))
-				return true;
+				return false;
 		}
-		return false;
+		return true;
 	}
 
 	protected boolean isAlterativeMethodAllowed(Challenge ch) {

@@ -41,6 +41,7 @@ public class ChangeUserAction extends HttpServlet {
        	ctx.setUser(null);
        	try {
 			ctx.updateAllowedAuthenticationMethods();
+			ctx.onInitialStep();
 		} catch (Exception e) {
            	error = "Cannot find suitable authentication methods";
            	LogFactory.getLog(getClass()).warn("Cannot find suitable authentication methods", e);
