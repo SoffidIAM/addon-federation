@@ -388,15 +388,9 @@ public class Main {
 		} else {
 			connector = new ServerConnector(server, factory, http11);
 		}
-        String s =  ConfigurationCache.getMasterProperty("soffid.syncserver.bufferSize") ;
-        if (s != null) {
-        	connector.setAcceptedReceiveBufferSize( Integer.parseInt(s));
-            connector.setAcceptedSendBufferSize( Integer.parseInt(s));
-        } else {
-        	connector.setAcceptedSendBufferSize( 64 * 1024);
-        	connector.setAcceptedReceiveBufferSize( 64 * 1024);
-        }
-
+       	connector.setAcceptedSendBufferSize( 64 * 1024);
+       	connector.setAcceptedReceiveBufferSize( 64 * 1024);
+ 
         connector.setPort(nc.getPort());
         connector.setAcceptQueueSize(10);
         server.addConnector(connector);
