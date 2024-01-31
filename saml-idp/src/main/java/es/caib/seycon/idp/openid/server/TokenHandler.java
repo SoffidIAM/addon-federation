@@ -43,6 +43,11 @@ import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.service.SessionService;
+import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
+import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
+import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;
+import com.soffid.iam.sync.intf.ExtensibleObject;
+import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
@@ -251,7 +256,7 @@ public class TokenHandler {
 		return signedToken;
 	}
 
-	public String generateJWTToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) {
+	public String generateJWTToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) throws InternalErrorException, IOException {
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
 				.withClaim("azp", (t.request.getFederationMember().getOpenidClientId()))
 				.withExpiresAt( new Date (t.getExpires()))
@@ -282,7 +287,7 @@ public class TokenHandler {
 		KeyPair keyPair = c.getKeyPair();
 		
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
-		completeJWTBuilder(att, builder, false);
+		completeJWTBuilder(t, att, builder, false);
 		String signedToken = builder.sign(algorithmRS);
 		return signedToken;
 	}
@@ -295,7 +300,7 @@ public class TokenHandler {
 			return "https://"+c.getFederationMember().getHostName()+port;
 	}
 
-	public String generateRefreshToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) {
+	public String generateRefreshToken(IdpConfig c, TokenInfo t, Map<String, Object> att, boolean keycloak) throws InternalErrorException, IOException {
 		Builder builder = JWT.create().withAudience(t.request.getFederationMember().getOpenidClientId())
 				.withExpiresAt( new Date (t.getExpires()))
 				.withIssuedAt(new Date(t.getCreated()))
@@ -316,7 +321,7 @@ public class TokenHandler {
 		KeyPair keyPair = c.getKeyPair();
 		
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
-		completeJWTBuilder(att, builder, false);
+		completeJWTBuilder(t, att, builder, false);
 		String signedToken = builder.sign(algorithmRS);
 		return signedToken;
 	}
@@ -411,7 +416,7 @@ public class TokenHandler {
 				.withIssuer(getIssuer(c, keycloak))
 				.withClaim("sid", t.getOauthSessionId());
 
-		completeJWTBuilder(att, builder, false);
+		completeJWTBuilder(t, att, builder, false);
 
 		KeyPair keyPair = c.getKeyPair();
 		
@@ -422,7 +427,7 @@ public class TokenHandler {
 		return signedToken;
 	}
 
-	public void completeJWTBuilder(Map<String, Object> att, Builder builder, boolean onlySubject) {
+	public void completeJWTBuilder(TokenInfo t, Map<String, Object> att, Builder builder, boolean onlySubject) throws InternalErrorException, IOException {
 		String subject = null;
 		String email = null;
 		String uid = null;
@@ -480,13 +485,19 @@ public class TokenHandler {
 			}
 		}
 		
+		String sub = getSubject(t);
+		
 		if (onlySubject) {
-			builder.withSubject(subject != null ? subject: 
+			builder.withSubject(sub != null ? sub:
+				subject != null ? subject: 
 				uid != null ? uid: 
 				email != null ? email :
 					null);
 			if (email != null)
 				builder.withClaim("email", email);
+		}
+		else if (sub != null) {
+			builder.withSubject(sub);
 		}
 		else  if (subject == null)
 		{
@@ -496,6 +507,34 @@ public class TokenHandler {
 				builder.withSubject(email);
 			}
 		}
+	}
+
+	private String getSubject(TokenInfo t) throws InternalErrorException, IOException {
+		String uid = null;
+		if (t != null & t.getRequest() != null && t.getRequest().getFederationMember() != null &&
+				t.getRequest().getFederationMember().getUidExpression() != null && 
+				!t.getRequest().getFederationMember().getUidExpression().trim().isEmpty()) {
+        	IdpConfig config;
+			try {
+				config = IdpConfig.getConfig();
+			} catch (Exception e1) {
+				throw new InternalErrorException("Error fetching configuration", e1);
+			}
+			final ServerService serverService = new RemoteServiceLocator().getServerService();
+			Account account = serverService.getAccountInfo(t.getUser(), config.getSystem().getName());
+			User ui = null;
+			try {
+				ui = serverService.getUserInfo(t.getUser(), config.getSystem().getName());
+			} catch (Exception e) {}
+			ExtensibleObject eo = ui == null ? 
+				new AccountExtensibleObject(account, serverService):
+				new UserExtensibleObject(account, ui, serverService);
+			eo.setAttribute("relyingParty", t.getRequest().getFederationMember().getPublicId());
+			uid = (String) new ObjectTranslator(config.getSystem(), serverService,
+				new java.util.LinkedList<ExtensibleObjectMapping>())
+					.eval(t.getRequest().getFederationMember().getUidExpression(), eo);
+		}
+		return uid;
 	}
 
 	public TokenInfo getToken(String token) throws InternalErrorException {
