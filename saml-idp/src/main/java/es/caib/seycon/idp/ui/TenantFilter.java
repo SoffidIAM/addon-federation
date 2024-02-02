@@ -47,7 +47,6 @@ public class TenantFilter implements Filter {
 			throws IOException, ServletException {
 		final HttpServletResponse res = (HttpServletResponse) response;
 		final HttpServletRequest req = (HttpServletRequest) request;
-		Security.setClientRequest(req);
 		String uri = req.getContextPath()+req.getServletPath();
 		if (req.getPathInfo() != null)
 			uri += req.getPathInfo();
@@ -56,6 +55,7 @@ public class TenantFilter implements Filter {
 			IdpConfig config = IdpConfig.getConfig();
 			int realPort = request.getLocalPort();
 			int port = realPort;
+			String source = req.getRemoteAddr();
 			for (IdpNetworkConfig nc: config.getFederationMember().getNetworkConfig()) {
 				if (nc.isProxy() && nc.getPort() == realPort)
 				{
@@ -70,11 +70,24 @@ public class TenantFilter implements Filter {
 							r.getOutputStream().close();
 							return;
 						}
-						
+						else
+						{
+							String[] sources = req.getHeader("x-forwarded-for").split(" +");
+							source = sources[0];
+							for (int i = 0; i < sources.length - 1; i++) {
+								if (! NetmaskMatch.matches(nc.getProxyInternalAddress(), 
+										InetAddress.getByName(source)))
+									break;
+								source = sources[i+1];
+							}
+						}
 					}
 					break;
 				}
 			}
+
+			Security.setClientIp(source);
+
 			request = new HttpServletRequestSourceIpWrapper(req, Security.getClientIp(), 
 					config.getHostName(), port);
 			String tenant = filterConfig.getInitParameter("tenant");
