@@ -51,6 +51,15 @@ public class CertificateValidator {
 		X509Certificate certs[] = (X509Certificate[]) req
                 .getAttribute("javax.servlet.request.X509Certificate"); //$NON-NLS-1$
         if (certs == null) {
+        	if ("true".equals(System.getProperty("soffid.idp.dumpheaders"))) {
+        		for (Enumeration<String> e = req.getHeaderNames(); e.hasMoreElements();  ) {
+        			String k = e.nextElement();
+        			for (Enumeration<String> ee = req.getHeaders(k); ee.hasMoreElements(); ) {
+        				String v = ee.nextElement();
+        				log.info(" >> "+k+" : "+v);
+        			}
+        		}
+        	}
         	String header;
 			try {
 				for (IdpNetworkConfig nc: IdpConfig.getConfig().getFederationMember().getNetworkConfig()) {
