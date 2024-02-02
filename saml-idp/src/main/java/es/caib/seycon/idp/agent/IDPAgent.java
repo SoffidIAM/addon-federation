@@ -110,6 +110,7 @@ public class IDPAgent extends Agent implements AccessLogMgr, UserMgr {
 	@Override
 	public void updateUser(Account arg0) throws RemoteException, InternalErrorException {
 		SseEvent ev = new SseEvent();
+		ev.setReceiver("-");
 		ev.setType(Events.CAEP_TOKEN_CLAIMS_CHANGE);
 		ev.setAccountName(arg0.getName());
 		ev.setAccountSystem(arg0.getSystem());
