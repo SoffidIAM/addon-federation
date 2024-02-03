@@ -4,6 +4,8 @@
 <head>
 	
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge" >
 	<title>Soffid SAML Identity Provider</title>
 	
 	<!-- css -->
@@ -23,12 +25,23 @@
 
 	<div class="login">
 		<div class="loginbox"> 
-		<p class="loginheader"><a href="https://www.soffid.com/" target="_blank"><img src="img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
-			<p class="header">${titleRecover}</p>
+			<p class="loginheader"><a href="https://www.soffid.com/" target="_blank"><img src="img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
+			<div class="logintype2"  id ="passlogin">
+				<form class="captcha-form" method="post" action="${RecoverURL}">
+					<p class="header">${titleRecover}</p>
+					<p/>
+					${raw:recoverBlock}
+					<div class="upbutton" >
+						<input name="formUCboton" type="button" value="${Cancel}" onClick="location.href='${BackURL}'"/>
+						<input name="formUCboton" type="submit" value="${Recover}"/>
+					</p>
+				</div>
+			</div>
 			<p/>
-			<p >${messageRecover}</p>
 		</div>
-		<p/>
+		{if ERROR}
+		<p id="errormsg" style="color:red;">${ERROR}</p>
+		{endif}
 	</div>
 
 	

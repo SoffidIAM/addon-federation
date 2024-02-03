@@ -165,6 +165,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("pushLoginUrl", ValidateUserPushCredentialServlet.URI); //$NON-NLS-1$
             g.addArgument("registerUrl", RegisterFormServlet.URI);
             g.addArgument("recoverUrl", PasswordRecoveryAction.URI);
+            g.addArgument("recover2Url", PasswordRecoveryModuleForm.URI);
             g.addArgument("facebookRequestUrl", OauthRequestAction.URI);
             g.addArgument("userReadonly", userReadonly); //$NON-NLS-1$
             g.addArgument("requestedUser", requestedUser);
@@ -301,7 +302,10 @@ public class UserPasswordFormServlet extends BaseForm {
             	g.addArgument("fingerprintToRemove", s);
             g.addArgument("fingerprintLoginUrl", ValidateCredential.URI);
             g.addArgument("registerAllowed", ip.isAllowRegister() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
-            g.addArgument("recoverAllowed", ip.isAllowRecover()? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("recoverAllowed", ip.isAllowRecover() &&
+            		!passwordRecoveryAddonInstalled() ? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("recoverModuleAllowed", ip.isAllowRecover() &&
+            		passwordRecoveryAddonInstalled() ? "true": "false"); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("externalLogin", generateExternalLogin(ip, ctx));
             Date w = ctx.getCertificateWarning();
             if (w != null) {
@@ -325,7 +329,16 @@ public class UserPasswordFormServlet extends BaseForm {
 		}
     }
 
-    final static String methods[] = new String[] {
+    private boolean passwordRecoveryAddonInstalled() {
+    	try {
+    		Class.forName("com.soffid.iam.addons.passrecover.service.RecoverPasswordUserService");
+    		return true;
+    	} catch (Exception e) {
+    		return false;
+    	}
+	}
+
+	final static String methods[] = new String[] {
     		"fingerprintAllowed",
     		"certAllowed", "kerberosAllowed",
     		"passwordAllowed",

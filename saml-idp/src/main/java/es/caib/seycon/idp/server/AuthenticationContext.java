@@ -45,6 +45,7 @@ import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.impl.IssueHelper;
+import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Challenge;
@@ -94,6 +95,7 @@ public class AuthenticationContext {
 	private String os;
 	private String browser;
 	private String cpu;
+	private RecoverPasswordChallenge recoverChallenge;
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
@@ -966,6 +968,16 @@ public class AuthenticationContext {
 
 	public void setCertificateWarningDone(boolean certificateWarningDone) {
 		this.certificateWarningDone = certificateWarningDone;
+	}
+
+
+	public void setRecoverChallenge(RecoverPasswordChallenge challenge) {
+		this.recoverChallenge = challenge;
+	}
+
+
+	public RecoverPasswordChallenge getRecoverChallenge() {
+		return recoverChallenge;
 	}
 
 

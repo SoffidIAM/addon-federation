@@ -45,15 +45,11 @@ public class ActivatedFormServlet extends BaseForm {
             throws ServletException, IOException {
         super.doGet(req, resp);
 
-        AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
-        if (! amf.allowUserPassword())
-            throw new ServletException (Messages.getString("UserPasswordFormServlet.methodNotAllowed")); //$NON-NLS-1$
-
         try {
         	
             HtmlGenerator g = new HtmlGenerator(context, req);
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
-
+            g.addArgument("continueURL", UserPasswordFormServlet.URI);
             g.generate(resp, "activatedPage.html"); //$NON-NLS-1$
 
         } catch (Exception e) {

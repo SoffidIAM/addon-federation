@@ -26,7 +26,15 @@
 		<p class="loginheader"><a href="https://www.soffid.com/" target="_blank"><img src="img/logo.png" alt="Soffid logo" class="logo"/></a></p> 
 			<p class="header">${titleActivated}</p>
 			<p/>
-			<p >${messageActivated}</p>
+			<div class="logintype"  id ="passlogin">
+				<form method="get" action="${continueURL}" id="form-pass">
+					<p >${messageActivated}</p>
+					<div class="upbutton">
+						<input id="loginpassbutton" name="formUCboton" type="submit" value="${Login}" />
+					</div>
+				</form>
+			</div>
+			
 		</div>
 		<p/>
 	</div>

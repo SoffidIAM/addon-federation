@@ -70,7 +70,7 @@ public class TenantFilter implements Filter {
 							r.getOutputStream().close();
 							return;
 						}
-						else
+						else if (req.getHeader("x-forwarded-for") != null)
 						{
 							String[] sources = req.getHeader("x-forwarded-for").split(" +");
 							source = sources[0];

@@ -12,6 +12,7 @@ import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 
 public class PasswordChangeRequiredForm extends BaseForm {
@@ -29,14 +30,25 @@ public class PasswordChangeRequiredForm extends BaseForm {
             super.doGet(req, resp);
             HttpSession session = req.getSession();
             
+            String uri = PasswordChangeRequiredAction.URI;
             String user = (String) session.getAttribute(SessionConstants.SEU_TEMP_USER);
+            if (user == null) {
+            	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+            	if (ctx != null && ctx.getCurrentUser() != null &&
+            			ctx.getRecoverChallenge() != null &&
+            			ctx.getRecoverChallenge().isAnswered()) {
+            		user = ctx.getCurrentUser().getUserName();
+            		uri = PasswordRecoveryModuleAction2.URI;
+            	}
+            }
             if (user == null) {
                 throw new ServletException(Messages.getString("PasswordChangeRequiredForm.expired.session")); //$NON-NLS-1$
             }
             HtmlGenerator g = new HtmlGenerator(getServletContext(), req);
             g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("user", user);
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
-            g.addArgument("passwordChangeLoginUrl", PasswordChangeRequiredAction.URI); //$NON-NLS-1$
+            g.addArgument("passwordChangeLoginUrl", uri); //$NON-NLS-1$
             
         	ServerService serverService = new RemoteServiceLocator().getServerService();
         	LogonService logonService = new RemoteServiceLocator().getLogonService();
