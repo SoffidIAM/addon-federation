@@ -15,6 +15,7 @@ import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
+import com.soffid.iam.addons.federation.model.IdpNetworkConfigEntity;
 import com.soffid.iam.addons.federation.model.SseReceiverEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialRequestEntity;
@@ -197,39 +198,42 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 				final IdentityProviderEntity idp = (IdentityProviderEntity) fm;
 				if (idp.getIdpType() == IdentityProviderType.SOFFID && 
 						(identityProvider == null || identityProvider.trim().isEmpty() || identityProvider.equals(idp.getPublicId()))) {
-					if (type == UserCredentialType.PUSH) {
-						URI u2 = new URI(
-								Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
+					for (IdpNetworkConfigEntity cfg: idp.getNetworkConfigs() ) {
+						if (type == UserCredentialType.PUSH) {
+							URI u2 = new URI(
+								"https",
 								null, // User
 								idp.getHostName(),
-								Integer.parseInt(idp.getStandardPort()),
+								cfg.isProxy() && cfg.getProxyPort() != null ? cfg.getProxyPort(): cfg.getPort(),
 								"/rpc/"+c.getHash(),
 								null, // Query
 								null  // Hash
 								);
-						return new URI("soffidpush", u2.toString(),
-								null);
+							return new URI("soffidpush", u2.toString(),
+									null);
+						}
+						else if (!unsecure)
+							return new URI(
+									"https",
+									null, // User
+									idp.getHostName(),
+									cfg.isProxy() && cfg.getProxyPort() != null ? cfg.getProxyPort(): cfg.getPort(),
+									"/registerRequestedCredential/"+c.getHash(),
+									null, // Query
+									null  // Hash
+									);
+						else
+							return new URI(
+									"https",
+									null, // User
+									idp.getHostName(),
+									cfg.isProxy() && cfg.getProxyPort() != null ? cfg.getProxyPort(): cfg.getPort(),
+									"/protected/registerCredential",
+									null, // Query
+									null  // Hash
+									);
 					}
-					else if (!unsecure)
-						return new URI(
-								Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
-								null, // User
-								idp.getHostName(),
-								Integer.parseInt(idp.getStandardPort()),
-								"/registerRequestedCredential/"+c.getHash(),
-								null, // Query
-								null  // Hash
-								);
-					else
-						return new URI(
-								Boolean.TRUE.equals(idp.getDisableSSL()) ? "http": "https",
-								null, // User
-								idp.getHostName(),
-								Integer.parseInt(idp.getStandardPort()),
-								"/protected/registerCredential",
-								null, // Query
-								null  // Hash
-								);
+					throw new InternalErrorException("Unable to find network configuration for the identity provider");
 				}
 			}
 		}
