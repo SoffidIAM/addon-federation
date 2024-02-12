@@ -62,6 +62,10 @@ public class UserCredentialEntity {
 	Date lastUse;
 	
 	@Nullable
+	@Column(name="UCR_LASCHE")
+	Date lastCheck;
+	
+	@Nullable
 	@Column(name="UCR_FAILS")
 	Integer fails;
 
