@@ -59,5 +59,5 @@ public abstract class RootCertificateEntity {
 	TenantEntity tenant;
 	
 	@Nullable @Column(name="CAR_CACHE")
-	Integer cacheDays;
+	public Integer cacheDays;
 }

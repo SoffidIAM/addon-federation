@@ -37,6 +37,6 @@ public class RootCertificate {
 	@Nullable
 	public Integer expirationWarningDays;
 
-	@Nullable @Column(name="CAR_CACHE")
+	@Nullable
 	Integer cacheDays;
 }
