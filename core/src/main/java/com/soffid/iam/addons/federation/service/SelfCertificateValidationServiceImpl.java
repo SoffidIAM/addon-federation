@@ -207,19 +207,16 @@ public class SelfCertificateValidationServiceImpl extends
 		UserCredentialEntity toCheck = null;
 		for (UserCredentialEntity cred: getUserCredentialEntityDao().findByPublicKey(pk)) {
 			if (!cred.getRoot().isDevice() && validate(cred)) {
-				log.info("cred.getRoot.getCacheDays: "+cred.getRoot().getCacheDays());
-				log.info("cred.getLastCheck: "+cred.getLastCheck() );
 				if (cred.getRoot().getCacheDays() == null ||
 						cred.getRoot().getCacheDays() <= 0 ||
 						(cred.getLastCheck() != null && 
 							cred.getRoot().getCacheDays() * 24 * 60 * 60 * 1000 + cred.getLastCheck().getTime() > System.currentTimeMillis() )) {
-					log.info("Es mayor a la fecha del certificado digital.");
+					
 					cred.setLastUse(new Date());
 					getUserCredentialEntityDao().update(cred);
 					return true;
 				} else {
 					toCheck = cred;
-					log.info(">>>>>>>> O bien los días en cache son nulos o menor o igual a 0, o la última vez que se probó es null o los días de cache más la última vez que se comprobó es menor a la hora actual("+System.currentTimeMillis()+")");
 					break;
 				}
 			}
