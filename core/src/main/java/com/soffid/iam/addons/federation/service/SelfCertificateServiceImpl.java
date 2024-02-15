@@ -368,6 +368,7 @@ public class SelfCertificateServiceImpl extends SelfCertificateServiceBase {
 		rootEntity.setUserCertificateMonths(root.getUserCertificateMonths());
 		rootEntity.setGuessUserScript(root.getGuessUserScript());
 		rootEntity.setExpirationWarningDays(root.getExpirationWarningDays());
+		rootEntity.setCacheDays(root.getCacheDays());
 		getRootCertificateEntityDao().update(rootEntity);
 	}
 

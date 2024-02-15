@@ -37,4 +37,6 @@ public class RootCertificate {
 	@Nullable
 	public Integer expirationWarningDays;
 
+	@Nullable
+	Integer cacheDays;
 }

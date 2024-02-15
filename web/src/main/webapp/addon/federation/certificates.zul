@@ -95,6 +95,11 @@
 						   &lt;b&gt;subject&lt;/b&gt; Contains the subject name&lt;br&gt;
 						   &lt;b&gt;certificate&lt;/b&gt; Contains the full user certificate&lt;br&gt;"/>
 					</customfield3>
+					<customfield3 
+						id="cacheDays"
+						label="${c:l('selfCertificate.cacheDays')}"
+						dataType="NUMBER"
+						bind="cacheDays" />
 						
 					<div sclass="databox">
 						<label sclass="label" value="${c:l('selfcertificate.certificate')}"/>

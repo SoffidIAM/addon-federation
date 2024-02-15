@@ -204,11 +204,21 @@ public class SelfCertificateValidationServiceImpl extends
 			throws Exception {
  		final X509Certificate userCert = certs.get(0);
 		String pk = Base64.encodeBytes(userCert.getPublicKey().getEncoded(), Base64.DONT_BREAK_LINES);
+		UserCredentialEntity toCheck = null;
 		for (UserCredentialEntity cred: getUserCredentialEntityDao().findByPublicKey(pk)) {
 			if (!cred.getRoot().isDevice() && validate(cred)) {
-				cred.setLastUse(new Date());
-				getUserCredentialEntityDao().update(cred);
-				return true;
+				if (cred.getRoot().getCacheDays() == null ||
+						cred.getRoot().getCacheDays() <= 0 ||
+						(cred.getLastCheck() != null && 
+							cred.getRoot().getCacheDays() * 24 * 60 * 60 * 1000 + cred.getLastCheck().getTime() > System.currentTimeMillis() )) {
+					
+					cred.setLastUse(new Date());
+					getUserCredentialEntityDao().update(cred);
+					return true;
+				} else {
+					toCheck = cred;
+					break;
+				}
 			}
 		}
 		
@@ -222,6 +232,9 @@ public class SelfCertificateValidationServiceImpl extends
 						userCert.checkValidity();
 						User u = getCertificateUser(ac, userCert);
 						if (u != null) {
+							if (toCheck != null) {
+								getUserCredentialEntityDao().remove(toCheck);
+							}
 							UserCredentialEntity cred = getUserCredentialEntityDao().newUserCredentialEntity();
 							cred.setCertificate(Base64.encodeBytes(userCert.getEncoded(), Base64.DONT_BREAK_LINES));
 							cred.setCreated(new Date());
@@ -233,6 +246,7 @@ public class SelfCertificateValidationServiceImpl extends
 							cred.setSerialNumber(userCert.getSerialNumber().toString());
 							cred.setType(UserCredentialType.CERT);
 							cred.setUserId(u.getId());
+							cred.setLastCheck(new Date());
 							getUserCredentialEntityDao().create(cred);
 							return true;
 						}
