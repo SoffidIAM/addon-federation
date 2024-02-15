@@ -47,6 +47,7 @@ import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.impl.IssueHelper;
 import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
 import com.soffid.iam.api.Account;
+import com.soffid.iam.api.AccountStatus;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Host;
@@ -611,11 +612,20 @@ public class AuthenticationContext {
 	
 	public boolean isLocked (String u) throws IOException, InternalErrorException
 	{
-		getUserData(u);
-		if (currentUser != null)
+    	IdpConfig cfg;
+		try {
+			cfg = IdpConfig.getConfig();
+		} catch (Exception e) {
+			throw new InternalErrorException("Error getting default dispatcher", e);
+		}
+	    String d = cfg.getSystem().getName();
+	    Account account = new RemoteServiceLocator().getAccountService().findAccount(u, d);
+		if (account != null)
 		{
+			if (account.isDisabled())
+				return true;
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
-			return ubh.isLocked(currentUser.getId());
+			return ubh.isLocked(currentAccount.getId());
 		}
 		return false;
 	}

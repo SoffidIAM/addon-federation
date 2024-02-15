@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,12 +29,14 @@ import com.soffid.iam.addons.federation.model.UserBehaviorEntity;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.impl.IssueHelper;
 import com.soffid.iam.addons.otp.service.OtpService;
+import com.soffid.iam.api.AccountStatus;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordValidation;
 import com.soffid.iam.api.User;
 import com.soffid.iam.model.AccountEntity;
+import com.soffid.iam.model.PasswordPolicyEntity;
 import com.soffid.iam.model.SystemEntity;
 import com.soffid.iam.model.UserAccountEntity;
 import com.soffid.iam.model.UserEntity;
@@ -309,24 +312,47 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 	}
 
 	@Override
-	protected boolean handleIsLocked(Long userId) throws Exception {
-		long f = handleGetUserFailures(userId);
-		if (f >= 3) {
-			Date d = handleGetLastFailedAttempt(userId);
-			if (d != null && System.currentTimeMillis() - d.getTime() < 60000 ) // 10 minutes lock
-			{
-				UserEntity user = getUserEntityDao().load(userId);
-				if (user == null)
-					return true;
-				for (UserAccountEntity userAccount: user.getAccounts()) {
-					Date d2 = userAccount.getAccount().getLastPasswordSet();
-					if (d2 != null && d2.after(d))
-						return false;
+	protected boolean handleIsLocked(Long accountId) throws Exception {
+		AccountEntity account = getAccountEntityDao().load(accountId);
+		if (account == null || account.getStatus() == AccountStatus.LOCKED)
+			return true;
+		
+		PasswordPolicyEntity pp = getPasswordPolicyEntityDao().findByPasswordDomainAndUserType(
+				account.getSystem().getPasswordDomain().getName(),
+				account.getPasswordPolicy().getName());
+		if (pp == null)
+			return true;
+		if (getMaxFailures(pp) == null) {
+			for (UserAccountEntity ua: account.getUsers()) {
+				long f = handleGetUserFailures(ua.getUser().getId());
+				if (f >= 3) {
+					Date d = handleGetLastFailedAttempt(ua.getUser().getId());
+					if (d != null && System.currentTimeMillis() - d.getTime() < 60000 ) // 10 minutes lock
+					{
+						UserEntity user = ua.getUser();
+						if (user == null)
+							return true;
+						for (UserAccountEntity userAccount: user.getAccounts()) {
+							Date d2 = userAccount.getAccount().getLastPasswordSet();
+							if (d2 != null && d2.after(d))
+								return false;
+						}
+						return true;
+					}
 				}
-				return true;
+				
 			}
 		}
 		return false;
+	}
+
+	protected Object getMaxFailures(PasswordPolicyEntity pp) {
+		// Reflection for compatibility with older versions
+		try {
+			return PropertyUtils.getProperty(pp, "maxFailures");
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	@Override

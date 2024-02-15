@@ -19,6 +19,7 @@ import es.caib.seycon.ng.comu.PasswordValidation;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.model.AccountEntity;
 import es.caib.seycon.ng.model.DispatcherEntity;
+import es.caib.seycon.ng.model.PoliticaContrasenyaEntity;
 import es.caib.seycon.ng.model.UsuariEntity;
 import es.caib.seycon.ng.servei.AccountService;
 import es.caib.seycon.ng.servei.DispatcherService;
@@ -35,7 +36,8 @@ import es.caib.seycon.ng.servei.XarxaService;
 		AccountEntity.class,
 		DispatcherEntity.class,
 		InternalPasswordService.class,
-		GeoInformationService.class})
+		GeoInformationService.class,
+		PoliticaContrasenyaEntity.class})
 public class UserBehaviorService {
 	public String getCountryForIp(String ip) { return null; }
 	public String getLastCountry(Long userId) {return null; }
@@ -55,7 +57,7 @@ public class UserBehaviorService {
 	
 	public AuthenticationMethod getAuthenticationMethod ( FederationMember fm, AdaptiveEnvironment env) {return null;}
 	
-	public boolean isLocked(Long userId) {return false;}
+	public boolean isLocked(Long accountId) {return false;}
 	
 	public Collection<UserCredentialType> getEnabledCredentials(Long userId) {return null;}
 	public Collection<String> getEnabledOtps(Long userId) {return null;}
