@@ -1,5 +1,6 @@
 package es.caib.seycon.idp.shibext;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,8 +13,13 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.Host;
+
 import edu.internet2.middleware.shibboleth.common.session.Session;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.ng.config.Config;
+import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.sync.intf.LogEntry;
 
 public class LogRecorder {
@@ -51,11 +57,23 @@ public class LogRecorder {
      * @param shibbolethSession
      * @return
      * @throws IOException
+     * @throws InternalErrorException 
      */
-    public synchronized LogEntry addSuccessLogEntry(String type, String user, String authMethod, String serviceProvider,
-            String remoteIp, HttpSession session, Session shibbolethSession, String tokenId) throws IOException {
+    public synchronized LogEntry addSuccessLogEntry(String type, String user, String authMethod, 
+    		String serviceProvider, String remoteHostName,
+            String remoteIp, HttpSession session, Session shibbolethSession, String tokenId) throws IOException, InternalErrorException {
         LogEntry le = new LogEntry();
-        le.setClient(remoteIp);
+
+        if (remoteHostName != null) {
+        	Host host = new RemoteServiceLocator().getUserBehaviorService().findHostBySerialNumber(remoteHostName);
+        	if (host != null)
+        		remoteHostName = host.getName();
+        }
+        if (isNewVersion() && remoteIp != null && remoteHostName != null) {
+        	remoteIp = remoteHostName+" "+remoteIp;
+        } else if (remoteHostName != null){
+        	remoteIp = remoteHostName;
+        }
         try {
             le.setHost(IdpConfig.getConfig().getHostName());
         } catch (Exception e) {
@@ -71,7 +89,7 @@ public class LogRecorder {
         le.setClient(remoteIp);
         le.setProtocol(type); //$NON-NLS-1$
         le.setDate(new Date());
-        le.SessionId = le.getHost() + "-" + System.currentTimeMillis(); //$NON-NLS-1$
+        le.SessionId = le.getProtocol()+"-"+le.getHost() + "-" + System.currentTimeMillis(); //$NON-NLS-1$
         le.type = LogEntry.LOGON;
         le.setUser(user);
         logs.add(le);
@@ -82,7 +100,7 @@ public class LogRecorder {
         le2.setClient(remoteIp);
         le2.setProtocol(type); //$NON-NLS-1$
         le2.setDate(new Date());
-        le2.SessionId = le.getHost() + "-" + System.currentTimeMillis(); //$NON-NLS-1$
+        le2.SessionId = le.getProtocol()+"-"+le.getHost() + "-" + System.currentTimeMillis(); //$NON-NLS-1$
         le2.type = LogEntry.LOGOFF;
         le2.setUser(user);
         
@@ -100,7 +118,23 @@ public class LogRecorder {
 		return le2;
     }
 
-    public synchronized void flushLogoutEntry(String tokenId) {
+    String version = null;
+    private boolean isNewVersion() throws FileNotFoundException, IOException {
+    	try {
+    		if (version == null)
+    			version = Config.getConfig().getVersion();
+	        String[] split = version.split("[-.]");
+	        if ( Integer.parseInt(split[0]) > 3) return true;
+	        if ( Integer.parseInt(split[0]) < 3) return false;
+	        if ( Integer.parseInt(split[1]) > 5) return true;
+	        if ( Integer.parseInt(split[1]) < 5) return false;
+	        return Integer.parseInt(split[2]) >= 10;
+    	} catch (NumberFormatException e) {
+    		return false;
+    	}
+	}
+
+	public synchronized void flushLogoutEntry(String tokenId) {
 		List<LogEntry> le = activeLogs.get(tokenId);
 		if (le != null)
 		{
@@ -153,10 +187,17 @@ public class LogRecorder {
     	}
     }
 
-    public synchronized void addErrorLogEntry(String user, String info, String remoteIp)
-            throws IOException {
+    public synchronized void addErrorLogEntry(String protocol,
+    		String user, String info, 
+    		String remoteHostName, String remoteIp)
+            throws IOException, InternalErrorException {
         LogEntry le = new LogEntry();
-        le.setClient(remoteIp);
+        if (isNewVersion() && remoteHostName != null) {
+        	Host h = new RemoteServiceLocator().getUserBehaviorService().findHostBySerialNumber(remoteHostName);
+        	if (h != null) {
+        		remoteIp = h.getName()+" "+remoteIp;
+        	}
+        }
         try {
             le.setHost(IdpConfig.getConfig().getHostName());
         } catch (Exception e) {
@@ -165,7 +206,7 @@ public class LogRecorder {
         le.info = info;
         le.setHost(config.getHostName());
         le.setClient(remoteIp);
-        le.setProtocol("SAML"); //$NON-NLS-1$
+        le.setProtocol(protocol);
         le.setDate(new Date());
         le.SessionId = le.getHost() + "-" + System.currentTimeMillis(); //$NON-NLS-1$
         le.type = 2;

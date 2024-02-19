@@ -425,10 +425,19 @@ public class Autenticator {
 				req.getAttribute(
 						edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
         LOG.info("Session type " + session.getAttribute("soffid-session-type")); //$NON-NLS-1$ //$NON-NLS-2$
+        String sessionType = (String) session.getAttribute("soffid-session-type");
+        if (sessionType == null)
+        	sessionType = "wsso";
+        else
+        	sessionType = sessionType.toUpperCase();
+    	LogRecorder.getInstance().addSuccessLogEntry(
+    			sessionType,
+    			user, actualType, entityId,
+    			authCtx.getHostId(resp),
+    			req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
         	final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
-        	LogRecorder.getInstance().addSuccessLogEntry("SAML", user, actualType, entityId, req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	
 			Principal principal = new SessionPrincipal(user, soffidSession);

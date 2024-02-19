@@ -51,6 +51,7 @@ import com.soffid.iam.sync.intf.ExtensibleObjectMapping;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.LogoutHandler;
 import es.caib.seycon.idp.server.LogoutResponse;
 import es.caib.seycon.idp.shibext.LogRecorder;
@@ -225,11 +226,16 @@ public class TokenHandler {
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
 		getFederationService().createOauthToken(generateOauthToken(t));
+		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 		if (t.getType() == TokenType.TOKEN_CAS) {
-			LogRecorder.getInstance().addSuccessLogEntry(t.getType().getValue(), t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
-					req.getRemoteAddr(), null, null, "CAS");
+			LogRecorder.getInstance().addSuccessLogEntry(t.getType().getValue(), t.getUser(), authType, 
+        			t.getRequest().getFederationMember().getPublicId(), 
+        			authCtx == null ? null: authCtx.getHostId(null),
+					req.getRemoteAddr(), null, null, "cas-token");
 		} else {
-			LogRecorder.getInstance().addSuccessLogEntry("OPENID", t.getUser(), authType, t.getRequest().getFederationMember().getPublicId(), 
+			LogRecorder.getInstance().addSuccessLogEntry("oid-token", t.getUser(), authType, 
+					t.getRequest().getFederationMember().getPublicId(), 
+					authCtx == null ? null: authCtx.getHostId(null),
 					req.getRemoteAddr(), null, null, "OPENID_"+t.jwtId);
 		}
 	}
@@ -372,7 +378,10 @@ public class TokenHandler {
 		activeTokens.addLast(t);
 
 		getFederationService().createOauthToken(generateOauthToken(t));
-    	LogRecorder.getInstance().addSuccessLogEntry("OPENID", t.getUser(), "Refresh-token", t.getRequest().getFederationMember().getPublicId(), 
+		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
+    	LogRecorder.getInstance().addSuccessLogEntry("oid-refresh", t.getUser(), "Refresh-token", 
+    			t.getRequest().getFederationMember().getPublicId(), 
+    			authCtx == null ? null: authCtx.getHostId(null),
     			req.getRemoteAddr(), null, null, "OPENID_"+t.jwtId);
 	}
 

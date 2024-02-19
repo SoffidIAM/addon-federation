@@ -95,7 +95,9 @@ public class UserPasswordAction extends HttpServlet {
         					}
                 		}
                 		else if (v.mustChangePassword()) {
-	                        logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.7"), req.getRemoteAddr()); //$NON-NLS-1$
+	                        logRecorder.addErrorLogEntry(getSessionType(req), u, Messages.getString("UserPasswordAction.7"), 
+	                        		ctx.getHostId(resp),
+	                        		req.getRemoteAddr()); //$NON-NLS-1$
 	                        HttpSession s = req.getSession();
 	                        s.setAttribute(SessionConstants.SEU_TEMP_USER, u);
 	                        s.setAttribute(SessionConstants.SEU_TEMP_PASSWORD, new Password(p));
@@ -130,7 +132,9 @@ public class UserPasswordAction extends HttpServlet {
 		                  // Account is disabled
 		                }
     	    		}
-                    logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
+                    logRecorder.addErrorLogEntry(getSessionType(req), u, Messages.getString("UserPasswordAction.8"),
+                    		ctx == null ? null: ctx.getHostId(resp),
+                    		req.getRemoteAddr()); //$NON-NLS-1$
                 }
             } catch (UnknownUserException e) {
             } catch (Exception e) {
@@ -142,5 +146,16 @@ public class UserPasswordAction extends HttpServlet {
         RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         dispatcher.forward(req, resp);
     }
+
+	protected String getSessionType(HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
+		if (session == null)
+			return "wsso";
+        String sessionType = (String) session.getAttribute("soffid-session-type");
+        if (sessionType == null)
+        	return "wsso";
+        else
+        	return sessionType.toUpperCase();
+	}
 
 }

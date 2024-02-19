@@ -625,7 +625,7 @@ public class AuthenticationContext {
 			if (account.isDisabled())
 				return true;
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
-			return ubh.isLocked(currentAccount.getId());
+			return ubh.isLocked(account.getId());
 		}
 		return false;
 	}
@@ -764,7 +764,7 @@ public class AuthenticationContext {
 	public String getHostId( HttpServletResponse resp) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		if (hostId == null) {
 			UserBehaviorService ubh = new RemoteServiceLocator().getUserBehaviorService();
-			if (hostId == null)
+			if (hostId == null && resp != null)
 			{
 				registerHost(ubh);
 				Cookie c2 = new Cookie(getHostIdCookieName(), hostId);

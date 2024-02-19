@@ -83,7 +83,7 @@ public class OTPAction extends HttpServlet {
             	
             	if (user == null) {
             		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
-                    logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
+                    logRecorder.addErrorLogEntry(getSessionType(req), u, error, ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
                     try {
                     	CreateIssueHelper.wrongUser(u,
                     		ctx.getHostId(resp), ctx.getRemoteIp());
@@ -105,7 +105,7 @@ public class OTPAction extends HttpServlet {
 	            	if (ch == null ||  ch.getCardNumber() == null)
 	            	{
 	            		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
-	                    logRecorder.addErrorLogEntry(u, error, req.getRemoteAddr()); //$NON-NLS-1$
+	                    logRecorder.addErrorLogEntry(getSessionType(req), u, error, ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
 	            	}
 	            	else if (v.validatePin(ch, p)) {
 	            		ctx.setChallenge(null);
@@ -131,7 +131,9 @@ public class OTPAction extends HttpServlet {
 	            		if (ctx != null)
 	            			ctx.authenticationFailure(u, Messages.getString("UserPasswordAction.wrong.password"));
 	                	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
-	                    logRecorder.addErrorLogEntry(u, Messages.getString("UserPasswordAction.8"), req.getRemoteAddr()); //$NON-NLS-1$
+	                    logRecorder.addErrorLogEntry(getSessionType(req), u, Messages.getString("UserPasswordAction.8"),
+	                    		ctx.getHostId(resp),
+	                    		req.getRemoteAddr()); //$NON-NLS-1$
 	                }
             	}
             } catch (UnknownUserException e) {
@@ -162,4 +164,16 @@ public class OTPAction extends HttpServlet {
         RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         dispatcher.forward(req, resp);
     }
+    
+	protected String getSessionType(HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
+		if (session == null)
+			return "wsso";
+        String sessionType = (String) session.getAttribute("soffid-session-type");
+        if (sessionType == null)
+        	return "wsso";
+        else
+        	return sessionType.toUpperCase();
+	}
+
 }
