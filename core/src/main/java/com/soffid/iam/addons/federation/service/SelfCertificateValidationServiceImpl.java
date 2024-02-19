@@ -208,14 +208,14 @@ public class SelfCertificateValidationServiceImpl extends
 		for (UserCredentialEntity cred: getUserCredentialEntityDao().findByPublicKey(pk)) {
 			if (!cred.getRoot().isDevice() && validate(cred)) {
 				if (cred.getRoot().getCacheDays() == null ||
-						cred.getRoot().getCacheDays() <= 0 ||
+						cred.getRoot().getCacheDays() > 0 ||
 						(cred.getLastCheck() != null && 
 							cred.getRoot().getCacheDays() * 24 * 60 * 60 * 1000 + cred.getLastCheck().getTime() > System.currentTimeMillis() )) {
 					
 					cred.setLastUse(new Date());
 					getUserCredentialEntityDao().update(cred);
 					return true;
-				} else {
+				} else if(cred.getRoot().getCacheDays() <= 0) {
 					toCheck = cred;
 					break;
 				}
