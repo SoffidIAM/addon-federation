@@ -14,15 +14,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.sync.service.ServerService;
+import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -39,8 +41,14 @@ public class AuthorizationHandler {
     	{
     		if (member.getSystem() != null) {
     			Collection<UserAccount> accounts = new RemoteServiceLocator().getServerService().getUserAccounts(ui.getId(), member.getSystem());
-    			if (accounts == null || accounts.isEmpty())
-    				throw new SecurityException("Access denied");
+    			if (accounts == null || accounts.isEmpty()) {
+    				LogRecorder.getInstance().addErrorLogEntry(
+    						getProtocol(member), user, 
+    						"Access denied to "+member.getPublicId(),
+    						null, 
+    						Security.getClientIp()); 
+    				return false;
+    			}
     		}
     		if (member.getRoles() != null && !member.getRoles().isEmpty()) {
     			boolean found = false;
@@ -50,11 +58,29 @@ public class AuthorizationHandler {
     					break;
     				}
     			}
-    			if (!found)
+    			if (!found) {
+    				LogRecorder.getInstance().addErrorLogEntry(
+    						getProtocol(member), user, 
+    						"Access denied to "+member.getPublicId(),
+    						null, 
+    						Security.getClientIp()); 
     				return false;
+    			}
     		}
     	}
     	return true;
 
+	}
+
+	private String getProtocol(FederationMember member) {
+		return member.getServiceProviderType() == ServiceProviderType.CAS ? "CAS":
+			member.getServiceProviderType() == ServiceProviderType.OPENID_CONNECT ? "OPENID":
+			member.getServiceProviderType() == ServiceProviderType.OPENID_REGISTER ? "OPENID":
+			member.getServiceProviderType() == ServiceProviderType.RADIUS ? "RADIUS":
+			member.getServiceProviderType() == ServiceProviderType.SOFFID_SAML ? "SAML":
+			member.getServiceProviderType() == ServiceProviderType.SAML ? "SAML":
+			member.getServiceProviderType() == ServiceProviderType.TACACSP ? "TACACS+":
+			member.getServiceProviderType() == ServiceProviderType.WS_FEDERATION ? "WSFED":
+			"SAML";
 	}
 }

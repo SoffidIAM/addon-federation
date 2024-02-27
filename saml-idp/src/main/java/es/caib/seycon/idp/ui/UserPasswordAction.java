@@ -137,6 +137,9 @@ public class UserPasswordAction extends HttpServlet {
                     		req.getRemoteAddr()); //$NON-NLS-1$
                 }
             } catch (UnknownUserException e) {
+            } catch (SecurityException e) {
+                error = Messages.getString("accessDenied"); //$NON-NLS-1$
+                LogFactory.getLog(getClass()).info("Error authenticating user "+u, e);
             } catch (Exception e) {
                 error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
                 LogFactory.getLog(getClass()).info("Error authenticating user "+u, e);

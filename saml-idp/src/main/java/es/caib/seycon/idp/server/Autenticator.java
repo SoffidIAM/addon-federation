@@ -56,6 +56,7 @@ import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
+import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationException;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
@@ -437,58 +438,7 @@ public class Autenticator {
     			req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
-        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
-	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
-	
-			Principal principal = new SessionPrincipal(user, soffidSession);
-	        
-	        req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
-	        req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
-	        Set<Principal> principals = new HashSet<Principal> ();
-	        Set<?> pubCredentals = new HashSet<Object>();
-	        Set<?> privCredentials = new HashSet<Object>();
-	        principals.add(principal);
-	        Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
-	        req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
-	        
-	        if (shibbolethSession != null)
-	        {
-	        	shibbolethSession.setSubject(userSubject);
-	        	shibbolethSession.getAuthenticationMethods().clear();
-	        }
-	        
-			Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
-			if (saml2LoginContext == null) {
-				saml2LoginContext = (Saml2LoginContext) session.getAttribute("$$soffid-old-login-context$$");
-				String saml2LoginContextId = (String) session.getAttribute("$$soffid-old-login-context-id$$");
-		        StorageService<String, LoginContextEntry> storageService = (StorageService<String, LoginContextEntry>) 
-		        		HttpServletHelper.getStorageService(ctx);
-	        	storageService.put(HttpServletHelper.DEFAULT_LOGIN_CTX_PARITION, 
-		        			saml2LoginContextId,
-		        			new LoginContextEntry(saml2LoginContext, 1800000));
-	        	Cookie cookie = new Cookie(HttpServletHelper.LOGIN_CTX_KEY_NAME, saml2LoginContextId);
-	            RequestDispatcher dispatcher = req.getRequestDispatcher(saml2LoginContext.getAuthenticationEngineURL());
-	            dispatcher.forward( new CookieRequest( req, cookie), resp);
-			}
-			else if (saml2LoginContext != null) {
-				List<String> set = saml2LoginContext.getRequestedAuthenticationMethods();
-				String actualLogin = toSamlAuthenticationMethod(type);
-				if (set.isEmpty() || set.contains(actualLogin))
-					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, actualLogin);
-				else
-					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, set.iterator().next());
-				session.setAttribute("$$soffid-old-login-context$$", saml2LoginContext);
-		        Cookie loginContextKeyCookie = HttpServletHelper.getCookie(req, HttpServletHelper.LOGIN_CTX_KEY_NAME);
-		        if (loginContextKeyCookie != null)
-		        	session.setAttribute("$$soffid-old-login-context-id$$", loginContextKeyCookie.getValue());
-				
-	            RequestDispatcher dispatcher = req.getRequestDispatcher(saml2LoginContext.getAuthenticationEngineURL());
-	            dispatcher.forward(req, resp);
-			}
-	        else
-	        {
-	            resp.sendRedirect(returnPath);
-	        }
+            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session);
         } 
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
@@ -522,6 +472,80 @@ public class Autenticator {
         	
         }
     }
+
+	protected void doSamlLogin(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp,
+			edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession, String type, String user,
+			boolean externalAuth, String hostId, HttpSession session)
+			throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException,
+			KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException,
+			SignatureException, UnknownUserException, Exception, ServletException {
+		String relyingParty = (String) session.
+		        getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+		FederationMember member = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(
+				relyingParty);
+		if (member != null && new AuthorizationHandler().checkAuthorization(user, member)) {
+			final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
+			String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
+			
+			Principal principal = new SessionPrincipal(user, soffidSession);
+			
+			req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
+			req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
+			Set<Principal> principals = new HashSet<Principal> ();
+			Set<?> pubCredentals = new HashSet<Object>();
+			Set<?> privCredentials = new HashSet<Object>();
+			principals.add(principal);
+			Subject userSubject = new Subject(false,principals, pubCredentals, privCredentials); 
+			req.setAttribute(LoginHandler.SUBJECT_KEY, userSubject);
+			
+			if (shibbolethSession != null)
+			{
+				shibbolethSession.setSubject(userSubject);
+				shibbolethSession.getAuthenticationMethods().clear();
+			}
+			
+			Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
+			if (saml2LoginContext == null) {
+				saml2LoginContext = (Saml2LoginContext) session.getAttribute("$$soffid-old-login-context$$");
+				String saml2LoginContextId = (String) session.getAttribute("$$soffid-old-login-context-id$$");
+				StorageService<String, LoginContextEntry> storageService = (StorageService<String, LoginContextEntry>) 
+						HttpServletHelper.getStorageService(ctx);
+				storageService.put(HttpServletHelper.DEFAULT_LOGIN_CTX_PARITION, 
+						saml2LoginContextId,
+						new LoginContextEntry(saml2LoginContext, 1800000));
+				Cookie cookie = new Cookie(HttpServletHelper.LOGIN_CTX_KEY_NAME, saml2LoginContextId);
+				RequestDispatcher dispatcher = req.getRequestDispatcher(saml2LoginContext.getAuthenticationEngineURL());
+				dispatcher.forward( new CookieRequest( req, cookie), resp);
+			}
+			else 
+			{
+				List<String> set = saml2LoginContext.getRequestedAuthenticationMethods();
+				String actualLogin = toSamlAuthenticationMethod(type);
+				if (set.isEmpty() || set.contains(actualLogin))
+					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, actualLogin);
+				else
+					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, set.iterator().next());
+				session.setAttribute("$$soffid-old-login-context$$", saml2LoginContext);
+				Cookie loginContextKeyCookie = HttpServletHelper.getCookie(req, HttpServletHelper.LOGIN_CTX_KEY_NAME);
+				if (loginContextKeyCookie != null)
+					session.setAttribute("$$soffid-old-login-context-id$$", loginContextKeyCookie.getValue());
+				
+				RequestDispatcher dispatcher = req.getRequestDispatcher(saml2LoginContext.getAuthenticationEngineURL());
+				dispatcher.forward(req, resp);
+			}
+		} else {
+			Saml2LoginContext saml2LoginContext = (Saml2LoginContext)HttpServletHelper.getLoginContext(req);
+			if (saml2LoginContext != null) {
+				saml2LoginContext.setAuthenticationFailure(
+						new AuthenticationException("access denied")
+						);
+				RequestDispatcher dispatcher = req.getRequestDispatcher(saml2LoginContext.getAuthenticationEngineURL());
+				dispatcher.forward(req, resp);
+			} else {
+				throw new SecurityException("acces denied");
+			}
+		}
+	}
 
     static SecureRandom secureRandom = new SecureRandom();
     public String generateRandomSessionId() {

@@ -28,6 +28,8 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
+import com.soffid.iam.api.User;
+import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -36,6 +38,7 @@ import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
 import es.caib.seycon.idp.server.AuthorizationHandler;
+import es.caib.seycon.idp.shibext.UidEvaluator;
 import es.caib.seycon.idp.ui.HtmlGenerator;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -110,6 +113,11 @@ public class WsfedResponse  {
 
 		try {
 			FederationService rfs = (FederationService) new RemoteServiceLocator().getRemoteService(FederationService.REMOTE_PATH);
+			final ServerService serverService = new RemoteServiceLocator().getServerService();
+			User ui = serverService.getUserInfo(user, null);
+			String uid = new UidEvaluator().evaluateUid(serverService,
+					r.getPublicId(), 
+					user, ui);
 			SamlRequest wsfedResponse = rfs.generateWsFedLoginResponse(r.getPublicId(), 
 					IdpConfig.getConfig().getPublicId(), user, att);
 			HtmlGenerator g = new HtmlGenerator(ctx, request);
