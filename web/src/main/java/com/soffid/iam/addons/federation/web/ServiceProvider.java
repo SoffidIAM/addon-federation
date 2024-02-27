@@ -89,6 +89,7 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		getFellow("networkSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		getFellow("certificateSection").setVisible(spType == ServiceProviderType.SOFFID_SAML);
 		getFellow("openidSection").setVisible(spType == ServiceProviderType.OPENID_CONNECT || spType == ServiceProviderType.OPENID_REGISTER);
+		getFellow("wsfedSection").setVisible(spType == ServiceProviderType.WS_FEDERATION);
 		getFellow("casSection").setVisible(spType == ServiceProviderType.CAS);
 		getFellow("configurationSection").setVisible( spType != ServiceProviderType.OPENID_CONNECT &&
 				spType != ServiceProviderType.CAS && spType != ServiceProviderType.RADIUS  &&
