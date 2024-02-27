@@ -61,7 +61,6 @@ function arrayToBase64(array)
 
 function registerCredential (cred) 
 {
-    const response = await 
 	fetch(fingerprintRegisterUrl, {
       method: 'POST',
       headers: {
