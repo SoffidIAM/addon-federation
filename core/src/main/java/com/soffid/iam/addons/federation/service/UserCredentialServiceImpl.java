@@ -107,15 +107,16 @@ public class UserCredentialServiceImpl extends UserCredentialServiceBase {
 										"app");
 				ev.setChangeType(action);
 				
-				if (credential.getType() == UserCredentialType.CERT) {
+				if (credential.getType() == UserCredentialType.CERT && credential.getCertificate() != null) {
 					ev.setX509Serial(credential.getCertificate().getSerialNumber().toString());
 					ev.setX509Issuer(credential.getCertificate().getIssuerX500Principal().getName());
+					getSharedSignalEventsService().addEvent(ev);
 				}
 				if (credential.getType() == UserCredentialType.FIDO) {
 					ev.setFido2aaGuid(credential.getSerialNumber());
+					getSharedSignalEventsService().addEvent(ev);
 				}
 				
-				getSharedSignalEventsService().addEvent(ev);
 			}
 		}
 	}
