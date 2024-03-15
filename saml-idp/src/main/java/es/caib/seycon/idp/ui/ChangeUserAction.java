@@ -18,6 +18,7 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
@@ -36,6 +37,12 @@ public class ChangeUserAction extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
         String error = null;
        	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
        	ctx.setUser(null);

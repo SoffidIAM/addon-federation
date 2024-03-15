@@ -90,6 +90,16 @@
 		}
 	}
 	setInterval (checkTimeout, 1000);
+	function checkServerSession() {
+		fetch("${sessionAliveUrl}")
+			.then ( response => response.json()) 
+			.then ( data => {
+				if (! data.success) {
+					location.href = "${sessionAliveUrl}?return=true";
+				}
+			});
+	}
+	setInterval (checkServerSession, 60000);
 
 	{if resendSms} 
 	setTimeout(function () {

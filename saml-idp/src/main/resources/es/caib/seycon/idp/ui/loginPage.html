@@ -72,12 +72,23 @@
 		}
 	}
 	
+	function checkServerSession() {
+		fetch("${sessionAliveUrl}")
+			.then ( response => response.json()) 
+			.then ( data => {
+				if (! data.success) {
+					location.href = "${sessionAliveUrl}?return=true";
+				}
+			});
+	}
+	
 	function init() {
 		updateFormHash(); 
 		activateFingerprint(); 
 	}
 	
 	setInterval (checkTimeout, 1000);
+	setInterval (checkServerSession, 60000);
 	</script>
 
 	<script src="/js/jquery-3.6.0.slim.min.js"></script>

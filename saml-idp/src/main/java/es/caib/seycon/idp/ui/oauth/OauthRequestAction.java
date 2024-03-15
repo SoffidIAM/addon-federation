@@ -22,6 +22,7 @@ import es.caib.seycon.idp.oauth.consumer.LinkedinConsumer;
 import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;
 import es.caib.seycon.idp.oauth.consumer.OpenidConnectConsumer;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 
 public class OauthRequestAction extends HttpServlet {
@@ -49,6 +50,12 @@ public class OauthRequestAction extends HttpServlet {
 
 	private void process(HttpServletRequest req, HttpServletResponse resp,
 			String id) throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
 		HttpSession session = req.getSession();
 		String user = req.getParameter("user");
         resp.addHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$

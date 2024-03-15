@@ -32,6 +32,7 @@ import com.soffid.iam.api.UserAccount;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.Messages;
@@ -55,6 +56,12 @@ public class ValidateUserPushCredentialServlet extends BaseForm {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
     	JSONObject o = new JSONObject();
     	o.put("done", false);
     	try {

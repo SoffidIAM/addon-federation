@@ -16,6 +16,7 @@ import com.soffid.iam.sync.engine.kerberos.KerberosManager;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.comu.Challenge;
 import es.caib.seycon.ng.comu.Sessio;
@@ -42,6 +43,12 @@ public class NtlmAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
         
         String principal = req.getRemoteUser();
         if (principal == null)

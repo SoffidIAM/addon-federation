@@ -17,6 +17,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.opensaml.xml.io.UnmarshallingException;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
@@ -32,7 +33,9 @@ import com.soffid.iam.utils.Security;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
+import es.caib.seycon.idp.cas.LoginResponse;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.openid.server.AuthorizationResponse;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
@@ -40,6 +43,7 @@ import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.cred.ValidateUserPushCredentialServlet;
 import es.caib.seycon.idp.ui.oauth.OauthRequestAction;
+import es.caib.seycon.idp.wsfed.WsfedResponse;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -126,7 +130,7 @@ public class UserPasswordFormServlet extends BaseForm {
         	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
             if (ip == null)
             	throw new es.caib.seycon.ng.exception.InternalErrorException(String.format("Internal error. Cannot guess virtual identity provider for %s", relyingParty));
-
+            
         	log.info("Displaying login page");
         	log.info("Current user "+ctx.getUser());
         	if (ctx.getUser() != null) {
@@ -146,6 +150,7 @@ public class UserPasswordFormServlet extends BaseForm {
             g.addArgument("kerberosUrl", NtlmAction.URI); //$NON-NLS-1$
             g.addArgument("passwordLoginUrl", UserPasswordAction.URI); //$NON-NLS-1$
             g.addArgument("userUrl", UserAction.URI); //$NON-NLS-1$
+            g.addArgument("sessionAliveUrl", CheckSessionAliveServlet.URI);
             if ( config.acceptsClientCert() ) {
             	g.addArgument("certAllowed",  ctx.getNextFactor().contains("C") ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
             	if (config.getClientCertPort() == req.getLocalPort())
@@ -329,7 +334,7 @@ public class UserPasswordFormServlet extends BaseForm {
 		}
     }
 
-    private boolean passwordRecoveryAddonInstalled() {
+	private boolean passwordRecoveryAddonInstalled() {
     	try {
     		Class.forName("com.soffid.iam.addons.passrecover.service.RecoverPasswordUserService");
     		return true;

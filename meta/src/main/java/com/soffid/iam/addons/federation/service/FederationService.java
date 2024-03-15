@@ -693,4 +693,8 @@ public abstract class FederationService {
 		throws es.caib.seycon.ng.exception.InternalErrorException {
 	 return null;
 	}
+	
+	@Description("Generates a simple error response when the server session has been lost")
+	public SamlRequest generateErrorResponse(String federationMember, String identityProvider, @Nullable String state) 
+		{return null;}
 }

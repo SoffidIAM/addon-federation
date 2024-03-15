@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.soffid.iam.addons.federation.common.FederationMember;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
 import es.caib.seycon.ng.sync.servei.LogonService;
 import es.caib.seycon.ng.sync.servei.ServerService;
@@ -42,6 +43,12 @@ public class RegisterFormServlet extends BaseForm {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
         super.doGet(req, resp);
 
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);

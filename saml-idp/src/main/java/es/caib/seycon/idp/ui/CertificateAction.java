@@ -26,6 +26,7 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.cred.ValidateUserPushCredentialServlet;
@@ -50,6 +51,12 @@ public class CertificateAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
 
         try {
             CertificateValidator v = new CertificateValidator();

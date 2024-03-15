@@ -2866,4 +2866,7 @@ public class FederationServiceImpl
 		return getSelfCertificateValidationService().getCertificateExpirationWarning(certs);
 	}
 	
+	public SamlRequest handleGenerateErrorResponse(String federationMember, String identityProvider, String sessionId) throws InternalErrorException, Exception {
+		return getDelegate().generateErrorResponse(federationMember, identityProvider, sessionId);
+	}
 }

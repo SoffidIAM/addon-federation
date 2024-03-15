@@ -105,6 +105,7 @@ import es.caib.seycon.idp.ui.AuthenticatedFilter;
 import es.caib.seycon.idp.ui.CancelAction;
 import es.caib.seycon.idp.ui.CertificateAction;
 import es.caib.seycon.idp.ui.ChangeUserAction;
+import es.caib.seycon.idp.ui.CheckSessionAliveServlet;
 import es.caib.seycon.idp.ui.ConsentAction;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.DefaultServlet;
@@ -507,6 +508,7 @@ public class Main {
         }
 		
 
+        ctx.addServlet(CheckSessionAliveServlet.class, CheckSessionAliveServlet.URI);
         ctx.addServlet(LoginServlet.class, LoginServlet.URI);
         ctx.addServlet(UserInfoForm.class, UserInfoForm.URI);
         ctx.addServlet(ConsentAction.class, ConsentAction.URI);

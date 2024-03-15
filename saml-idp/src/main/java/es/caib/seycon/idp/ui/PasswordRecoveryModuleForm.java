@@ -18,6 +18,7 @@ import com.soffid.iam.addons.passrecover.service.RecoverPasswordUserService;
 import com.soffid.iam.addons.passrecover.service.RecoverPasswordUserServiceBase;
 
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.ng.addons.passrecover.remote.RemoteServiceLocator;
 
 public class PasswordRecoveryModuleForm extends HttpServlet {
@@ -38,6 +39,12 @@ public class PasswordRecoveryModuleForm extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
         try {
             AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
             if (ctx == null || ctx.getCurrentUser() == null)

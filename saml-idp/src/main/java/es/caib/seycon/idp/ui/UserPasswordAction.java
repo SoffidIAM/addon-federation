@@ -23,6 +23,7 @@ import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.CaptchaVerifier;
 import es.caib.seycon.idp.server.CreateIssueHelper;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -41,6 +42,12 @@ public class UserPasswordAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
         AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
 
         String u = req.getParameter("j_username"); //$NON-NLS-1$

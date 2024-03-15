@@ -27,6 +27,7 @@ import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.CaptchaVerifier;
 import es.caib.seycon.idp.server.CreateIssueHelper;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -43,6 +44,12 @@ public class OTPAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
         
         AuthenticationMethodFilter amf = new AuthenticationMethodFilter(req);
 

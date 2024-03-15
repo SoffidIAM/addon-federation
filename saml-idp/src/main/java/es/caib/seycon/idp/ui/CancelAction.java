@@ -29,6 +29,7 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.session.LoginTimeoutHandler;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -52,6 +53,12 @@ public class CancelAction extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
     	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
     	if (authCtx == null)
        		getServletContext().getRequestDispatcher(LogoutServlet.URI).forward(req, resp);

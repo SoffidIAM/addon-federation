@@ -1,12 +1,29 @@
 package com.soffid.iam.addons.federation.service.impl;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.security.KeyPair;
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.DateTime;
 import org.opensaml.core.config.InitializationException;
+import org.opensaml.saml.common.SAMLObjectBuilder;
+import org.opensaml.saml.common.SAMLVersion;
+import org.opensaml.saml.common.SignableSAMLObject;
+import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.Status;
+import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
+import org.w3c.dom.Element;
 
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.FederationServiceLocator;
@@ -16,11 +33,13 @@ import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
+import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.api.User;
 import com.soffid.iam.model.SamlRequestEntity;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.util.Base64;
 
 public class OIDCServiceInternal extends AbstractFederationService {
 
@@ -198,6 +217,75 @@ public class OIDCServiceInternal extends AbstractFederationService {
 			throw new InternalErrorException ("Error generating Openid-connect request", e);
 		}
 	
+	}
+
+	public SamlRequest generateOidcErrorResponse(IdentityProviderEntity ip, ServiceProviderEntity sp,
+			String requestId) throws InternalErrorException {
+		try {
+			SamlRequest r = new SamlRequest();
+			r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+			for (ServiceProviderReturnUrlEntity ru: sp.getReturnUrls()) {
+				String url = ru.getUrl()+ (ru.getUrl().contains("?") ? "&": "?") +
+						"error=access_denied&error_description="+
+	    				URLEncoder.encode("Access denied", "UTF-8")+
+	    				(requestId != null ? "&state="+requestId: "");
+				r.setUrl(url);
+				break;
+			}
+			r.setParameters(new HashMap<>());
+			return r;
+		} catch (Exception e) {
+			if (e instanceof InternalErrorException)
+				throw (InternalErrorException) e;
+			else
+				throw new InternalErrorException(e.getMessage(), e);
+		}
+	}
+
+	public SamlRequest generateCasErrorResponse(IdentityProviderEntity ip, ServiceProviderEntity sp,
+			String requestId) throws InternalErrorException {
+		try {
+			SamlRequest r = new SamlRequest();
+			r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+			for (ServiceProviderReturnUrlEntity ru: sp.getReturnUrls()) {
+				String url = ru.getUrl()+ (ru.getUrl().contains("?") ? "&": "?") +
+						"error=access_denied&error_description="+
+	    				URLEncoder.encode("Access denied", "UTF-8")+
+	    				(requestId != null ? "&state="+requestId: "");
+				r.setUrl(url);
+				break;
+			}
+			r.setParameters(new HashMap<>());
+			return r;
+		} catch (Exception e) {
+			if (e instanceof InternalErrorException)
+				throw (InternalErrorException) e;
+			else
+				throw new InternalErrorException(e.getMessage(), e);
+		}
+	}
+
+	public SamlRequest generateWsFedErrorResponse(IdentityProviderEntity ip, ServiceProviderEntity sp,
+			String requestId) throws InternalErrorException {
+		try {
+			SamlRequest r = new SamlRequest();
+			r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+			for (ServiceProviderReturnUrlEntity ru: sp.getReturnUrls()) {
+				String url = ru.getUrl()+ (ru.getUrl().contains("?") ? "&": "?") +
+						"error=access_denied&error_description="+
+	    				URLEncoder.encode("Access denied", "UTF-8")+
+	    				(requestId != null ? "&state="+requestId: "");
+				r.setUrl(url);
+				break;
+			}
+			r.setParameters(new HashMap<>());
+			return r;
+		} catch (Exception e) {
+			if (e instanceof InternalErrorException)
+				throw (InternalErrorException) e;
+			else
+				throw new InternalErrorException(e.getMessage(), e);
+		}
 	}
 
 

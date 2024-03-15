@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 
 public class ResendSmsAction extends HttpServlet {
@@ -26,6 +27,12 @@ public class ResendSmsAction extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        SessionChecker checker = new SessionChecker();
+        if (!checker.checkSession(req, resp))
+        {
+        	checker.generateErrorPage(req, resp);
+        	return;
+        }
         AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
         String error = null;
         

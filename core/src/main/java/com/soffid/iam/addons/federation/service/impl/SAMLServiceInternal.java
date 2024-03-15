@@ -78,6 +78,7 @@ import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.AbstractSignableSAMLObject;
 import org.opensaml.saml.common.SAMLObjectBuilder;
 import org.opensaml.saml.common.SAMLObjectContentReference;
+import org.opensaml.saml.common.SAMLVersion;
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.saml.common.assertion.AssertionValidationException;
 import org.opensaml.saml.common.assertion.ValidationContext;
@@ -109,6 +110,7 @@ import org.opensaml.saml.saml2.core.NameID;
 import org.opensaml.saml.saml2.core.NameIDPolicy;
 import org.opensaml.saml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.Status;
 import org.opensaml.saml.saml2.core.StatusCode;
 import org.opensaml.saml.saml2.core.Subject;
 import org.opensaml.saml.saml2.core.impl.AuthnContextClassRefBuilder;
@@ -161,6 +163,7 @@ import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
+import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.api.SamlRequest;
@@ -1351,4 +1354,87 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		SAMLObjectBuilder<?> builder = (SAMLObjectBuilder<?>) builderFactory.getBuilder(name);
 		return builder.buildObject();
 	}
+
+	public SamlRequest generateSamlErrorResponse(IdentityProviderEntity ip, ServiceProviderEntity serviceProvider,
+			String requestId) throws InternalErrorException {
+		try {
+			// Get the assertion builder based on the assertion element name
+
+			EntityDescriptor idp = getIdpMetadata(ip.getPublicId());
+			if (idp == null)
+				throw new InternalErrorException(String.format("Unable to find Identity Provider metadata"));
+			IDPSSODescriptor idpssoDescriptor = idp.getIDPSSODescriptor(SAMLConstants.SAML20P_NS);
+
+			EntityDescriptor sp = getSpMetadata(serviceProvider.getPublicId());
+			
+			// Create the assertion
+			SAMLObjectBuilder<Response> builder = (SAMLObjectBuilder<Response>) builderFactory.getBuilder(Response.DEFAULT_ELEMENT_NAME);
+			Response resp = builder.buildObject( );
+			
+			String newID = generateRandomId();
+			resp.setInResponseTo(requestId);
+			
+			SPSSODescriptor spsso = sp.getSPSSODescriptor(SAMLConstants.SAML20P_NS);
+			if (spsso == null)
+				throw new InternalErrorException("Unable to find SP SSO Profile "+serviceProvider);
+			boolean found = false;
+			boolean post = false;
+			SamlRequest r = new SamlRequest();
+			for ( AssertionConsumerService acs : spsso.getAssertionConsumerServices())
+			{
+				if (acs.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI))
+				{
+					resp.setDestination(acs.getLocation());
+					r.setMethod(SAMLConstants.SAML2_POST_BINDING_URI);
+					r.setUrl(acs.getLocation());
+					break;
+				}
+				if (acs.getBinding().equals(SAMLConstants.SAML2_REDIRECT_BINDING_URI))
+				{
+					resp.setDestination(acs.getLocation());
+					r.setMethod(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
+					r.setUrl(acs.getLocation());
+					break;
+				}
+			}
+			if (resp.getDestination() == null)
+				throw new InternalErrorException(String.format("Unable to find a HTTP-Post binding for SP %s"), serviceProvider);
+
+			resp.setID(newID);
+			resp.setIssueInstant(new DateTime ());
+			resp.setVersion(SAMLVersion.VERSION_20);
+			
+			Issuer issuer = ( (SAMLObjectBuilder<Issuer>) builderFactory.getBuilder(Issuer.DEFAULT_ELEMENT_NAME)).buildObject();
+			issuer.setValue( idp.getEntityID() );
+			resp.setIssuer( issuer );
+			Status status = ( (SAMLObjectBuilder<Status>) builderFactory.getBuilder(Status.DEFAULT_ELEMENT_NAME)).buildObject();
+			StatusCode statusCode = ( (SAMLObjectBuilder<StatusCode>) builderFactory.getBuilder(StatusCode.DEFAULT_ELEMENT_NAME)).buildObject();
+			statusCode.setValue(StatusCode.AUTHN_FAILED);
+			status.setStatusCode(statusCode);
+			resp.setStatus( status );
+			
+			KeyPair pk = getPrivateKey(ip.getPublicId());
+			if (pk == null)
+				throw new InternalErrorException ("Cannot find private key for "+ip.getPublicId());
+			
+			
+			
+			Element xml = sign (ip.getPublicId(), builderFactory, (SignableSAMLObject) resp, idp);
+			String xmlString = generateString(xml);
+
+			// Encode base 64
+			r.setParameters(new HashMap<String, String>());
+			String encodedRequest = Base64.encodeBytes(xmlString.getBytes("UTF-8"), Base64.DONT_BREAK_LINES);
+			r.getParameters().put("SAMLResponse", encodedRequest);
+			r.getParameters().put("RelayState", requestId);
+
+			return r;
+		} catch (Exception e) {
+			if (e instanceof InternalErrorException)
+				throw (InternalErrorException) e;
+			else
+				throw new InternalErrorException(e.getMessage(), e);
+		}
+	}
+
 }

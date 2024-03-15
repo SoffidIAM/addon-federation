@@ -30,6 +30,7 @@ import org.opensaml.core.config.InitializationException;
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
+import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberEntityDao;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
@@ -832,6 +833,26 @@ public class FederationServiceInternal {
 		else 
 			throw new InternalErrorException ("Cannot find identity provider with public id "+identityProvider);
 	}
+
+	public SamlRequest generateErrorResponse(String identyProvider, String federationMember, String requestId) throws InternalErrorException {
+		ServiceProviderEntity sp = findServiceProvider(federationMember);
+		if (sp == null)
+			return null;
+		IdentityProviderEntity ip = findIdentityProvider(identyProvider);
+		
+		if (sp.getServiceProviderType() == ServiceProviderType.SAML)
+			return samlService.generateSamlErrorResponse(ip, sp, requestId);
+		else if (sp.getServiceProviderType() == ServiceProviderType.OPENID_CONNECT ||
+				sp.getServiceProviderType() == ServiceProviderType.OPENID_REGISTER)
+			return oidcService.generateOidcErrorResponse(ip, sp, requestId);
+		else if (sp.getServiceProviderType() == ServiceProviderType.WS_FEDERATION)
+			return oidcService.generateWsFedErrorResponse(ip, sp, requestId);
+		else if (sp.getServiceProviderType() == ServiceProviderType.CAS)
+			return oidcService.generateCasErrorResponse(ip, sp, requestId);
+		
+		return null;
+	}
+
 
 }
 

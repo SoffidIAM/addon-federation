@@ -27,6 +27,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.session.LoginTimeoutHandler;
+import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -43,6 +44,7 @@ public class LoginServlet extends LangSupportServlet {
     void process (HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, IOException, ServletException {
         HttpSession session = req.getSession();
         
+        
         String entityId = (String) req.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
         if (entityId != null)
         	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, entityId);
@@ -51,6 +53,8 @@ public class LoginServlet extends LangSupportServlet {
         
 
        	try {
+       		SessionChecker checker = new SessionChecker();
+       		checker.registerSession(req, resp);
        		new LoginTimeoutHandler().registerSession(req);
        		
        		boolean timeout = checkSessionDuration(req, resp);

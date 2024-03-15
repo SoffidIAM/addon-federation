@@ -26,7 +26,6 @@ public class ErrorServlet extends HttpServlet {
     	String error = null;
         Throwable t = (Throwable) req
                 .getAttribute(AbstractErrorHandler.ERROR_KEY);
-        log.warn("Error generating page "+req.getRequestURL(), t);
         if (t != null)
         	error = t.toString();
         
@@ -37,13 +36,16 @@ public class ErrorServlet extends HttpServlet {
 				error = e.toString();
 				while (e != null && e instanceof Exception) {
 					Exception ex = (Exception) e;
+					if (t == null) t = ex;
 					error = e.getClass().getSimpleName()+": "+ ex.getMessage();
 					if (ex.getCause() == null || ex.getCause() == ex) break;
 					e = ex.getCause();
 				}
 			}
         }
-        
+
+        if (t != null)
+        	log.warn("Error generating page "+req.getRequestURL(), t);
         if (error == null)
         {
         	error = (String) req.getAttribute("ERROR");
