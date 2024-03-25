@@ -630,6 +630,10 @@ public class AuthenticationContext {
 		return false;
 	}
 
+	public void fetchUserData() throws InternalErrorException, IOException {
+		getUserData(user);
+	}
+	
 	private void getUserData(String userName) throws InternalErrorException, IOException {
     	IdpConfig cfg;
 		try {

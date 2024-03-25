@@ -47,7 +47,7 @@ public class PasswordRecoveryModuleForm extends HttpServlet {
         }
         try {
             AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-            if (ctx == null || ctx.getCurrentUser() == null)
+            if (ctx == null || ctx.getUser() == null)
             {
             	resp.sendRedirect(UserPasswordFormServlet.URI);
             	return;
@@ -56,6 +56,7 @@ public class PasswordRecoveryModuleForm extends HttpServlet {
         	RecoverPasswordUserService svc = (RecoverPasswordUserService) 
         			new RemoteServiceLocator()
         				.getRemoteService(RecoverPasswordUserService.REMOTE_PATH);
+        	ctx.fetchUserData();
         	RecoverPasswordChallenge challenge = svc.requestChallenge(ctx.getCurrentUser().getUserName());
         	g.addArgument("RecoverURL", PasswordRecoveryModuleAction.URI);
         	g.addArgument("BackURL", UserPasswordFormServlet.URI);
