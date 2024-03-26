@@ -67,7 +67,9 @@ public class OTPAction extends HttpServlet {
             error = Messages.getString("UserPasswordAction.missing.password"); //$NON-NLS-1$
         } else {
             try {
-            	FederationMember idp = IdpConfig.getConfig().getFederationMember();
+                String entityId = (String) req.getSession()
+                		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+            	FederationMember idp = IdpConfig.getConfig().findIdentityProviderForRelyingParty(entityId);
             	if (Boolean.TRUE.equals(idp.getEnableCaptcha())) {
             		CaptchaVerifier captcha = new CaptchaVerifier();
             		if (! captcha.verify(req, idp, req.getParameter("captchaToken"))) {
@@ -90,7 +92,10 @@ public class OTPAction extends HttpServlet {
             	
             	if (user == null) {
             		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
-                    logRecorder.addErrorLogEntry(getSessionType(req), u, error, ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
+                    logRecorder.addErrorLogEntry(getSessionType(req), u, 
+                    		"NOOTP: "+error,
+                    		entityId,
+                    		ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
                     try {
                     	CreateIssueHelper.wrongUser(u,
                     		ctx.getHostId(resp), ctx.getRemoteIp());
@@ -112,7 +117,10 @@ public class OTPAction extends HttpServlet {
 	            	if (ch == null ||  ch.getCardNumber() == null)
 	            	{
 	            		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
-	                    logRecorder.addErrorLogEntry(getSessionType(req), u, error, ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
+	                    logRecorder.addErrorLogEntry(getSessionType(req), u,
+	                    		"NOOTP: "+error, 
+	                    		entityId,
+	                    		ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
 	            	}
 	            	else if (v.validatePin(ch, p)) {
 	            		ctx.setChallenge(null);
@@ -138,7 +146,9 @@ public class OTPAction extends HttpServlet {
 	            		if (ctx != null)
 	            			ctx.authenticationFailure(u, Messages.getString("UserPasswordAction.wrong.password"));
 	                	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
-	                    logRecorder.addErrorLogEntry(getSessionType(req), u, Messages.getString("UserPasswordAction.8"),
+	                    logRecorder.addErrorLogEntry(getSessionType(req), u, 
+	                    		"WRONGOTP: "+Messages.getString("UserPasswordAction.8"),
+	                    		entityId,
 	                    		ctx.getHostId(resp),
 	                    		req.getRemoteAddr()); //$NON-NLS-1$
 	                }

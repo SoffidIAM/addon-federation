@@ -13,6 +13,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Host;
 
@@ -26,6 +29,7 @@ public class LogRecorder {
 
     private static LogRecorder instance;
     IdpConfig config;
+    Log logger = LogFactory.getLog("idplog");
 
     private LogRecorder() {
     	try {
@@ -69,6 +73,8 @@ public class LogRecorder {
         	if (host != null)
         		remoteHostName = host.getName();
         }
+        
+        logger.info("LOGON "+user+"|"+remoteIp+"|"+serviceProvider+"|"+type+"|"+authMethod);
         if (isNewVersion() && remoteIp != null && remoteHostName != null) {
         	remoteIp = remoteHostName+" "+remoteIp;
         } else if (remoteHostName != null){
@@ -171,6 +177,10 @@ public class LogRecorder {
     			for (LogEntry log: le) {
     				log.setDate(new Date());
     				logs.add(log);
+    				String host = log.getHost();
+    				if (host.contains(" "))
+    					host = host.substring(host.lastIndexOf(" ")+1);
+    				logger.info("LOGOFF "+log.user+"|"+log.getClient()+"|"+log.getHost()+"|"+log.getProtocol());
     			}
     			activeLogs.remove(session.getId());
     		}
@@ -189,9 +199,11 @@ public class LogRecorder {
 
     public synchronized void addErrorLogEntry(String protocol,
     		String user, String info, 
+    		String serviceProvider,
     		String remoteHostName, String remoteIp)
             throws IOException, InternalErrorException {
         LogEntry le = new LogEntry();
+        logger.info("LOGON-DENIED "+user+"|"+remoteIp+"|"+serviceProvider+"|"+protocol);
         if (isNewVersion() && remoteHostName != null) {
         	Host h = new RemoteServiceLocator().getUserBehaviorService().findHostBySerialNumber(remoteHostName);
         	if (h != null) {
@@ -204,7 +216,7 @@ public class LogRecorder {
             throw new IOException("Unable to get configuration"); //$NON-NLS-1$
         }
         le.info = info;
-        le.setHost(config.getHostName());
+        le.setHost(serviceProvider);
         le.setClient(remoteIp);
         le.setProtocol(protocol);
         le.setDate(new Date());

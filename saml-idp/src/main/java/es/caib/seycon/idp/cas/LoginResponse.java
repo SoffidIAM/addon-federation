@@ -29,6 +29,7 @@ import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.AuthorizationHandler;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -44,7 +45,7 @@ public class LoginResponse  {
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		log.info("Generating openid response");
-		if (!checkAuthorization(user, r)) {
+		if (!checkAuthorization(user, r, request, response)) {
 			log.info("Not authorized to login");
 			unauthorized(request, response, r, user);
 		} else {
@@ -57,8 +58,11 @@ public class LoginResponse  {
 		throw new ServletException("Access denied for user "+user);
 	}
 
-	private static boolean checkAuthorization(String user, OpenIdRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
-    	return new AuthorizationHandler().checkAuthorization(user, r.getFederationMember());
+	private static boolean checkAuthorization(String user, OpenIdRequest r, HttpServletRequest request, HttpServletResponse response) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
+    	return new AuthorizationHandler().checkAuthorization(user, r.getFederationMember(),
+				authCtx == null ? null: authCtx.getHostId(response),
+				request.getRemoteAddr());
 	}
 
 	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, ServletException {

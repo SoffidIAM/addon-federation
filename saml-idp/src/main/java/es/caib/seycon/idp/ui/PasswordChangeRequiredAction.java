@@ -62,6 +62,8 @@ public class PasswordChangeRequiredAction extends HttpServlet {
                 error = String.format(Messages.getString("PasswordChangeRequiredAction.wrong.password"), user); //$NON-NLS-1$
             } catch (BadPasswordException e) {
                 error = String.format(Messages.getString("PasswordChangeRequiredAction.password.not.suitable")); //$NON-NLS-1$
+            } catch (es.caib.seycon.ng.exception.BadPasswordException e) {
+                error = String.format(Messages.getString("PasswordChangeRequiredAction.password.not.suitable")); //$NON-NLS-1$
             } catch (Exception e) {
                 error = Messages.getString("PasswordChangeRequiredAction.internal.error") ;//$NON-NLS-1$
                 LogFactory.getLog(getClass()).info("Error changing password ", e);

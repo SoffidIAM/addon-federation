@@ -214,10 +214,6 @@ public class TokenEndpoint extends HttpServlet {
 					LogRecorder logRecorder = LogRecorder.getInstance();
 					if (v.validate(username, new Password(password))) {
 						if (!v.mustChangePassword()) {
-							logRecorder.addErrorLogEntry("OPENID", 
-									username, Messages.getString("UserPasswordAction.7"), //$NON-NLS-1$
-									null,
-									req.getRemoteAddr());
 							// 1. Mask the context as authenticated
 							authCtx.authenticated(username, "P", resp);
 							// 2. Register Soffid session
@@ -233,7 +229,8 @@ public class TokenEndpoint extends HttpServlet {
 						} else {
 							authCtx.authenticationFailure(username, Messages.getString("UserPasswordAction.8"));
 							logRecorder.addErrorLogEntry("OPENID",
-									username, Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
+									username, "PASSEXPIRED: "+Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
+									request.getFederationMember().getPublicId(),
 									null,
 									req.getRemoteAddr());
 							buildError(resp, "invalid_grant", "Password is expired");
@@ -241,7 +238,8 @@ public class TokenEndpoint extends HttpServlet {
 						}
 					} else {
 						logRecorder.addErrorLogEntry("OPENID",
-								username, Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
+								username, "WRONGPASS: "+Messages.getString("UserPasswordAction.8"), //$NON-NLS-1$
+								request.getFederationMember().getPublicId(),
 								null,
 								req.getRemoteAddr());
 						buildError(resp, "invalid_grant", "Invalid username or password");

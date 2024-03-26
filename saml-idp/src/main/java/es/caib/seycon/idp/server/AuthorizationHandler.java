@@ -25,13 +25,15 @@ import com.soffid.iam.utils.Security;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.shibext.LogRecorder;
+import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationHandler {
 	static Log log = LogFactory.getLog(AuthorizationHandler.class);
 	
-	public boolean checkAuthorization(String user, FederationMember member) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+	public boolean checkAuthorization(String user, FederationMember member,
+			String clientHost, String clientIp) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
     	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
     	final String systemName = IdpConfig.getConfig().getSystem().getName();
     	log.info("Getting information of "+user+" at "+systemName);
@@ -44,8 +46,9 @@ public class AuthorizationHandler {
     			if (accounts == null || accounts.isEmpty()) {
     				LogRecorder.getInstance().addErrorLogEntry(
     						getProtocol(member), user, 
-    						"Access denied to "+member.getPublicId(),
-    						null, 
+    						"ACCESSDENIED: "+ String.format(Messages.getString("accessDeniedTo"), member.getPublicId()),
+    						member.getPublicId(),
+    						clientHost, 
     						Security.getClientIp()); 
     				return false;
     			}
@@ -62,7 +65,8 @@ public class AuthorizationHandler {
     				LogRecorder.getInstance().addErrorLogEntry(
     						getProtocol(member), user, 
     						"Access denied to "+member.getPublicId(),
-    						null, 
+    						member.getPublicId(),
+    						clientHost, 
     						Security.getClientIp()); 
     				return false;
     			}

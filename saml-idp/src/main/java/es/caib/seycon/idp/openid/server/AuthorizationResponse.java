@@ -32,6 +32,7 @@ import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeF
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.AuthorizationHandler;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -47,7 +48,7 @@ public class AuthorizationResponse  {
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		log.info("Generating openid response");
-		if (!checkAuthorization(user, r)) {
+		if (!checkAuthorization(user, r, request, response)) {
 			log.info("Not authorized to login");
 			unauthorized(request, response, r, user);
 		} else if ( r.getResponseTypeSet().contains("code")) {
@@ -70,10 +71,13 @@ public class AuthorizationResponse  {
     				(r.getState() != null ? "&state="+r.getState(): ""));
 	}
 
-	private static boolean checkAuthorization(String user, OpenIdRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	private static boolean checkAuthorization(String user, OpenIdRequest r, HttpServletRequest request, HttpServletResponse response) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		FederationService fs = new RemoteServiceLocator().getFederacioService();
     	FederationMember member = fs.findFederationMemberByClientID(r.getClientId());
-    	return new AuthorizationHandler().checkAuthorization(user, member);
+		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
+    	return new AuthorizationHandler().checkAuthorization(user, member,
+				authCtx == null ? null: authCtx.getHostId(response),
+				request.getRemoteAddr());
 	}
 
 	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {

@@ -37,6 +37,7 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.AuthorizationHandler;
 import es.caib.seycon.idp.shibext.UidEvaluator;
 import es.caib.seycon.idp.ui.HtmlGenerator;
@@ -54,7 +55,7 @@ public class WsfedResponse  {
 		WsfedRequest r = (WsfedRequest) s.getAttribute(SessionConstants.WSFED_REQUEST);
 
 		log.info("Generating openid response");
-		if (!checkAuthorization(user, r)) {
+		if (!checkAuthorization(user, r, request, response)) {
 			log.info("Not authorized to login");
 			unauthorized(request, response, r, user);
 		} else  {
@@ -68,10 +69,13 @@ public class WsfedResponse  {
 		throw new ServletException("Access denied fo user "+user);
 	}
 
-	private static boolean checkAuthorization(String user, WsfedRequest r) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	private static boolean checkAuthorization(String user, WsfedRequest r, HttpServletRequest request, HttpServletResponse response) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		FederationService fs = new RemoteServiceLocator().getFederacioService();
     	FederationMember member = fs.findFederationMemberByClientID(r.getPublicId());
-    	return new AuthorizationHandler().checkAuthorization(user, member);
+		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
+    	return new AuthorizationHandler().checkAuthorization(user, member,
+				authCtx == null ? null: authCtx.getHostId(response),
+				request.getRemoteAddr());
 	}
 
 	private static void wsfedFlow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, 

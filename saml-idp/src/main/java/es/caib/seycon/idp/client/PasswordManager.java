@@ -60,13 +60,37 @@ public class PasswordManager {
         }
     }
     
-    public void changePassword(String user, Password passwordOld, Password passwordNew) throws RemoteException, FileNotFoundException, IOException, UnknownUserException, es.caib.seycon.ng.exception.InternalErrorException, es.caib.seycon.ng.exception.BadPasswordException, es.caib.seycon.ng.exception.InvalidPasswordException {
+    public void changePassword(String user, Password passwordOld, Password passwordNew) throws Exception {
     	if (passwordOld == null)
     	{
     		changePassword(user, passwordNew);
     	} else {
 	    	LogonService logonService = new RemoteServiceLocator().getLogonService();
-	        logonService.changePassword(user,  getDispatcher(), passwordOld.getPassword(), passwordNew.getPassword());
+	    	Object monitor = new Object();
+	    	Exception exception[] = new Exception[]{null};
+	    	synchronized (monitor) {
+		    	new Thread( () -> {
+		    		try {
+		    			System.out.println("__________ STARTED PASSWORD CHANGE");
+		    			logonService.changePassword(user,  getDispatcher(), passwordOld.getPassword(), passwordNew.getPassword());
+		    		} catch (Exception e) {
+		    			exception[0] = e;
+		    		} finally {
+		    			System.out.println("__________ END PASSWORD CHANGE");
+		    			synchronized (monitor) {
+		    				monitor.notifyAll();
+		    			}
+		    			System.out.println("__________ NOTIFIED PASSWORD CHANGE");
+		    		}
+		    	}).start();
+		    	try {
+	    			System.out.println("__________ WAITING FOR PASSWORD CHANGE");
+		    		monitor.wait(10000);
+		    	} catch (InterruptedException e) {}
+    			System.out.println("__________ FINISHED PASSWORD CHANGE");
+		    	if (exception[0] != null)
+		    		throw exception[0];
+	    	}
 	        mustChangePassword = false;
     	}
     }

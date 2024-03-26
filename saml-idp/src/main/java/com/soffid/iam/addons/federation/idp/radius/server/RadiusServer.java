@@ -179,7 +179,8 @@ public class RadiusServer {
 			if (ctx.isFinished()) {
 				try {
 					FederationService fs = new RemoteServiceLocator().getFederacioService();
-			    	if (new AuthorizationHandler().checkAuthorization(ctx.getUser(), member)) {
+			    	if (new AuthorizationHandler().checkAuthorization(ctx.getUser(), member,
+			    			null, client.getAddress().toString())) {
 	
 				    	RadiusPacket answer = new RadiusPacket(RadiusPacket.ACCESS_ACCEPT, accessRequest.getPacketIdentifier());
 						copyProxyState(accessRequest, answer);

@@ -63,7 +63,9 @@ public class UserPasswordAction extends HttpServlet {
             PasswordManager v = new PasswordManager();
 
             try {
-            	FederationMember idp = IdpConfig.getConfig().getFederationMember();
+                String entityId = (String) req.getSession()
+                		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+            	FederationMember idp = IdpConfig.getConfig().findIdentityProviderForRelyingParty(entityId);
             	if (Boolean.TRUE.equals(idp.getEnableCaptcha())) {
             		CaptchaVerifier captcha = new CaptchaVerifier();
             		if (! captcha.verify(req, idp, req.getParameter("captchaToken"))) {
@@ -74,6 +76,11 @@ public class UserPasswordAction extends HttpServlet {
                         	ctx = new AuthenticationContext();
                         	ctx.initialize(req);
                         }
+                        logRecorder.addErrorLogEntry(getSessionType(req), u, 
+                        		"CAPTCHA: "+Messages.getString("UserPasswordAction.10"), 
+                        		entityId,
+                        		ctx.getHostId(resp),
+                        		req.getRemoteAddr()); //$NON-NLS-1$
                         try {
                         	CreateIssueHelper.robotLogin(u, captcha.getConfidence(),
                         		ctx.getHostId(resp), ctx.getRemoteIp());
@@ -102,7 +109,9 @@ public class UserPasswordAction extends HttpServlet {
         					}
                 		}
                 		else if (v.mustChangePassword()) {
-	                        logRecorder.addErrorLogEntry(getSessionType(req), u, Messages.getString("UserPasswordAction.7"), 
+	                        logRecorder.addErrorLogEntry(getSessionType(req), u, 
+	                        		"PASSEXPIRED: "+Messages.getString("UserPasswordAction.7"), 
+	                        		entityId,
 	                        		ctx.getHostId(resp),
 	                        		req.getRemoteAddr()); //$NON-NLS-1$
 	                        HttpSession s = req.getSession();
@@ -139,7 +148,9 @@ public class UserPasswordAction extends HttpServlet {
 		                  // Account is disabled
 		                }
     	    		}
-                    logRecorder.addErrorLogEntry(getSessionType(req), u, Messages.getString("UserPasswordAction.8"),
+                    logRecorder.addErrorLogEntry(getSessionType(req), u, 
+                    		"WRONGPASS: "+Messages.getString("UserPasswordAction.8"),
+                    		entityId,
                     		ctx == null ? null: ctx.getHostId(resp),
                     		req.getRemoteAddr()); //$NON-NLS-1$
                 }

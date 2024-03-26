@@ -483,7 +483,10 @@ public class Autenticator {
 		        getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
 		FederationMember member = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(
 				relyingParty);
-		if (member != null && new AuthorizationHandler().checkAuthorization(user, member)) {
+		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
+		if (member != null && new AuthorizationHandler().checkAuthorization(user, member,
+				authCtx == null ? null: authCtx.getHostId(resp),
+				req.getRemoteAddr())) {
 			final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
 			String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 			
