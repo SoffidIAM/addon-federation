@@ -101,7 +101,7 @@ release:
       echo '"name": "Release '$CI_COMMIT_TAG'", ' ;
       echo '"assets":{"links": [';
       first="true" ;
-      mvn -q -Dexec.executable='echo' -Dexec.args='${project.groupId} ${project.version} ${project.artifactId} ${project.packaging}' exec:exec | 
+      mvn -q -Dexec.executable='echo' -s $DEPLOYER_SETTINGS -Dexec.args='${project.groupId} ${project.version} ${project.artifactId} ${project.packaging}' exec:exec | 
       while read a b c d ;
       do if [[ "$first" == "false" ]] ; then  echo ,  ;  fi ;  first=false ;
       echo '{"name":"'$c'","url":"https://download.soffid.com/maven/'$(echo $a|sed 's/\./\//g' )/$c/$b/$c-$b.$d'","link_type":"other"}'; 
