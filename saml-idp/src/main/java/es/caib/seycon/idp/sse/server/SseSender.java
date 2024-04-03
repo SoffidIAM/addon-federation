@@ -86,12 +86,15 @@ public class SseSender {
 		JSONObject e = serializeEvent(r, event, r.getServiceProvider(), servletContext);
 		KeyPair keyPair = c.getKeyPair();
 		
+		JSONObject s = serializeSubject(r, event, r.getServiceProvider(), servletContext);
+
 		Algorithm algorithmRS = Algorithm.RSA256((RSAPublicKey) keyPair.getPublic(), (RSAPrivateKey) keyPair.getPrivate());
 
 		String jwt = JWT.create().withAudience(event.getReceiver())
 		.withIssuedAt(new Date())
 		.withIssuer(r.getIdentityProvider())
 		.withClaim("events", e.toMap())
+		.withClaim("sub_id", s.toMap())
 		.withClaim("iat", event.getDate().getTime()/1000 )
 		.withJWTId(event.getId().toString())
 		.withKeyId(c.getHostName())
@@ -99,16 +102,23 @@ public class SseSender {
 		return jwt;
 	}
 
+
 	private JSONObject serializeEvent(SseReceiver r, SseEvent event, String serviceProvider, ServletContext servletContext) throws Exception {
 		JSONObject o = new JSONObject();
 		JSONObject o2 = new JSONObject();
-		o.put(event.getType(), o2);
 		Account[] account = {null};
 		User[] user = {null};
 		if (event.getSubject() == null) {
 			calculateSubject(event, r, account, user, servletContext);
 		}
-		if (event.getType().equals(Events.VERIFY)) {
+		o2 = serializeSubject(r, event, serviceProvider, servletContext);
+		o.put(event.getType(), o2);
+		return o;
+	}
+
+	private JSONObject serializeSubject(SseReceiver r, SseEvent event, String serviceProvider, ServletContext servletContext) throws Exception {
+		JSONObject o2 = new JSONObject();
+		if (event.getType().equals(Events.VERIFY_SSE) || event.getType().equals(Events.VERIFY_SSF)) {
 			o2.put("state", event.getSubject());
 		} else if (event.getType().endsWith(Events.CAEP_SESSION_REVOKED)) {
 			JSONObject subject = encodeSubject(r, event);
@@ -194,13 +204,17 @@ public class SseSender {
 			o2.put("subject", subject);
 		}
 		o2.put("event_timestamp", event.getDate().getTime());
-		return o;
+		return o2;
 	}
 
 	private void calculateSubject(SseEvent event, SseReceiver r, Account[] account, User[] user, ServletContext servletContext) throws Exception {
 		if (event.getSubject() == null) {
 			if (event.getUser() != null) {
-				user[0] = new RemoteServiceLocator().getServerService().getUserInfo(event.getUser(), null);
+				try {
+					user[0] = new RemoteServiceLocator().getServerService().getUserInfo(event.getUser(), null);
+				} catch (UnknownUserException uue) {
+					user[0] = null;
+				}
 				if (user[0] == null)
 					return;
 				calculateUserSubject(event, r, account, user, servletContext);

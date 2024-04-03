@@ -32,24 +32,44 @@ import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.FederationService;
 
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.ui.IframeSession;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-public class ConfigurationEndpoint extends HttpServlet {
+public class ConfigurationEndpoint extends SharedSignalsHttpServlet {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
-
 	Log log = LogFactory.getLog(getClass());
 	
+	String framework = null;
+	String version = null;
+
+	public String getFramework() {
+		return framework;
+	}
+
+	public void setFramework(String framework) {
+		this.framework = framework;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public ConfigurationEndpoint(String framework, String version) {
+		super();
+		this.framework = framework;
+		this.version = version;
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
 		doPost(req, resp);
 	}
-	
+
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
@@ -70,18 +90,22 @@ public class ConfigurationEndpoint extends HttpServlet {
         	}
 			Map<String, Object> att = new HashMap<String, Object>();
 			final String portSuffix = c.getStandardPort() == 443 ? "":  ":"+c.getStandardPort();
+			if (isSSF())
+				att.put("spec_version", getVersion());
 			att.put("issuer", "https://"+c.getFederationMember().getHostName()+portSuffix);
 			att.put("jwks_uri", "https://"+c.getFederationMember().getHostName()+portSuffix+"/.well-known/jwks.json");
 			att.put("delivery_methods_supported", new JSONArray(new String[] {
 					"https://schemas.openid.net/secevent/risc/delivery-method/push",
 					"https://schemas.openid.net/secevent/risc/delivery-method/poll"
 			}));
-			att.put("configuration_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/stream");
-			att.put("status_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/status");
-			att.put("add_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/subject-add");
-			att.put("remove_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/subject-remove");
-			att.put("verification_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/sse/verification");
+			att.put("configuration_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/stream");
+			att.put("status_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/status");
+			att.put("add_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/subject-add");
+			att.put("remove_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/subject-remove");
+			att.put("verification_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/verify");
 			att.put("critical_subject_members", new JSONArray(new String[] { "user" }));
+			if (isSSF())
+				att.put("spec_urn", new JSONArray(new String[] {"urn:ietf:rfc:6749","urn:ietf:rfc:6750"}));
 			JSONObject o = new JSONObject( att );
 			buildResponse(resp, o);
 		} catch (InternalErrorException e) {

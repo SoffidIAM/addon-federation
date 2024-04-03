@@ -2,7 +2,11 @@ package es.caib.seycon.idp.sse.server;
 
 public class Events {
 
-	public static final String VERIFY = "https://schemas.openid.net/secevent/sse/event-type/verification";
+	public static final String SSE = "sse";
+	public static final String SSF = "ssf";
+
+	public static final String VERIFY_SSE = "https://schemas.openid.net/secevent/sse/event-type/verification";
+	public static final String VERIFY_SSF = "https://schemas.openid.net/secevent/ssf/event-type/verification";
 	
 	public static final String CAEP_SESSION_REVOKED = "https://schemas.openid.net/secevent/caep/event-type/session-revoked";
 	public static final String CAEP_TOKEN_CLAIMS_CHANGE = "https://schemas.openid.net/secevent/caep/event-type/token-claims-change";

@@ -36,7 +36,7 @@ import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-public class StatusEndpoint extends HttpServlet {
+public class StatusEndpoint extends SharedSignalsHttpServlet {
 
 	/**
 	 * 
@@ -121,12 +121,15 @@ public class StatusEndpoint extends HttpServlet {
 
 	protected JSONObject generateStatusObject(SseReceiver r) {
 		JSONObject o = new JSONObject();
-		
-		o.put("status",  r.isPause() ? "paused": "enabled");
-		
+		if (isSSE()) {
+			o.put("status", r.isPause() ? "paused" : "enabled");
+		} else {
+			o.put("stream_id", r.getId());
+			o.put("status", r.isPause() ? "paused" : "enabled");
+			o.put("reason", r.isPause() ? "Stream paused by the transmitter" : "Stream enabled by the transmitter");
+		}
 		return o;
 	}
-	
 
 	private void buildError(HttpServletResponse resp, String string) throws IOException, ServletException {
 		JSONObject o = new JSONObject();
