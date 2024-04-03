@@ -36,7 +36,7 @@ import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-public class StreamEndpoint extends HttpServlet {
+public class StreamEndpoint extends SharedSignalsHttpServlet {
 	/**
 	 * 
 	 */
@@ -44,6 +44,12 @@ public class StreamEndpoint extends HttpServlet {
 
 	Log log = LogFactory.getLog(getClass());
 	
+	@Override
+	public void init() throws ServletException {
+		eventsList[0] = isSSE() ? Events.VERIFY_SSE : Events.VERIFY_SSF;
+		super.init();
+	}
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
@@ -184,13 +190,16 @@ public class StreamEndpoint extends HttpServlet {
 		o.put("events_delivered", delivered);
 		if (r.getMethod() != null) {
 			JSONObject d = new JSONObject();
-			d.put("method", r.getMethod() == SseReceiverMethod.POLL ? "https://schemas.openid.net/secevent/risc/delivery-method/poll":
-				r.getMethod() == SseReceiverMethod.PUSH ? "https://schemas.openid.net/secevent/risc/delivery-method/push":
-					null);
+			if (isSSE()) {
+				d.put("method", r.getMethod() == SseReceiverMethod.POLL ? "https://schemas.openid.net/secevent/risc/delivery-method/poll" :
+					r.getMethod() == SseReceiverMethod.PUSH ? "https://schemas.openid.net/secevent/risc/delivery-method/push" : null);
+			} else if (isSSF()) {
+				d.put("method", r.getMethod() == SseReceiverMethod.POLL ? "urn:ietf:rfc:8936" :
+					r.getMethod() == SseReceiverMethod.PUSH ? "urn:ietf:rfc:8935" : null);
+			}
 			if (r.getMethod() == SseReceiverMethod.POLL) {
 				final String portSuffix = c.getStandardPort() == 443 ? "":  ":"+c.getStandardPort();
-				d.put("endpoint_url", "https://"+c.getHostName()+portSuffix+
-						"/sse/poll");
+				d.put("endpoint_url", "https://"+c.getHostName()+portSuffix+"/"+getFramework()+"/poll");
 			} else {
 				d.put("endpoint_url", r.getUrl());
 				d.put("authorization_header", r.getAuthorizationHeader());
@@ -198,25 +207,33 @@ public class StreamEndpoint extends HttpServlet {
 			o.put("delivery", d);
 		}
 		o.put("min_verification_interval", 1);
-		if (r.getSubjectType() == SubjectFormatEnumeration.ISS_SUB)
-			o.put("format", "iss_sub");
-		else if (r.getSubjectType() == SubjectFormatEnumeration.ACCOUNT)
-			o.put("format", "account");
-		else if (r.getSubjectType() == SubjectFormatEnumeration.DID)
-			o.put("format", "did");
-		else if (r.getSubjectType() == SubjectFormatEnumeration.EMAIL)
-			o.put("format", "email");
-		else if (r.getSubjectType() == SubjectFormatEnumeration.OPAQUE)
-			o.put("format", "opaque");
-		else if (r.getSubjectType() == SubjectFormatEnumeration.PHONE_NUMBER)
-			o.put("format", "phone_number");
-		else if (r.getSubjectType() == SubjectFormatEnumeration.URI)
-			o.put("format", "uri");
+
+    	if (isSSF()) {
+        	o.put("stream_id", r.getId());
+        	o.put("descripcion", r.getDescription());
+    	}
+
+		if (isSSE()) {
+			if (r.getSubjectType() == SubjectFormatEnumeration.ISS_SUB)
+				o.put("format", "iss_sub");
+			else if (r.getSubjectType() == SubjectFormatEnumeration.ACCOUNT)
+				o.put("format", "account");
+			else if (r.getSubjectType() == SubjectFormatEnumeration.DID)
+				o.put("format", "did");
+			else if (r.getSubjectType() == SubjectFormatEnumeration.EMAIL)
+				o.put("format", "email");
+			else if (r.getSubjectType() == SubjectFormatEnumeration.OPAQUE)
+				o.put("format", "opaque");
+			else if (r.getSubjectType() == SubjectFormatEnumeration.PHONE_NUMBER)
+				o.put("format", "phone_number");
+			else if (r.getSubjectType() == SubjectFormatEnumeration.URI)
+				o.put("format", "uri");
+		}
 		return o;
 	}
 
-	protected static String[] eventsList = new String[] {
-			Events.VERIFY,
+	protected String[] eventsList = new String[] {
+			null, // updated in init
 			Events.CAEP_ASSURANCE_LEVEL_CHANGE,
 			Events.CAEP_CREDENTIAL_CHANGE,
 			Events.CAEP_DEVICE_COMPLIANCE_CHANGE,
@@ -234,7 +251,6 @@ public class StreamEndpoint extends HttpServlet {
 			Events.SOFFID_AUDIT,
 			Events.SOFFID_LOG
 		};
-	
 
 	private void buildError(HttpServletResponse resp, String string) throws IOException, ServletException {
 		JSONObject o = new JSONObject();
