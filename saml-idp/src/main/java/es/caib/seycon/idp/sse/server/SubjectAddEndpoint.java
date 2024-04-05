@@ -1,42 +1,29 @@
 package es.caib.seycon.idp.sse.server;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.Date;
-import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import com.soffid.iam.addons.federation.api.SseReceiver;
-import com.soffid.iam.addons.federation.api.SseReceiverMethod;
 import com.soffid.iam.addons.federation.api.SseSubscription;
 import com.soffid.iam.addons.federation.api.SubjectFormatEnumeration;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 
-import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-public class SubjectAddEndpoint extends HttpServlet {
+public class SubjectAddEndpoint extends SharedSignalsHttpServlet {
 	/**
 	 * 
 	 */
@@ -52,18 +39,30 @@ public class SubjectAddEndpoint extends HttpServlet {
 		resp.addHeader("Cache-control", "no-store");
 		resp.addHeader("Pragma", "no-cache");
 
-
         try {
         	String auth = req.getHeader("Authorization");
-        	IdpConfig c = IdpConfig.getConfig();
-
         	SseReceiver r = SseReceiverCache.instance().findBySecret(auth);
         	if (r == null) {
-        		resp.setStatus(resp.SC_UNAUTHORIZED);
+        		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         		return;
         	}
-        	
+
     		JSONObject request = new JSONObject(new JSONTokener(in));
+
+    		if (isSSF()) {
+    			boolean found = false;
+    			try {
+    				long stream_id = request.getLong("stream_id");
+        			if (r.getId().longValue()==stream_id)
+        				found = true;
+    			} finally {
+    				if (!found) {
+        				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        				return;
+    				}
+    			}
+    		}
+
         	String subject = parseSubject(r, request);
         	if (subject != null) {
         		SseSubscription s = new SseSubscription();

@@ -36,7 +36,7 @@ import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-public class SubjectRemoveEndpoint extends HttpServlet {
+public class SubjectRemoveEndpoint extends SharedSignalsHttpServlet {
 	/**
 	 * 
 	 */
@@ -52,18 +52,30 @@ public class SubjectRemoveEndpoint extends HttpServlet {
 		resp.addHeader("Cache-control", "no-store");
 		resp.addHeader("Pragma", "no-cache");
 
-
         try {
         	String auth = req.getHeader("Authorization");
-        	IdpConfig c = IdpConfig.getConfig();
-
         	SseReceiver r = SseReceiverCache.instance().findBySecret(auth);
         	if (r == null) {
-        		resp.setStatus(resp.SC_UNAUTHORIZED);
+        		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         		return;
         	}
         	
     		JSONObject request = new JSONObject(new JSONTokener(in));
+
+    		if (isSSF()) {
+    			boolean found = false;
+    			try {
+    				long stream_id = request.getLong("stream_id");
+        			if (r.getId().longValue()==stream_id)
+        				found = true;
+    			} finally {
+    				if (!found) {
+        				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        				return;
+    				}
+    			}
+    		}
+
         	String subject = parseSubject(r, request);
         	if (subject != null) {
         		SharedSignalEventsService sseService = new RemoteServiceLocator()
