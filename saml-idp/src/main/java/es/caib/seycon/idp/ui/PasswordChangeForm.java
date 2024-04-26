@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
 import es.caib.seycon.ng.sync.servei.LogonService;
@@ -35,8 +36,22 @@ public class PasswordChangeForm extends BaseForm {
             if (user == null) {
                 throw new ServletException(Messages.getString("PasswordChangeForm.expired.session")); //$NON-NLS-1$
             }
+            AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+            
+            boolean askPreviousPassword = true;
+            if (ctx != null && ctx.isFinished() &&
+            		System.currentTimeMillis() - ctx.getTimestamp() < 5 * 60 * 1000L &&
+            		(
+            		"P".equals(ctx.getFirstFactor()) || 
+            		"P".equals(ctx.getSecondFactor()))) {
+            	askPreviousPassword = false;
+            }
+            		
+            session.setAttribute("changepass-require-password", askPreviousPassword);	
+            
             HtmlGenerator g = new HtmlGenerator(getServletContext(), req);
             g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
+            g.addArgument("requirePassword", Boolean.toString(askPreviousPassword));
             g.addArgument("refreshUrl", URI); //$NON-NLS-1$
             g.addArgument("passwordChangeUrl", PasswordChangeAction.URI); //$NON-NLS-1$
             
