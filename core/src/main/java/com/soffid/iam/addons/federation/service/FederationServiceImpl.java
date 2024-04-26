@@ -6,6 +6,7 @@
 package com.soffid.iam.addons.federation.service;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -151,6 +152,7 @@ import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.UserDomain;
 import com.soffid.iam.api.UserType;
 import com.soffid.iam.bpm.service.scim.ScimHelper;
+import com.soffid.iam.interp.Evaluator;
 import com.soffid.iam.model.AuditEntity;
 import com.soffid.iam.model.Parameter;
 import com.soffid.iam.model.PasswordDomainEntity;
@@ -163,6 +165,7 @@ import com.soffid.iam.model.criteria.CriteriaSearchConfiguration;
 import com.soffid.iam.service.AdditionalDataJSONConfiguration;
 import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.service.impl.bshjail.SecureInterpreter;
+import com.soffid.iam.sync.intf.ExtensibleObject;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
 import com.soffid.iam.utils.Security;
 import com.soffid.scimquery.EvalException;
@@ -704,7 +707,7 @@ public class FederationServiceImpl
 		int order = 1;
 		for ( AuthenticationMethod method: federationMember.getExtendedAuthenticationMethods())
 		{
-			testCondition(method, new AdaptiveEnvironment());
+			testCondition(method, new AdaptiveEnvironment(), method.getDescription());
 			
 			AuthenticationMethodEntity entity = getAuthenticationMethodEntityDao().authenticationMethodToEntity(method);
 			entity.setOrder(new Long(order++));
@@ -716,32 +719,14 @@ public class FederationServiceImpl
 		
 	}
 
-	private void testCondition(AuthenticationMethod method, AdaptiveEnvironment env) 
-			throws InternalErrorException, MalformedURLException, UtilEvalError 
+	private void testCondition(AuthenticationMethod method, AdaptiveEnvironment env, String conditionName) 
+			throws InternalErrorException 
 	{
-		SecureInterpreter interpret = new SecureInterpreter();
-		NameSpace ns = interpret.getNameSpace();
-
-		EnvironmentNamespace newNs = new EnvironmentNamespace(env);
-		newNs.setVariable("serviceLocator", ServiceLocator.instance(), false);
+		Map<String, Object> m = new EnvironmentExtensibleObject(env);
 		try {
-			Object result = interpret.eval(method.getExpression(), newNs);
-			if (result instanceof Primitive)
-			{
-				result = ((Primitive)result).getValue();
-			}
-		} catch (TargetError e) {
-			throw new InternalErrorException("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression()+"\nMessage:"+
-					e.getTarget().getMessage(),
-					e.getTarget());
-		} catch (EvalError e) {
-			String msg;
-			try {
-				msg = e.getMessage() + "[ "+ e.getErrorText()+"] ";
-			} catch (Exception e2) {
-				msg = e.getMessage();
-			}
-			throw new InternalErrorException("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression()+"\nMessage:"+msg);
+			Evaluator.instance().evaluate(method.getExpression(), m, conditionName);
+		} catch (Exception e) {
+			throw new InternalErrorException("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression(), e);
 		}
 	}
 

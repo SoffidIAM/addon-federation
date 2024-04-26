@@ -1,6 +1,7 @@
 package com.soffid.iam.addons.federation.service;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.security.SecureRandom;
@@ -35,6 +36,7 @@ import com.soffid.iam.api.Host;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordValidation;
 import com.soffid.iam.api.User;
+import com.soffid.iam.interp.Evaluator;
 import com.soffid.iam.model.AccountEntity;
 import com.soffid.iam.model.PasswordPolicyEntity;
 import com.soffid.iam.model.SystemEntity;
@@ -282,31 +284,17 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 	}
 
 	private boolean matchesCondition(AuthenticationMethod method, AdaptiveEnvironment env) throws InternalErrorException {
-		Interpreter interpret = new Interpreter();
-		NameSpace ns = interpret.getNameSpace();
-
-		EnvironmentNamespace newNs = new EnvironmentNamespace(env);
+		EnvironmentExtensibleObject m = new EnvironmentExtensibleObject(env);
 		
 		try {
-			Object result = interpret.eval(method.getExpression(), newNs);
+			Object result = Evaluator.instance().evaluate(method.getExpression(), m, method.getDescription());
 			if (result instanceof Primitive)
 			{
 				result = ((Primitive)result).getValue();
 			}
 			return Boolean.TRUE.equals(result);
-		} catch (TargetError e) {
-			log.warn("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression()+"\nMessage:"+
-					e.getTarget().getMessage(),
-					e.getTarget());
-			return false;
-		} catch (EvalError e) {
-			String msg;
-			try {
-				msg = e.getMessage() + "[ "+ e.getErrorText()+"] ";
-			} catch (Exception e2) {
-				msg = e.getMessage();
-			}
-			log.warn("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression()+"\nMessage:"+msg);
+		} catch (Exception e) {
+			log.warn("Error evaluating rule "+method.getDescription()+"\n"+method.getExpression(), e);
 			return false;
 		}
 	}
