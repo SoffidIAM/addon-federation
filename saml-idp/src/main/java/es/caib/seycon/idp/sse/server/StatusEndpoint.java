@@ -1,21 +1,10 @@
 package es.caib.seycon.idp.sse.server;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.Collection;
-import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,17 +15,13 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import com.soffid.iam.addons.federation.api.SseReceiver;
-import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.common.SAMLProfile;
-import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
-public class StatusEndpoint extends HttpServlet {
+public class StatusEndpoint extends SharedSignalsHttpServlet {
 
 	/**
 	 * 
@@ -52,16 +37,21 @@ public class StatusEndpoint extends HttpServlet {
 		resp.addHeader("Cache-control", "no-store");
 		resp.addHeader("Pragma", "no-cache");
 
-
         try {
         	String auth = req.getHeader("Authorization");
-        	IdpConfig c = IdpConfig.getConfig();
-
         	SseReceiver r = SseReceiverCache.instance().findBySecret(auth);
         	if (r == null) {
-        		resp.setStatus(resp.SC_UNAUTHORIZED);
+        		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         		return;
         	}
+
+    		if (isSSF()) {
+    			String stream_id = req.getParameter("stream_id");
+    			if (stream_id==null || r.getId().longValue()!=Long.parseLong(stream_id)) {
+    				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    				return;
+    			}
+    		}
 
         	JSONObject o = generateStatusObject(r);
 			buildResponse(resp, o);
@@ -121,12 +111,15 @@ public class StatusEndpoint extends HttpServlet {
 
 	protected JSONObject generateStatusObject(SseReceiver r) {
 		JSONObject o = new JSONObject();
-		
-		o.put("status",  r.isPause() ? "paused": "enabled");
-		
+		if (isSSE()) {
+			o.put("status", r.isPause() ? "paused" : "enabled");
+		} else {
+			o.put("stream_id", r.getId());
+			o.put("status", r.isPause() ? "paused" : "enabled");
+			o.put("reason", r.isPause() ? "Stream paused by the transmitter" : "Stream enabled by the transmitter");
+		}
 		return o;
 	}
-	
 
 	private void buildError(HttpServletResponse resp, String string) throws IOException, ServletException {
 		JSONObject o = new JSONObject();

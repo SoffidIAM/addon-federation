@@ -505,6 +505,7 @@ public class Main {
         if (sseProfile != null && Boolean.TRUE.equals(sseProfile.getEnabled()))
         {
         	configureSseProfile(ctx, openIdProfile);
+        	configureSsfProfile(ctx, openIdProfile);
         }
 		
 
@@ -717,9 +718,7 @@ public class Main {
 	}
 
 	private void configureSseProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
-		ServletHolder servlet;
-		servlet = new ServletHolder(
-		        es.caib.seycon.idp.sse.server.ConfigurationEndpoint.class);
+		ServletHolder servlet = new ServletHolder(es.caib.seycon.idp.sse.server.ConfigurationEndpointSse.class);
 		servlet.setInitOrder(2);
 		servlet.setName("sse-configuration"); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/.well-known/sse-configuration/*"); //$NON-NLS-1$
@@ -755,6 +754,46 @@ public class Main {
 		servlet.setName("sse-poll"); //$NON-NLS-1$
 		ctx.addServlet(servlet, "/sse/poll"); //$NON-NLS-1$
 		
+		new SseThreadManager(ctx.getServletContext()).start();
+	}
+
+	private void configureSsfProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
+		ServletHolder servlet = new ServletHolder(es.caib.seycon.idp.sse.server.ConfigurationEndpointSsf.class);
+		servlet.setInitOrder(2);
+		servlet.setName("ssf-configuration"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/ssf-configuration/*"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/.well-known/ssf-configuration"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.StatusEndpoint.class);
+		servlet.setName("ssf-status"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/ssf/status"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.StreamEndpoint.class);
+		servlet.setName("ssf-stream"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/ssf/stream"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.SubjectAddEndpoint.class);
+		servlet.setName("ssf-add-subject"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/ssf/subject-add"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.SubjectRemoveEndpoint.class);
+		servlet.setName("ssf-remove-subject"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/ssf/subject-remove"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.VerifyEndpoint.class);
+		servlet.setName("ssf-verify"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/ssf/verify"); //$NON-NLS-1$
+
+		servlet = new ServletHolder(
+				es.caib.seycon.idp.sse.server.EventPollEndpoint.class);
+		servlet.setName("ssf-poll"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/ssf/poll"); //$NON-NLS-1$
+
 		new SseThreadManager(ctx.getServletContext()).start();
 	}
 
