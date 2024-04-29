@@ -5,6 +5,9 @@ public class Events {
 	public static final String SSE = "sse";
 	public static final String SSF = "ssf";
 
+	public static final String SSF_METHOD_POLL = "urn:ietf:rfc:8936";
+	public static final String SSF_METHOD_PUSH = "urn:ietf:rfc:8935";
+
 	public static final String VERIFY_SSE = "https://schemas.openid.net/secevent/sse/event-type/verification";
 	public static final String VERIFY_SSF = "https://schemas.openid.net/secevent/ssf/event-type/verification";
 	

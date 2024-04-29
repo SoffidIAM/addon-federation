@@ -94,18 +94,33 @@ public class ConfigurationEndpoint extends SharedSignalsHttpServlet {
 				att.put("spec_version", getVersion());
 			att.put("issuer", "https://"+c.getFederationMember().getHostName()+portSuffix);
 			att.put("jwks_uri", "https://"+c.getFederationMember().getHostName()+portSuffix+"/.well-known/jwks.json");
-			att.put("delivery_methods_supported", new JSONArray(new String[] {
-					"https://schemas.openid.net/secevent/risc/delivery-method/push",
-					"https://schemas.openid.net/secevent/risc/delivery-method/poll"
-			}));
+			if (isSSE()) {
+				att.put("delivery_methods_supported", new JSONArray(new String[] {
+						"https://schemas.openid.net/secevent/risc/delivery-method/push",
+						"https://schemas.openid.net/secevent/risc/delivery-method/poll"
+				}));
+			} else if (isSSF()) {
+				att.put("delivery_methods_supported", new JSONArray(new String[] {
+						Events.SSF_METHOD_PUSH,
+						Events.SSF_METHOD_POLL
+				}));
+			}
 			att.put("configuration_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/stream");
 			att.put("status_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/status");
 			att.put("add_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/subject-add");
 			att.put("remove_subject_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/subject-remove");
 			att.put("verification_endpoint", "https://"+c.getFederationMember().getHostName()+portSuffix+"/"+this.framework+"/verify");
 			att.put("critical_subject_members", new JSONArray(new String[] { "user" }));
-			if (isSSF())
-				att.put("spec_urn", new JSONArray(new String[] {"urn:ietf:rfc:6749","urn:ietf:rfc:6750"}));
+			if (isSSF()) {
+				Map<String, Object> att1 = new HashMap<String, Object>();
+				att1.put("spec_urn", "urn:ietf:rfc:6749");
+				Map<String, Object> att2 = new HashMap<String, Object>();
+				att2.put("spec_urn", "urn:ietf:rfc:6750");
+				JSONArray ja = new JSONArray();
+				ja.put(att1);
+				ja.put(att2);
+				att.put("authorization_schemes", ja);
+			}
 			JSONObject o = new JSONObject( att );
 			buildResponse(resp, o);
 		} catch (InternalErrorException e) {

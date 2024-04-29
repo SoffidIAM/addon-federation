@@ -82,13 +82,15 @@ public class SseReceiverEntity {
 	@Nullable
 	ServiceProviderEntity serviceProvider;
 	
-
 	@Column(name="SSR_TEN_ID")
 	TenantEntity tenant;
 
 	@Description("Communication is paused")
 	@Nullable @Column(name="SSR_PAUSE")
 	boolean pause;
+
+	@Nullable @Column(name="SSR_STAREA", length = 128)
+	String statusReason;
 
 	@Description("All subjects are subscribed")
 	@Nullable @Column(name="SSR_SUBALL")

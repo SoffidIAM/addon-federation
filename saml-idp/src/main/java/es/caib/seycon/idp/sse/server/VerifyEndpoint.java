@@ -35,6 +35,11 @@ public class VerifyEndpoint extends SharedSignalsHttpServlet {
 		resp.addHeader("Pragma", "no-cache");
         try {
         	String auth = req.getHeader("Authorization");
+        	if (auth==null || !auth.toLowerCase().startsWith("bearer ")) {
+    			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    			return;
+    		}
+
         	SseReceiver r = SseReceiverCache.instance().findBySecret(auth);
         	if (r == null) {
         		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -45,10 +50,16 @@ public class VerifyEndpoint extends SharedSignalsHttpServlet {
     		String state = request.optString("state", null);
     		
     		if (isSSF()) {
-    			Long stream_id = request.getLong("stream_id");
-    			if (stream_id==null || r.getId().longValue()!=stream_id.longValue()) {
-    				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    				return;
+    			boolean found = false;
+    			try {
+    				long stream_id = request.getLong("stream_id");
+        			if (r.getId().longValue()==stream_id)
+        				found = true;
+    			} finally {
+    				if (!found) {
+        				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        				return;
+    				}
     			}
     		}
 

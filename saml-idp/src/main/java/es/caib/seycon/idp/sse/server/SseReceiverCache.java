@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.sse.server;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,14 +57,15 @@ public class SseReceiverCache {
 		if (auth.toLowerCase().startsWith("bearer"))
 			auth = auth.substring(7);
 		SseReceiver r = receivers.get(auth);
-		if (r != null) 
-			return r;
+		if (r != null) {
+			return (validateTokenExpiration(r)) ? r : null;
+		}
 		int step = 0;
 		do {
 			for (SseReceiver r2: receiverList) {
 				if (r2.getToken() != null && r2.getToken().validate(auth)) {
 					receivers.put(auth, r2);
-					return r2;
+					return (validateTokenExpiration(r2)) ? r2 : null;
 				}
 			}
 			if (step == 0)
@@ -71,6 +73,13 @@ public class SseReceiverCache {
 			step ++;
 		} while (step < 2);
 		return null;
+	}
+
+	public boolean validateTokenExpiration(SseReceiver r) {
+		if (r.getExpiration()==null)
+			return true;
+		Date now = new Date();
+		return (now.getTime()<r.getExpiration().getTime());
 	}
 
 	public SseReceiver findByName(String receiver) throws IOException, InternalErrorException {

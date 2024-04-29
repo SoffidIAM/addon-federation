@@ -59,7 +59,8 @@ public class LogFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest req = (HttpServletRequest) request;
 		HttpServletResponseWrapper resp = new HttpServletResponseWrapper((HttpServletResponse) response);
-		if (! "GET".equals(req.getMethod()) && ! "POST".equals(req.getMethod())  && ! "OPTIONS".equals(req.getMethod()))
+		if (! "GET".equals(req.getMethod()) && ! "POST".equals(req.getMethod())  && ! "OPTIONS".equals(req.getMethod())
+				&& (req.getContextPath().contains("/sse/") || req.getContextPath().contains("/ssf/")))
 		{
 			resp.sendError(HttpServletResponse.SC_FORBIDDEN);
 		} else {

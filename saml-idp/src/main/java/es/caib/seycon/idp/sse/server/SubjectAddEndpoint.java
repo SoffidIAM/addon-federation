@@ -41,6 +41,11 @@ public class SubjectAddEndpoint extends SharedSignalsHttpServlet {
 
         try {
         	String auth = req.getHeader("Authorization");
+        	if (auth==null || !auth.toLowerCase().startsWith("bearer ")) {
+    			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    			return;
+    		}
+
         	SseReceiver r = SseReceiverCache.instance().findBySecret(auth);
         	if (r == null) {
         		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

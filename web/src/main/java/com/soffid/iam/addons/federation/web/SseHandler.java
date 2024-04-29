@@ -301,6 +301,8 @@ public class SseHandler extends FrameHandler {
 		} catch (Exception e) {
 		}
 	}
-	
 
+	public void cleanReason(Event ev) throws Exception {
+		es.caib.zkib.datasource.XPathUtils.setValue(getForm(), "statusReason", null);
+	}
 }
