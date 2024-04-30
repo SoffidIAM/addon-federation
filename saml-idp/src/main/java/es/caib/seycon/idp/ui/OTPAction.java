@@ -1,6 +1,9 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.ClassNotFoundException;
+import java.lang.NoSuchMethodException;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -123,8 +126,25 @@ public class OTPAction extends HttpServlet {
 	                    		ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
 	            	}
 	            	else if (v.validatePin(ch, p)) {
-	            		String s = ch.getOtpHandler();
-	            		String auditType = v.generateTypeForAudit(ch);
+	            		String auditType = null;
+	            		try {
+	            			Class<?> c = v.getClass();
+	            			Method m = c.getMethod("generateTypeForAudit", Challenge.class);
+	            			auditType = (String) m.invoke(v, ch);
+	            		} catch (Exception e) {}
+
+	            		if (auditType==null) {
+		            		Set<String> nf = ctx.getNextFactor();
+		            		if (nf.contains("I"))
+		            			auditType = "I"; //$NON-NLS-1$
+		            		else if (nf.contains("S"))
+		            			auditType = "S"; //$NON-NLS-1$
+		            		else if (nf.contains("M"))
+		            			auditType = "M"; //$NON-NLS-1$
+		            		else if (nf.contains("O"))
+		            			auditType = "O"; //$NON-NLS-1$
+	            		}
+
 	            		ctx.setChallenge(null);
 	            		ctx.authenticated(u, auditType, resp); //$NON-NLS-1$
 	            		ctx.store(req);
