@@ -1,6 +1,9 @@
 package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.ClassNotFoundException;
+import java.lang.NoSuchMethodException;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -114,7 +117,7 @@ public class OTPAction extends HttpServlet {
 						ch = v.selectToken(ch);
 						ctx.setChallenge(ch);
 	            	}
-	            	if (ch == null ||  ch.getCardNumber() == null)
+	            	if (ch == null && ch.getCardNumber() == null)
 	            	{
 	            		error = Messages.getString("OTPAction.notoken"); //$NON-NLS-1$
 	                    logRecorder.addErrorLogEntry(getSessionType(req), u,
@@ -123,16 +126,27 @@ public class OTPAction extends HttpServlet {
 	                    		ctx.getHostId(resp), req.getRemoteAddr()); //$NON-NLS-1$
 	            	}
 	            	else if (v.validatePin(ch, p)) {
+	            		String auditType = null;
+	            		try {
+	            			Class<?> c = v.getClass();
+	            			Method m = c.getMethod("generateTypeForAudit", Challenge.class);
+	            			auditType = (String) m.invoke(v, ch);
+	            		} catch (Exception e) {}
+
+	            		if (auditType==null) {
+		            		Set<String> nf = ctx.getNextFactor();
+		            		if (nf.contains("I"))
+		            			auditType = "I"; //$NON-NLS-1$
+		            		else if (nf.contains("S"))
+		            			auditType = "S"; //$NON-NLS-1$
+		            		else if (nf.contains("M"))
+		            			auditType = "M"; //$NON-NLS-1$
+		            		else if (nf.contains("O"))
+		            			auditType = "O"; //$NON-NLS-1$
+	            		}
+
 	            		ctx.setChallenge(null);
-	            		Set<String> nf = ctx.getNextFactor();
-	            		if (nf.contains("I"))
-	            			ctx.authenticated(u, "I", resp); //$NON-NLS-1$
-	            		else if (nf.contains("S")) 
-	            			ctx.authenticated(u, "S", resp); //$NON-NLS-1$
-	            		else if (nf.contains("M")) 
-	            			ctx.authenticated(u, "M", resp); //$NON-NLS-1$
-	            		else if (nf.contains("O")) 
-	            			ctx.authenticated(u, "O", resp); //$NON-NLS-1$
+	            		ctx.authenticated(u, auditType, resp); //$NON-NLS-1$
 	            		ctx.store(req);
 	            		if ( ctx.isFinished())
 	            		{
