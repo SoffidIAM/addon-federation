@@ -56,7 +56,9 @@ public class SessionChecker {
         			URLEncoder.encode(relyingParty, "UTF-8")+"&"+
         			URLEncoder.encode(state == null ? "": state, "UTF-8");
         	
-        	resp.addCookie(new Cookie(COOKIE_NAME, c));
+        	final Cookie cookie = new Cookie(COOKIE_NAME, c);
+        	cookie.setPath("/");
+			resp.addCookie(cookie);
         }
 	}
 	
