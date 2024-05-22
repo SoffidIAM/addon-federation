@@ -78,8 +78,7 @@
 			id="systemSelector"
 			label="${c:l('federacio.system')}"
 			bind="/federationMember/system"
-			dataType='STRING'
-			uiHandler="com.soffid.iam.addons.federation.web.SystemFieldHandler"
+			dataType='SYSTEM'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 	</div>
 	<div sclass="section" id="networkSection" >

@@ -88,6 +88,7 @@ public class SseReceiver {
 	String sourceOAuth;
 	
 	@Nullable
+	@Attribute(type = "SYSTEM")
 	String sourceSystem;
 	
 	@Description("Communication is paused")
