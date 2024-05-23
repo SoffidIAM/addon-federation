@@ -143,7 +143,11 @@
 						dataType="SEPARATOR" />
 					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.pause')}"
 						bind="pause"
-						dataType="BOOLEAN" />
+						dataType="BOOLEAN"
+						onChange="ref:frame.cleanReason" />
+					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.statusReason')}"
+						bind="statusReason"
+						dataType="STRING" />
 					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.subscribeAll')}"
 						bind="subscribeAll"
 						dataType="BOOLEAN" />

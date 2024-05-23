@@ -20,8 +20,7 @@ public class SseSubscriptionEntityDaoImpl extends SseSubscriptionEntityDaoBase {
 	protected void handleRemoveByReceiver(String receiver) throws Exception {
 		getSession().createQuery("delete from com.soffid.iam.addons.federation.model.SseSubscriptionEntity "
 				+ "where receiver.id in "
-				+ "(select id from com.soffid.iam.addons.federation.model.SseReceiverEntity as r "
-				+ "where r.name = :receiver")
+				+ "(select id from com.soffid.iam.addons.federation.model.SseReceiverEntity as r where r.name = :receiver)")
 			.setString("receiver", receiver)
 			.executeUpdate();
 	}

@@ -42,6 +42,11 @@ public class EventPollEndpoint extends HttpServlet {
         try {
         	final SharedSignalEventsService svc = new RemoteServiceLocator().getSharedSignalEventsService();
         	String auth = req.getHeader("Authorization");
+        	if (auth==null || !auth.toLowerCase().startsWith("bearer ")) {
+    			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    			return;
+    		}
+
         	IdpConfig c = IdpConfig.getConfig();
 
         	r = SseReceiverCache.instance().findBySecret(auth);
