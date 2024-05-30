@@ -45,6 +45,12 @@
 			bind= "/federationMember/metadades" id="metadades"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
 			onChange="ref:handler.changeMetadata"/>
+		<customfield3 label="${c:l('federacio.zul.nameIdFormat')}"
+			dataType="STRING"
+			multiline='false'
+			bind= "/federationMember/nameIdFormat" id="nameIdFormat"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" 
+			listOfValues="Persistent, Email, Unspecified, Transient"/>
 	</div>
 	<div sclass="section" id="provisionSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.provisioning') }" />

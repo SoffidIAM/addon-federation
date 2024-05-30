@@ -273,6 +273,11 @@ public class RelyingPartyGenerator {
         node.setAttribute("defaultSigningCredentialRef", "cred-" //$NON-NLS-1$ //$NON-NLS-2$
                 + federationMember.getPublicId());
         node.setAttribute("defaultAuthenticationMethod", "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"); //$NON-NLS-1$ //$NON-NLS-2$
+        node.setAttribute("nameIDFormatPrecedence",
+        		"urn:oasis:names:tc:SAML:2.0:nameid-format:persistent " +
+        		"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress "+
+        		"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified " +
+        		"urn:oasis:names:tc:SAML:2.0:nameid-format:transient");
         addProfileDescriptor(federationMember, node);
 
         rootNode.insertBefore(node, trustEngineNode);

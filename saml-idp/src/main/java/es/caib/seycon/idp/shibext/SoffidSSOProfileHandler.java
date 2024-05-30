@@ -18,6 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.opensaml.Configuration;
+import org.opensaml.common.SAMLObjectBuilder;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.NameIDPolicy;
@@ -28,10 +30,12 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.util.DatatypeHelper;
 
+import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 
 import edu.internet2.middleware.shibboleth.common.attribute.AttributeRequestException;
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
+import edu.internet2.middleware.shibboleth.common.attribute.encoding.AttributeEncodingException;
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML2AttributeAuthority;
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;
@@ -125,26 +129,55 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
     }
     
     protected NameID buildNameId(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
-    	NameID nameId = super.buildNameId(requestContext);
-    	FederationMemberSession fms = pendingSession.get();
-    	if (nameId != null && fms != null) {
-    		fms.setUserName(nameId.getValue());
-    		fms.setUserNameFormat(nameId.getFormat());
-    		fms.setUserNameQualifier(nameId.getNameQualifier());
-    		fms.setSessionHash(requestContext.getUserSession().getSessionID());
-    		try {
-				IdpConfig.getConfig().getFederationService().createFederatioMemberSession(fms);
-			} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
-					| CertificateException | IllegalStateException | NoSuchProviderException | SignatureException
-					| InternalErrorException | IOException e) {
-				throw new ProfileException("Error registering session", e);
-			}
+    	String requiredNameIdFormat = getRequiredNameIDFormat(requestContext);
+    	if (requiredNameIdFormat == null ||
+    			requiredNameIdFormat.equals(NameID.TRANSIENT)) {
+	    	NameID nameId = super.buildNameId(requestContext);
+	    	FederationMemberSession fms = pendingSession.get();
+	    	if (nameId != null && fms != null) {
+	    		fms.setUserName(nameId.getValue());
+	    		fms.setUserNameFormat(nameId.getFormat());
+	    		fms.setUserNameQualifier(nameId.getNameQualifier());
+	    		fms.setSessionHash(requestContext.getUserSession().getSessionID());
+	    		try {
+					IdpConfig.getConfig().getFederationService().createFederatioMemberSession(fms);
+				} catch (UnrecoverableKeyException | InvalidKeyException | KeyStoreException | NoSuchAlgorithmException
+						| CertificateException | IllegalStateException | NoSuchProviderException | SignatureException
+						| InternalErrorException | IOException e) {
+					throw new ProfileException("Error registering session", e);
+				}
+	    	}
+	    	return nameId;
+    	} else {
+            SAMLObjectBuilder<NameID> nameIdBuilder = (SAMLObjectBuilder<NameID>) Configuration.getBuilderFactory().getBuilder(
+                    NameID.DEFAULT_ELEMENT_NAME);
+            NameID nameId = nameIdBuilder.buildObject();
+
+            nameId.setValue(requestContext.getPrincipalName());
+            nameId.setFormat(requiredNameIdFormat);
+
+            return nameId;
     	}
-    	return nameId;
     }
 
     /** {@inheritDoc} */
     protected String getRequiredNameIDFormat(BaseSAMLProfileRequestContext requestContext) {
+    	String sp = requestContext.getPeerEntityId();
+    	try {
+			FederationMember fm = IdpConfig.getConfig().getFederationService().findFederationMemberByPublicId(sp);
+			if (fm != null && fm.getNameIdFormat() != null) {
+				if ("Persistent".equalsIgnoreCase(fm.getNameIdFormat()))
+					return NameID.PERSISTENT;
+				if ("Transient".equalsIgnoreCase(fm.getNameIdFormat()))
+					return NameID.TRANSIENT;
+				if ("Unspecified".equalsIgnoreCase(fm.getNameIdFormat()))
+					return NameID.UNSPECIFIED;
+				if ("Email".equalsIgnoreCase(fm.getNameIdFormat()))
+					return NameID.EMAIL;
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error searching for service provider "+sp, e);
+		}
         String requiredNameFormat = super.getRequiredNameIDFormat(requestContext);
         if (requiredNameFormat != null && ! isSupportedNameFormat(requiredNameFormat) ||
         		"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified".equals(requiredNameFormat))

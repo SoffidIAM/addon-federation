@@ -328,4 +328,5 @@ public class FederationMember {
 	@Description("Default language for UI. Leave empty to use browser language")
 	@Nullable
 	String language;
+
 }
