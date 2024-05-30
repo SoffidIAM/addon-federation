@@ -136,16 +136,18 @@
 						dataType="STRING" required="false" id="sourceOAuth"
 						uiHandler="com.soffid.iam.addons.federation.web.OauthFieldHandler"/>
 					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.system')}"
-						bind="sourceSystem" 
-						dataType="SYSTEM" required="false" id="system"
-						uiHandler="com.soffid.iam.addons.federation.web.SystemFieldHandler"/>
+						bind="sourceSystem" dataType="SYSTEM" required="false" id="system"/>
 				</div>
 				<div sclass="section">
 					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.method')}"
 						dataType="SEPARATOR" />
 					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.pause')}"
 						bind="pause"
-						dataType="BOOLEAN" />
+						dataType="BOOLEAN"
+						onChange="ref:frame.cleanReason" />
+					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.statusReason')}"
+						bind="statusReason"
+						dataType="STRING" />
 					<customfield3 label="${c:l('com.soffid.iam.addons.federation.api.SseReceiver.subscribeAll')}"
 						bind="subscribeAll"
 						dataType="BOOLEAN" />

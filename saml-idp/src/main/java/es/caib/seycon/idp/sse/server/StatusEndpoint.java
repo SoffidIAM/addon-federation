@@ -39,6 +39,11 @@ public class StatusEndpoint extends SharedSignalsHttpServlet {
 
         try {
         	String auth = req.getHeader("Authorization");
+        	if (auth==null || !auth.toLowerCase().startsWith("bearer ")) {
+    			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    			return;
+    		}
+
         	SseReceiver r = SseReceiverCache.instance().findBySecret(auth);
         	if (r == null) {
         		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -47,10 +52,17 @@ public class StatusEndpoint extends SharedSignalsHttpServlet {
 
     		if (isSSF()) {
     			String stream_id = req.getParameter("stream_id");
-    			if (stream_id==null || r.getId().longValue()!=Long.parseLong(stream_id)) {
-    				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    				return;
+    			boolean found = false;
+    			if (stream_id!=null) {
+    				try {
+    					if (r.getId().longValue()==Long.parseLong(stream_id))
+    						found = true;
+    				} catch(Exception e) {}
     			}
+    			if (!found) {
+					resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+					return;
+				}
     		}
 
         	JSONObject o = generateStatusObject(r);
@@ -74,9 +86,13 @@ public class StatusEndpoint extends SharedSignalsHttpServlet {
 		resp.addHeader("Cache-control", "no-store");
 		resp.addHeader("Pragma", "no-cache");
 
-
         try {
         	String auth = req.getHeader("Authorization");
+        	if (auth==null || !auth.toLowerCase().startsWith("bearer ")) {
+    			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    			return;
+    		}
+
         	IdpConfig c = IdpConfig.getConfig();
 
         	SseReceiver r = SseReceiverCache.instance().findBySecret(auth);
@@ -85,19 +101,39 @@ public class StatusEndpoint extends SharedSignalsHttpServlet {
         		return;
         	}
 
-        	
     		JSONObject request = new JSONObject(new JSONTokener(in));
+
+    		if (isSSF()) {
+    			boolean found = false;
+    			try {
+    				long stream_id = request.getLong("stream_id");
+        			if (r.getId().longValue()==stream_id)
+        				found = true;
+    			} finally {
+    				if (!found) {
+        				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        				return;
+    				}
+    			}
+    		}
+
         	if (request.has("status")) {
         		final boolean pause = "paused".equals(request.optString("status"));
         		if (pause != r.isPause()) {
 					r.setPause(pause);
+					r.setStatusReason(request.has("reason") ? request.optString("reason") : null);
 			    	SharedSignalEventsService sseService = new RemoteServiceLocator().getSharedSignalEventsService();
 			    	sseService.update(r);
+		        	JSONObject o = generateStatusObject(r);
+					buildResponse(resp, o);
+        		} else {
+        			buildError(resp, HttpServletResponse.SC_BAD_REQUEST, "Status is the same than the current value");
         		}
+        	} else {
+        		buildError(resp, HttpServletResponse.SC_BAD_REQUEST, "Status is mandatory");
         	}
-    		
-        	JSONObject o = generateStatusObject(r);
-			buildResponse(resp, o);
+
+
 		} catch (InternalErrorException e) {
 			log.warn("Error evaluating claims", e);
 			buildError(resp, "Error resolving attributes");
@@ -116,7 +152,8 @@ public class StatusEndpoint extends SharedSignalsHttpServlet {
 		} else {
 			o.put("stream_id", r.getId());
 			o.put("status", r.isPause() ? "paused" : "enabled");
-			o.put("reason", r.isPause() ? "Stream paused by the transmitter" : "Stream enabled by the transmitter");
+			if (r.getStatusReason()!=null && !r.getStatusReason().trim().isEmpty())
+				o.put("reason", r.getStatusReason());
 		}
 		return o;
 	}
@@ -135,6 +172,23 @@ public class StatusEndpoint extends SharedSignalsHttpServlet {
 		resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		ServletOutputStream out = resp.getOutputStream();
 		out.print( o.toString() );
+		out.close();
+	}
+
+	private void buildError(HttpServletResponse resp, int HTTPCode, String string) throws IOException, ServletException {
+		JSONObject o = new JSONObject();
+		try {
+			o.put("error", string);
+		} catch (JSONException e) {
+			throw new ServletException("Error generating error message "+string, e);
+		}
+		resp.setContentType("application/json");
+		resp.addHeader("Cache-control", "no-store");
+		resp.addHeader("Pragma", "no-cache");
+		resp.addHeader("WWW-Authenticate", "error=\"unexpected_error\",error_description=\""+string+"\"");
+		resp.setStatus(HTTPCode);
+		ServletOutputStream out = resp.getOutputStream();
+		out.print(o.toString());
 		out.close();
 	}
 

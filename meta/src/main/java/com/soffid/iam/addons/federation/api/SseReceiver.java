@@ -88,10 +88,14 @@ public class SseReceiver {
 	String sourceOAuth;
 	
 	@Nullable
+	@Attribute(type = "SYSTEM")
 	String sourceSystem;
 	
 	@Description("Communication is paused")
 	boolean pause;
+
+	@Nullable
+	String statusReason;
 
 	@Description("All subjects are subscribed")
 	boolean subscribeAll;
