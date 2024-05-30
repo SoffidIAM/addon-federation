@@ -56,7 +56,7 @@ public class UserPushCredentialRegisterServlet extends BaseForm {
         	if (user == null) {
         		o.put("success", false);
         		o.put("cause", "Wrong URL");
-        	} else {
+        	} else if ("true".equals(req.getParameter("fetch"))){
 				UserCredential credential = new UserCredential();
 				credential.setCreated(new Date());
 				credential.setSerialNumber( userCredentialService.generateNextSerial() );
@@ -76,6 +76,9 @@ public class UserPushCredentialRegisterServlet extends BaseForm {
         		o.put("key", s);
         		o.put("company", IdpConfig.getConfig().getFederationMember().getOrganization());
         		o.put("id", credential.getSerialNumber());
+        	} else {
+        		o.put("success", false);
+        		o.put("cause", "Incomplete URL");
         	}
         	byte[] b = o.toString().getBytes(StandardCharsets.UTF_8);
         	resp.setContentLength(b.length);
