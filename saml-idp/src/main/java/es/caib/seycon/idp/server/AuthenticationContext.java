@@ -661,6 +661,15 @@ public class AuthenticationContext {
 
 	public void setUser(String user) {
 		this.user = user;
+		currentUser = null;
+		currentAccount = null;
+		if (user != null) {
+			try {
+				getUserData(user);
+			} catch (Exception e) {
+				// Ignore locked or disabled account error
+			}
+		}
 	}
 
 	public FederationMember getIdentityProvider() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
