@@ -99,6 +99,8 @@ public class PasswordChangeRequiredAction extends HttpServlet {
 	        		{
 	        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
 	        			return;
+	        		} else {
+	        			req.getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);
 	        		}
         		}
         	} catch (Exception e)
