@@ -16,6 +16,7 @@ import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.HtmlGenerator;
 import es.caib.seycon.idp.ui.Messages;
+import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.UserAccount;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.remote.RemoteServiceLocator;
@@ -72,6 +73,13 @@ public class PasswordResetForm extends BaseForm {
         		session.setAttribute("account", acc.getName());
         		g.addArgument("policy", logonService.getPasswordPolicy(acc.getName(), acc.getDispatcher()));
         		g.addArgument("user", acc.getName());
+        	}
+
+        	String isTitleRecover = (String) session.getAttribute(SessionConstants.TITLE_RECOVER);
+        	if (isTitleRecover!=null && "true".equals(isTitleRecover)) {
+        		g.addArgument("isFromRecoveryPassword", "true");
+        	} else {
+        		g.addArgument("isFromResetPassword", "true");
         	}
 
         	g.generate(resp, "passwordChangeRequired.html"); //$NON-NLS-1$

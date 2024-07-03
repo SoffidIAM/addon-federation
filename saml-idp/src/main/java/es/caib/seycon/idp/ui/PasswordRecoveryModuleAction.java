@@ -63,6 +63,7 @@ public class PasswordRecoveryModuleAction extends HttpServlet {
         		HttpSession s = req.getSession();
                 s.setAttribute(SessionConstants.SEU_TEMP_USER, null);
                 s.setAttribute(SessionConstants.SEU_TEMP_PASSWORD, null);
+                s.setAttribute(SessionConstants.TITLE_RECOVER, "true");
                 RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordChangeRequiredForm.URI);
                 dispatcher.forward(req, resp);
         	} else {
