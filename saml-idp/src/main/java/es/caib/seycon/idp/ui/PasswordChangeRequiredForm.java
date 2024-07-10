@@ -56,7 +56,13 @@ public class PasswordChangeRequiredForm extends BaseForm {
         	
         	g.addArgument("policy", logonService.getPasswordPolicy(user, IdpConfig.getConfig().getSystem().getName()));
 
-            
+        	String isTitleRecover = (String) session.getAttribute(SessionConstants.TITLE_RECOVER);
+        	if (isTitleRecover!=null && "true".equals(isTitleRecover)) {
+        		g.addArgument("isFromRecoveryPassword", "true");
+        	} else {
+        		g.addArgument("isFromResetPassword", "true");
+        	}
+
             g.generate(resp, "passwordChangeRequired.html"); //$NON-NLS-1$
         } catch (TextFormatException e) {
             throw new ServletException(e);
