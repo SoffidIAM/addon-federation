@@ -102,6 +102,6 @@ public class SseReceiverEntity {
 	@DaoFinder("select r "
 			+ "from com.soffid.iam.addons.federation.model.SseReceiverEntity as r "
 			+ "join r.allowedEvents as ev "
-			+ "where ev.name = :name")
+			+ "where ev.name = :name and r.tenant.id = :tenantId")
 	Collection<SseReceiverEntity> findByEventType(String name) {return null;}
 }
