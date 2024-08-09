@@ -304,7 +304,7 @@ public class FederationServiceImpl
 	}
 
 	private void checkRole(String system, String name, String description) throws InternalErrorException {
-		Role role = getApplicationService().findRoleByNameAndSystem(system, name);
+		Role role = getApplicationService().findRoleByNameAndSystem(name, system);
 		if (role == null) {
 			role = new Role();
 			role.setName(name);
