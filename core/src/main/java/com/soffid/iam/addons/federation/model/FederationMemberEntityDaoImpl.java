@@ -320,7 +320,8 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 		target.getNetworkConfig().add(cfg);
 		if (idp.getClientCertificatePort() != null && ! idp.getClientCertificatePort().isEmpty() && 
 				!idp.getClientCertificatePort().equals(idp.getStandardPort()) &&
-				!cfg.isProxy()) {
+				!cfg.isProxy() && 
+				!"false".equals(idp.getClientCertificatePort())) {
 			cfg = new IdpNetworkConfig();
 			cfg.setProxy(false);
 			cfg.setPort(Integer.parseInt(idp.getClientCertificatePort()));
