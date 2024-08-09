@@ -82,7 +82,7 @@ public class UserPasswordFormServlet extends BaseForm {
         	if ( ctx != null && ctx.getStep() > 0 ) {
         		requestedUser = ctx.getUser();
         	}
-        	else if (ctx.isFinished()) {
+        	else if (ctx != null && ctx.isFinished()) {
     			new Autenticator().autenticate2(ctx.getUser(), getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
     			return;
         	}
