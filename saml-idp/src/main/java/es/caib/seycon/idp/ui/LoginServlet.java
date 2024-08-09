@@ -77,7 +77,9 @@ public class LoginServlet extends LangSupportServlet {
 				if (!timeout && !authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req) &&
 						auth.getSession(req, false) != null)
 				{
-					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
+					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), 
+							false,
+		            		authCtx.getHostId(resp));
 					return;
 				}
         	}

@@ -201,7 +201,7 @@ public class Autenticator {
 		String user = ti.getUser();
 		if (user == null)
 			return false;
-		autenticate2(user, ctx, req, resp, ti.getAuthenticationMethod(), true, null);
+		autenticate2(user, ctx, req, resp, ti.getAuthenticationMethod(), false, null);
 		return true;
 	}
 
@@ -257,7 +257,7 @@ public class Autenticator {
 						authCtx.store(req);
 						return false;
 					} else {
-						autenticate2(user, ctx, req, resp, "E", true, hostId);
+						autenticate2(user, ctx, req, resp, "E", false, hostId);
 						return true;
 					}
 		        }

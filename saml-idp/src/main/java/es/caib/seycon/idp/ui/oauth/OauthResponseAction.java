@@ -95,7 +95,9 @@ public class OauthResponseAction extends HttpServlet {
     		ctx.store(req);
     		if ( ctx.isFinished())
     		{
-	            auth.autenticate2(account, getServletContext(), req, resp, ctx.getUsedMethod(), consumer.getRelyingParty(), true, ctx.getHostId(resp));
+	            auth.autenticate2(account, getServletContext(), req, resp, ctx.getUsedMethod(), consumer.getRelyingParty(),
+	            		true,
+	            		ctx.getHostId(resp));
     		} else {
     		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
     		    dispatcher.forward(req, resp);

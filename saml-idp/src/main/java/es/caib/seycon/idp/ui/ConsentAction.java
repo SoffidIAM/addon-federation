@@ -33,7 +33,9 @@ public class ConsentAction extends HttpServlet {
 	        	{
 	        		authCtx.addConsent();
 	                Autenticator auth = new Autenticator();
-	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp) );
+	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), 
+		            		authCtx.getUsedMethod() != null && !authCtx.getUsedMethod().contains("P"),
+		            		authCtx.getHostId(resp) );
 	        	} else {
 					resp.sendRedirect(CancelAction.URI);
 	        	}
