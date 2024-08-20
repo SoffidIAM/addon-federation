@@ -534,7 +534,7 @@ public class SessionServer extends Session
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.GETUSER, 
 					FLAG_ZERO,
-					"User name",
+					"User name: ",
 					""
 				);
 		else if (authenticationContext == null && password == null) {
@@ -546,8 +546,8 @@ public class SessionServer extends Session
 			} catch (Exception e) {
 				return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 						TAC_PLUS.AUTHEN.STATUS.GETPASS, 
-						FLAG_ZERO,
-						"Password",
+						(byte) 1,
+						"Password: ",
 						""
 						);
 			}
@@ -609,21 +609,21 @@ public class SessionServer extends Session
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.GETUSER, 
 					FLAG_ZERO,
-					"User name",
+					"User name: ",
 					""
 					);
 		} else if (changingPassword) {
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.GETPASS, 
-					FLAG_ZERO,
-					"New password",
+					(byte) 1,
+					"New password: ",
 					""
 					);
 		} else if (authenticationContext == null || nextFactors.contains("P")) {
 			return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 					TAC_PLUS.AUTHEN.STATUS.GETPASS, 
-					FLAG_ZERO,
-					"Password",
+					(byte) 1,
+					"Password: ",
 					""
 					);
 		} else if (nextFactors.contains("O") || nextFactors.contains("M") || nextFactors.contains("I")|| nextFactors.contains("S")) {
@@ -642,7 +642,7 @@ public class SessionServer extends Session
 			{
 				return new AuthenReply	(p.getHeader().next(TAC_PLUS.PACKET.VERSION.v13_0), 
 						TAC_PLUS.AUTHEN.STATUS.GETPASS, 
-						FLAG_ZERO,
+						(byte) 1,
 						ch.getCardNumber()+" "+ch.getCell(),
 						""
 						);
