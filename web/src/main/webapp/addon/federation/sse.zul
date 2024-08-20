@@ -185,11 +185,10 @@
 		- ${c:l("user-account-new.Finish")}
 				</attribute>
 			<div id="step1" >
-				<fileupload style="width: 600px; height: 120px; padding: 20px 0px 20px 100px"
+				<uploader style="width: 600px; height: 120px; padding: 20px 0px 20px 100px"
 					id="${c:l('csvimport.upload') }" 
 					onUpload="ref:frame.onUpload"
-					onClose="ref:frame.cancelUpload"
-					mold="compact"/>
+					onClose="ref:frame.cancelUpload"/>
 			</div>
 			<div id="step2" visible="false" style="min-width: 600px; padding: 20px; width: 100%">
 				<customfield3 label="${c:l('federacio.zul.pin') }" dataType="PASSWORD" maxlength="64" id="pin"/> 				

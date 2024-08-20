@@ -149,10 +149,10 @@
 				<div id="upload">
 					<div>
 						<label value="${c:l('selfcertificate.certificate') }:" sclass="label"></label>
-						<fileupload style="width: 400px; height: 60px; display: inline-block"
+						<uploader noclose="true"
+							style="width: 400px; height: 60px; display: inline-block"
 							id="${c:l('csvimport.upload') }" 
-							onUpload="ref:frame.onUpload"
-							mold="short"/>					
+							onUpload="ref:frame.onUpload"/>					
 					</div>
 					<customfield3 dataType="STRING" maxlength="100"
 						readonly="true" 
