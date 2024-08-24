@@ -65,14 +65,16 @@ public class IDPAgent extends Agent implements AccessLogMgr, UserMgr {
 		                    if (name == null)
 		                        log.info("Starting IDP {} (Previous {})", newName, name); //$NON-NLS-1$
 		                    main = createMain();
-		                    main.start(newName, getSystem());
 		                    name = newName;
+		                    main.start(newName, getSystem());
 		                }
 		            } catch (Exception e) {
 		            	log.warn("Error starting IDP", e);
 		            	try {
 		            		stopMain();
 		            	} catch (Exception e2) {}
+		            	name = null; 
+		            	main = null;
 		                throw new InternalErrorException("Error starting IDP", e); //$NON-NLS-1$
 		            }
 		        }

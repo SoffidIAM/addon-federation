@@ -135,30 +135,12 @@ public class RelyingPartyGenerator {
             NoSuchAlgorithmException, CertificateException,
             IllegalStateException, NoSuchProviderException, SignatureException,
             InternalErrorException {
-        Element mdNode = doc.createElementNS(METADATA_NAMESPACE,
-                "MetadataProvider"); //$NON-NLS-1$
-        rootNode.insertBefore(mdNode, trustEngineNode);
-
-        mdNode.setAttribute("xsi:type", "metadata:ChainingMetadataProvider"); //$NON-NLS-1$ //$NON-NLS-2$
-        mdNode.setAttribute("id", "ShibbolethMetadata"); //$NON-NLS-1$ //$NON-NLS-2$
-
-        Element spmdNode = doc.createElementNS(METADATA_NAMESPACE,
-                "MetadataProvider"); //$NON-NLS-1$
-        mdNode.appendChild(spmdNode);
-        spmdNode.setAttribute("minRefreshDelay",  "PT15S"); //$NON-NLS-1$ //$NON-NLS-2$
-        spmdNode.setAttribute("maxRefreshDelay", "PT1M"); //$NON-NLS-1$ //$NON-NLS-2$
-        spmdNode.setAttribute("id", "Global-Metadata"); //$NON-NLS-1$ //$NON-NLS-2$
-        spmdNode.setAttribute("xsi:type", //$NON-NLS-1$
-                "metadata:ResourceBackedMetadataProvider"); //$NON-NLS-1$
-
-        Element confNode = doc.createElementNS(METADATA_NAMESPACE,
-                "MetadataResource"); //$NON-NLS-1$
-        spmdNode.appendChild(confNode);
-        String tenant = IdpConfig.getConfig().getSystem().getTenant();
-        URL server = ServerLocator.getInstance().getServerUrl("/SAML/metadata.xml?tenant="+URLEncoder.encode(tenant, "UTF-8")); //$NON-NLS-1$
-        confNode.setAttribute("url", server.toString()); //$NON-NLS-1$
-        confNode.setAttribute("file", new File (IdpConfig.getConfig().getConfDir(), "metadata.xml").getPath()); //$NON-NLS-1$ //$NON-NLS-2$
-        confNode.setAttribute("xsi:type", "resource:FileBackedHttpResource"); //$NON-NLS-1$ //$NON-NLS-2$
+		Element mdNode = doc.createElementNS(METADATA_NAMESPACE,
+				"MetadataProvider"); //$NON-NLS-1$
+		rootNode.insertBefore(mdNode, trustEngineNode);
+		
+		mdNode.setAttribute("xsi:type", "metadata:SoffidMetadataProvider"); //$NON-NLS-1$ //$NON-NLS-2$
+		mdNode.setAttribute("id", "ShibbolethMetadata"); //$NON-NLS-1$ //$NON-NLS-2$
 
     }
 

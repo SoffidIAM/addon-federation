@@ -8,8 +8,10 @@
           xmlns:relyingParty="urn:mace:shibboleth:2.0:relying-party"
           xmlns:resource="urn:mace:shibboleth:2.0:resource" 
           xmlns:soffid-resolver="urn:soffid.com:shibboleth:2.0:resolver"
+          xmlns:soffid-relying-party="urn:soffid.com:shibboleth:2.0:relying-party"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="urn:soffid.com:shibboleth:2.0:resolver classpath:/schema/SeuExtension.xsd
+                              urn:soffid.com:shibboleth:2.0:relying-party classpath:/schema/SeuRPExtension.xsd
                               urn:mace:shibboleth:2.0:services classpath:/schema/shibboleth-2.0-services.xsd
                               urn:mace:shibboleth:2.0:afp classpath:/schema/shibboleth-2.0-afp.xsd
                               urn:mace:shibboleth:2.0:attribute:authority classpath:/schema/shibboleth-2.0-attribute-authority.xsd
@@ -40,10 +42,9 @@
              filter="shibboleth.AttributeFilterEngine" />
 
     <srv:Service id="shibboleth.RelyingPartyConfigurationManager"
-             xsi:type="relyingParty:SAMLMDRelyingPartyConfigurationManager"
+             xsi:type="soffid-relying-party:RelyingPartyConfigurationManager"
              depends-on="shibboleth.SAML1AttributeAuthority shibboleth.SAML2AttributeAuthority"
              configurationResourcePollingFrequency="PT1M">
-        <srv:ConfigurationResource file="${conf}/relying-party.xml" xsi:type="resource:FilesystemResource" />
     </srv:Service>
 
     <srv:Service id="shibboleth.HandlerManager"

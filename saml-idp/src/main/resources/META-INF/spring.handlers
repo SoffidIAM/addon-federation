@@ -1,2 +1,3 @@
 urn\:soffid.com\:shibboleth\:2.0\:resolver = es.caib.seycon.idp.shibext.NamespaceHandler
 urn\:soffid.com\:shibboleth\:2.0\:idp\:profile-handler = es.caib.seycon.idp.shibext.ProfileNamespaceHandler
+urn\:soffid.com\:shibboleth\:2.0\:relying-party = es.caib.seycon.idp.shibext.RelyingPartyNamespaceHandler
