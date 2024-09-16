@@ -44,6 +44,7 @@ import es.caib.seycon.ng.comu.Maquina;
 import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.RolEntity;
+import es.caib.seycon.ng.model.TipusUnitatOrganitzativaEntity;
 import es.caib.seycon.ng.servei.AplicacioService;
 import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.DispatcherService;
@@ -699,4 +700,7 @@ public abstract class FederationService {
 	@Description("Generates a simple error response when the server session has been lost")
 	public SamlRequest generateErrorResponse(String federationMember, String identityProvider, @Nullable String state) 
 		{return null;}
+
+	@Description("Retrieve if an organizational unit has the holderGroup checked")
+	public boolean isOUTypeAHolderGroup(String OUName) {return false;}
 }

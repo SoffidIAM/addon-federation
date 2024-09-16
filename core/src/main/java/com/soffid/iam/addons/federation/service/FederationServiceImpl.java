@@ -2953,4 +2953,9 @@ public class FederationServiceImpl
 	public SamlRequest handleGenerateErrorResponse(String federationMember, String identityProvider, String sessionId) throws InternalErrorException, Exception {
 		return getDelegate().generateErrorResponse(federationMember, identityProvider, sessionId);
 	}
+
+	@Override
+	public boolean handleIsOUTypeAHolderGroup(String OUName) {
+		return false;
+	}
 }

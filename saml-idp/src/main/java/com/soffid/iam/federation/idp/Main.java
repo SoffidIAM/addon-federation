@@ -157,6 +157,8 @@ import es.caib.seycon.idp.ui.RegisterFormServlet;
 import es.caib.seycon.idp.ui.RegisteredFormServlet;
 import es.caib.seycon.idp.ui.ResendSmsAction;
 import es.caib.seycon.idp.ui.RootServlet;
+import es.caib.seycon.idp.ui.SelectHolderGroupAction;
+import es.caib.seycon.idp.ui.SelectHolderGroupForm;
 import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
 import es.caib.seycon.idp.ui.UnauthorizedServlet;
@@ -592,11 +594,12 @@ public class Main {
         ctx.addServlet(SessionCallbackServlet.class, SessionCallbackServlet.URI);
         ctx.addServlet(OauthRequestAction.class, OauthRequestAction.URI);
         ctx.addServlet(OauthResponseAction.class, OauthResponseAction.URI);
-        
         ctx.addServlet(QueryUserIdPServlet.class, QueryUserIdPServlet.URI);
         ctx.addServlet(SAMLSSOPostServlet.class, SAMLSSOPostServlet.URI);
         ctx.addServlet(SAMLSSORequest.class, SAMLSSORequest.URI);
-        
+        ctx.addServlet(SelectHolderGroupForm.class, SelectHolderGroupForm.URI);
+        ctx.addServlet(SelectHolderGroupAction.class, SelectHolderGroupAction.URI);
+
         try {
             ctx.addServlet(PasswordRememberAction.class, PasswordRememberAction.URI);
             ctx.addServlet(PasswordRememberForm.class, PasswordRememberForm.URI);

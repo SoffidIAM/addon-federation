@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -23,6 +24,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.api.Group;
+import com.soffid.iam.api.GroupUser;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -55,7 +59,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 			req.getSession().setAttribute("soffid-session-type", "openid");
 	    	r = new OpenIdRequest();
 	    	
-	    	r.setScope(req.getParameter("scope"));
+	    	r.setScope(getScopeFromRequest(req));
 	    	r.setClientId(req.getParameter("client_id"));
 	    	r.setResponseType(req.getParameter("response_type"));
 	    	r.setState(req.getParameter("state"));
@@ -65,20 +69,23 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setPkceAlgorithm(req.getParameter("code_challenge_method"));
 	    	r.setPkceChallenge(req.getParameter("code_challenge"));
 	    	r.setLoginHint(req.getParameter("login_hint"));
+	    	r.setHolderGroup(getHolderGroupFromScope(r.getScope()));
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
 	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
 	    	}
 	    	if (OidcDebugController.isDebug()) {
 				log.info("Received authorization request:");
-				log.info("client_id     = "+r.getClientId());
-				log.info("response_type = "+r.getResponseType());
-				log.info("state         = "+r.getState());
-				log.info("nonce         = "+r.getNonce());
-				log.info("redirect_uri  = "+r.getRedirectUrl());
-				log.info("scope         = "+req.getParameter("scope"));
-				log.info("code_algorithm= "+r.getPkceAlgorithm());
-				log.info("code_challenge= "+r.getPkceChallenge());
+				log.info("client_id      = "+r.getClientId());
+				log.info("response_type  = "+r.getResponseType());
+				log.info("state          = "+r.getState());
+				log.info("nonce          = "+r.getNonce());
+				log.info("redirect_uri   = "+r.getRedirectUrl());
+				log.info("scope          = "+r.getScope());
+				log.info("code_algorithm = "+r.getPkceAlgorithm());
+				log.info("code_challenge = "+r.getPkceChallenge());
+				log.info("login_hint     = "+r.getLoginHint());
+				log.info("holderGroup    = "+r.getHolderGroup());
 	    	}
 	    	HttpSession session = req.getSession(true);
 	    	if (r.getFederationMember() != null) {
@@ -112,6 +119,51 @@ public class AuthorizationEndpoint extends HttpServlet {
     	} catch (Exception e) {
             generateError(r, "server_error", e.toString(), resp);
 		}
+	}
+
+	private String getScopeFromRequest(HttpServletRequest req) {
+		String[] a = req.getParameterValues("scope");
+		if (a!=null && a.length>0) {
+			HashMap<String, String> hm = new HashMap<String, String>();
+			for (String i : a) {
+				for (String i2 : i.split(" ")) {
+					hm.put(i2.trim(), i2.trim());
+				}
+			}
+			String o = "";
+			for (String i : hm.keySet()) {
+				if (!i.trim().isEmpty()) {
+					if (o.length()>0)
+						o = o+" ";
+					o = o+i;
+				}
+			}
+			return o;
+		}
+		return null;
+	}
+
+	private String getHolderGroupFromScope(String scope) {
+		if (scope==null || !scope.toLowerCase().contains("holdergroup:"))
+			return null;
+
+		String[] sa = scope.trim().split(" ");
+		for (String s : sa) {
+			if (s.toLowerCase().startsWith("holdergroup:")) {
+				String hg = s.substring(s.indexOf(":")+1);
+				if (hg!=null && !hg.trim().isEmpty()) {
+					try {
+						hg =  URLDecoder.decode(hg,"UTF-8");
+						Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(hg);
+						if (g!=null)
+							return g.getName();
+					} catch (InternalErrorException | IOException e) {}
+				}
+				return null;
+			}
+		}
+
+		return null;
 	}
 
 	private void clientCredentialsGrantType(HttpServletRequest req, HttpServletResponse resp)

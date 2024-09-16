@@ -188,7 +188,9 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
         		UserData data = server.getUserData(ui.getId(), "PHONE"); //$NON-NLS-1$
         		if (data != null)
         			addStringValue (ctx, m, "TelephoneNumber", data.getValue()); //$NON-NLS-1$
-        		
+
+        		addStringValue (ctx, m, "HolderGroup", "ABCD"); //$NON-NLS-1$
+
         	} catch (UnknownUserException ex) {
         		addStringValue (ctx, m, "Fullname", account.getDescription()); //$NON-NLS-1$
         		

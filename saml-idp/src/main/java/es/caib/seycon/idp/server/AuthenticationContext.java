@@ -97,6 +97,27 @@ public class AuthenticationContext {
 	private String browser;
 	private String cpu;
 	private RecoverPasswordChallenge recoverChallenge;
+	public boolean isHolderGroupIsActive() {
+		return holderGroupIsActive;
+	}
+
+
+	public void setHolderGroupIsActive(boolean holderGroupIsActive) {
+		this.holderGroupIsActive = holderGroupIsActive;
+	}
+
+
+	public String getHolderGroupSelected() {
+		return holderGroupSelected;
+	}
+
+
+	public void setHolderGroupSelected(String holderGroupSelected) {
+		this.holderGroupSelected = holderGroupSelected;
+	}
+
+	private boolean holderGroupIsActive;
+	private String holderGroupSelected;
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{

@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -45,6 +46,8 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.api.Group;
+import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
@@ -76,6 +79,7 @@ import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.shibext.UidEvaluator;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
+import es.caib.seycon.idp.ui.SelectHolderGroupForm;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.idp.wsfed.WsfedResponse;
 import es.caib.seycon.ng.comu.TipusSessio;
@@ -419,7 +423,11 @@ public class Autenticator {
 				return;
 			}
 		}
-		
+
+		// Handle the selection of the holderGroup
+		if (hasToResquetDomains(session, authCtx)) {
+			resp.sendRedirect(SelectHolderGroupForm.URI);
+		}
 
 		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
@@ -472,6 +480,45 @@ public class Autenticator {
         	
         }
     }
+
+	private boolean hasToResquetDomains(HttpSession session, AuthenticationContext authCtx) {
+		try {
+			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
+
+			// HolderGroup already selected
+			if (authCtx.getHolderGroupSelected()!=null)
+				return false;
+
+			// HolderGroup present in the scope
+			if (r.getHolderGroup()!=null) {
+				authCtx.setHolderGroupSelected(r.getHolderGroup());
+				authCtx.setHolderGroupIsActive(true);
+				return false;
+			}
+
+			// User has one or more holderGroups
+    		String un = authCtx.getCurrentUser().getUserName();
+    		Collection<GroupUser> lgu = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
+    		Collection<Group> lgu2 = new LinkedList();
+    		for (GroupUser gu : lgu) {
+    			Group g = new RemoteServiceLocator().getGroupService().findGroupById(gu.getGroupId());
+    			if (g.getType()!=null) {
+    				lgu2.add(g);
+    			}
+    		}
+    		if (lgu2.size()==1) {
+    			authCtx.setHolderGroupSelected(lgu2.iterator().next().getName());
+    			authCtx.setHolderGroupIsActive(true);
+    			return false;
+    		} else if (lgu.size()>1) {
+    			authCtx.setHolderGroupIsActive(true);
+    			return true;
+    		}
+
+		} catch (Exception e) {}
+
+		return false;
+	}
 
 	protected void doSamlLogin(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp,
 			edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession, String type, String user,
