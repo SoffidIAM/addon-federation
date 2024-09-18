@@ -29,17 +29,19 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	private String identityProvider;
 	private String serviceProvider;
 	private boolean deviceCertificate;
+	private boolean isEsso;
 	
 	private Collection<UserCredentialType> tokens;
 
 	private Collection<String> otps;
 	
 	public ActualAdaptiveEnvironment(User user, String sourceIp, String hostId, 
-			boolean deviceCertificate) throws IOException, InternalErrorException {
+			boolean deviceCertificate, boolean esso) throws IOException, InternalErrorException {
 		this.user = user;
 		this.sourceIp = sourceIp;
 		this.hostId = hostId;
 		this.deviceCertificate = deviceCertificate;
+		this.isEsso = esso;
 	}
 
 	@Override
@@ -291,5 +293,10 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 
 	public Double displacementSpeed() throws InternalErrorException {
 		return service.getDisplacementSpeed(user, sourceIp);
+	}
+
+	@Override
+	public boolean isEsso() {
+		return isEsso;
 	}
 }

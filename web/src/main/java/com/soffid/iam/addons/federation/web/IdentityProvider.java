@@ -550,7 +550,8 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 				XPathUtils.setValue(form, "logoutEndpoint", "/logout");
 			if (XPathUtils.eval(form, "revokeEndpoint") == null) 
 				XPathUtils.setValue(form, "revokeEndpoint", "/revoke");
-		} else if (SamlProfileEnumeration.CAS.equals(classe)){
+		} else if (SamlProfileEnumeration.CAS.equals(classe) ||
+				classe == SamlProfileEnumeration.ESSO){
 			w.getFellow("r_discoveryEndpoint").setVisible(false);
 			w.getFellow("r_authorizationEndpoint").setVisible(false);
 			w.getFellow("r_tokenEndpoint").setVisible(false);
@@ -577,7 +578,21 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 					!SamlProfileEnumeration.TACACS_PLUS.equals(classe) &&
 					!SamlProfileEnumeration.WS_FEDERATION.equals(classe));
 		 }
+		
+		 w.getFellow("r_esso_createLocalAccounts").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_enableCloseSession").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_forceStartupLogin").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_hostnameFormat").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_idleTimeout").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_keepAlive").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_mainAgent").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_offlineDays").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_offlineDetector").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_sharedWorkstation").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_showPreviousUser").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_windowsCredentialProvider").setVisible(SamlProfileEnumeration.ESSO == classe);
 
+		
 		w.getFellow("r_radius_authPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe) || SamlProfileEnumeration.TACACS_PLUS.equals(classe));
 		w.getFellow("r_radius_acctPort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));
 		w.getFellow("r_radius_securePort").setVisible(SamlProfileEnumeration.RADIUS.equals(classe));

@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
 import javax.servlet.DispatcherType;
+import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -75,6 +76,26 @@ import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.sync.jetty.ProxyConnectionFactory;
 import com.soffid.iam.sync.jetty.SoffidSslContextFactory;
+import com.soffid.iam.federation.idp.esso.QueryServlet;
+import com.soffid.iam.federation.idp.esso.AuditPasswordQueryServlet;
+import com.soffid.iam.federation.idp.esso.CertificateLoginServlet;
+import com.soffid.iam.federation.idp.esso.ChangeSecretServlet;
+import com.soffid.iam.federation.idp.esso.CreateSessionServlet;
+import com.soffid.iam.federation.idp.esso.EssoCertServlet;
+import com.soffid.iam.federation.idp.esso.GeneratePasswordServlet;
+import com.soffid.iam.federation.idp.esso.GetHostAdministrationServlet;
+import com.soffid.iam.federation.idp.esso.GetSecretsServlet;
+import com.soffid.iam.federation.idp.esso.KeepaliveSessionServlet;
+import com.soffid.iam.federation.idp.esso.KerberosLoginServlet;
+import com.soffid.iam.federation.idp.esso.MazingerIconsServlet;
+import com.soffid.iam.federation.idp.esso.MazingerMenuEntryServlet;
+import com.soffid.iam.federation.idp.esso.MazingerMenuServlet;
+import com.soffid.iam.federation.idp.esso.MazingerServlet;
+import com.soffid.iam.federation.idp.esso.PasswordLoginServlet;
+import com.soffid.iam.federation.idp.esso.SetHostAdministrationServlet;
+import com.soffid.iam.federation.idp.esso.UpdateHostAddress;
+import com.soffid.iam.sync.web.pam.PamSessionServlet;
+import com.soffid.iam.sync.web.wsso.WebSessionServlet;
 import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;
 
@@ -137,6 +158,7 @@ import es.caib.seycon.idp.ui.ResendSmsAction;
 import es.caib.seycon.idp.ui.RootServlet;
 import es.caib.seycon.idp.ui.TenantFilter;
 import es.caib.seycon.idp.ui.UnauthenticatedFilter;
+import es.caib.seycon.idp.ui.UnauthorizedServlet;
 import es.caib.seycon.idp.ui.UserAction;
 import es.caib.seycon.idp.ui.UserInfoForm;
 import es.caib.seycon.idp.ui.UserPasswordAction;
@@ -497,6 +519,11 @@ public class Main {
         {
         	configureOpenidProfile(ctx, openIdProfile);
         }
+        SAMLProfile essoProfile = useEssoProfile();
+        if (essoProfile != null && Boolean.TRUE.equals(essoProfile.getEnabled()))
+        {
+        	configureEssoProfile(ctx, openIdProfile);
+        }
         final SAMLProfile casProfile = useCasProfile();
 		if (casProfile != null) {
         	configureCasProfile(ctx, casProfile);
@@ -534,6 +561,7 @@ public class Main {
         ctx.addServlet(CancelAction.class, CancelAction.URI);
         ctx.addServlet(UserPasswordFormServlet.class,
                 UserPasswordFormServlet.URI);
+        ctx.addServlet(UnauthorizedServlet.class, UnauthorizedServlet.URI);
         ctx.addServlet(UserPasswordAction.class, UserPasswordAction.URI);
         ctx.addServlet(PasswordRecoveryModuleForm.class, PasswordRecoveryModuleForm.URI);
         ctx.addServlet(PasswordRecoveryModuleAction.class, PasswordRecoveryModuleAction.URI);
@@ -587,7 +615,7 @@ public class Main {
         ctx.setErrorHandler(errorHandler);
         
         errorHandler.addErrorPage(400, ErrorServlet.URI);
-        errorHandler.addErrorPage(401, UserPasswordFormServlet.URI);
+        errorHandler.addErrorPage(401, UnauthorizedServlet.URI);
         errorHandler.addErrorPage(Throwable.class, ErrorServlet.URI);
         for (int i = 402; i <= 416; i++)
         	errorHandler.addErrorPage(i, ErrorServlet.URI);
@@ -757,6 +785,38 @@ public class Main {
 		new SseThreadManager(ctx.getServletContext()).start();
 	}
 
+	private void configureEssoProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+        bindEssoServlet("/query/*", ctx, QueryServlet.class);
+        bindEssoServlet("/logout", ctx, com.soffid.iam.federation.idp.esso.LogoutServlet.class);
+        bindEssoServlet("/passwordLogin", ctx, PasswordLoginServlet.class);
+        bindEssoServlet("/kerberosLogin", ctx, KerberosLoginServlet.class);
+        bindEssoServlet("/certificateLogin", ctx, CertificateLoginServlet.class);
+        bindEssoServlet("/keepAliveSession", ctx, KeepaliveSessionServlet.class);
+        bindEssoServlet("/getSecrets", ctx, GetSecretsServlet.class);
+        bindEssoServlet("/createsession", ctx, CreateSessionServlet.class);
+        bindEssoServlet("/getmazingerconfig", ctx, MazingerServlet.class);
+        bindEssoServlet("/getapplications", ctx, MazingerMenuServlet.class);
+        bindEssoServlet("/getapplication", ctx, MazingerMenuEntryServlet.class);
+        bindEssoServlet("/getapplicationicon", ctx, MazingerIconsServlet.class);
+        bindEssoServlet("/gethostadmin", ctx, GetHostAdministrationServlet.class);
+        bindEssoServlet("/updateHostAddress", ctx, UpdateHostAddress.class);
+        bindEssoServlet("/setSecret", ctx, ChangeSecretServlet.class);
+        bindEssoServlet("/generatePassword", ctx, GeneratePasswordServlet.class);
+        bindEssoServlet("/auditPassword", ctx, AuditPasswordQueryServlet.class);
+        bindEssoServlet("/sethostadmin", ctx, SetHostAdministrationServlet.class);
+        bindEssoServlet("/websession", ctx, WebSessionServlet.class);
+        bindEssoServlet("/pam-notify", ctx, PamSessionServlet.class);
+        bindEssoServlet("/cert", ctx, EssoCertServlet.class);
+        
+	}
+
+	private void bindEssoServlet(String path, ServletContextHandler ctx, Class<? extends Servlet> class1) {
+		ServletHolder servlet = new ServletHolder(class1);
+		servlet.setInitOrder(3);
+		servlet.setName(path);
+		ctx.addServlet(servlet, "/esso"+path);
+	}
+
 	private void configureSsfProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
 		ServletHolder servlet = new ServletHolder(es.caib.seycon.idp.sse.server.ConfigurationEndpointSsf.class);
 		servlet.setInitOrder(2);
@@ -896,6 +956,23 @@ public class Main {
         return null;
 	}
 
+	private SAMLProfile useEssoProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+        IdpConfig c = IdpConfig.getConfig();
+		FederationService federacioService = c.getFederationService();
+		FederationMember fm = c.getFederationMember();
+		
+        Collection<SAMLProfile> profiles = federacioService
+                .findProfilesByFederationMember(fm);
+        for (Iterator<SAMLProfile> it = profiles.iterator(); it.hasNext();) {
+            SAMLProfile profile = (SAMLProfile) it.next();
+            SamlProfileEnumeration type = profile.getClasse();
+            if (type.equals(SamlProfileEnumeration.ESSO) && Boolean.TRUE.equals(profile.getEnabled())) {
+            	return profile;
+            }
+        }
+        return null;
+	}
+
 	private SAMLProfile useCasProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
         IdpConfig c = IdpConfig.getConfig();
 		FederationService federacioService = c.getFederationService();
@@ -1029,12 +1106,18 @@ public class Main {
         constraintMapping.setConstraint(constraint);
         constraintMapping.setPathSpec(NtlmAction.URI);
 
+        ConstraintMapping constraintMapping2 = new ConstraintMapping();
+        constraintMapping2.setConstraint(constraint);
+        constraintMapping2.setPathSpec("/esso/kerberosLogin");
+
         ConstraintSecurityHandler csh = new ConstraintSecurityHandler();
         LoginService loginService;
        	loginService = new CustomSpnegoLoginService("CustomSpnegoLogin");
         csh.setAuthenticator(new ConfigurableSpnegoAuthenticator());
         csh.setRealmName("Soffid");
-        csh.setConstraintMappings(new ConstraintMapping[] {constraintMapping});
+        csh.setConstraintMappings(new ConstraintMapping[] {
+        		constraintMapping,
+        		constraintMapping2});
         csh.setLoginService( loginService );
         
         ctx.setSecurityHandler(csh);

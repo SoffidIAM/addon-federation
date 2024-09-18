@@ -35,4 +35,7 @@ public class SamlProfileEnumeration {
 	public java.lang.String SSE="Shared signals & events";
 
 	public java.lang.String WS_FEDERATION="Ws-Federation";
+
+	public java.lang.String ESSO="Esso";
+
 }

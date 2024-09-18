@@ -15,6 +15,7 @@ import com.soffid.iam.addons.federation.model.AllowedScopeEntity;
 import com.soffid.iam.addons.federation.model.AllowedScopeRoleEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.CasProfileEntity;
+import com.soffid.iam.addons.federation.model.EssoProfileEntity;
 import com.soffid.iam.addons.federation.model.FederationMemberSessionEntity;
 import com.soffid.iam.addons.federation.model.IdpNetworkConfigEntity;
 import com.soffid.iam.addons.federation.model.ImpersonationEntity;
@@ -104,6 +105,7 @@ import org.springframework.transaction.annotation.Transactional;
 	com.soffid.iam.addons.federation.model.Saml2ECPProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity.class,
 	com.soffid.iam.addons.federation.model.Saml2AttributeQueryProfileEntity.class,
+	EssoProfileEntity.class,
 	SseProfileEntity.class,
 	RadiusProfileEntity.class,
 	CasProfileEntity.class,

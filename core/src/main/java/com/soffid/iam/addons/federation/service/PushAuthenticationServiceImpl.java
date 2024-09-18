@@ -42,7 +42,7 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 	}
 
 	@Override
-	protected Collection<UserCredentialChallenge> handleSendPushAuthentication(String user, String domain) throws Exception {
+	protected Collection<UserCredentialChallenge> handleSendPushAuthentication(String user, String domain, boolean text) throws Exception {
 		List<UserCredentialChallenge> currentChallenge = new LinkedList<>(); 
 		UserEntity u = getUserEntityDao().findByUserName(user);
 		if (u != null && u.getActive().equals("S")) {
@@ -74,6 +74,7 @@ public class PushAuthenticationServiceImpl extends PushAuthenticationServiceBase
 						ch.setImage2(images[1]);
 						ch.setImage3(images[2]);
 						ch.setImage4(images[3]);
+						ch.setText(text);
 					}
 					getUserCredentialChallengeEntityDao().create(ch);
 					currentChallenge.add( getUserCredentialChallengeEntityDao().toUserCredentialChallenge(ch) );

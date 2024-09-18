@@ -327,7 +327,7 @@ public class Am03Handler extends Window implements AfterCompose {
 	}
 
 	private boolean alreadyHasToken(User user) throws IOException, InternalErrorException {
-		ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment (user, "", "", false);
+		ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment (user, "", "", false, false);
 		env.setService((UserBehaviorService) 
 				ServiceLocator
 				.instance()

@@ -5,9 +5,12 @@
  */
 package com.soffid.iam.addons.federation.model;
 
+import java.text.ParseException;
+
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
+import com.soffid.iam.utils.ConfigurationCache;
 
 /**
  * @see com.soffid.iam.addons.federation.model.SamlProfileEntity
@@ -153,6 +156,28 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 		} else if (source instanceof SamlProfileEntity) {
 			// En teoria aquesta és abstracta
 			target.setClasse(SamlProfileEnumeration.SAML_PRO);
+		} else if (source instanceof EssoProfileEntity) {
+			// En teoria aquesta és abstracta
+			target.setClasse(SamlProfileEnumeration.ESSO);
+			EssoProfileEntity entity = (EssoProfileEntity) source;
+			target.setHostnameFormat( entity.getHostnameFormat() );
+			target.setMainAgent( entity.getMainAgent() );
+			target.setEnableCloseSession( entity.getEnableCloseSession() );
+			target.setForceStartupLogin(entity.getForceStartupLogin());
+			target.setKeepAlive(entity.getKeepAlive());
+			String to = ConfigurationCache.getProperty("soffid.esso.session.timeout");
+			try 
+			{
+				target.setIdleTimeout( Integer.parseInt(to) );
+			} catch (NumberFormatException e) {
+				target.setIdleTimeout(1200);
+			}
+			target.setSharedWorkstation(entity.getSharedWorkstation());
+			target.setWindowsCredentialProvider(entity.getWindowsCredentialProvider());
+			target.setCreateLocalAccounts(entity.getCreateLocalAccounts());
+			target.setShowPreviousUser(entity.getShowPreviousUser());
+			target.setOfflineDetector(entity.getOfflineDetector());
+			target.setOfflineDays(entity.getOfflineDays());
 		}
 
 	}
@@ -195,6 +220,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 				samlProfileEntity = newSseProfileEntity();
 			} else if (SamlProfileEnumeration.WS_FEDERATION.equals(sAMLProfile.getClasse())) {
 				samlProfileEntity = newWsfedProfileEntity();
+			} else if (SamlProfileEnumeration.ESSO.equals(sAMLProfile.getClasse())) {
+				samlProfileEntity = newEssoProfileEntity();
 			} else {
 				samlProfileEntity = newSamlProfileEntity();
 			}
@@ -380,6 +407,22 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			SseProfileEntity entity = (SseProfileEntity) target;
 			entity.setEnabled(source.getEnabled());
 			target = entity;
+		} else if (SamlProfileEnumeration.ESSO.equals(source.getClasse())) {
+			// heretats
+			EssoProfileEntity entity = (EssoProfileEntity) target;
+			entity.setEnabled(source.getEnabled());
+			entity.setHostnameFormat( source.getHostnameFormat() );
+			entity.setMainAgent( source.getMainAgent() );
+			entity.setEnableCloseSession( source.getEnableCloseSession() );
+			entity.setForceStartupLogin(source.getForceStartupLogin());
+			entity.setKeepAlive(source.getKeepAlive());
+			entity.setIdleTimeout(source.getIdleTimeout());
+			entity.setSharedWorkstation(source.getSharedWorkstation());
+			entity.setWindowsCredentialProvider(source.getWindowsCredentialProvider());
+			entity.setCreateLocalAccounts(source.getCreateLocalAccounts());
+			entity.setShowPreviousUser(source.getShowPreviousUser());
+			entity.setOfflineDetector(source.getOfflineDetector());
+			entity.setOfflineDays(source.getOfflineDays());
 		} else {
 			// Res més... per als SAMLProfile
 		}

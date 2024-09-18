@@ -14,7 +14,10 @@ public class UserCredentialChallengeEntityDaoImpl extends UserCredentialChalleng
 			updateIdentifiers(target, 1, source.getImage2());
 			updateIdentifiers(target, 2, source.getImage3());
 			updateIdentifiers(target, 3, source.getImage4());
-			target.setImageUrl(generateUrl(source.getImage()));
+			if (source.isText())
+				target.setImageUrl(source.getImage());
+			else
+				target.setImageUrl(generateUrl(source.isText(), source.getImage()));
 		}
 		target.setDeviceVersion(source.getCredential().getVersion());
 	}
@@ -23,12 +26,14 @@ public class UserCredentialChallengeEntityDaoImpl extends UserCredentialChalleng
 		if (image != null) {
 			final int num = Integer.parseInt(image);
 			target.getIdentifiers()[i] = num;
-			target.getImages()[i] = generateUrl(image);			
+			target.getImages()[i] = generateUrl(target.isText(), image);			
 		}
 	}
 
-	protected String generateUrl(final String num) {
-		return "https://download.soffid.com/doc/push-images/birds/"+num+".jpg";
+	protected String generateUrl(boolean text, final String num) {
+		return text? 
+				"https://download.soffid.com/doc/push-images/numbers/"+num+".jpg" :
+				"https://download.soffid.com/doc/push-images/birds/"+num+".jpg";
 	}
 
 }

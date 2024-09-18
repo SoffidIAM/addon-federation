@@ -5,32 +5,20 @@
 //
 
 package com.soffid.iam.addons.federation.service;
-import com.soffid.iam.addons.federation.api.UserCredential;
+import java.util.Collection;
+
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
-import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialChallengeEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialEntity;
 import com.soffid.iam.addons.federation.model.UserCredentialRequestEntity;
-import com.soffid.iam.addons.federation.roles.federation_credential_create;
-import com.soffid.iam.addons.federation.roles.federation_credential_query;
-import com.soffid.mda.annotation.*;
+import com.soffid.mda.annotation.Depends;
+import com.soffid.mda.annotation.Nullable;
+import com.soffid.mda.annotation.Service;
 
-import es.caib.seycon.ng.comu.Usuari;
 import es.caib.seycon.ng.model.ConfiguracioEntity;
 import es.caib.seycon.ng.model.UsuariEntity;
 import es.caib.seycon.ng.servei.UsuariService;
-import roles.Tothom;
-import roles.federation_create_token;
-import roles.selfcertificate_user;
-import roles.user_query;
-
-import java.net.URI;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-
-import org.springframework.transaction.annotation.Transactional;
 
 @Service(serverPath = "/seycon/PushAuthenticationService", serverRole="agent")
 @Depends ({es.caib.seycon.ng.servei.ConfiguracioService.class,
@@ -43,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 	UserCredentialChallengeEntity.class})
 public class PushAuthenticationService 
 {
-	public Collection<UserCredentialChallenge> sendPushAuthentication( String user, @Nullable String domain ) { return null; }
+	public Collection<UserCredentialChallenge> sendPushAuthentication( String user, @Nullable String domain, boolean textMode ) { return null; }
 
 	public boolean isPushAuthenticationAccepted ( UserCredentialChallenge challenge ) { return false; }
 

@@ -243,7 +243,7 @@ public class UserPasswordFormServlet extends BaseForm {
 					user = new RemoteServiceLocator().getServerService().getUserInfo(requestedUser, config.getSystem().getName());
 					Collection<UserCredentialChallenge> ch = new RemoteServiceLocator()
 							.getPushAuthenticationService()
-							.sendPushAuthentication(user.getUserName(), ip.getHostName());
+							.sendPushAuthentication(user.getUserName(), ip.getHostName(), false);
 					ctx.setPushChallenge(ch);
 					g.addArgument("pushAllowed", ch.isEmpty() ? "false": "true");
 					g.addArgument("pushImage", "/img/transparent.png");

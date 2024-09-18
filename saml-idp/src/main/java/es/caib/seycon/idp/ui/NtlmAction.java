@@ -66,7 +66,7 @@ public class NtlmAction extends HttpServlet {
         	resp.sendRedirect(UserPasswordFormServlet.URI);
         	return;
         }
-        String user = principal.substring(0, split);
+        String user = principal;
         String system = principal.substring(split + 1);
 
     	String error = "";

@@ -273,7 +273,7 @@
 		<dependency>
 			<groupId>com.soffid.iam.sync</groupId>
 			<artifactId>syncserver</artifactId>
-			<version>3.3.0</version>
+			<version>3.6.3</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>

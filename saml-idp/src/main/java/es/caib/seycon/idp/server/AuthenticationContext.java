@@ -339,7 +339,7 @@ public class AuthenticationContext {
 		IdpConfig config = IdpConfig.getConfig();
     	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
     		
-    	ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(currentUser, remoteIp, hostId, deviceCertificate);
+    	ActualAdaptiveEnvironment env = new ActualAdaptiveEnvironment(currentUser, remoteIp, hostId, deviceCertificate, false);
     	Integer f = failuresByIp.get(remoteIp);
     	env.setFailuresForSameIp(f == null ? 0: f.intValue());
     	env.setFailuresRatio(worstAthenticationRatio());

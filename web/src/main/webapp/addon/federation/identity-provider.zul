@@ -576,6 +576,57 @@
 				dataType="BOOLEAN"
 				bind="ssl"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+		<!-- ESSO -->
+			<customfield3 id="r_esso_mainAgent" label="${c:l('federa_profile.zul.mainAgent')}"
+				dataType="SYSTEM"
+				bind="mainAgent"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_keepAlive" label="${c:l('federa_profile.zul.keepAlive')}"
+				dataType="NUMBER"
+				bind="keepAlive"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_idleTimeout" label="${c:l('federa_profile.zul.idleTimeout')}"
+				dataType="NUMBER"
+				bind="idleTimeout"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_windowsCredentialProvider" label="${c:l('federa_profile.zul.windowsCredentialProvider')}"
+				dataType="BOOLEAN"
+				bind="windowsCredentialProvider"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_showPreviousUser" label="${c:l('federa_profile.zul.showPreviousUser')}"
+				dataType="BOOLEAN"
+				bind="showPreviousUser"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_createLocalAccounts" label="${c:l('federa_profile.zul.createLocalAccounts')}"
+				dataType="BOOLEAN"
+				bind="createLocalAccounts"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_offlineDays" label="${c:l('federa_profile.zul.offlineDays')}"
+				dataType="NUMBER"
+				bind="offlineDays"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_offlineDetector" label="${c:l('federa_profile.zul.offlineDetector')}"
+				dataType="BOOLEAN"
+				bind="offlineDetector"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_forceStartupLogin" label="${c:l('federa_profile.zul.forceStartupLogin')}"
+				dataType="BOOLEAN"
+				bind="forceStartupLogin"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_enableCloseSession" label="${c:l('federa_profile.zul.enableCloseSession')}"
+				dataType="BOOLEAN"
+				bind="enableCloseSession"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_sharedWorkstation" label="${c:l('federa_profile.zul.sharedWorkstation')}"
+				dataType="BOOLEAN"
+				bind="sharedWorkstation"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+			<customfield3 id="r_esso_hostnameFormat" label="${c:l('federa_profile.zul.hostnameFormat')}"
+				dataType="STRING"
+				bind="hostnameFormat"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+				listOfValues="short: ${c:l('federation.short')}, long: ${c:l('federation.long') }" ></customfield3>
+
 			<div style="text-align: right; width: 100%">
 				<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar') }" onClick="ref:handler.applyProfile"/>
 			</div>
@@ -634,6 +685,7 @@
 										"hasFidoToken":"java.lang.Boolean",
 										"hasPushToken":"java.lang.Boolean",
 										"hasCertificate":"java.lang.Boolean",
+										"isEsso":"java.lang.Boolean",
 										"serviceLocator":"com.soffid.iam.ServiceLocator",
 										"serviceLocator":"com.soffid.iam.ServiceLocator",
 										"deviceCertificate":"java.lang.Boolean",
@@ -696,10 +748,12 @@
 						readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 						bind="proxy"  dataType="BOOLEAN"
 						id="proxy" ></customfield3>
+						
 			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.proxyPort')}" dataType="number"
 				bind="proxyPort" required="true"
 				id="proxyPort"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+				
 			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.proxyInternalAddress')}" dataType="STRING"
 				bind="proxyInternalAddress" required="true"
 				placeholder="192.168.6.1, 192.168.6.0/24"
@@ -709,6 +763,7 @@
 			<customfield3 label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.port')}" dataType="number"
 				bind="port" id="port" required="true"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+
 			<customfield3 id="type" label="${c:l('com.soffid.iam.addons.federation.common.IdpNetworkConfig.type')}"
 				bind="type" dataType="STRING" required="true"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
@@ -733,7 +788,6 @@
 				dataType="STRING" maxLength="512" multiline="true"
 				bind="excludedProtocols" id="excludedProtocols"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
-
 
 			<div style="text-align: right; width: 100%">
 				<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar') }" onClick="ref:networkConfigWindow.apply"/>

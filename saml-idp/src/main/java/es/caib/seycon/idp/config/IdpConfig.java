@@ -58,6 +58,8 @@ import org.xml.sax.SAXException;
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
+import com.soffid.iam.addons.federation.common.SAMLProfile;
+import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
 import com.soffid.iam.api.Password;
@@ -75,6 +77,7 @@ public class IdpConfig {
     com.soffid.iam.api.System system;
 	private UserCredentialService userCredentialService;
     Log log = LogFactory.getLog(getClass());
+    SAMLProfile essoProfile;
     
     public String getFacebookKey ()
     {
@@ -158,12 +161,6 @@ public class IdpConfig {
     
     
     public FederationMember findIdentityProviderForRelyingParty (String relyingPartyId) throws InternalErrorException {
-    	if (lastQuery + 60000 < System.currentTimeMillis() || virtualFederationMembers == null)
-    	{
-    		lastQuery = System.currentTimeMillis();
-    		federationMember = federationService.findFederationMemberByPublicId(publicId);
-    		virtualFederationMembers = federationService.findVirtualIdentityProvidersForIdentitiProvider(publicId);
-    	}
     	for (FederationMember vfm: virtualFederationMembers)
     	{
     		for (FederationMember sp: vfm.getServiceProvider())
@@ -616,7 +613,13 @@ public class IdpConfig {
         
         if (federationMember == null)
             throw new InternalErrorException("Identity provider "+seyconConfig.getHostName()+" not configured"); //$NON-NLS-1$ //$NON-NLS-2$
-
+        else {
+        	virtualFederationMembers = federationService.findVirtualIdentityProvidersForIdentitiProvider(publicId);
+        	for (SAMLProfile profile: federationService.findProfilesByFederationMember(federationMember)) {
+        		if (profile.getClasse() == SamlProfileEnumeration.ESSO)
+        			essoProfile = profile;
+        	}
+        }        	
        this.federationMember = federationMember;
 	}
 
@@ -627,6 +630,14 @@ public class IdpConfig {
 			}
 		}
 		return false;
+	}
+
+	public SAMLProfile getEssoProfile() {
+		return essoProfile;
+	}
+
+	public void setEssoProfile(SAMLProfile essoProfile) {
+		this.essoProfile = essoProfile;
 	}
 
 }

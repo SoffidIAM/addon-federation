@@ -108,4 +108,36 @@ public class SAMLProfile {
 	@Nullable
 	@com.soffid.mda.annotation.Attribute(defaultValue = "true")
 	Boolean ssl;
+
+	@Nullable
+	String hostnameFormat;
+	
+	@Nullable 
+	String mainAgent;
+	
+	@Nullable
+	Boolean enableCloseSession;
+	
+	@Nullable
+	Boolean forceStartupLogin;
+	
+	@Nullable
+	Integer keepAlive;
+	
+	@Nullable 
+	Integer idleTimeout;
+	
+	@Nullable
+	Boolean sharedWorkstation;
+	
+	@Nullable Boolean windowsCredentialProvider;
+	
+	@Nullable Boolean createLocalAccounts;
+	
+	@Nullable Boolean showPreviousUser;
+	
+	@Nullable Boolean offlineDetector;
+	
+	@Nullable Integer offlineDays;
+	
 }

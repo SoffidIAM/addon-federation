@@ -98,6 +98,8 @@ public class AdaptiveEnvironment implements Serializable {
 	public boolean hasOtpMail() {return false;}
 	
 	public boolean hasPushToken() {return false;}
+	
+	public boolean isEsso() {return false;}
 
 	public String serviceProvider()
 	{

@@ -97,6 +97,7 @@ import com.soffid.iam.addons.federation.model.AttributeEntityDao;
 import com.soffid.iam.addons.federation.model.AttributePolicyEntity;
 import com.soffid.iam.addons.federation.model.AuthenticationMethodEntity;
 import com.soffid.iam.addons.federation.model.CasProfileEntity;
+import com.soffid.iam.addons.federation.model.EssoProfileEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntity;
 import com.soffid.iam.addons.federation.model.EntityGroupEntityDao;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
@@ -152,6 +153,7 @@ import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.UserDomain;
 import com.soffid.iam.api.UserType;
 import com.soffid.iam.bpm.service.scim.ScimHelper;
+import com.soffid.iam.config.Config;
 import com.soffid.iam.interp.Evaluator;
 import com.soffid.iam.model.AuditEntity;
 import com.soffid.iam.model.Parameter;
@@ -167,6 +169,7 @@ import com.soffid.iam.service.ConfigurationService;
 import com.soffid.iam.service.impl.bshjail.SecureInterpreter;
 import com.soffid.iam.sync.intf.ExtensibleObject;
 import com.soffid.iam.utils.AutoritzacionsUsuari;
+import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;
 import com.soffid.scimquery.EvalException;
 import com.soffid.scimquery.parser.ParseException;
@@ -868,6 +871,19 @@ public class FederationServiceImpl
 				getCasProfileEntityDao().update((CasProfileEntity) entity);
 			} else if (SamlProfileEnumeration.SSE.equals(samlProfile.getClasse())) {
 				getSseProfileEntityDao().update((SseProfileEntity) entity);
+			} else if (SamlProfileEnumeration.ESSO.equals(samlProfile.getClasse())) {
+				getEssoProfileEntityDao().update((EssoProfileEntity) entity);
+				Configuration c = getConfigurationService().findParameterByNameAndNetworkName("soffid.esso.session.timeout", null);
+				if (c == null) {
+					c = new Configuration();
+					c.setCode("soffid.esso.session.timeout");
+					c.setDescription("ESSO session timeout");
+				}
+				c.setValue(samlProfile.getIdleTimeout() == null ? "1200": samlProfile.getIdleTimeout().toString());
+				if (c.getId() == null)
+					getConfigurationService().create(c);
+				else
+					getConfigurationService().update(c);
 			} else {
 				getProfileEntityDao().update(entity);
 			}
@@ -1428,6 +1444,14 @@ public class FederationServiceImpl
 			p.setAuthorizationEndpoint("/authorization");
 			p.setAssertionLifetime("PT5M");
 			p.setIdentityProvider(federationMember);
+			if (e == SamlProfileEnumeration.ESSO) {
+				p.setMainAgent(getDispatcherService().findSoffidDispatcher().getName());
+				p.setKeepAlive(60);
+				p.setHostnameFormat("long");
+				p.setIdleTimeout(180);
+				p.setShowPreviousUser(true);
+				p.setEnableCloseSession(! "false".equals(ConfigurationCache.getProperty("EnableCloseSession")));
+			}
 			profiles.put(p.getClasse(), p);
 		}
 		profiles.remove(SamlProfileEnumeration.SAML_PRO);

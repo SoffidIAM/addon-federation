@@ -21,5 +21,7 @@ public class UserCredentialChallenge {
 	
 	Date created;
 	
+	boolean text;
+	
 	boolean solved;
 }

@@ -36,6 +36,9 @@ public class UserCredentialChallengeEntity {
 	@Nullable @Column(name = "UCR_IMAGE4")
 	String image4;
 
+	@Column(name="UCR_TEXT")
+	boolean text;
+	
 	@Column(name = "UCR_SOLVED", defaultValue = "false")
 	boolean solved;
 }
