@@ -32,7 +32,6 @@ public class SetHostAdministrationServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     Logger log = Log.getLogger("SetHostAdministrationServlet");
-    ConnectionPool pool = ConnectionPool.getPool();
 
     public SetHostAdministrationServlet() {
     }

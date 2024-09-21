@@ -5,42 +5,26 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.security.PrivilegedAction;
 
-import javax.security.auth.Subject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.LogFactory;
-import org.ietf.jgss.GSSContext;
-import org.ietf.jgss.GSSCredential;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.GSSName;
-import org.ietf.jgss.Oid;
 
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
-import com.soffid.iam.addons.federation.esso.OtpSelector;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Session;
-import com.soffid.iam.api.System;
 import com.soffid.iam.api.sso.Secret;
-import com.soffid.iam.sync.engine.challenge.ChallengeStore;
 import com.soffid.iam.sync.service.LogonService;
-import com.soffid.iam.sync.service.SecretStoreService;
-import com.soffid.iam.sync.service.ServerService;
-import com.soffid.iam.sync.service.TaskGenerator;
 import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.ui.Messages;
-import es.caib.seycon.idp.ui.UserPasswordFormServlet;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.LogonDeniedException;
-import es.caib.seycon.util.Base64;
 
 public class KerberosLoginServlet extends HttpServlet {
     public KerberosLoginServlet() {
@@ -83,7 +67,7 @@ public class KerberosLoginServlet extends HttpServlet {
     }
 
     private String doCreateSessionAction(HttpServletRequest req, HttpServletResponse resp)
-            throws InternalErrorException {
+            throws InternalErrorException, IOException {
         Challenge challenge = getChallenge(req);
 
         try {
@@ -110,7 +94,7 @@ public class KerberosLoginServlet extends HttpServlet {
     }
 
     private String doPBAction(HttpServletRequest req, HttpServletResponse resp)
-            throws InternalErrorException {
+            throws InternalErrorException, IOException {
         String challengeId = req.getParameter("challengeId");
 
         final Challenge challenge = challengeStore.getChallenge(challengeId);
@@ -223,7 +207,7 @@ public class KerberosLoginServlet extends HttpServlet {
 
     }
 
-    private Challenge getChallenge(HttpServletRequest req) throws InternalErrorException {
+    private Challenge getChallenge(HttpServletRequest req) throws InternalErrorException, IOException {
         String challengeId = req.getParameter("challengeId");
         final Challenge challenge = challengeStore.getChallenge(challengeId);
 

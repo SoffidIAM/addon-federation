@@ -30,8 +30,6 @@ import com.soffid.iam.api.System;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.sso.Secret;
 import com.soffid.iam.service.SessionService;
-import com.soffid.iam.sync.engine.challenge.ChallengeStore;
-import com.soffid.iam.sync.engine.kerberos.KerberosManager;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.service.SecretStoreService;
 import com.soffid.iam.sync.service.ServerService;
@@ -123,7 +121,7 @@ public class PasswordLoginServlet extends HttpServlet {
     }
 
     private String doCreateSessionAction(HttpServletRequest req, HttpServletResponse resp)
-            throws InternalErrorException {
+            throws InternalErrorException, IOException {
         Challenge challenge = getChallenge(req);
 
         try {
@@ -315,7 +313,7 @@ public class PasswordLoginServlet extends HttpServlet {
 
     }
 
-    private Challenge getChallenge(HttpServletRequest req) throws InternalErrorException {
+    private Challenge getChallenge(HttpServletRequest req) throws InternalErrorException, IOException {
         String challengeId = req.getParameter("challengeId");
         final Challenge challenge = challengeStore.getChallenge(challengeId);
 

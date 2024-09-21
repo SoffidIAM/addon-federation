@@ -111,7 +111,7 @@ public class CertificateValidator {
         if (certs == null || certs.length == 0) {
             return null;
         } else {
-        	com.soffid.iam.sync.service.ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+        	com.soffid.iam.sync.service.ServerService server = new RemoteServiceLocator().getServerService();
             User ui = server.getUserInfo(certs);
             if (ui == null)
             	return null;

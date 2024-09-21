@@ -31,7 +31,6 @@ public class GetHostAdministrationServlet extends HttpServlet
 
     private static final long serialVersionUID = 1L;
     Logger log = Log.getLogger("GetHostAdministrationServlet"); //$NON-NLS-1$
-    ConnectionPool pool = ConnectionPool.getPool();
 
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 		throws ServletException, IOException

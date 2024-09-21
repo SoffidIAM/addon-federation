@@ -41,42 +41,20 @@ import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.sso.Secret;
-import com.soffid.iam.service.impl.CertificateParser;
-import com.soffid.iam.sync.engine.cert.CertificateManager;
-import com.soffid.iam.sync.engine.cert.ValidadorFactory;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.service.SecretStoreService;
-import com.soffid.iam.sync.service.ServerService;
 import com.soffid.iam.sync.web.NameMismatchException;
-import com.soffid.iam.util.NameParser;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.ui.CertificateValidator;
 import es.caib.seycon.ng.exception.InternalErrorException;
-import es.caib.seycon.ng.exception.LogonDeniedException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
 import es.caib.signatura.api.SignatureVerifyException;
-import es.caib.signatura.cliente.ValidadorCertificados;
 import es.caib.signatura.utils.BitException;
 
 public class CertificateLoginServlet extends HttpServlet {
 
-    private ValidadorCertificados validador;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        try {
-            validador = new ValidadorFactory().getValidador();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServletException(e);
-        }
-    }
-
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
     Logger log = Log.getLogger("CertificateLoginServlet");
     private X509Certificate userCertificate;
@@ -165,11 +143,12 @@ public class CertificateLoginServlet extends HttpServlet {
         certificateChain = (X509Certificate[]) v.toArray(new X509Certificate[v.size()]);
         userCertificate = certificateChain[0];
         if (!verifySignaturePKCS1(challenge, pkcs1))
-            return "ERROR|Signatura incorrecta";
-        CertificateManager mgr = new CertificateManager();
-        if (!mgr.verifyCertificate(certificateChain))
-            return "ERROR|Certificat incorrecte";
-        return getCredentials(req, challenge);
+            return "ERROR|Wrong signature";
+        CertificateValidator mgr = new CertificateValidator();
+        String user = mgr.validate(certificateChain);
+        if (user == null)
+            return "ERROR|Wrong certificate";
+        return getCredentials(req, challenge, user);
     }
 
     private String pkcs7Login(HttpServletRequest req, final String challenge, final String pkcs7)
@@ -177,17 +156,18 @@ public class CertificateLoginServlet extends HttpServlet {
             BitException, RemoteException, ServiceException,
             UnknownUserException, IOException {
         if (!verifySignaturePKCS7(challenge, pkcs7))
-            return "ERROR|Signatura incorrecta";
-        CertificateManager mgr = new CertificateManager();
-        if (!mgr.verifyCertificate(certificateChain))
-            return "ERROR|Certificat incorrecte";
-        return getCredentials(req, challenge);
+            return "ERROR|Wrong signature";
+        String user = new CertificateValidator().validate(certificateChain);
+        
+        if (user == null)
+            return "ERROR|Certificate not recognized";
+        return getCredentials(req, challenge, user);
     }
 
-    private String getCredentials(HttpServletRequest req, String challenge)
+    private String getCredentials(HttpServletRequest req, String challenge, String userName)
             throws InternalErrorException, CertificateEncodingException, UnknownUserException, IOException {
         try {
-            User user = validateUser();
+            User user = new RemoteServiceLocator().getServerService().getUserInfo(userName, null);
 	    	boolean encode = "true".equals( req.getParameter("encode") );
             StringBuffer result = new StringBuffer("OK");
             SecretStoreService secretStoreService = new RemoteServiceLocator().getSecretStoreService();
@@ -241,36 +221,6 @@ public class CertificateLoginServlet extends HttpServlet {
 			throws UnsupportedEncodingException {
 		return URLEncoder.encode(secret,"UTF-8").replaceAll("|", "%7c"); 
 	}
-
-	User validateUser() throws UnknownUserException, InternalErrorException,
-            CertificateEncodingException, IOException, NameMismatchException {
-        ServerService s = new RemoteServiceLocator().getServerService();
-        User ui = s.getUserInfo(new X509Certificate[] {userCertificate});
-        CertificateParser parser = new CertificateParser(userCertificate);
-        String certNom = parser.getGivenName();
-        String certLlinatge1 = parser.getFirstSurName();
-        String certLlinatge2 = parser.getSecondSurName();
-        
-        NameParser p = new NameParser();
-        String dbNom = p.normalizeName(ui.getFirstName());
-        String dbLlinatge1 = p.normalizeName(ui.getLastName());
-        String dbLlinatge2 = ui.getMiddleName() == null ? "" : p.normalizeName(ui.getMiddleName());
-
-        if (!dbNom.equals(certNom) 
-                || !dbLlinatge1.equals(certLlinatge1)
-                || !dbLlinatge2.equals(certLlinatge2)) {
-            // Segon intent
-            String dbLlinatges [] = p.parse(ui.getLastName()+" "+ui.getMiddleName(), 2);
-            if (!dbNom.equals(certNom) 
-                    || !dbLlinatges[0].equals(certLlinatge1)
-                    || !dbLlinatges[1].equals(certLlinatge2)) {
-                throw new NameMismatchException(certNom + " "
-                        + certLlinatge1 + " " + certLlinatge2 + "/" + dbNom
-                        + " " + dbLlinatge1 + " " + dbLlinatge2);
-            } 
-        }
-        return ui;
-    }
 
     @SuppressWarnings("deprecation")
     boolean verifySignaturePKCS7(String key, String pkcs7string)

@@ -29,7 +29,6 @@ public class MazingerMenuEntryServlet extends HttpServlet {
      * 
      */
     private static final long serialVersionUID = 1L;
-    ConnectionPool pool = ConnectionPool.getPool();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,

@@ -38,8 +38,6 @@ public class MazingerMenuServlet extends HttpServlet {
     public MazingerMenuServlet() {
     }
 
-    ConnectionPool pool = ConnectionPool.getPool();
-
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
             IOException {
