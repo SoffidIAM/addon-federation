@@ -89,11 +89,14 @@ public class ChallengeStore {
     }
     
     public Challenge getChallenge(String id) throws InternalErrorException, IOException {
+    	System.out.println("Seanching for challenge "+id);
         long currentTime = System.currentTimeMillis();
         Challenge ch = challenges.get(id);
+    	System.out.println("Local challenge "+ch);
         LogonService logonService = new RemoteServiceLocator().getLogonService();
         if (ch == null) 
         	ch = logonService.getChallenge(id);
+    	System.out.println("Remote challenge "+ch);
         if (ch != null && 
             currentTime - ch.getTimeStamp().getTime() > 10 * 60 * 1000) { // 10 minuts
             // es.caib.seycon.ServerApplication.out.println ("Challenge

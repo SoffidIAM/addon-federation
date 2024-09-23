@@ -1,16 +1,14 @@
 package com.soffid.iam.federation.idp.esso;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.soffid.iam.service.NetworkService;
-import com.soffid.iam.sync.ServerServiceLocator;
+import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.addons.federation.service.EssoService;
 
 import es.caib.seycon.ng.exception.UnknownNetworkException;
 
@@ -29,8 +27,8 @@ public class UpdateHostAddress extends HttpServlet {
             String name = request.getParameter("name");
             String serial = request.getParameter("serial");
             String ip = com.soffid.iam.utils.Security.getClientIp();
-            NetworkService xs = ServerServiceLocator.instance().getNetworkService();
-            xs.registerDynamicIP(name, ip, serial);
+            EssoService esso = new RemoteServiceLocator().getEssoService();
+            esso.registerDynamicIP(name, ip, serial);
             response.getOutputStream().println("OK");
         } catch (Exception e) {
             if (! (e instanceof UnknownNetworkException)) {

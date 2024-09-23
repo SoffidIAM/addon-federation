@@ -148,6 +148,7 @@ public class PasswordLoginServlet extends HttpServlet {
             return "OK|" + challenge.getChallengeId() + "|" + Long.toString(s.getId())
                     + "|" + canAdmin;
         } catch (Exception e) {
+        	log.warn("Error authenticating user", e);
             return e.getClass().getName() + "|" + e.getMessage() + "\n";
         }
     }
@@ -254,16 +255,18 @@ public class PasswordLoginServlet extends HttpServlet {
             } catch (Exception e) {
             }
 
-            final Challenge challenge = new RemoteServiceLocator().getLogonService()
+            Challenge challenge = new RemoteServiceLocator().getLogonService()
             		.requestIdpChallenge(Challenge.TYPE_PASSWORD, user, domain, 
             		hostSerial == null ? hostIP: hostSerial, clientIP,
                     iCardSupport,
                     IdpConfig.getConfig().getPublicId());
             
-            if ( ! new RemoteServiceLocator().getEssoService()
-            		.updateAndRegisterChallenge(challenge, "true".equals(text))) {
+            challenge = new RemoteServiceLocator().getEssoService()
+            		.updateAndRegisterChallenge(challenge, "true".equals(text));
+            if ( challenge == null ) {
             	throw new LogonDeniedException("Access is not allowed");
             }
+            challengeStore.store(challenge);
 
             return "OK|" + challenge.getChallengeId() + "|" + challenge.getCardNumber() + "|"
                     + challenge.getCell()+"|"+challenge.getUser().getUserName();

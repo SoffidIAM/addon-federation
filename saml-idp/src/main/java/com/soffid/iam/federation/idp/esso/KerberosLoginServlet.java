@@ -176,7 +176,7 @@ public class KerberosLoginServlet extends HttpServlet {
         
         LogonService logonService = new RemoteServiceLocator().getLogonService();
 
-        final Challenge challenge = 
+        Challenge challenge = 
         		logonService.requestIdpChallenge(Challenge.TYPE_KERBEROS, 
         				system == null ? principal: user,
         				system, 
@@ -184,8 +184,9 @@ public class KerberosLoginServlet extends HttpServlet {
         				Integer.decode(cardSupport),
         				IdpConfig.getConfig().getPublicId());
 
-        if ( ! new RemoteServiceLocator().getEssoService()
-        		.updateAndRegisterChallenge(challenge, "true".equals(text))) {
+        challenge = new RemoteServiceLocator().getEssoService()
+        		.updateAndRegisterChallenge(challenge, "true".equals(text));
+        if ( challenge == null ) {
         	throw new LogonDeniedException("Access is not allowed");
         }
         // Check some credentials are stored

@@ -11,7 +11,6 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.sql.SQLException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -25,7 +24,6 @@ import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.service.SessionService;
-import com.soffid.iam.sync.ServerServiceLocator;
 import com.soffid.iam.sync.service.QueryService;
 
 import es.caib.seycon.idp.config.IdpConfig;

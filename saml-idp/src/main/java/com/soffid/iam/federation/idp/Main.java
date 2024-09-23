@@ -62,6 +62,7 @@ import org.xml.sax.SAXException;
 
 import com.soffid.iad.addons.federation.idp.tacacs.TacacsServer;
 import com.soffid.iad.addons.federation.idp.tacacs.TacacsServerListener;
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
 import com.soffid.iam.addons.federation.common.IdpNetworkEndpointType;
@@ -94,6 +95,7 @@ import com.soffid.iam.federation.idp.esso.MazingerServlet;
 import com.soffid.iam.federation.idp.esso.PasswordLoginServlet;
 import com.soffid.iam.federation.idp.esso.SetHostAdministrationServlet;
 import com.soffid.iam.federation.idp.esso.UpdateHostAddress;
+import com.soffid.iam.remote.RemoteServiceLocatorProxy;
 import com.soffid.iam.sync.web.pam.PamSessionServlet;
 import com.soffid.iam.sync.web.wsso.WebSessionServlet;
 import com.soffid.iam.utils.ConfigurationCache;
@@ -229,6 +231,7 @@ public class Main {
             
             System.out.println ("Starting IDP "+publicId); //$NON-NLS-1$
             
+    		// Configure the service locator
             IdpConfig c = IdpConfig.getConfig();
     
             c.setPublicId(publicId);

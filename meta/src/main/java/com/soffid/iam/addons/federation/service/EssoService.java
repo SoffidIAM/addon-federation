@@ -95,6 +95,6 @@ public class EssoService {
 
 	public String query(String path, @Nullable String format, @Nullable String ipAddress) { return null;}
 	
-	public boolean updateAndRegisterChallenge(@Nullable Challenge challenge, boolean textPush) {return true;}
+	public Challenge updateAndRegisterChallenge(@Nullable Challenge challenge, boolean textPush) {return null;}
 
 }

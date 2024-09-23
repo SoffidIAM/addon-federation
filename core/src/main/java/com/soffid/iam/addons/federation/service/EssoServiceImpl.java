@@ -552,10 +552,14 @@ public class EssoServiceImpl extends EssoServiceBase {
 	}
 
 	@Override
-	protected boolean handleUpdateAndRegisterChallenge(Challenge challenge, boolean textPush) throws Exception {
+	protected Challenge handleUpdateAndRegisterChallenge(Challenge challenge, boolean textPush) throws Exception {
 		boolean r = new OtpSelector().updateChallenge(challenge, null, textPush);
-		new com.soffid.iam.remote.RemoteServiceLocator().getLogonService().registerChallenge(challenge);
-		return r;
+		if (r) {
+			getLogonService().registerChallenge(challenge);
+			return challenge;
+		}
+		else
+			return null;
 	}
 
 }
