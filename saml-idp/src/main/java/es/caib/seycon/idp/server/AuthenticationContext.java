@@ -42,7 +42,6 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.idp.radius.attribute.RadiusAttribute;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.impl.IssueHelper;
 import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
@@ -52,6 +51,7 @@ import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;

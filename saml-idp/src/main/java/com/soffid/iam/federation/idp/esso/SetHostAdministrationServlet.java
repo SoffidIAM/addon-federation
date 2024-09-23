@@ -18,9 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.Password;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.NetworkService;
 import com.soffid.iam.sync.engine.db.ConnectionPool;
 import com.soffid.iam.sync.service.ServerService;

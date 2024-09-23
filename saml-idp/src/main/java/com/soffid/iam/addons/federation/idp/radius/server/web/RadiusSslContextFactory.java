@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.soffid.iam.addons.federation.idp.radius.server.CertificateCache;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 

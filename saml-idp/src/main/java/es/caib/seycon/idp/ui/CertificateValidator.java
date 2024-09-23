@@ -24,10 +24,10 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.openssl.PEMParser;
 
 import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;

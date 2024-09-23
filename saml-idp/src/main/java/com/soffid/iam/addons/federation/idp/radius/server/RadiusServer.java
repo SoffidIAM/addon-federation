@@ -67,11 +67,11 @@ import com.soffid.iam.addons.federation.idp.radius.attribute.VendorSpecificAttri
 import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccountingRequest;
 import com.soffid.iam.addons.federation.idp.radius.packet.RadiusPacket;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.OTPValidationService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 

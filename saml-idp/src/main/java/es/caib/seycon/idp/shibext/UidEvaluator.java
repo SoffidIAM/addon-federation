@@ -4,13 +4,13 @@ import java.util.Collection;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.engine.extobj.AccountExtensibleObject;
 import com.soffid.iam.sync.engine.extobj.ObjectTranslator;
 import com.soffid.iam.sync.engine.extobj.UserExtensibleObject;

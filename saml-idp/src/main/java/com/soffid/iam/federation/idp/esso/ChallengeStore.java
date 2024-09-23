@@ -6,8 +6,8 @@ import java.util.Hashtable;
 import java.util.Random;
 
 import com.soffid.iam.ServiceLocator;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.service.LogonService;
 
 import es.caib.seycon.ng.exception.InternalErrorException;

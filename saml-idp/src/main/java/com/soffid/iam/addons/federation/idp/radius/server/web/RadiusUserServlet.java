@@ -29,8 +29,8 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.idp.radius.packet.RadiusPacket;
 import com.soffid.iam.addons.federation.idp.radius.server.CertificateCache;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusServer;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Password;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;

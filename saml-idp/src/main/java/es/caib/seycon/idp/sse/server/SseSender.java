@@ -33,11 +33,11 @@ import com.soffid.iam.addons.federation.api.SseEvent;
 import com.soffid.iam.addons.federation.api.SseReceiver;
 import com.soffid.iam.addons.federation.api.SubjectFormatEnumeration;
 import com.soffid.iam.addons.federation.api.SubjectSourceEnumeration;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.interp.Evaluator;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;

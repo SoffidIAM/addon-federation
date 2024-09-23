@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;

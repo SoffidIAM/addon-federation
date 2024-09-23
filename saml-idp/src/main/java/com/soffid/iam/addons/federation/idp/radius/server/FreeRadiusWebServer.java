@@ -23,7 +23,7 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.idp.radius.server.web.RadiusSslContextFactory;
 import com.soffid.iam.addons.federation.idp.radius.server.web.RadiusUserServlet;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.jetty.ProxyConnectionFactory;
 

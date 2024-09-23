@@ -17,8 +17,8 @@ import javax.transaction.SystemException;
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.PasswordValidation;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.engine.db.ConnectionPool;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.web.Messages;

@@ -14,7 +14,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.logging.LogFactory;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 

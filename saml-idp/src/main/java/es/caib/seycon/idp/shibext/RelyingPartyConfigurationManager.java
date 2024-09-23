@@ -65,8 +65,8 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.utils.Security;
 
 import edu.internet2.middleware.shibboleth.common.attribute.provider.SAML1AttributeAuthority;

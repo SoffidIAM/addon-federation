@@ -22,8 +22,8 @@ import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.BaseForm;

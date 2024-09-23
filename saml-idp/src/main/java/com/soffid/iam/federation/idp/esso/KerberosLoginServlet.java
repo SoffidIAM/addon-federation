@@ -14,10 +14,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.sso.Secret;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;

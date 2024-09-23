@@ -24,9 +24,9 @@ import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.OTPValidationService;
 import com.soffid.iam.utils.Security;
 

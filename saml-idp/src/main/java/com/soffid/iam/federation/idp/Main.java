@@ -71,7 +71,6 @@ import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.idp.radius.server.FreeRadiusWebServer;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusServer;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;

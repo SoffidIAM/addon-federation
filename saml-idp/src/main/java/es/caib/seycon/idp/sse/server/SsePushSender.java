@@ -19,8 +19,8 @@ import org.json.JSONTokener;
 
 import com.soffid.iam.addons.federation.api.SseEvent;
 import com.soffid.iam.addons.federation.api.SseReceiver;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.SharedSignalEventsService;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 

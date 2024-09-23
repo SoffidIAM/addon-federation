@@ -16,9 +16,9 @@ import org.json.JSONObject;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.PushAuthenticationService;
 import com.soffid.iam.addons.federation.service.UserCredentialService;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.ui.BaseForm;
 

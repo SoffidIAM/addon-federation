@@ -23,12 +23,12 @@ import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusException;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusUtil;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordValidation;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.OTPValidationService;
 import com.soffid.iam.service.SessionService;
 import com.soffid.iam.sync.service.ServerService;

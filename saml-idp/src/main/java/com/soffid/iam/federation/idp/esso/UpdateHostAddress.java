@@ -7,8 +7,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.EssoService;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.ng.exception.UnknownNetworkException;
 

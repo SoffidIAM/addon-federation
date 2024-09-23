@@ -12,8 +12,8 @@ import javax.servlet.http.HttpSession;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.oauth.consumer.OAuth2Consumer;

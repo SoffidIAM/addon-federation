@@ -25,9 +25,9 @@ import org.json.JSONObject;
 import org.opensaml.xml.io.UnmarshallingException;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;

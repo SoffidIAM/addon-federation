@@ -1,6 +1,6 @@
 package es.caib.seycon.idp.openid.server;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 public class OidcDebugController {
 	static long lastCheck = 0;

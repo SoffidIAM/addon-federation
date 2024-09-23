@@ -17,9 +17,9 @@ import org.opensaml.saml2.core.AuthnContext;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.OTPValidationService;
 
 import es.caib.seycon.ng.exception.UnknownUserException;

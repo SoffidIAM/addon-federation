@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.Issue;
 import com.soffid.iam.api.IssueHost;
 import com.soffid.iam.api.IssueStatus;
 import com.soffid.iam.api.IssueUser;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.ng.exception.InternalErrorException;

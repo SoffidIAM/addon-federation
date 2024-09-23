@@ -25,7 +25,7 @@ import org.opensaml.saml2.metadata.OrganizationDisplayName;
 import org.opensaml.saml2.metadata.OrganizationURL;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.lang.MessageFactory;
 import com.soffid.iam.utils.Security;
 

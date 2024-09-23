@@ -21,7 +21,6 @@ import org.ietf.jgss.GSSContext;
 
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.esso.OtpSelector;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.PasswordValidation;
@@ -29,6 +28,7 @@ import com.soffid.iam.api.Session;
 import com.soffid.iam.api.System;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.sso.Secret;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.SessionService;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.service.SecretStoreService;

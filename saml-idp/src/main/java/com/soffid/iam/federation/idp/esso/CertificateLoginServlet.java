@@ -36,11 +36,11 @@ import org.bouncycastle.x509.util.StreamParsingException;
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.sso.Secret;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.service.SecretStoreService;
 import com.soffid.iam.sync.web.NameMismatchException;

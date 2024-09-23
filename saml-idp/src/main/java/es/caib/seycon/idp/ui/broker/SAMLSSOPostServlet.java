@@ -19,11 +19,11 @@ import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.System;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.AccountService;
 
 import es.caib.seycon.idp.config.IdpConfig;

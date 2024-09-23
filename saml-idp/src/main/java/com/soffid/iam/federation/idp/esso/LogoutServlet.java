@@ -12,8 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Session;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.SessionService;
 
 public class LogoutServlet extends HttpServlet {

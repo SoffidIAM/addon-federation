@@ -20,11 +20,11 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.MetadataScope;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.AdditionalDataService;
 import com.soffid.iam.service.UserService;
 

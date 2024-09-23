@@ -119,7 +119,7 @@ public class IdpConfig {
     public void configure () throws FileNotFoundException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, es.caib.seycon.ng.exception.InternalErrorException {
         seyconConfig = Config.getConfig();
         
-        com.soffid.iam.addons.federation.remote.RemoteServiceLocator rsl = new com.soffid.iam.addons.federation.remote.RemoteServiceLocator();
+        com.soffid.iam.federation.idp.RemoteServiceLocator rsl = new com.soffid.iam.federation.idp.RemoteServiceLocator();
         ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         

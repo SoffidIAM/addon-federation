@@ -86,8 +86,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.common.profile.ProfileException;
 import edu.internet2.middleware.shibboleth.common.profile.provider.BaseSAMLProfileRequestContext;

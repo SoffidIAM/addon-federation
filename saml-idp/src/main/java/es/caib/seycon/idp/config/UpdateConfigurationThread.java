@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.common.EntityGroupMember;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.AdditionalDataService;
 
 import es.caib.seycon.ng.exception.InternalErrorException;

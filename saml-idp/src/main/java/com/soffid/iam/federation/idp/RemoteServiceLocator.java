@@ -1,4 +1,4 @@
-package com.soffid.iam.addons.federation.remote;
+package com.soffid.iam.federation.idp;
 
 import java.io.IOException;
 

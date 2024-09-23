@@ -24,9 +24,9 @@ import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.Session;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.utils.ConfigurationCache;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;

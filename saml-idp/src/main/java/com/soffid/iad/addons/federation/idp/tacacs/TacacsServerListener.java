@@ -23,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.idp.radius.server.NetmaskMatch;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.ssl.SeyconKeyStore;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
