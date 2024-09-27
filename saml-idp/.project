@@ -26,28 +26,6 @@
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>com.jaspersoft.studio.babel.editor.rbeNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>metadata</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>metadata/google-metadata.xml</name>
-			<type>1</type>
-			<locationURI>copy_PARENT/app/shibbolth-idp/metadata/google-metadata.xml</locationURI>
-		</link>
-		<link>
-			<name>metadata/idp-metadata.xml</name>
-			<type>1</type>
-			<locationURI>copy_PARENT/app/shibbolth-idp/metadata/idp-metadata.xml</locationURI>
-		</link>
-		<link>
-			<name>metadata/localhost-metadata.xml</name>
-			<type>1</type>
-			<locationURI>copy_PARENT/app/shibbolth-idp/metadata/localhost-metadata.xml</locationURI>
-		</link>
-	</linkedResources>
 	<variableList>
 		<variable>
 			<name>copy_PARENT</name>

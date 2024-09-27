@@ -64,9 +64,6 @@ public class TenantMetadataProvider extends AbstractReloadingMetadataProvider {
 			dBuilder = dbFactory.newDocumentBuilder();
 			doc = dBuilder.newDocument();
 			
-			System.out.println("////////////////////");
-			System.out.println("// "+tenant+ "//");
-			System.out.println("////////////////////");
 			Element element = doc.createElementNS(METADATA_NAMESPACE, "EntitiesDescriptor");
 			doc.appendChild(element);
 			element.setAttribute("Name", "All Entities at "+tenant);
@@ -111,7 +108,7 @@ public class TenantMetadataProvider extends AbstractReloadingMetadataProvider {
                 return true;
             } else
                 return false;
-        } else {
+        } else if (eg.getType().equals("SP" ) || eg.getType().equals("IDP" )){
             FederationMember fm = eg.getFederationMember();
             if (fm != null && fm.getMetadades() != null) {
                 String md = fm.getMetadades();
@@ -127,15 +124,23 @@ public class TenantMetadataProvider extends AbstractReloadingMetadataProvider {
                     generateChildEntities(eg, element);
                     return true;
                 } catch (SAXParseException e) {
+                    Element node = doc.createElementNS(METADATA_NAMESPACE, "EntityDescriptor"); //$NON-NLS-1$
+                    node.setAttribute("entityID", eg.getDescription()); //$NON-NLS-1$
+                    element.appendChild(node);
                     org.slf4j.Logger log = LoggerFactory.getLogger(getClass());
                     System.err.println ("Error parsing metadata for entity"+fm.getPublicId()); //$NON-NLS-1$
                     log.warn("Error parsing metadata for entity "+fm.getPublicId(), e); //$NON-NLS-1$
                     return generateChildEntities(eg, element);
                 }
             } else {
-                return generateChildEntities(eg, element);
+            	Element node = doc.createElementNS(METADATA_NAMESPACE, "EntityDescriptor"); //$NON-NLS-1$
+            	node.setAttribute("entityID", fm.getPublicId()); //$NON-NLS-1$
+            	element.appendChild(node);
+            	return true;
             }
-        } 
+        } else {
+        	return generateChildEntities(eg, element);
+        }
     }
 
     private boolean generateChildEntities(EntityGroupMember eg, Element node) throws SAXException, IOException, InternalErrorException {
