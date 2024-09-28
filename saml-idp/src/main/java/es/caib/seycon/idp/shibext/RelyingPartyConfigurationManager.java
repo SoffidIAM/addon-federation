@@ -172,23 +172,24 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		WeakReference<RelyingPartyConfiguration> cached = configurationCache.get(Security.getCurrentTenantName()+"\\"+publicId);
 		RelyingPartyConfiguration rp2 = cached == null ? null: cached.get();
 		if (rp2 == null) {
-			rp2 = new RelyingPartyConfiguration(publicId);
-			rp2.setDefaultAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport");
-			rp2.setDefaultSigningCredential(getCredential());
 			FederationService svc = (FederationService) new RemoteServiceLocator().getFederacioService();
 			FederationMember fm = svc.findFederationMemberByPublicId(publicId);
+			
+			FederationMember vip = c.findIdentityProviderForRelyingParty(publicId);
+			rp2 = new RelyingPartyConfiguration(publicId, vip.getPublicId());
+			rp2.setDefaultAuthenticationMethod("urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport");
+			rp2.setDefaultSigningCredential(getCredential(vip));
 			if (fm == null)
 				throw new InternalErrorException("Unable to find profiles for "+publicId);
-			addProfiles(rp2, fm);
+			addProfiles(rp2, vip);
 			configurationCache.put(Security.getCurrentTenantName()+"\\"+publicId, new WeakReference<RelyingPartyConfiguration>(rp2));
 		}
 		return rp2;
 	}
 
-	private Credential getCredential() throws InternalErrorException {
+	private Credential getCredential(FederationMember federationMember) throws InternalErrorException {
 		try {
 			IdpConfig c = IdpConfig.getConfig();
-			FederationMember federationMember = c.getFederationMember();
 			// Now read the private and public key
 			PEMParser pemParser = new PEMParser(new StringReader(federationMember.getPrivateKey()));
 			Object object = pemParser.readObject();
@@ -256,7 +257,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		            pc.setSignRequests(parseCrypto(profile.getSignRequests(), CryptoOperationRequirementLevel.never));
 		            pc.setSignAssertions(parseCrypto(profile.getSignAssertions(), CryptoOperationRequirementLevel.never));
 		            pc.setSignResponses(parseCrypto(profile.getSignResponses(), CryptoOperationRequirementLevel.never));
-		            pc.setSigningCredential(getCredential());
+		            pc.setSigningCredential(getCredential(federationMember));
 		            rp2.getProfileConfigurations().put(pc.getProfileId(), pc);
 		            pc = createSaml2SsoProfile(federationMember, type, profile);
 	            } else if (type.equals(SamlProfileEnumeration.SAML2_ECP)) {
@@ -280,7 +281,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 	            pc.setSignRequests(parseCrypto(profile.getSignRequests(), CryptoOperationRequirementLevel.never));
 	            pc.setSignAssertions(parseCrypto(profile.getSignAssertions(), CryptoOperationRequirementLevel.never));
 	            pc.setSignResponses(parseCrypto(profile.getSignResponses(), CryptoOperationRequirementLevel.never));
-	            pc.setSigningCredential(getCredential());
+	            pc.setSigningCredential(getCredential(federationMember));
 	            rp2.getProfileConfigurations().put(pc.getProfileId(), pc);
             }
 		}
@@ -542,14 +543,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 	public RelyingPartyConfiguration getRelyingPartyConfiguration(String relyingPartyEntityID) {
 		try {
 			IdpConfig c = IdpConfig.getConfig();
-			FederationService federationService = new RemoteServiceLocator().getFederacioService();
-			FederationMember fm = federationService.findFederationMemberByPublicId(relyingPartyEntityID);
-			if (fm == null || 
-					fm.getVirtualIdentityProviderPublicId() == null ||
-					fm.getVirtualIdentityProviderPublicId().isEmpty())
-				return getRelyingPartyConfiguration(c, c.getFederationMember().getPublicId());
-			else
-				return getRelyingPartyConfiguration(c, fm.getVirtualIdentityProviderPublicId().iterator().next());
+			return getRelyingPartyConfiguration(c, relyingPartyEntityID);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
