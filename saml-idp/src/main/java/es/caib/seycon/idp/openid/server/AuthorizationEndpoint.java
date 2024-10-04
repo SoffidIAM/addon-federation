@@ -23,15 +23,12 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.AllowedScope;
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
 import com.soffid.iam.api.Group;
-import com.soffid.iam.api.GroupUser;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
-import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.session.LoginTimeoutHandler;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -154,7 +151,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 				if (hg!=null && !hg.trim().isEmpty()) {
 					try {
 						hg =  URLDecoder.decode(hg,"UTF-8");
-						Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(hg);
+						Group g = ServiceLocator.instance().getGroupService().findGroupByGroupName(hg);
 						if (g!=null)
 							return g.getName();
 					} catch (InternalErrorException | IOException e) {}

@@ -2,7 +2,6 @@ package es.caib.seycon.idp.ui;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -10,10 +9,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.api.Group;
 
-import es.caib.seycon.idp.openid.server.UserAttributesGenerator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 
 public class SelectHolderGroupForm extends BaseForm {
@@ -50,7 +48,7 @@ public class SelectHolderGroupForm extends BaseForm {
             g.addArgument("title", Messages.getString("selectHolderGroup")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("selectHolderGroupUrl", SelectHolderGroupAction.URI); //$NON-NLS-1$
 
-            Collection<Group> lg = new RemoteServiceLocator().getUserService().getUserGroups(authCtx.getCurrentUser().getId());
+            Collection<Group> lg = ServiceLocator.instance().getUserService().getUserGroups(authCtx.getCurrentUser().getId());
         	StringBuffer sb = new StringBuffer();
         	for (Group group : lg) {
         		if (group.getType()!=null) {

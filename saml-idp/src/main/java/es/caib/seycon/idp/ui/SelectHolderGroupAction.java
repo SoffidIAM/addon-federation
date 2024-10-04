@@ -3,14 +3,12 @@ package es.caib.seycon.idp.ui;
 import java.io.IOException;
 import java.util.Collection;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
-import com.soffid.iam.api.Group;
+import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.api.GroupUser;
 
 import es.caib.seycon.idp.server.Autenticator;
@@ -32,7 +30,7 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 	        	if (authCtx.isFinished()) {
 	        		String un = authCtx.getCurrentUser().getUserName();
-	        		Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
+	        		Collection<GroupUser> gul = ServiceLocator.instance().getGroupService().findUsersGroupByUserName(un);
 	        		for (GroupUser gu : gul) {
 	        			if (hgId.equals(gu.getGroupId().toString())) {
 	        				authCtx.setHolderGroupIsActive(true);
