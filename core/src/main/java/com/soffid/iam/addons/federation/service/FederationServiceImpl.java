@@ -482,7 +482,7 @@ public class FederationServiceImpl
 		}
 	}
 
-	private void updateScopes(ServiceProviderEntity entity, FederationMember federationMember) {
+	private void updateScopes(ServiceProviderEntity entity, FederationMember federationMember) throws java.lang.Exception {
 		if (federationMember.getServiceProviderType() != ServiceProviderType.OPENID_CONNECT ||
 				federationMember.getAllowedScopes() == null) {
 			for (Iterator<AllowedScopeEntity> iterator = entity.getAllowedScopes().iterator(); iterator.hasNext();) {
@@ -499,7 +499,8 @@ public class FederationServiceImpl
 				boolean found = false;
 				for ( Iterator<AllowedScope> iterator2 = l.iterator(); iterator2.hasNext();) {
 					AllowedScope scope = iterator2.next();
-					if (scope.getScope().equals(imp.getScope())) {
+					if (scope.getId().longValue()==imp.getId().longValue()) {
+						checkIfScopeAlreadyExists(scope, entity.getAllowedScopes());
 						updateScope(imp, scope);
 						found = true;
 						iterator2.remove();
@@ -513,13 +514,48 @@ public class FederationServiceImpl
 				}
 			}
 			for (AllowedScope scope: l) {
+				checkIfScopeAlreadyExists(scope, entity.getAllowedScopes());
 				AllowedScopeEntity scopeEntity = getAllowedScopeEntityDao().newAllowedScopeEntity();
 				scopeEntity.setServiceProvider(entity);
 				scopeEntity.setScope(scope.getScope());
+				scopeEntity.setByDefault(Boolean.valueOf(scope.isByDefault()));
 				getAllowedScopeEntityDao().create(scopeEntity);
 				updateScope(scopeEntity, scope);
 				entity.getAllowedScopes().add(scopeEntity);
-				
+			}
+		}
+	}
+
+	private void checkIfScopeAlreadyExists(AllowedScope scopeFront, Collection<AllowedScopeEntity> lsDB) throws java.lang.Exception{
+		if (scopeFront!=null) {
+			for (AllowedScopeEntity scopeDB : lsDB) {
+				if (scopeFront.getScope().equals(scopeDB.getScope()) &&
+						(scopeFront.getId()==null || scopeFront.getId().longValue()!=scopeDB.getId().longValue())) {
+					if ((scopeDB.getRoles()==null || scopeDB.getRoles().isEmpty()) &&
+							(scopeFront.getRoles()==null || scopeFront.getRoles().isEmpty())) {
+						throw new InternalErrorException(Messages.getString("FederacioServiceImpl.SameRoleWithoutRoles"));
+					} else if (scopeDB.getRoles()!=null && !scopeDB.getRoles().isEmpty() &&
+							scopeFront.getRoles()!=null && !scopeFront.getRoles().isEmpty() &&
+							scopeDB.getRoles().size()==scopeFront.getRoles().size()) {
+						Iterator<AllowedScopeRoleEntity> iDB = scopeDB.getRoles().iterator();
+						boolean areEquals = true;
+						while (iDB.hasNext() && areEquals) {
+							AllowedScopeRoleEntity roleDB = iDB.next();
+							Iterator<String> iFront = scopeFront.getRoles().iterator();
+							boolean found = false;
+							while (iFront.hasNext()) {
+								Role roleFront = ServiceLocator.instance().getApplicationService().findRoleByShortName(iFront.next());
+								if (roleDB.getRoleId().longValue()==roleFront.getId().longValue()) {
+									found = true;
+									break;
+								}
+							}
+							areEquals = found;
+						}
+						if (areEquals)
+							throw new InternalErrorException(Messages.getString("FederacioServiceImpl.SameRoleWithRoles"));
+					}
+				}
 			}
 		}
 	}
@@ -550,6 +586,18 @@ public class FederationServiceImpl
 				}
 			}
 		}
+
+		boolean changes = false;
+		if (!entity.getScope().equals(scope.getScope())) {
+			entity.setScope(scope.getScope());
+			changes = true;
+		}
+		if (!entity.getByDefault().equals(scope.isByDefault())) {
+			entity.setByDefault(scope.isByDefault());
+			changes = true;
+		}
+		if (changes)
+			getAllowedScopeEntityDao().update(entity);
 	}
 
 	/**
@@ -2540,11 +2588,10 @@ public class FederationServiceImpl
 		Account account = getAccountService().findAccount(user, system);
 		if (account == null)
 			return null;
-		Collection<RoleGrant> grants = null;
-		
 		HashSet<String> requested = new HashSet<String>( Arrays.asList(requestedScopes.split(" +")) );
 		HashSet<String> scopes = new HashSet<String>();
-		StringBuffer sb = new StringBuffer();
+		HashSet<String> hsScopesToResponse = new HashSet<String>();
+		HashSet<Long> hsGrants = null;
 		final List<FederationMemberEntity> federationMembers = getServiceProviderEntityDao().findFMByPublicId(serviceProvider);
 		for (String requestedScope: requested) {
 			boolean allowed = false;
@@ -2563,23 +2610,25 @@ public class FederationServiceImpl
 										break;
 									}
 									else {
-										if (grants == null) {
+										if (hsGrants==null) {
+											Collection<RoleGrant> grants = null;
 											if (account instanceof UserAccount) {
 												UserEntity userEntity = getUserEntityDao().findByUserName(((UserAccount) account).getUser());
 												grants = getApplicationService().findEffectiveRoleGrantByUser(userEntity.getId());
 											} else {
 												grants = getApplicationService().findEffectiveRoleGrantByAccount(account.getId());
 											}
+											hsGrants = new HashSet<Long>();
+											for (RoleGrant grant: grants) {
+												hsGrants.add(grant.getRoleId());
+											}
 										}
 										boolean found = false;
-										for (RoleGrant grant: grants) {
-											for ( AllowedScopeRoleEntity r: scope.getRoles()) {
-												if (r.getRoleId().equals(grant.getRoleId())) {
-													found = true;
-													break;
-												}
+										for (AllowedScopeRoleEntity r : scope.getRoles()) {
+											if (hsGrants.contains(r.getRoleId())) {
+												found = true;
+												break;
 											}
-											if (found) break;
 										}
 										if (found) {
 											allowed = true;
@@ -2592,10 +2641,36 @@ public class FederationServiceImpl
 					}
 				}
 			}
-			if (allowed) {
-				if (sb.length() > 0) sb.append(" ");
-				sb.append(requestedScope);
+			if (allowed)
+				hsScopesToResponse.add(requestedScope);
+		}
+
+		// Check scopes with default=true
+		for (FederationMemberEntity fm: federationMembers) {
+			if (fm instanceof ServiceProviderEntity && !((ServiceProviderEntity)fm).getAllowedScopes().isEmpty()) {
+				for (AllowedScopeEntity scope : ((ServiceProviderEntity)fm).getAllowedScopes()) {
+					if (scope.getByDefault().booleanValue() && !hsScopesToResponse.contains(scope.getScope())) {
+						if (scope.getRoles().isEmpty()) {
+							hsScopesToResponse.add(scope.getScope());
+						} else {
+							for (AllowedScopeRoleEntity r : scope.getRoles()) {
+								if (hsGrants.contains(r.getRoleId())) {
+									hsScopesToResponse.add(scope.getScope());
+									break;
+								}
+							}
+						}
+					}
+				}
 			}
+		}
+
+		// Generate the result
+		StringBuffer sb = new StringBuffer();
+		for (String scopesToResponse: hsScopesToResponse) {
+			if (sb.length()>0)
+				sb.append(" ");
+			sb.append(scopesToResponse);
 		}
 		return sb.toString();
 	}

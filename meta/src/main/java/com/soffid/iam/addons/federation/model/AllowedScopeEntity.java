@@ -19,4 +19,7 @@ public class AllowedScopeEntity {
 	
 	@Column(name="SAS_SCOPE", length = 256)
 	String scope;
+
+	@Column(name="SAS_BYDEFAULT", defaultValue="false")
+	Boolean byDefault;
 }

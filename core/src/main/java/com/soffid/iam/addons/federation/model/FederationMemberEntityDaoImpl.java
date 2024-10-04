@@ -351,7 +351,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				sp.getServiceProviderType() == ServiceProviderType.OPENID_REGISTER ) {
 			target.setAllowedScopes( getAllowedScopeEntityDao().toAllowedScopeList(sp.getAllowedScopes()));
 			if (target.getAllowedScopes().isEmpty()) {
-				target.getAllowedScopes().add(new AllowedScope(null, "*", new LinkedList<String>()));
+				target.getAllowedScopes().add(new AllowedScope(null, "*", new LinkedList<String>(), Boolean.TRUE));
 			}
 			for (AllowedScope scope: target.getAllowedScopes()) {
 				if (scope.getScope().equals("openid"))
@@ -359,7 +359,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 					return;
 				}
 			}
-			target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>()));
+			target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>(), Boolean.TRUE));
 		}
 	}
 
