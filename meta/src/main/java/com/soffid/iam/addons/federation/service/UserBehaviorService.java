@@ -2,6 +2,7 @@ package com.soffid.iam.addons.federation.service;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
@@ -48,7 +49,8 @@ public class UserBehaviorService {
 	public Date getLastFailedAttempt (Long userId) {return null;}
 	public Date getLastLogon (Long userId) {return null;}
 	public Date getLastLogon (Long userId, String hostId) {return null;}
-	public void registerLogon (Long userId, String hostIp, @Nullable String hostId) {}
+	public Map<String,Date> getLastLogonByMethod (Long userId) {return null;}
+	public void registerLogon (Long userId, String hostIp, @Nullable String hostId, @Nullable String logonMethod) {}
 	public String registerHost (String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {return null;}
 	public void updateHost (String hostId, String hostIp, @Nullable String device, @Nullable String browser, @Nullable String os, @Nullable String cpu) {}
 	public Maquina findHostBySerialNumber (String serialNumber) {return null;}

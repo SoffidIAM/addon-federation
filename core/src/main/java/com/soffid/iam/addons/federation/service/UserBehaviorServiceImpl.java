@@ -8,7 +8,9 @@ import java.security.SecureRandom;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.beanutils.PropertyUtils;
@@ -194,11 +196,22 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 	}
 
 	@Override
-	protected void handleRegisterLogon(Long userId, String hostIp, String hostId) throws Exception {
+	protected Map<String,Date> handleGetLastLogonByMethod(Long userId) throws Exception {
+		Map<String,Date> m = new HashMap<>();
+		for (UserBehaviorEntity ub: getUserBehaviorEntityDao().findByUserId(userId)) {
+			if (ub.getKey().startsWith("lastLogon."))
+				m.put(ub.getKey().substring(10), new Date(Long.parseLong(ub.getValue())));
+		}
+		return m;
+	}
+
+	@Override
+	protected void handleRegisterLogon(Long userId, String hostIp, String hostId, String logonMethod) throws Exception {
 		String now = Long.toString( System.currentTimeMillis() );
 		setValue (userId, "failures", "0");
 		setValue (userId, "lastFail", "");
 		setValue (userId, "lastLogon", now);
+		setValue (userId, "lastLogon."+logonMethod, now);
 
 		String country = handleGetCountryForIp(hostIp);
 		if (country != null && !country.equals("??")) {
@@ -436,4 +449,5 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 		return dis.doubleValue() / (System.currentTimeMillis() - oldTime) 
 				/ 60.0 * 60.0 * 1000.0;
 	}
+
 }

@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.soffid.iam.addons.federation.api.GeoInformation;
 import com.soffid.iam.addons.federation.api.UserCredential;
@@ -299,4 +302,18 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	public boolean isEsso() {
 		return isEsso;
 	}
+	
+	public Map<String, Integer> daysSinceLastLogonByMethod () throws InternalErrorException
+	{
+		Map<String, Integer> mdays = new HashMap<>();
+		if (user != null) {
+			Map<String, Date> mdates = getService().getLastLogonByMethod(user.getId());
+			for (Entry<String, Date> entry: mdates.entrySet()) {
+				long days = System.currentTimeMillis() - entry.getValue().getTime();
+				mdays.put( entry.getKey(), Integer.valueOf((int)(days / 1000L / 60L / 60L / 24L)));
+			}
+		}
+		return mdays;
+	}
+
 }

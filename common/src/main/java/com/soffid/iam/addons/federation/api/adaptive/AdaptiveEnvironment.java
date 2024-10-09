@@ -2,6 +2,8 @@ package com.soffid.iam.addons.federation.api.adaptive;
 
 import java.io.Serializable;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.soffid.iam.addons.federation.api.GeoInformation;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
@@ -74,6 +76,10 @@ public class AdaptiveEnvironment implements Serializable {
 		return 0;
 	}
 	
+	public Map<String,Integer> daysSinceLastLogonByMethod () throws InternalErrorException
+	{
+		return new HashMap<>();
+	}
 	
 	public User user() {
 		return null;

@@ -663,6 +663,7 @@
 								selectIcon="/img/pencil.svg"
 								javascript='{"dayOfWeek": "java.long.Integer",
 										"daysSinceLastLogon":"java.long.Integer",
+										"daysSinceLastLogonByMethod":"java.util.Map",
 										"daysSinceLastLogonFromSameHost":"java.lang.Integer",
 										"failuresForSameIp":"java.lang.Integer",
 										"failuresForSameUser":"java.lang.Integer",
