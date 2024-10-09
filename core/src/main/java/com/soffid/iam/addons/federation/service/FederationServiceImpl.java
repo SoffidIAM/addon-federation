@@ -1696,7 +1696,7 @@ public class FederationServiceImpl
 	protected String[] handleGenerateKeys(String name) throws Exception {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA"); //$NON-NLS-1$
 		SecureRandom r = SecureRandom.getInstance("SHA1PRNG"); //$NON-NLS-1$
-		keyGen.initialize(1024, r);
+		keyGen.initialize(3072, r);
 		KeyPair pair = keyGen.genKeyPair();
 
 		PublicKey publickey = pair.getPublic();

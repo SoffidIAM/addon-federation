@@ -458,6 +458,7 @@ public class AuthenticationContext {
 		{
 			this.user = user;
 			firstFactor = method;
+			secondFactor = null;
 		}
 		else 
 			secondFactor = method;
@@ -513,7 +514,8 @@ public class AuthenticationContext {
 			if (hostId != null) {
 				checkLockedHost(ubh);
 			}
-			ubh.registerLogon(currentUser.getId(), remoteIp, hostId);
+			String method = firstFactor;
+			ubh.registerLogon(currentUser.getId(), remoteIp, hostId, getUsedMethod());
 			if (currentAccount != null) {
 				currentAccount = new RemoteServiceLocator().getAccountService().findAccountById(currentAccount.getId());
 				currentAccount.setLastLogin(Calendar.getInstance());
