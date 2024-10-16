@@ -592,7 +592,7 @@ public class FederationServiceImpl
 			entity.setScope(scope.getScope());
 			changes = true;
 		}
-		if (!entity.getByDefault().equals(scope.isByDefault())) {
+		if (entity.getByDefault()!=null && !entity.getByDefault().equals(scope.isByDefault())) {
 			entity.setByDefault(scope.isByDefault());
 			changes = true;
 		}
@@ -2649,12 +2649,12 @@ public class FederationServiceImpl
 		for (FederationMemberEntity fm: federationMembers) {
 			if (fm instanceof ServiceProviderEntity && !((ServiceProviderEntity)fm).getAllowedScopes().isEmpty()) {
 				for (AllowedScopeEntity scope : ((ServiceProviderEntity)fm).getAllowedScopes()) {
-					if (scope.getByDefault().booleanValue() && !hsScopesToResponse.contains(scope.getScope())) {
+					if (scope.getByDefault()!=null && scope.getByDefault().booleanValue() && !hsScopesToResponse.contains(scope.getScope())) {
 						if (scope.getRoles().isEmpty()) {
 							hsScopesToResponse.add(scope.getScope());
 						} else {
 							for (AllowedScopeRoleEntity r : scope.getRoles()) {
-								if (hsGrants.contains(r.getRoleId())) {
+								if (hsGrants!=null && hsGrants.contains(r.getRoleId())) {
 									hsScopesToResponse.add(scope.getScope());
 									break;
 								}
