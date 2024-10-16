@@ -9,8 +9,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.api.Group;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.server.AuthenticationContext;
 
@@ -48,11 +48,10 @@ public class SelectHolderGroupForm extends BaseForm {
             g.addArgument("title", Messages.getString("selectHolderGroup")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("selectHolderGroupUrl", SelectHolderGroupAction.URI); //$NON-NLS-1$
 
-            Collection<Group> lg = ServiceLocator.instance().getUserService().getUserGroups(authCtx.getCurrentUser().getId());
+            Collection<Group> lg = new RemoteServiceLocator().getUserService().getUserGroups(authCtx.getCurrentUser().getId());
         	StringBuffer sb = new StringBuffer();
         	for (Group group : lg) {
         		if (group.getType()!=null) {
-        			//String aaa = new RemoteServiceLocator().get
 		        	sb.append("<div>");
 		        	sb.append("<input type=\"radio\" name=\"holderGroup\" id=\"g"+group.getId()+"\" value=\""+group.getId()+"\" style=\"margin:7px\">");
 		        	sb.append("<label for=\"g"+group.getId()+"\">"+group.getName()+" - "+group.getDescription()+"</label>");

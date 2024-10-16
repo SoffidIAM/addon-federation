@@ -8,8 +8,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.api.GroupUser;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
@@ -30,7 +30,7 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 	        	if (authCtx.isFinished()) {
 	        		String un = authCtx.getCurrentUser().getUserName();
-	        		Collection<GroupUser> gul = ServiceLocator.instance().getGroupService().findUsersGroupByUserName(un);
+	        		Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
 	        		for (GroupUser gu : gul) {
 	        			if (hgId.equals(gu.getGroupId().toString())) {
 	        				authCtx.setHolderGroupIsActive(true);

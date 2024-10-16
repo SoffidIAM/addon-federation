@@ -23,9 +23,9 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.api.Group;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -151,7 +151,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 				if (hg!=null && !hg.trim().isEmpty()) {
 					try {
 						hg =  URLDecoder.decode(hg,"UTF-8");
-						Group g = ServiceLocator.instance().getGroupService().findGroupByGroupName(hg);
+						Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(hg);
 						if (g!=null)
 							return g.getName();
 					} catch (InternalErrorException | IOException e) {}
