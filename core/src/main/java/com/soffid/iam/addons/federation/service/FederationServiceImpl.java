@@ -140,6 +140,7 @@ import com.soffid.iam.api.DataType;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.MailDomain;
 import com.soffid.iam.api.MetadataScope;
+import com.soffid.iam.api.OUType;
 import com.soffid.iam.api.PagedResult;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.api.PasswordDomain;
@@ -2956,6 +2957,12 @@ public class FederationServiceImpl
 
 	@Override
 	public boolean handleIsOUTypeAHolderGroup(String OUName) {
+		try {
+			OUType ou = getOrganizationalUnitTypeService().findOUTypeByName(OUName);
+			return ou.isRoleHolder();
+		} catch (InternalErrorException e) {
+			e.printStackTrace();
+		}
 		return false;
 	}
 }

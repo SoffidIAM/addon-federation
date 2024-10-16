@@ -138,7 +138,9 @@ import org.springframework.transaction.annotation.Transactional;
 	AsyncRunnerService.class,
 	TacacsPlusAuthRuleEntity.class,
 	SelfCertificateValidationService.class,
-	IdpNetworkConfigEntity.class
+	IdpNetworkConfigEntity.class,
+	es.caib.seycon.ng.model.TipusUnitatOrganitzativaEntity.class,
+	es.caib.seycon.ng.servei.TipusUnitatOrganitzativaService.class
 })
 public abstract class FederationService {
 

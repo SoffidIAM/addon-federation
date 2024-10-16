@@ -9,6 +9,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.soffid.iam.addons.federation.FederationServiceLocator;
+import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Group;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
@@ -50,8 +52,9 @@ public class SelectHolderGroupForm extends BaseForm {
 
             Collection<Group> lg = new RemoteServiceLocator().getUserService().getUserGroups(authCtx.getCurrentUser().getId());
         	StringBuffer sb = new StringBuffer();
+        	FederationService fs = FederationServiceLocator.instance().getFederationService();
         	for (Group group : lg) {
-        		if (group.getType()!=null) {
+        		if (group.getType()!=null && fs.isOUTypeAHolderGroup(group.getType())) {
 		        	sb.append("<div>");
 		        	sb.append("<input type=\"radio\" name=\"holderGroup\" id=\"g"+group.getId()+"\" value=\""+group.getId()+"\" style=\"margin:7px\">");
 		        	sb.append("<label for=\"g"+group.getId()+"\">"+group.getName()+" - "+group.getDescription()+"</label>");

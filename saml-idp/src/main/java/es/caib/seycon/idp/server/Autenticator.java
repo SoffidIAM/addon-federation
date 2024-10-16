@@ -34,14 +34,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.http.HttpRequest;
-import org.jfree.util.Log;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.soffid.iam.ServiceLocator;
+import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
@@ -54,13 +52,10 @@ import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.federation.idp.LanguageFilter;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
-import com.soffid.iam.service.SessionService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.service.ServerService;
 
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationException;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
@@ -71,7 +66,6 @@ import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.AuthorizationResponse;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
-import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
@@ -500,9 +494,10 @@ public class Autenticator {
     		String un = authCtx.getCurrentUser().getUserName();
     		Collection<GroupUser> lgu = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
     		Collection<Group> lgu2 = new LinkedList();
+    		FederationService fs = FederationServiceLocator.instance().getFederationService();
     		for (GroupUser gu : lgu) {
     			Group g = new RemoteServiceLocator().getGroupService().findGroupById(gu.getGroupId());
-    			if (g.getType()!=null) {
+    			if (g.getType()!=null && fs.isOUTypeAHolderGroup(g.getType())) {
     				lgu2.add(g);
     			}
     		}
