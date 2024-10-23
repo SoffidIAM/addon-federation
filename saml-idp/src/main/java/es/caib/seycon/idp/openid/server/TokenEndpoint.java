@@ -140,6 +140,9 @@ public class TokenEndpoint extends HttpServlet {
 	        				break;
 	        			}
 	        		}
+	        		if (s.startsWith("holdergroup:")) {
+	        			found = true;
+	        		}
 	        		if (!found) {
 	        			buildError(resp, "invalid_scope", "The requested scope "+s+" is not allowed due to system policies");
 	        			return;

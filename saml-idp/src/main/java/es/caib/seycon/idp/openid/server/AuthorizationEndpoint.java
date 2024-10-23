@@ -216,6 +216,9 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    				break;
 	    			}
 	    		}
+        		if (s.startsWith("holdergroup:")) {
+        			found = true;
+        		}
 		    	if (!found) {
 		    		generateError(r, "invalid_scope", "The requested scope "+s+" is not allowed due to system policies", resp);
 		    		return false;
