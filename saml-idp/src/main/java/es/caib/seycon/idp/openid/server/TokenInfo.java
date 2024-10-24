@@ -1,7 +1,5 @@
 package es.caib.seycon.idp.openid.server;
 
-import java.util.Map;
-
 import com.soffid.iam.addons.federation.api.TokenType;
 
 public class TokenInfo {
@@ -25,7 +23,8 @@ public class TokenInfo {
 	private TokenType type;
 	public String refreshTokenFull;
 	public String oauthSessionId;
-	
+	private String holderGroup;
+
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
 				+", User: "+user+", AuthenticationMethod: "+authentication+", SessionId: "+sessionId
@@ -183,5 +182,13 @@ public class TokenInfo {
 
 	public void setOauthSessionId(String oauthSessionId) {
 		this.oauthSessionId = oauthSessionId;
+	}
+
+	public String getHolderGroup() {
+		return holderGroup;
+	}
+
+	public void setHolderGroup(String holderGroup) {
+		this.holderGroup = holderGroup;
 	}
 }

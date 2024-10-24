@@ -7,6 +7,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,15 +15,14 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
+import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.shibext.LogRecorder;
 
 public class SelectHolderGroupAction extends HttpServlet {
 
 	public static final String URI = "/holderGroupAction"; //$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
-	private LogRecorder logRecorder = LogRecorder.getInstance();
 	Log log = LogFactory.getLog(getClass());
 
 	@Override
@@ -38,11 +38,22 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        		Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
 	        		for (GroupUser gu : gul) {
 	        			if (hgId.equals(gu.getGroupId().toString())) {
+
+	        				// Context
 	        				authCtx.setHolderGroupIsActive(true);
-	        				authCtx.setHolderGroupSelected(hgId);
+	        				authCtx.setHolderGroupSelected(gu.getGroup());
+
+	        				// Session
+	        				HttpSession s = req.getSession();
+	        				OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
+	        				r.setHolderGroup(gu.getGroup());
+	        		    	s.setAttribute(SessionConstants.OPENID_REQUEST, r);
+
+	        		    	// Authenticator
 	    	                Autenticator auth = new Autenticator();
 	    	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
 	    	                log.info(">>> HOLDERGROUP - authentication ok");
+	    	                break;
 	        			}
 	        		}
             		error = "No se ha encontrado el grupo "+un; //$NON-NLS-1$
@@ -58,11 +69,5 @@ public class SelectHolderGroupAction extends HttpServlet {
 		}
 		req.setAttribute("ERROR", error); //$NON-NLS-1$
 		resp.sendRedirect(SelectHolderGroupForm.URI);
-
-//		if (error != null) {
-//	        req.setAttribute("ERROR", error); //$NON-NLS-1$
-//	        RequestDispatcher dispatcher = req.getRequestDispatcher(ErrorServlet.URI);
-//	        dispatcher.forward(req, resp);
-//		}
 	}
 }

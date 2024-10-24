@@ -418,8 +418,9 @@ public class Autenticator {
 		}
 
 		// Handle the selection of the holderGroup
-		if (hasToResquetDomains(session, authCtx)) {
+		if (hasToRequestDomains(session, authCtx)) {
 			resp.sendRedirect(SelectHolderGroupForm.URI);
+			return;
 		}
 
 		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
@@ -474,12 +475,13 @@ public class Autenticator {
         }
     }
 
-	private boolean hasToResquetDomains(HttpSession session, AuthenticationContext authCtx) {
+	private boolean hasToRequestDomains(HttpSession session, AuthenticationContext authCtx) {
 		try {
 			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
 
 			// HolderGroup already selected
 			if (authCtx.getHolderGroupSelected()!=null) {
+				r.setHolderGroup(authCtx.getHolderGroupSelected());
 				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getHolderGroupSelected());
 				return false;
 			}

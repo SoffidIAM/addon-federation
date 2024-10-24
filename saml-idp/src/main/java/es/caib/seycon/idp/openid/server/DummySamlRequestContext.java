@@ -140,7 +140,8 @@ public class DummySamlRequestContext implements
 	}
 
 	public String getRelayState() {
-		return null;
+		// Trick to retriever the holdergroup
+		return token.getHolderGroup();
 	}
 
 	public SAMLObject getSubjectNameIdentifier() {
@@ -373,5 +374,4 @@ public class DummySamlRequestContext implements
 
 	public void setPrincipalName(String name) {
 	}
-
 }

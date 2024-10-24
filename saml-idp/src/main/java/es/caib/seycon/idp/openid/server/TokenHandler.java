@@ -28,14 +28,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.JWTCreator.Builder;
+import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
@@ -52,12 +51,10 @@ import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.server.LogoutHandler;
 import es.caib.seycon.idp.server.LogoutResponse;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
-import es.caib.seycon.util.Base64;
 
 public class TokenHandler {
 	HashMap<String, TokenInfo> authorizationCodes = new HashMap<String, TokenInfo>();
@@ -95,6 +92,7 @@ public class TokenHandler {
 			t.setSessionKey(session.getKey());
 		}
 		t.setOauthSessionId(sessionHash);
+		t.setHolderGroup(request.getHolderGroup());
 		authorizationCodes.put(t.getAuthorizationCode(), t);
 		pendingTokens.addLast(t);
 		
@@ -624,6 +622,7 @@ public class TokenHandler {
 		o.setPkceAlgorithm(t.getPkceAlgorithm());
 		o.setPkceChallenge(t.getPkceChallenge());
 		o.setNonce(t.getRequest().getNonce());
+		o.setHolderGroup(t.getHolderGroup());
 		return o;
 	}
 	
@@ -649,6 +648,7 @@ public class TokenHandler {
 		t.setSessionId(o.getSessionId());
 		t.setSessionKey(o.getSessionKey());
 		t.setOauthSessionId(o.getOauthSession());
+		t.setHolderGroup(o.getHolderGroup());
 		return t;
 	}
 
