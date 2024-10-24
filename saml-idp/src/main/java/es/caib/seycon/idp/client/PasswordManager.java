@@ -98,7 +98,7 @@ public class PasswordManager {
     	synchronized (monitor) {
 	    	new Thread( () -> {
 	    		try {
-	    			serverService.changePasswordSync(user,  getDispatcher(), passwordNew, false);
+	    			serverService.changePassword(user,  getDispatcher(), passwordNew, false);
 	    		} catch (Exception e) {
 	    			exception[0] = e;
 	    		} finally {
