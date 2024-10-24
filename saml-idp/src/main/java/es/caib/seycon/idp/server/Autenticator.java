@@ -39,7 +39,6 @@ import org.opensaml.util.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.soffid.iam.addons.federation.FederationServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
@@ -480,32 +479,39 @@ public class Autenticator {
 			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
 
 			// HolderGroup already selected
-			if (authCtx.getHolderGroupSelected()!=null)
+			if (authCtx.getHolderGroupSelected()!=null) {
+				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getHolderGroupSelected());
 				return false;
+			}
 
 			// HolderGroup present in the scope
 			if (r.getHolderGroup()!=null) {
 				authCtx.setHolderGroupSelected(r.getHolderGroup());
 				authCtx.setHolderGroupIsActive(true);
+				LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
 				return false;
 			}
 
 			// User has one or more holderGroups
     		String un = authCtx.getCurrentUser().getUserName();
     		Collection<GroupUser> lgu = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
+    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups");
     		Collection<Group> lgu2 = new LinkedList();
-    		FederationService fs = FederationServiceLocator.instance().getFederationService();
+    		FederationService fs = IdpConfig.getConfig().getFederationService();
     		for (GroupUser gu : lgu) {
     			Group g = new RemoteServiceLocator().getGroupService().findGroupById(gu.getGroupId());
     			if (g.getType()!=null && fs.isOUTypeAHolderGroup(g.getType())) {
     				lgu2.add(g);
     			}
     		}
+    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type");
     		if (lgu2.size()==1) {
+    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
     			authCtx.setHolderGroupSelected(lgu2.iterator().next().getName());
     			authCtx.setHolderGroupIsActive(true);
     			return false;
     		} else if (lgu.size()>1) {
+    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, he has to select the group from a list");
     			authCtx.setHolderGroupIsActive(true);
     			return true;
     		}

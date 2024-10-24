@@ -9,11 +9,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.soffid.iam.addons.federation.FederationServiceLocator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Group;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
+import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
 
 public class SelectHolderGroupForm extends BaseForm {
@@ -21,6 +24,7 @@ public class SelectHolderGroupForm extends BaseForm {
 	public static final String URI = "/holderGroupForm"; //$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
     private ServletContext context = null;
+    Log log = LogFactory.getLog(getClass());
 
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -29,8 +33,10 @@ public class SelectHolderGroupForm extends BaseForm {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    	log.error(">>> HOLDERGROUP - SelectHolderGroupForm.doGet");
         super.doGet(req, resp);
         try {
+        	log.error(">>> HOLDERGROUP - SelectHolderGroupForm.doGet, authenticating");
         	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
         	if (authCtx==null)
         		throw new ServletException("URL not valid at this time");
@@ -50,9 +56,11 @@ public class SelectHolderGroupForm extends BaseForm {
             g.addArgument("title", Messages.getString("selectHolderGroup")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("selectHolderGroupUrl", SelectHolderGroupAction.URI); //$NON-NLS-1$
 
+            log.error("SelectHolderGroupForm.doGet - Se procede a consultar los holder groups...");
             Collection<Group> lg = new RemoteServiceLocator().getUserService().getUserGroups(authCtx.getCurrentUser().getId());
-        	StringBuffer sb = new StringBuffer();
-        	FederationService fs = FederationServiceLocator.instance().getFederationService();
+            log.error("SelectHolderGroupForm.doGet - Se han encontrado "+((lg!=null) ? lg.size():0)+" holder groups");
+            StringBuffer sb = new StringBuffer();
+        	FederationService fs = IdpConfig.getConfig().getFederationService();
         	for (Group group : lg) {
         		if (group.getType()!=null && fs.isOUTypeAHolderGroup(group.getType())) {
 		        	sb.append("<div>");
@@ -66,6 +74,7 @@ public class SelectHolderGroupForm extends BaseForm {
             g.generate(resp, "selectHolderGroupPage.html"); //$NON-NLS-1$
 
         } catch (Exception e) {
+        	log.error("SelectHolderGroupForm.doGet - Error genérico: "+e.getMessage());
             throw new ServletException(e);
 		}
     }

@@ -8,6 +8,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
@@ -20,11 +23,13 @@ public class SelectHolderGroupAction extends HttpServlet {
 	public static final String URI = "/holderGroupAction"; //$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
 	private LogRecorder logRecorder = LogRecorder.getInstance();
+	Log log = LogFactory.getLog(getClass());
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String error = null;
 		try {
+			log.info(">>> HOLDERGROUP - SelectHolderGroupAction.doPost");
 			String hgId = req.getParameter("holderGroup"); //$NON-NLS-1$
 			if (hgId!=null) {
 	        	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
@@ -37,6 +42,7 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        				authCtx.setHolderGroupSelected(hgId);
 	    	                Autenticator auth = new Autenticator();
 	    	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
+	    	                log.info(">>> HOLDERGROUP - authentication ok");
 	        			}
 	        		}
             		error = "No se ha encontrado el grupo "+un; //$NON-NLS-1$
