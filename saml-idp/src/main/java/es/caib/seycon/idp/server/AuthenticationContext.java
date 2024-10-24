@@ -635,7 +635,18 @@ public class AuthenticationContext {
 	public void fetchUserData() throws InternalErrorException, IOException {
 		getUserData(user);
 	}
-	
+
+	public boolean checkUser(String userName) throws InternalErrorException, IOException {
+    	IdpConfig cfg;
+		try {
+			cfg = IdpConfig.getConfig();
+		} catch (Exception e) {
+			throw new InternalErrorException("Error getting default dispatcher", e);
+		}
+	    String d = cfg.getSystem().getName();
+	    return new RemoteServiceLocator().getAccountService().findAccount(userName, d) != null;
+	}
+
 	private void getUserData(String userName) throws InternalErrorException, IOException {
     	IdpConfig cfg;
 		try {

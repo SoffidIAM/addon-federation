@@ -74,8 +74,14 @@ public class UserAction extends HttpServlet {
     			}
         	} else {
 	           	AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-	           	ctx.setUser(u);
 	           	try {
+		           	if (!ctx.checkUser(u)) {
+		           		if (ctx.checkUser(u.toLowerCase()))
+		           			u = u.toLowerCase();
+		           		else if (ctx.checkUser(u.toUpperCase()))
+		           			u = u.toUpperCase();
+		           	}
+		           	ctx.setUser(u);
 	           		if (ctx.isLocked(u)) {
 	           			error = "User is temporary locked";
 	           		} else {
