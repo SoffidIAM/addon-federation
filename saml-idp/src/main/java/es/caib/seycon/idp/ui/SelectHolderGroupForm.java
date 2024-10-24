@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Group;
+import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.config.IdpConfig;
@@ -57,11 +58,12 @@ public class SelectHolderGroupForm extends BaseForm {
             g.addArgument("selectHolderGroupUrl", SelectHolderGroupAction.URI); //$NON-NLS-1$
 
             log.error("SelectHolderGroupForm.doGet - Se procede a consultar los holder groups...");
-            Collection<Group> lg = new RemoteServiceLocator().getUserService().getUserGroups(authCtx.getCurrentUser().getId());
-            log.error("SelectHolderGroupForm.doGet - Se han encontrado "+((lg!=null) ? lg.size():0)+" holder groups");
+            Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(authCtx.getCurrentUser().getUserName());
+            log.error("SelectHolderGroupForm.doGet - Se han encontrado "+((gul!=null) ? gul.size():0)+" holder groups");
             StringBuffer sb = new StringBuffer();
         	FederationService fs = IdpConfig.getConfig().getFederationService();
-        	for (Group group : lg) {
+        	for (GroupUser gu : gul) {
+        		Group group = new RemoteServiceLocator().getGroupService().findGroupByGroupName(gu.getGroup());
         		if (group.getType()!=null && fs.isOUTypeAHolderGroup(group.getType())) {
 		        	sb.append("<div>");
 		        	sb.append("<input type=\"radio\" name=\"holderGroup\" id=\"g"+group.getId()+"\" value=\""+group.getId()+"\" style=\"margin:7px\">");
