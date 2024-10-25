@@ -536,7 +536,7 @@ public class Autenticator {
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 		if (member != null && new AuthorizationHandler().checkAuthorization(user, member,
 				authCtx == null ? null: authCtx.getHostId(resp),
-				req.getRemoteAddr())) {
+				req.getRemoteAddr(), authCtx.getHolderGroupSelected())) {
 			final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
 			String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 			

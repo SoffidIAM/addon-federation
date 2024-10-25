@@ -180,7 +180,7 @@ public class RadiusServer {
 				try {
 					FederationService fs = new RemoteServiceLocator().getFederacioService();
 			    	if (new AuthorizationHandler().checkAuthorization(ctx.getUser(), member,
-			    			null, client.getAddress().toString())) {
+			    			null, client.getAddress().toString(), ctx.getHolderGroupSelected())) {
 	
 				    	RadiusPacket answer = new RadiusPacket(RadiusPacket.ACCESS_ACCEPT, accessRequest.getPacketIdentifier());
 						copyProxyState(accessRequest, answer);

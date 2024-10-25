@@ -32,8 +32,8 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 public class AuthorizationHandler {
 	static Log log = LogFactory.getLog(AuthorizationHandler.class);
 	
-	public boolean checkAuthorization(String user, FederationMember member,
-			String clientHost, String clientIp) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+	public boolean checkAuthorization(String user, FederationMember member, String clientHost, String clientIp, String holderGroup)
+					throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
     	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
     	final String systemName = IdpConfig.getConfig().getSystem().getName();
     	log.info("Getting information of "+user+" at "+systemName);
@@ -57,8 +57,10 @@ public class AuthorizationHandler {
     			boolean found = false;
     			for (RoleGrant role: new RemoteServiceLocator().getServerService().getUserRoles(ui.getId(), null)) {
     				if (member.getRoles().contains(role.getRoleName()+"@"+role.getSystem())) {
-    					found = true;
-    					break;
+    					if (role.getHolderGroup()==null || (holderGroup!=null && holderGroup.equals(role.getHolderGroup()))) {
+							found = true;
+							break;
+						}
     				}
     			}
     			if (!found) {
