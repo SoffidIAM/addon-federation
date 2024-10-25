@@ -227,7 +227,7 @@ public class TokenEndpoint extends HttpServlet {
 							t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true), oauthSessionId);
 							t.setUser(username);
 							t.setAuthenticationMethod("P");
-							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId());
+							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId(), t.getHolderGroup());
 							t.setScope(scopes);
 						} else {
 							authCtx.authenticationFailure(username, Messages.getString("UserPasswordAction.8"));

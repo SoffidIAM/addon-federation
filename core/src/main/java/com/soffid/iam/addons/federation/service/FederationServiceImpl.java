@@ -2582,7 +2582,7 @@ public class FederationServiceImpl
 	}
 
 	@Override
-	protected String handleFilterScopes(String requestedScopes, String user, String system, String serviceProvider)
+	protected String handleFilterScopes(String requestedScopes, String user, String system, String serviceProvider, String holderGroup)
 			throws Exception {
 		if (requestedScopes == null)
 			return null;
@@ -2592,7 +2592,7 @@ public class FederationServiceImpl
 		HashSet<String> requested = new HashSet<String>( Arrays.asList(requestedScopes.split(" +")) );
 		HashSet<String> scopes = new HashSet<String>();
 		HashSet<String> hsScopesToResponse = new HashSet<String>();
-		HashSet<Long> hsGrants = null;
+		HashMap<Long, String> hmGrants = null;
 		final List<FederationMemberEntity> federationMembers = getServiceProviderEntityDao().findFMByPublicId(serviceProvider);
 		for (String requestedScope: requested) {
 			boolean allowed = false;
@@ -2611,7 +2611,7 @@ public class FederationServiceImpl
 										break;
 									}
 									else {
-										if (hsGrants==null) {
+										if (hmGrants==null) {
 											Collection<RoleGrant> grants = null;
 											if (account instanceof UserAccount) {
 												UserEntity userEntity = getUserEntityDao().findByUserName(((UserAccount) account).getUser());
@@ -2619,16 +2619,18 @@ public class FederationServiceImpl
 											} else {
 												grants = getApplicationService().findEffectiveRoleGrantByAccount(account.getId());
 											}
-											hsGrants = new HashSet<Long>();
+											hmGrants = new HashMap<Long, String>();
 											for (RoleGrant grant: grants) {
-												hsGrants.add(grant.getRoleId());
+												hmGrants.put(grant.getRoleId(), grant.getHolderGroup());
 											}
 										}
 										boolean found = false;
 										for (AllowedScopeRoleEntity r : scope.getRoles()) {
-											if (hsGrants.contains(r.getRoleId())) {
-												found = true;
-												break;
+											if (hmGrants!=null && hmGrants.containsKey(r.getRoleId())) {
+												if (hmGrants.get(r.getRoleId())==null || (holderGroup!=null && holderGroup.equals(hmGrants.get(r.getRoleId())))) {
+													found = true;
+													break;
+												}
 											}
 										}
 										if (found) {
@@ -2655,9 +2657,11 @@ public class FederationServiceImpl
 							hsScopesToResponse.add(scope.getScope());
 						} else {
 							for (AllowedScopeRoleEntity r : scope.getRoles()) {
-								if (hsGrants!=null && hsGrants.contains(r.getRoleId())) {
-									hsScopesToResponse.add(scope.getScope());
-									break;
+								if (hmGrants!=null && hmGrants.containsKey(r.getRoleId())) {
+									if (hmGrants.get(r.getRoleId())==null || (holderGroup!=null && holderGroup.equals(hmGrants.get(r.getRoleId())))) {
+										hsScopesToResponse.add(scope.getScope());
+										break;
+									}
 								}
 							}
 						}

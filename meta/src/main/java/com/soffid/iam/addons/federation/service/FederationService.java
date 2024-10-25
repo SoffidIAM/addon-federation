@@ -580,7 +580,7 @@ public abstract class FederationService {
 	OauthToken findOauthTokenByAuthorizationCode(String idp, String authorizationCode) {return null;}
 	OauthToken findOauthTokenByToken(String idp, String token) {return null;}
 	OauthToken findOauthTokenByRefreshToken(String idp, String token) {return null;}
-	String filterScopes(@Nullable String requestedScopes, String user, String system, String serviceProvider) {return null;}
+	String filterScopes(@Nullable String requestedScopes, String user, String system, String serviceProvider, String holderGroup) {return null;}
 	
 	/* Consent */
 	boolean hasConsent(String userName, String serviceProvider) {return false;}
