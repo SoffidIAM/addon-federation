@@ -11,6 +11,7 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -118,6 +119,12 @@ public class QueryServlet extends HttpServlet {
 			return profile.getOfflineDetector() == null ? "false": profile.getOfflineDetector().toString();
 		case "/config/SSOOfflineDays":
 			return profile.getOfflineDays() == null ? null: profile.getOfflineDays().toString();
+		case "/config/logo":
+			return fm.getLogo() == null ? null: Base64.getEncoder().encodeToString(fm.getLogo());
+		case "/config/accountLabel":
+			return profile.getAccountLabel() == null || profile.getAccountLabel().isBlank() ? null: profile.getAccountLabel();
+		case "/config/adminAccountLabel":
+			return profile.getAdminAccountLabel() == null || profile.getAdminAccountLabel().isBlank() ? null: profile.getAdminAccountLabel();
 		default:
 			return null;
 		}

@@ -394,14 +394,19 @@ public class FederationServiceImpl
 		updateUi(entity.getId(), "css", federationMember.getHtmlCSS());
 		updateUi(entity.getId(), "header", federationMember.getHtmlHeader());
 		updateUi(entity.getId(), "footer", federationMember.getHtmlFooter());
+		updateUi(entity.getId(), "logo", federationMember.getLogo());
 	}
 
 	private void updateUi(Long id, String tag, String value) throws InternalErrorException {
+		updateUi(id, tag, value == null || value.trim().isEmpty()? null: value.getBytes(StandardCharsets.UTF_8));
+	}
+
+	private void updateUi(Long id, String tag, byte[] value) throws InternalErrorException {
 		String name = "federation/"+id+"/"+tag;
-		if (value == null || value.trim().isEmpty()) {
+		if (value == null) {
 			getConfigurationService().deleteBlob(name);
 		} else {
-			getConfigurationService().updateBlob(name, value.getBytes(StandardCharsets.UTF_8));
+			getConfigurationService().updateBlob(name, value);
 		}
 	}
 
