@@ -2584,6 +2584,7 @@ public class FederationServiceImpl
 	@Override
 	protected String handleFilterScopes(String requestedScopes, String user, String system, String serviceProvider, String holderGroup)
 			throws Exception {
+		log.info(">>> FILTERSCOPES - requestedScopes="+requestedScopes+", user="+user+", system="+system+", serviceProvider="+serviceProvider+", holderGroup="+holderGroup);
 		if (requestedScopes == null)
 			return null;
 		Account account = getAccountService().findAccount(user, system);
@@ -2592,14 +2593,23 @@ public class FederationServiceImpl
 		HashSet<String> requested = new HashSet<String>( Arrays.asList(requestedScopes.split(" +")) );
 		HashSet<String> scopes = new HashSet<String>();
 		HashSet<String> hsScopesToResponse = new HashSet<String>();
-		HashMap<Long, String> hmGrants = null;
+		Collection<RoleGrant> grants = null;
 		final List<FederationMemberEntity> federationMembers = getServiceProviderEntityDao().findFMByPublicId(serviceProvider);
+
+		//
+		// Check requested scopes
+		//
 		for (String requestedScope: requested) {
 			boolean allowed = false;
 			if (requestedScope.equals("openid"))
 				allowed = true;
 			else {
-				for (FederationMemberEntity fm: federationMembers) {
+				if (federationMembers.size()==0)
+					log.info(">>> FILTERSCOPES - ServiceProvider "+serviceProvider+" not found");
+				else if (federationMembers.size()>1)
+					log.info(">>> FILTERSCOPES - Found "+federationMembers.size()+" definitions of the serviceProvider "+serviceProvider);
+				else {
+					ServiceProviderEntity fm = (ServiceProviderEntity) federationMembers.get(0);
 					if (fm instanceof ServiceProviderEntity) {
 						if (((ServiceProviderEntity)fm).getAllowedScopes().isEmpty()) // Compatibility check
 							allowed = true;
@@ -2611,27 +2621,32 @@ public class FederationServiceImpl
 										break;
 									}
 									else {
-										if (hmGrants==null) {
-											Collection<RoleGrant> grants = null;
+										if (grants==null) {
 											if (account instanceof UserAccount) {
 												UserEntity userEntity = getUserEntityDao().findByUserName(((UserAccount) account).getUser());
 												grants = getApplicationService().findEffectiveRoleGrantByUser(userEntity.getId());
 											} else {
 												grants = getApplicationService().findEffectiveRoleGrantByAccount(account.getId());
 											}
-											hmGrants = new HashMap<Long, String>();
+											StringBuffer sb = new StringBuffer();
 											for (RoleGrant grant: grants) {
-												hmGrants.put(grant.getRoleId(), grant.getHolderGroup());
+												if (sb.length()>0) sb.append(", ");
+												sb.append(grant.getRoleName()+"@"+grant.getSystem()+"#"+grant.getHolderGroup());
 											}
+											log.info(">>> FILTERSCOPES - Grants to check: "+sb.toString());
 										}
 										boolean found = false;
-										for (AllowedScopeRoleEntity r : scope.getRoles()) {
-											if (hmGrants!=null && hmGrants.containsKey(r.getRoleId())) {
-												if (hmGrants.get(r.getRoleId())==null || (holderGroup!=null && holderGroup.equals(hmGrants.get(r.getRoleId())))) {
-													found = true;
-													break;
+										for (AllowedScopeRoleEntity rs : scope.getRoles()) {
+											for (RoleGrant rg : grants) {
+												if (rs.getRoleId().longValue()==rg.getRoleId().longValue()) {
+													if (rg.getHolderGroup()==null || (holderGroup!=null && holderGroup.equals(rg.getHolderGroup()))) {
+														found = true;
+														break;
+													}
 												}
 											}
+											if (found)
+												break;
 										}
 										if (found) {
 											allowed = true;
@@ -2644,39 +2659,65 @@ public class FederationServiceImpl
 					}
 				}
 			}
-			if (allowed)
+			if (allowed) {
 				hsScopesToResponse.add(requestedScope);
+				log.info(">>> FILTERSCOPES - Included: "+requestedScope);
+			} else {
+				log.info(">>> FILTERSCOPES - Excluded: "+requestedScope);
+			}
 		}
 
+		//
 		// Check scopes with default=true
-		for (FederationMemberEntity fm: federationMembers) {
+		//
+		if (federationMembers.size()==0)
+			log.info(">>> FILTERSCOPES - ServiceProvider "+serviceProvider+" not found");
+		else if (federationMembers.size()>1)
+			log.info(">>> FILTERSCOPES - Found "+federationMembers.size()+" definitions of the serviceProvider "+serviceProvider);
+		else {
+			ServiceProviderEntity fm = (ServiceProviderEntity) federationMembers.get(0);
 			if (fm instanceof ServiceProviderEntity && !((ServiceProviderEntity)fm).getAllowedScopes().isEmpty()) {
 				for (AllowedScopeEntity scope : ((ServiceProviderEntity)fm).getAllowedScopes()) {
 					if (scope.getByDefault()!=null && scope.getByDefault().booleanValue() && !hsScopesToResponse.contains(scope.getScope())) {
+						boolean added = false;
 						if (scope.getRoles().isEmpty()) {
 							hsScopesToResponse.add(scope.getScope());
+							added = true;
 						} else {
-							for (AllowedScopeRoleEntity r : scope.getRoles()) {
-								if (hmGrants!=null && hmGrants.containsKey(r.getRoleId())) {
-									if (hmGrants.get(r.getRoleId())==null || (holderGroup!=null && holderGroup.equals(hmGrants.get(r.getRoleId())))) {
-										hsScopesToResponse.add(scope.getScope());
-										break;
+							for (AllowedScopeRoleEntity rs : scope.getRoles()) {
+								for (RoleGrant rg : grants) {
+									if (rs.getRoleId().longValue()==rg.getRoleId().longValue()) {
+										if (rg.getHolderGroup()==null || (holderGroup!=null && holderGroup.equals(rg.getHolderGroup()))) {
+											hsScopesToResponse.add(scope.getScope());
+											added = true;
+											break;
+										}
 									}
 								}
+								if (added)
+									break;
 							}
+						}
+						if (added) {
+							log.info(">>> FILTERSCOPES - Included default: "+scope.getScope());
+						} else {
+							log.info(">>> FILTERSCOPES - Excluded default: "+scope.getScope());
 						}
 					}
 				}
 			}
 		}
 
+		//
 		// Generate the result
+		//
 		StringBuffer sb = new StringBuffer();
 		for (String scopesToResponse: hsScopesToResponse) {
 			if (sb.length()>0)
 				sb.append(" ");
 			sb.append(scopesToResponse);
 		}
+		log.info(">>> FILTERSCOPES - Final scopes: "+sb.toString());
 		return sb.toString();
 	}
 
