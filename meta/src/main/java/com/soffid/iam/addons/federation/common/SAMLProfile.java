@@ -140,4 +140,7 @@ public class SAMLProfile {
 	
 	@Nullable Integer offlineDays;
 	
+	@Nullable String accountLabel;	
+
+	@Nullable String adminAccountLabel;	
 }

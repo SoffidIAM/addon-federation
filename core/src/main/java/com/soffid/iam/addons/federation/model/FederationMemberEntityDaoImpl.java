@@ -151,6 +151,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			generateRegisterValues(target, idp);
 			loadAuthenticatioMethods (idp, target);
 			
+			target.setLogo(getBinaryBlob(idp, "logo"));
 			target.setHtmlCSS(getBlob(idp, "css"));
 			target.setHtmlFooter(getBlob(idp, "footer"));
 			target.setHtmlHeader(getBlob(idp, "header"));
@@ -336,11 +337,16 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 	}
 	
 	private String getBlob(IdentityProviderEntity idp, String tag) {
+		byte[] data = getBinaryBlob(idp, tag);
+		if (data == null) return null;
+		else return new String(data, StandardCharsets.UTF_8);
+	}
+
+	protected byte[] getBinaryBlob(IdentityProviderEntity idp, String tag) {
 		try {
 			byte[] data;
 			data = getConfigurationService().getBlob("federation/"+idp.getId()+"/"+tag);
-			if (data == null) return null;
-			else return new String(data, StandardCharsets.UTF_8);
+			return data;
 		} catch (InternalErrorException e) {
 			throw new HibernateException("Error fetching data", e);
 		}

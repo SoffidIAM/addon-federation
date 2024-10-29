@@ -178,6 +178,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			target.setShowPreviousUser(entity.getShowPreviousUser());
 			target.setOfflineDetector(entity.getOfflineDetector());
 			target.setOfflineDays(entity.getOfflineDays());
+			target.setAccountLabel(entity.getAccountLabel());
+			target.setAdminAccountLabel(entity.getAdminAccountLabel());
 		}
 
 	}
@@ -423,6 +425,8 @@ public class ProfileEntityDaoImpl extends com.soffid.iam.addons.federation.model
 			entity.setShowPreviousUser(source.getShowPreviousUser());
 			entity.setOfflineDetector(source.getOfflineDetector());
 			entity.setOfflineDays(source.getOfflineDays());
+			entity.setAccountLabel(source.getAccountLabel());
+			entity.setAdminAccountLabel(source.getAdminAccountLabel());
 		} else {
 			// Res més... per als SAMLProfile
 		}

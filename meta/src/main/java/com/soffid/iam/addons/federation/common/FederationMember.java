@@ -288,6 +288,10 @@ public class FederationMember {
 	@Description("HTML CSS for identity provider")
 	public String htmlCSS;
 	
+	@Nullable
+	@Description("Logo")
+	public byte[] logo;
+	
 	@Description("Dynamic registration token")
 	@Nullable
 	Digest registrationToken;

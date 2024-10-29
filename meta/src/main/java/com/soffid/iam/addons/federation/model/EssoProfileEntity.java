@@ -47,4 +47,10 @@ public abstract class EssoProfileEntity extends com.soffid.iam.addons.federation
 	@Column(name = "PRO_OFFDAY")
 	@Nullable Integer offlineDays;
 	
+	@Column(name = "PRO_ACCLAB")
+	@Nullable String accountLabel;	
+
+	@Column(name = "PRO_ADMLAB")
+	@Nullable String adminAccountLabel;	
+
 }

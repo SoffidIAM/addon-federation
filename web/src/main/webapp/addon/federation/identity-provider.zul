@@ -356,6 +356,12 @@
 	<div sclass="section" id="uiSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.lookandfeel') }" />
 		<customfield3 
+			label="${c:l('federacio.logo')}"
+			dataType="PHOTO"
+			multiline='true'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			bind="/federationMember/logo"/>
+		<customfield3 
 			label="${c:l('federacio.htmlCSS')}"
 			dataType="STRING"
 			multiline='true'
@@ -626,6 +632,14 @@
 				bind="hostnameFormat"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
 				listOfValues="short: ${c:l('federation.short')}, long: ${c:l('federation.long') }" ></customfield3>
+			<customfield3 id="r_esso_accountLabel" label="${c:l('federa_profile.zul.accountLabel')}"
+				dataType="STRING"
+				bind="accountLabel"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+			<customfield3 id="r_esso_adminAccountLabel" label="${c:l('federa_profile.zul.adminAccountLabel')}"
+				dataType="STRING"
+				bind="adminAccountLabel"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 
 			<div style="text-align: right; width: 100%">
 				<button image="/img/undo-r.svg" label="${c:l('error.zul.Tancar') }" onClick="ref:handler.applyProfile"/>

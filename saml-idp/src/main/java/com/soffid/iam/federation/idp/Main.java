@@ -136,6 +136,7 @@ import es.caib.seycon.idp.ui.IframeSession;
 import es.caib.seycon.idp.ui.KeepAliveServlet;
 import es.caib.seycon.idp.ui.LogFilter;
 import es.caib.seycon.idp.ui.LoginServlet;
+import es.caib.seycon.idp.ui.LogoServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.MetadataServlet;
 import es.caib.seycon.idp.ui.NtlmAction;
@@ -580,6 +581,7 @@ public class Main {
         ctx.addServlet(PasswordChangeForm.class, PasswordChangeForm.URI);
         ctx.addServlet(PasswordChangeAction.class, PasswordChangeAction.URI);
         ctx.addServlet(PasswordChangedForm.class, PasswordChangedForm.URI);
+        ctx.addServlet(LogoServlet.class, LogoServlet.URI);
         ctx.addServlet(LogoutServlet.class, LogoutServlet.URI);
         ctx.addServlet(RegisterFormServlet.class, RegisterFormServlet.URI);
         ctx.addServlet(RegisterAction.class, RegisterAction.URI);
