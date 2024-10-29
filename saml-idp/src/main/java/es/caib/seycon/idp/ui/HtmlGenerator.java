@@ -216,7 +216,7 @@ public class HtmlGenerator {
         			+ "			<li class=\"lang-ca ${lang.active.ca}\"><a href=\""+url+"?lang=ca\" hreflang=\"ca\" title=\"Català\"><span>Català</span></a></li>\n"
         			+ "		</ul>\n"
         			+ "	</div>\n"
-        			+ "<p class='biglogo'><img src=\"/imgs/logo.png\"/></div>"
+        			+ "<p class='biglogo'><img src=\"/imgs/custom-logo.png\"/></div>"
         			+ "");
         }
         if (fm != null && fm.getHtmlFooter() != null && ! fm.getHtmlFooter().trim().isEmpty()) {

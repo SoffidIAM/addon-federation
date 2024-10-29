@@ -70,7 +70,14 @@ public class OTPAction extends HttpServlet {
             error = Messages.getString("UserPasswordAction.missing.password"); //$NON-NLS-1$
         } else {
             try {
-                String entityId = (String) req.getSession()
+	           	if (!ctx.checkUser(u)) {
+	           		if (ctx.checkUser(u.toLowerCase()))
+	           			u = u.toLowerCase();
+	           		else if (ctx.checkUser(u.toUpperCase()))
+	           			u = u.toUpperCase();
+	           	}
+
+	           	String entityId = (String) req.getSession()
                 		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
             	FederationMember idp = IdpConfig.getConfig().findIdentityProviderForRelyingParty(entityId);
             	if (Boolean.TRUE.equals(idp.getEnableCaptcha())) {
