@@ -63,6 +63,12 @@ public class UserPasswordAction extends HttpServlet {
             PasswordManager v = new PasswordManager();
 
             try {
+	           	if (!ctx.checkUser(u)) {
+	           		if (ctx.checkUser(u.toLowerCase()))
+	           			u = u.toLowerCase();
+	           		else if (ctx.checkUser(u.toUpperCase()))
+	           			u = u.toUpperCase();
+	           	}
                 String entityId = (String) req.getSession()
                 		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
             	FederationMember idp = IdpConfig.getConfig().findIdentityProviderForRelyingParty(entityId);

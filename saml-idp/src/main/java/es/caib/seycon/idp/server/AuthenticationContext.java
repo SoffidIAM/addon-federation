@@ -183,6 +183,12 @@ public class AuthenticationContext {
 			for (Cookie cookie: request.getCookies()) {
 				if (cookie.getName().equals(userCookie) && Boolean.TRUE.equals(idp.getStoreUser())) {
 					String u = cookie.getValue();
+		           	if (!checkUser(u)) {
+		           		if (checkUser(u.toLowerCase()))
+		           			u = u.toLowerCase();
+		           		else if (checkUser(u.toUpperCase()))
+		           			u = u.toUpperCase();
+		           	}
 					user = u;
 				}
     			if (cookie.getName().equals(cookieName))
@@ -655,7 +661,8 @@ public class AuthenticationContext {
 			throw new InternalErrorException("Error getting default dispatcher", e);
 		}
 	    String d = cfg.getSystem().getName();
-	    return new RemoteServiceLocator().getAccountService().findAccount(userName, d) != null;
+	    Account acc = new RemoteServiceLocator().getAccountService().findAccount(userName, d);
+	    return acc != null && acc.getName().equals(userName);
 	}
 
 	private void getUserData(String userName) throws InternalErrorException, IOException {
