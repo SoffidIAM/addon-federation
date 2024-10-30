@@ -41,7 +41,7 @@ public class SelectHolderGroupAction extends HttpServlet {
 
 	        				// Context
 	        				authCtx.setHolderGroupIsActive(true);
-	        				authCtx.setHolderGroupSelected(gu.getGroup());
+	        				authCtx.setSelectedHolderGroup(gu.getGroup());
 
 	        				// Session
 	        				HttpSession s = req.getSession();

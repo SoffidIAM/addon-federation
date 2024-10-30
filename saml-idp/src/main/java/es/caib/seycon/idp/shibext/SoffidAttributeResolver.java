@@ -189,8 +189,12 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
         		if (data != null)
         			addStringValue (ctx, m, "TelephoneNumber", data.getValue()); //$NON-NLS-1$
 
-        		if (ctx.getRelayState()!=null)
-        			addStringValue (ctx, m, "HolderGroup", ctx.getRelayState()); //$NON-NLS-1$
+            	Subject subject = ctx.getUserSession().getSubject();
+            	if (subject != null) {
+            		SessionPrincipal p = (SessionPrincipal) subject.getPrincipals().iterator().next();
+            		if (p != null && p.getHolderGroup() != null)
+            			addStringValue (ctx, m, "HolderGroup", p.getHolderGroup()); //$NON-NLS-1$
+            	}
 
         	} catch (UnknownUserException ex) {
         		addStringValue (ctx, m, "Fullname", account.getDescription()); //$NON-NLS-1$
@@ -270,12 +274,19 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
         
 
         eo.setAttribute("ctx", ctx);
+    	Subject subject = ctx.getUserSession().getSubject();
+    	if (subject != null) {
+    		SessionPrincipal p = (SessionPrincipal) subject.getPrincipals().iterator().next();
+    		if (p != null)
+    			eo.setAttribute("holderGroup", p.getHolderGroup());
+    	}
 		for ( Attribute attribute: attributes)
         {
   			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
    			{
   				eo.put("ctx", ctx);
-  				DelayedAttribute b = new DelayedAttribute(attribute.getShortName(), translator, eo, attribute, ctx instanceof DummySamlRequestContext);
+  				DelayedAttribute b = new DelayedAttribute(attribute.getShortName(), translator, eo, attribute, 
+  						ctx instanceof DummySamlRequestContext);
   				m.put(attribute.getShortName(), b);
         	} else if ("urn:oid:1.3.6.1.4.1.5923.1.5.1.1".equals(attribute.getOid())) {
                	m.put("memberOf",  new RolesDelayedAttribute("memberOf", attribute, server, ui, account));

@@ -62,7 +62,7 @@ public class LoginResponse  {
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
     	return new AuthorizationHandler().checkAuthorization(user, r.getFederationMember(),
 				authCtx == null ? null: authCtx.getHostId(response),
-				request.getRemoteAddr(), authCtx.getHolderGroupSelected());
+				request.getRemoteAddr(), authCtx.getSelectedHolderGroup());
 	}
 
 	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, ServletException {

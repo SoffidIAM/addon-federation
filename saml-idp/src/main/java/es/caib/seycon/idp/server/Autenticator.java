@@ -440,7 +440,7 @@ public class Autenticator {
     			req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
-            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session);
+            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session, authCtx.getSelectedHolderGroup());
         } 
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
@@ -480,15 +480,15 @@ public class Autenticator {
 			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
 
 			// HolderGroup already selected
-			if (authCtx.getHolderGroupSelected()!=null) {
-				r.setHolderGroup(authCtx.getHolderGroupSelected());
-				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getHolderGroupSelected());
+			if (authCtx.getSelectedHolderGroup()!=null) {
+				r.setHolderGroup(authCtx.getSelectedHolderGroup());
+				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getSelectedHolderGroup());
 				return false;
 			}
 
 			// HolderGroup present in the scope
 			if (r.getHolderGroup()!=null) {
-				authCtx.setHolderGroupSelected(r.getHolderGroup());
+				authCtx.setSelectedHolderGroup(r.getHolderGroup());
 				authCtx.setHolderGroupIsActive(true);
 				LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
 				return false;
@@ -509,7 +509,7 @@ public class Autenticator {
     		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type");
     		if (lgu2.size()==1) {
     			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
-    			authCtx.setHolderGroupSelected(lgu2.iterator().next().getName());
+    			authCtx.setSelectedHolderGroup(lgu2.iterator().next().getName());
     			authCtx.setHolderGroupIsActive(true);
     			return false;
     		} else if (lgu.size()>1) {
@@ -525,7 +525,7 @@ public class Autenticator {
 
 	protected void doSamlLogin(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp,
 			edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession, String type, String user,
-			boolean externalAuth, String hostId, HttpSession session)
+			boolean externalAuth, String hostId, HttpSession session, String holderGroup)
 			throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException,
 			KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException,
 			SignatureException, UnknownUserException, Exception, ServletException {
@@ -536,11 +536,11 @@ public class Autenticator {
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 		if (member != null && new AuthorizationHandler().checkAuthorization(user, member,
 				authCtx == null ? null: authCtx.getHostId(resp),
-				req.getRemoteAddr(), authCtx.getHolderGroupSelected())) {
+				req.getRemoteAddr(), authCtx.getSelectedHolderGroup())) {
 			final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
 			String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 			
-			Principal principal = new SessionPrincipal(user, soffidSession);
+			Principal principal = new SessionPrincipal(user, soffidSession, holderGroup);
 			
 			req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
 			req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
@@ -561,6 +561,8 @@ public class Autenticator {
 			if (saml2LoginContext == null) {
 				saml2LoginContext = (Saml2LoginContext) session.getAttribute("$$soffid-old-login-context$$");
 				String saml2LoginContextId = (String) session.getAttribute("$$soffid-old-login-context-id$$");
+				if (saml2LoginContext != null)
+					saml2LoginContext.setProperty("holderGroup", holderGroup);
 				StorageService<String, LoginContextEntry> storageService = (StorageService<String, LoginContextEntry>) 
 						HttpServletHelper.getStorageService(ctx);
 				storageService.put(HttpServletHelper.DEFAULT_LOGIN_CTX_PARITION, 

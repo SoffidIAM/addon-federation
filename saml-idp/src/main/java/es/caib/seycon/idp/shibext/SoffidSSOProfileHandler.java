@@ -87,6 +87,7 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
 					}
 					if (ctx.isAlwaysAskForCredentials() || loginContext.isForceAuthRequired()) {
 						loginContext.setPrincipalAuthenticated(true);
+						loginContext.setProperty("authenticationContext", ctx.getSelectedHolderGroup());
 						Cookie[] requestCookies = httpRequest.getCookies();
 						if (requestCookies != null) {
 							for (Cookie requestCookie : requestCookies) {

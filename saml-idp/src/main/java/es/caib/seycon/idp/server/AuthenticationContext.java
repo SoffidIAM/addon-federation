@@ -107,17 +107,16 @@ public class AuthenticationContext {
 	}
 
 
-	public String getHolderGroupSelected() {
-		return holderGroupSelected;
+	public String getSelectedHolderGroup() {
+		return selectedHolderGroup;
 	}
 
-
-	public void setHolderGroupSelected(String holderGroupSelected) {
-		this.holderGroupSelected = holderGroupSelected;
+	public void setSelectedHolderGroup(String holderGroupSelected) {
+		this.selectedHolderGroup = holderGroupSelected;
 	}
 
 	private boolean holderGroupIsActive;
-	private String holderGroupSelected;
+	private String selectedHolderGroup;
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{

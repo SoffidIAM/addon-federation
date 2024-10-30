@@ -1,8 +1,12 @@
 package es.caib.seycon.idp.openid.server;
 
+import java.security.Principal;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import javax.security.auth.Subject;
 import javax.servlet.ServletContext;
 import javax.xml.namespace.QName;
 
@@ -29,16 +33,19 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRe
 import edu.internet2.middleware.shibboleth.common.session.Session;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.shibext.SessionPrincipal;
 
 public class DummySamlRequestContext implements
 		SAMLProfileRequestContext {
 
 	private TokenInfo token;
 	private ServletContext context;
+	private String holderGroup;
 
-	public DummySamlRequestContext(TokenInfo t, ServletContext ctx) {
+	public DummySamlRequestContext(TokenInfo t, ServletContext ctx, String holderGroup) {
 		this.token = t;
 		this.context = ctx;
+		this.holderGroup = holderGroup;
 	}
 
 	public SAMLObject getInboundSAMLMessage() {
@@ -140,8 +147,7 @@ public class DummySamlRequestContext implements
 	}
 
 	public String getRelayState() {
-		// Trick to retriever the holdergroup
-		return token.getHolderGroup();
+		return null;
 	}
 
 	public SAMLObject getSubjectNameIdentifier() {
@@ -322,6 +328,46 @@ public class DummySamlRequestContext implements
 	}
 
 	public Session getUserSession() {
+		
+		Session s = new Session() {
+			@Override
+			public String getSessionID() {
+				return null;
+			}
+
+			@Override
+			public Subject getSubject() {
+				Principal principal = new SessionPrincipal(token.getUser(), null, token.getHolderGroup());
+				Set<Principal> principals = new HashSet<Principal> ();
+				Set<?> pubCredentals = new HashSet<Object>();
+				Set<?> privCredentials = new HashSet<Object>();
+				principals.add(principal);
+				return new Subject(false,principals, pubCredentals, privCredentials); 
+			}
+
+			@Override
+			public void setSubject(Subject newSubject) {
+			}
+
+			@Override
+			public String getPrincipalName() {
+				return token.getUser();
+			}
+
+			@Override
+			public long getInactivityTimeout() {
+				return 0;
+			}
+
+			@Override
+			public DateTime getLastActivityInstant() {
+				return null;
+			}
+
+			@Override
+			public void setLastActivityInstant(DateTime lastActivity) {
+			}
+		};
 		return null;
 	}
 

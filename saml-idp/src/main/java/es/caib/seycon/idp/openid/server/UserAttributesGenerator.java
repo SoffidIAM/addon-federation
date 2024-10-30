@@ -54,7 +54,7 @@ public class UserAttributesGenerator {
 				(AttributeFilteringEngine<SAMLProfileRequestContext>)
 				HttpServletHelper.getAttributeFilterEnginer(ctx);
 
-		DummySamlRequestContext context = new DummySamlRequestContext(t, ctx);
+		DummySamlRequestContext context = new DummySamlRequestContext(t, ctx, t.getHolderGroup());
 		Map<String, BaseAttribute> att;
 		att = resolver.resolveAttributes(context);
 		att = filter.filterAttributes(att, context);
