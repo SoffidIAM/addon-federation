@@ -5,6 +5,23 @@
 //
 
 package com.soffid.iam.addons.federation.service;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Federation Service.
+ * 
+ * Common services for user authentication:
+ * 
+ * - generateSamlRequest: generates a SAML request 
+ * - authenticate: parses and validates a SAML request, generating a sessino cookie
+ * - checkSessionCookie: parses and validates a SAML session cookie
+ * 
+ */
+import org.springframework.transaction.annotation.Transactional;
+
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
@@ -36,42 +53,24 @@ import com.soffid.iam.api.SamlRequest;
 import com.soffid.iam.model.SamlRequestEntity;
 import com.soffid.iam.service.AsyncRunnerService;
 import com.soffid.iam.service.MailService;
-import com.soffid.mda.annotation.*;
+import com.soffid.mda.annotation.Depends;
+import com.soffid.mda.annotation.Description;
+import com.soffid.mda.annotation.Nullable;
+import com.soffid.mda.annotation.Operation;
+import com.soffid.mda.annotation.Service;
 
 import es.caib.bpm.servei.BpmEngine;
 import es.caib.seycon.ng.comu.Auditoria;
 import es.caib.seycon.ng.comu.Maquina;
 import es.caib.seycon.ng.comu.Usuari;
-import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.RolEntity;
-import es.caib.seycon.ng.model.TipusUnitatOrganitzativaEntity;
 import es.caib.seycon.ng.servei.AplicacioService;
-import es.caib.seycon.ng.servei.DadesAddicionalsService;
 import es.caib.seycon.ng.servei.DispatcherService;
 import es.caib.seycon.ng.servei.DominiService;
 import es.caib.seycon.ng.servei.DominiUsuariService;
-import es.caib.seycon.ng.servei.InternalPasswordService;
 import es.caib.seycon.ng.servei.SessioService;
-import es.caib.seycon.ng.servei.UsuariService;
 import es.caib.seycon.ng.sync.servei.LogonService;
 import roles.Tothom;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-/**
- * Federation Service.
- * 
- * Common services for user authentication:
- * 
- * - generateSamlRequest: generates a SAML request 
- * - authenticate: parses and validates a SAML request, generating a sessino cookie
- * - checkSessionCookie: parses and validates a SAML session cookie
- * 
- */
-import org.springframework.transaction.annotation.Transactional;
 
 @Service ( serverPath="/seycon/FederationService",
 	 serverRole="agent",
@@ -580,7 +579,7 @@ public abstract class FederationService {
 	OauthToken findOauthTokenByAuthorizationCode(String idp, String authorizationCode) {return null;}
 	OauthToken findOauthTokenByToken(String idp, String token) {return null;}
 	OauthToken findOauthTokenByRefreshToken(String idp, String token) {return null;}
-	String filterScopes(@Nullable String requestedScopes, String user, String system, String serviceProvider, String holderGroup) {return null;}
+	String filterScopes(@Nullable String requestedScopes, String user, String system, String serviceProvider, @Nullable String holderGroup) {return null;}
 	
 	/* Consent */
 	boolean hasConsent(String userName, String serviceProvider) {return false;}
