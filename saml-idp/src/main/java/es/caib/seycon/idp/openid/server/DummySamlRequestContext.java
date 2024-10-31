@@ -368,7 +368,7 @@ public class DummySamlRequestContext implements
 			public void setLastActivityInstant(DateTime lastActivity) {
 			}
 		};
-		return null;
+		return s;
 	}
 
 	public void setProfileConfiguration(ProfileConfiguration configuration) {

@@ -101,7 +101,6 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
 			encoder2.setAttributeName(att.getOid() == null || att.getOid().trim().isEmpty() ? att.getShortName(): att.getOid());
 			if (att.getShortName().equals("uid")) {
 				def.setSourceAttributeID("uid");
-				def.getDependencyIds().add("seu");
 			}
 			def.getAttributeEncoders().add(encoder2);
 			data.definitions.add(def);
@@ -189,7 +188,8 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
         		if (data != null)
         			addStringValue (ctx, m, "TelephoneNumber", data.getValue()); //$NON-NLS-1$
 
-            	Subject subject = ctx.getUserSession().getSubject();
+				Session s = ctx.getUserSession();
+				Subject subject = (s!=null) ? ctx.getUserSession().getSubject() : null;
             	if (subject != null) {
             		SessionPrincipal p = (SessionPrincipal) subject.getPrincipals().iterator().next();
             		if (p != null && p.getHolderGroup() != null)
