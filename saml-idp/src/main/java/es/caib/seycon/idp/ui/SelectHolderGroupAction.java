@@ -53,7 +53,7 @@ public class SelectHolderGroupAction extends HttpServlet {
 	    	                Autenticator auth = new Autenticator();
 	    	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
 	    	                log.info(">>> HOLDERGROUP - authentication ok");
-	    	                break;
+	    	                return;
 	        			}
 	        		}
             		error = "No se ha encontrado el grupo "+un; //$NON-NLS-1$
@@ -67,7 +67,9 @@ public class SelectHolderGroupAction extends HttpServlet {
 			error = "An internal error has been detected: " + e.toString();
 			e.printStackTrace();
 		}
-		req.setAttribute("ERROR", error); //$NON-NLS-1$
-		resp.sendRedirect(SelectHolderGroupForm.URI);
+		if (error!=null) {
+			req.setAttribute("ERROR", error); //$NON-NLS-1$
+			resp.sendRedirect(SelectHolderGroupForm.URI);
+		}
 	}
 }
