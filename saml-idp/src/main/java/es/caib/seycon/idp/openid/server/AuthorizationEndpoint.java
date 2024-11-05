@@ -66,7 +66,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setPkceAlgorithm(req.getParameter("code_challenge_method"));
 	    	r.setPkceChallenge(req.getParameter("code_challenge"));
 	    	r.setLoginHint(req.getParameter("login_hint"));
-	    	r.setHolderGroup(getHolderGroupFromScope(r.getScope()));
+	    	r.setHolderGroup(getHolderGroupFromScopeAndSession(r.getScope(), (String) req.getSession().getAttribute(SessionConstants.OPENID_HOLDERGROUP)));
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
 	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
@@ -110,7 +110,10 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	HttpSession session = req.getSession();
 	    	session.setAttribute(SessionConstants.OPENID_REQUEST, r);
 	    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
-	    	
+
+	    	if (r.getHolderGroup()!=null)
+	    		session.setAttribute(SessionConstants.OPENID_HOLDERGROUP, r.getHolderGroup());
+
     		clientCredentialsGrantType(req, resp);
 	    	
     	} catch (Exception e) {
@@ -140,9 +143,9 @@ public class AuthorizationEndpoint extends HttpServlet {
 		return null;
 	}
 
-	private String getHolderGroupFromScope(String scope) {
+	private String getHolderGroupFromScopeAndSession(String scope, String sessionHolderGroup) {
 		if (scope==null || !scope.toLowerCase().contains("holdergroup:"))
-			return null;
+			return getHolderGroupFromSession(sessionHolderGroup);
 
 		String[] sa = scope.trim().split(" ");
 		for (String s : sa) {
@@ -156,10 +159,20 @@ public class AuthorizationEndpoint extends HttpServlet {
 							return g.getName();
 					} catch (InternalErrorException | IOException e) {}
 				}
-				return null;
+				return getHolderGroupFromSession(sessionHolderGroup);
 			}
 		}
+		return getHolderGroupFromSession(sessionHolderGroup);
+	}
 
+	private String getHolderGroupFromSession(String sessionHolderGroup) {
+		if (sessionHolderGroup!=null) {
+			try {
+				Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(sessionHolderGroup);
+				if (g!=null)
+					return g.getName();
+			} catch (InternalErrorException | IOException e) {}
+		}
 		return null;
 	}
 

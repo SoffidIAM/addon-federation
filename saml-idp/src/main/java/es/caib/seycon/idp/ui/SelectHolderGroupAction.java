@@ -48,6 +48,7 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        				OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 	        				r.setHolderGroup(gu.getGroup());
 	        		    	s.setAttribute(SessionConstants.OPENID_REQUEST, r);
+	        		    	s.setAttribute(SessionConstants.OPENID_HOLDERGROUP, r.getHolderGroup());
 
 	        		    	// Authenticator
 	    	                Autenticator auth = new Autenticator();
