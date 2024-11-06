@@ -126,6 +126,7 @@ public class LogoutHandler {
 		for (OauthToken token: federationService.findOauthTokenBySessionId(s.getId())) {
 			federationService.deleteOauthToken(token);
 			final TokenHandler tokenHandler = TokenHandler.instance();
+			log.info(">>> LOGOUT - getToken");
 			TokenInfo t = tokenHandler.getToken(token.getFullToken());
 			if (t != null)
 				t.setExpires(System.currentTimeMillis());
@@ -221,6 +222,7 @@ public class LogoutHandler {
 			for (OauthToken token: federationService.findOauthTokenBySessionId(s.getId())) {
 				if (fms.getFederationMember().equals( token.getServiceProvider() ) &&
 					fms.getSessionHash().equals(token.getOauthSession())) {
+					log.info(">>> LOGOUT - getToken");
 					TokenInfo t = tokenHandler.getToken(token.getTokenId());
 					if (t != null) {
 						if (sp.getOpenidLogoutUrlBack() != null && ! sp.getOpenidLogoutUrlBack().isEmpty())

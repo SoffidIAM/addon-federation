@@ -558,12 +558,20 @@ public class TokenHandler {
 				OauthToken o = getFederationService().findOauthTokenByToken(getIdentityProvider(), jwtid);
 				if (o != null) {
 					ti = parseOauthToken(o);
-					log.info(">>> LOGOUT - id_token encontrado en la base de datos");
+					if (ti.isExpired())
+						log.info(">>> LOGOUT - id_token encontrado en la base de datos, pero esta expirado");
+					else
+						log.info(">>> LOGOUT - id_token encontrado en la base de datos");
 				}
 			}
 		} else {
-			log.info(">>> LOGOUT - id_token encontrado en cache");
+			if (ti.isExpired())
+				log.info(">>> LOGOUT - id_token encontrado en cache, pero esta expirado");
+			else
+				log.info(">>> LOGOUT - id_token encontrado en cache");
 		}
+		if (ti==null)
+			log.info(">>> LOGOUT - id_token no encontrado");
 		if (ti == null || ti.isExpired())
 			return null;
 		else

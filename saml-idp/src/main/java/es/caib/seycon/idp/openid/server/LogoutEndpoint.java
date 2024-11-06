@@ -66,11 +66,12 @@ public class LogoutEndpoint extends HttpServlet {
 			String logoutUrl = LogoutServlet.URI;
 			if (tokenHint != null) {
 				TokenHandler th = new TokenHandler();
+				log.info(">>> LOGOUT - getToken");
 				TokenInfo t = th.getToken(tokenHint);
 				if (t != null) {
 					log.info(">>> LOGOUT - tokenInfo encontrado");
 					new TokenHandler().revoke(getServletContext(), req, t);
-					log.info(">>> LOGOUT - revocación de la sesión");
+					log.info(">>> LOGOUT - revocacion de la sesion");
 					if (clientId == null) {
 						clientId = t.getRequest().getFederationMember().getOpenidClientId();
 						log.info(">>> LOGOUT - clientId="+clientId);
@@ -89,7 +90,7 @@ public class LogoutEndpoint extends HttpServlet {
 							postLogoutRedirectUri += URLEncoder.encode(state, "UTF-8");
 						}
 						logoutUrl = postLogoutRedirectUri;
-						log.info(">>> LOGOUT - URL para redirección: "+logoutUrl);
+						log.info(">>> LOGOUT - URL para redireccion: "+logoutUrl);
 					}
 				} else {
 					log.info(">>> LOGOUT - clientId no encontrado como service provider");
@@ -99,18 +100,18 @@ public class LogoutEndpoint extends HttpServlet {
 			Session session = new Autenticator().getSession(req, false);
 			if (session != null) {
 				response = new LogoutHandler().logout(getServletContext(), req, session, true);
-				log.info(">>> LOGOUT - hay sesión, se redirige a LogoutHandler");
+				log.info(">>> LOGOUT - hay sesion, se redirige a LogoutHandler");
 			}
 			if (response != null && response.getFrontRequests().isEmpty()) {
 				resp.sendRedirect(logoutUrl);
-				log.info(">>> LOGOUT - Redirección (1)");
+				log.info(">>> LOGOUT - Redireccion (1)");
 			} else {
 				if (! logoutUrl.equals(LogoutServlet.URI)) {
 					req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
-					log.info(">>> LOGOUT - Redirección en sesión");
+					log.info(">>> LOGOUT - Redireccion en sesion");
 				}
 				resp.sendRedirect(LogoutServlet.URI);
-				log.info(">>> LOGOUT - Redirección (2)");
+				log.info(">>> LOGOUT - Redireccion (2)");
 			}
 	    	
 		} catch (Exception e) {

@@ -66,6 +66,7 @@ public class ServiceValidateEndpoint extends HttpServlet {
 			} else {
 				TokenHandler h = TokenHandler.instance();
 				TokenInfo t = null;
+				log.info(">>> LOGOUT - getToken");
 				t = h.getToken(ticket);
 				if (t == null) {
 					failure(out, format, "INVALID_REQUEST", "Wrong service name");
