@@ -97,15 +97,6 @@ public class AuthenticationContext {
 	private String browser;
 	private String cpu;
 	private RecoverPasswordChallenge recoverChallenge;
-	public boolean isHolderGroupIsActive() {
-		return holderGroupIsActive;
-	}
-
-
-	public void setHolderGroupIsActive(boolean holderGroupIsActive) {
-		this.holderGroupIsActive = holderGroupIsActive;
-	}
-
 
 	public String getSelectedHolderGroup() {
 		return selectedHolderGroup;
@@ -115,7 +106,6 @@ public class AuthenticationContext {
 		this.selectedHolderGroup = holderGroupSelected;
 	}
 
-	private boolean holderGroupIsActive;
 	private String selectedHolderGroup;
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)

@@ -40,7 +40,6 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        			if (hgId.equals(gu.getGroupId().toString())) {
 
 	        				// Context
-	        				authCtx.setHolderGroupIsActive(true);
 	        				authCtx.setSelectedHolderGroup(gu.getGroup());
 
 	        				// Session

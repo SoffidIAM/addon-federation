@@ -489,7 +489,6 @@ public class Autenticator {
 			// HolderGroup present in the scope
 			if (r.getHolderGroup()!=null) {
 				authCtx.setSelectedHolderGroup(r.getHolderGroup());
-				authCtx.setHolderGroupIsActive(true);
 				LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
 				return false;
 			}
@@ -510,11 +509,9 @@ public class Autenticator {
     		if (lgu2.size()==1) {
     			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
     			authCtx.setSelectedHolderGroup(lgu2.iterator().next().getName());
-    			authCtx.setHolderGroupIsActive(true);
     			return false;
     		} else if (lgu.size()>1) {
     			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, he has to select the group from a list");
-    			authCtx.setHolderGroupIsActive(true);
     			return true;
     		}
 
