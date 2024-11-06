@@ -24,6 +24,8 @@ import java.util.Map;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -63,7 +65,8 @@ public class TokenHandler {
 	LinkedList<TokenInfo> pendingTokens = new LinkedList<TokenInfo>();
 	LinkedList<TokenInfo> activeTokens = new LinkedList<TokenInfo>();
 	static TokenHandler instance;
-	
+	Log log = LogFactory.getLog(getClass());
+
 	public static TokenHandler instance() {
 		if (instance == null)
 			instance = new TokenHandler();
@@ -553,9 +556,13 @@ public class TokenHandler {
 			} catch (Exception e) {}
 			if (jwtid != null) {
 				OauthToken o = getFederationService().findOauthTokenByToken(getIdentityProvider(), jwtid);
-				if (o != null)
+				if (o != null) {
 					ti = parseOauthToken(o);
+					log.info(">>> LOGOUT - id_token encontrado en la base de datos");
+				}
 			}
+		} else {
+			log.info(">>> LOGOUT - id_token encontrado en cache");
 		}
 		if (ti == null || ti.isExpired())
 			return null;

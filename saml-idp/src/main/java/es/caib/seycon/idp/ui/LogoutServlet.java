@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -44,6 +45,7 @@ public class LogoutServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 	public static final String URI = "/logout.jsp"; //$NON-NLS-1$
+	Log log = LogFactory.getLog(getClass());
 
     void process (HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, IOException, ServletException {
         HtmlGenerator g = new HtmlGenerator(getServletContext(), req);
@@ -56,6 +58,7 @@ public class LogoutServlet extends HttpServlet {
     			close = true;
         	}
         	else if (isSafeLogout(req)) {
+        		log.info(">>> LOGOUT - isSafeLogout");
         		LogoutResponse r = new LogoutHandler().logout(getServletContext(), req, session, true);
         		if (r.getFrontRequests() != null && ! r.getFrontRequests().isEmpty()) {
         			JSONArray a = new JSONArray();
@@ -68,6 +71,7 @@ public class LogoutServlet extends HttpServlet {
                 	g.addArgument("logoutList", a.toString());
                 	g.addArgument("showProgress", "true");
             		new LogoutHandler().logout(getServletContext(), req, session, false);
+            		log.info(">>> LOGOUT - LogoutHandler (1)");
         		} else {
         			close = true;
         		}
@@ -78,9 +82,11 @@ public class LogoutServlet extends HttpServlet {
         		if (sessions.isEmpty()) {
             		new LogoutHandler().logout(getServletContext(), req, session, false);
         			close = true;
+        			log.info(">>> LOGOUT - LogoutHandler (2)");
         		}
         		else
         		{
+        			log.info(">>> LOGOUT - showLogout");
         			g.addArgument("showLogout", "true");
         			g.addArgument("Close_n_sessions", String.format(g.getResourceBundle().getString("Close_n_sessions"), sessions.size()));
         			StringBuffer sb = new StringBuffer();
@@ -93,14 +99,18 @@ public class LogoutServlet extends HttpServlet {
         		}
         	}
         	if (close) {
+        		log.info(">>> LOGOUT - redirección showClose");
         		g.addArgument("showClose", "true");
         		req.getSession().invalidate();
+        		log.info(">>> LOGOUT - invalidar sesión");
         		if (desiredTarget != null)
         		{
+        			log.info(">>> LOGOUT - redirección final a "+desiredTarget);
         			resp.sendRedirect(desiredTarget);
         			return;
         		}
         	}
+        	log.info(">>> LOGOUT - redirección a logout.html");
        		g.generate(resp, "logout.html"); //$NON-NLS-1$
 		} catch (Exception e) {
             String error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
@@ -108,6 +118,7 @@ public class LogoutServlet extends HttpServlet {
             LogFactory.getLog(getClass()).info("Error closing sessions ", e);
 			try {
 				g.generate(resp, "logout.html");
+				log.info(">>> LOGOUT - redirección por error a logout.html");
 			} catch (TextFormatException | IOException e1) {
 				throw new ServletException("Error generating logout page", e1);
 			} //$NON-NLS-1$

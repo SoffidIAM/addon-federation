@@ -44,6 +44,11 @@ public class LogoutEndpoint extends HttpServlet {
 		String clientId = req.getParameter("client_id");
 		String postLogoutRedirectUri = req.getParameter("post_logout_redirect_uri");
 		String state = req.getParameter("state");
+		log.info(">>> LOGOUT - id_token_hint="+tokenHint);
+		log.info(">>> LOGOUT - post_logout_redirect_uri="+postLogoutRedirectUri);
+		log.info(">>> LOGOUT - logout_hint="+logoutHint);
+		log.info(">>> LOGOUT - client_id="+clientId);
+		log.info(">>> LOGOUT - state="+state);
 		try {
 			if (OidcDebugController.isDebug()) {
 				log.info("Received logout request");
@@ -63,9 +68,12 @@ public class LogoutEndpoint extends HttpServlet {
 				TokenHandler th = new TokenHandler();
 				TokenInfo t = th.getToken(tokenHint);
 				if (t != null) {
+					log.info(">>> LOGOUT - tokenInfo encontrado");
 					new TokenHandler().revoke(getServletContext(), req, t);
+					log.info(">>> LOGOUT - revocación de la sesión");
 					if (clientId == null) {
 						clientId = t.getRequest().getFederationMember().getOpenidClientId();
+						log.info(">>> LOGOUT - clientId="+clientId);
 					}
 				}
 			}
@@ -81,19 +89,28 @@ public class LogoutEndpoint extends HttpServlet {
 							postLogoutRedirectUri += URLEncoder.encode(state, "UTF-8");
 						}
 						logoutUrl = postLogoutRedirectUri;
+						log.info(">>> LOGOUT - URL para redirección: "+logoutUrl);
 					}
+				} else {
+					log.info(">>> LOGOUT - clientId no encontrado como service provider");
 				}
 			}
 			
 			Session session = new Autenticator().getSession(req, false);
-			if (session != null)
+			if (session != null) {
 				response = new LogoutHandler().logout(getServletContext(), req, session, true);
+				log.info(">>> LOGOUT - hay sesión, se redirige a LogoutHandler");
+			}
 			if (response != null && response.getFrontRequests().isEmpty()) {
 				resp.sendRedirect(logoutUrl);
+				log.info(">>> LOGOUT - Redirección (1)");
 			} else {
-				if (! logoutUrl.equals(LogoutServlet.URI))
+				if (! logoutUrl.equals(LogoutServlet.URI)) {
 					req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
+					log.info(">>> LOGOUT - Redirección en sesión");
+				}
 				resp.sendRedirect(LogoutServlet.URI);
+				log.info(">>> LOGOUT - Redirección (2)");
 			}
 	    	
 		} catch (Exception e) {
@@ -105,11 +122,17 @@ public class LogoutEndpoint extends HttpServlet {
 	private boolean validateResponseUrl(String postLogoutRedirectUri, FederationMember fm) {
 		boolean ok = false;
 		for (String url: fm.getOpenidLogoutUrl()) {
-    		if (postLogoutRedirectUri.equals(url) || postLogoutRedirectUri.startsWith(url+"?")) 
+    		if (postLogoutRedirectUri.equals(url) || postLogoutRedirectUri.startsWith(url+"?")) {
     			ok = true;
-    		if (url.endsWith("*") && postLogoutRedirectUri.startsWith(url.substring(0, url.length()-1))) 
+    			log.info(">>> LOGOUT - postLogoutRedirectUri encontrada en el service provider (1)");
+    		}
+    		if (url.endsWith("*") && postLogoutRedirectUri.startsWith(url.substring(0, url.length()-1))) {
     			ok = true;
+    			log.info(">>> LOGOUT - postLogoutRedirectUri encontrada en el service provider (2)");
+			}
 		}
+		if (!ok)
+			log.info(">>> LOGOUT - postLogoutRedirectUri "+postLogoutRedirectUri+" no encontrada en el service provider");
 		return ok;
 	}
 
