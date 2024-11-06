@@ -479,17 +479,17 @@ public class Autenticator {
 		try {
 			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
 
-			// HolderGroup already selected
-			if (authCtx.getSelectedHolderGroup()!=null) {
-				r.setHolderGroup(authCtx.getSelectedHolderGroup());
-				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getSelectedHolderGroup());
-				return false;
-			}
-
 			// HolderGroup present in the scope
 			if (r.getHolderGroup()!=null) {
 				authCtx.setSelectedHolderGroup(r.getHolderGroup());
 				LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
+				return false;
+			}
+
+			// HolderGroup already selected
+			if (authCtx.getSelectedHolderGroup()!=null) {
+				r.setHolderGroup(authCtx.getSelectedHolderGroup());
+				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getSelectedHolderGroup());
 				return false;
 			}
 
