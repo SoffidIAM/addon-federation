@@ -286,6 +286,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.getRoles().add(ra.getRole().getName()+"@"+ra.getRole().getSystem().getName());
 			}
 			loadScopes(sp, target);
+			target.setAuthWithHolderGroup((source.getAuthWithHolderGroup()!=null) ? source.getAuthWithHolderGroup().booleanValue() : false);
 		}
 		
 		target.getKeytabs().clear();

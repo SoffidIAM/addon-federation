@@ -114,6 +114,10 @@ public abstract class FederationMemberEntity {
 	@Nullable
 	public String scriptParse;
 
+	@Column (name="FED_AWHG", defaultValue="false")
+	@Nullable
+	public java.lang.Boolean authWithHolderGroup;
+
 	@DaoFinder("select fm "
 			+ "from com.soffid.iam.addons.federation.model.FederationMemberEntity fm "
 			+ "where (:entityGroupId is null or fm.entityGroup.id =:entityGroupId) and "

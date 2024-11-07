@@ -477,7 +477,14 @@ public class Autenticator {
 
 	private boolean hasToRequestDomains(HttpSession session, AuthenticationContext authCtx) {
 		try {
+
 			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
+
+			// Check if the service provider has the holder group authentication active
+			if (r!=null && r.getFederationMember()!=null && !r.getFederationMember().isAuthWithHolderGroup()) {
+				LOG.info(">>> HOLDERGROUP - The service provider has disabled the holder group authentication");
+				return false;
+			}
 
 			// HolderGroup present in the scope
 			if (r.getHolderGroup()!=null) {

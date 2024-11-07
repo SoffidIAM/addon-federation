@@ -329,4 +329,7 @@ public class FederationMember {
 	@Nullable
 	String language;
 
+	@Nullable
+	@Description("Use the holder group in the authentication process")
+	public boolean authWithHolderGroup;
 }
