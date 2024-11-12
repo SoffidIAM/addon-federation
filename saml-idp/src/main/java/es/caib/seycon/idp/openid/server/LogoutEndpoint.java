@@ -2,6 +2,7 @@ package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.Base64;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -82,6 +83,10 @@ public class LogoutEndpoint extends HttpServlet {
 				FederationMember fm = new RemoteServiceLocator().getFederacioService().findFederationMemberByClientID(clientId);
 				if (fm != null) {
 					if (validateResponseUrl(postLogoutRedirectUri, fm)) {
+						if (postLogoutRedirectUri.startsWith("BASE64")) {
+							postLogoutRedirectUri = new String(Base64.getDecoder().decode(postLogoutRedirectUri.substring(6)));
+							log.info(">>> LOGOUT - postLogoutRedirectUri decodificada: "+postLogoutRedirectUri);
+						}
 						if (state != null) {
 							if (postLogoutRedirectUri.contains("?"))
 								postLogoutRedirectUri += "&state=";
@@ -121,6 +126,10 @@ public class LogoutEndpoint extends HttpServlet {
 	}
 
 	private boolean validateResponseUrl(String postLogoutRedirectUri, FederationMember fm) {
+		if (postLogoutRedirectUri.startsWith("BASE64")) {
+			log.info(">>> LOGOUT - URL en base64, es una redirección interna");
+			return true;
+		}
 		boolean ok = false;
 		for (String url: fm.getOpenidLogoutUrl()) {
     		if (postLogoutRedirectUri.equals(url) || postLogoutRedirectUri.startsWith(url+"?")) {

@@ -486,7 +486,7 @@ public class Autenticator {
 				return false;
 			}
 
-			// HolderGroup present in the scope
+			// HolderGroup present in the scope or session
 			if (r.getHolderGroup()!=null) {
 				authCtx.setSelectedHolderGroup(r.getHolderGroup());
 				LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());

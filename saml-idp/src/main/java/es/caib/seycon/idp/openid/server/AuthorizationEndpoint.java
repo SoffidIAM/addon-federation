@@ -10,6 +10,7 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -52,10 +53,10 @@ public class AuthorizationEndpoint extends HttpServlet {
 		OpenIdRequest r;
 		try {
 			config = IdpConfig.getConfig();
-		
 			req.getSession().setAttribute("soffid-session-type", "openid");
+			String hgSession = (String) req.getSession().getAttribute(SessionConstants.OPENID_HOLDERGROUP);
+
 	    	r = new OpenIdRequest();
-	    	
 	    	r.setScope(getScopeFromRequest(req));
 	    	r.setClientId(req.getParameter("client_id"));
 	    	r.setResponseType(req.getParameter("response_type"));
@@ -66,7 +67,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setPkceAlgorithm(req.getParameter("code_challenge_method"));
 	    	r.setPkceChallenge(req.getParameter("code_challenge"));
 	    	r.setLoginHint(req.getParameter("login_hint"));
-	    	r.setHolderGroup(getHolderGroupFromScopeAndSession(r.getScope(), (String) req.getSession().getAttribute(SessionConstants.OPENID_HOLDERGROUP)));
+	    	r.setHolderGroup(getHolderGroupFromScopeAndSession(r.getScope(), hgSession));
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
 	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
@@ -84,6 +85,22 @@ public class AuthorizationEndpoint extends HttpServlet {
 				log.info("login_hint     = "+r.getLoginHint());
 				log.info("holderGroup    = "+r.getHolderGroup());
 	    	}
+
+	    	// Check if the holderGroup is present in session and in the scope,
+	    	// and if there is different a logout is requiered to continue.
+	    	// URI in base64 as an internal redirect
+	    	if (r.getHolderGroup()!=null && hgSession!=null && !r.getHolderGroup().equals(hgSession)) {
+	    		String uri = "";
+	    		for (String p : req.getParameterMap().keySet())
+	    			uri = uri+(uri.isEmpty() ? "?" : "&")+p+"="+req.getParameter(p);
+	    		uri = req.getRequestURI()+uri;
+	    		uri = "BASE64"+Base64.getEncoder().encodeToString(uri.getBytes());
+	    		String finalURL = "logout?client_id="+r.getClientId()+"&post_logout_redirect_uri="+uri;
+	    		log.info(">>> HOLDERGROUP - Detected HolderGroup change (session="+hgSession+", scope="+r.getHolderGroup()+"), redirection to logout: "+finalURL);
+	    		resp.sendRedirect(finalURL);
+	    		return;
+	    	}
+
 	    	HttpSession session = req.getSession(true);
 	    	if (r.getFederationMember() != null) {
 		    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
