@@ -31,6 +31,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.LoginServlet;
+import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -94,10 +95,10 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    		for (String p : req.getParameterMap().keySet())
 	    			uri = uri+(uri.isEmpty() ? "?" : "&")+p+"="+req.getParameter(p);
 	    		uri = req.getRequestURI()+uri;
-	    		uri = "BASE64"+Base64.getEncoder().encodeToString(uri.getBytes());
-	    		String finalURL = "logout?client_id="+r.getClientId()+"&post_logout_redirect_uri="+uri;
-	    		log.info(">>> HOLDERGROUP - Detected HolderGroup change (session="+hgSession+", scope="+r.getHolderGroup()+"), redirection to logout: "+finalURL);
-	    		resp.sendRedirect(finalURL);
+	    		req.getSession().setAttribute("$$soffid$$-logout-redirect", uri);
+	    		req.getSession().setAttribute("$$soffid$$-logout-internal", "true");
+	    		log.info(">>> HOLDERGROUP - Detected HolderGroup change (session="+hgSession+", scope="+r.getHolderGroup()+"), redirection to logout: "+uri);
+	    		resp.sendRedirect(LogoutServlet.URI);
 	    		return;
 	    	}
 

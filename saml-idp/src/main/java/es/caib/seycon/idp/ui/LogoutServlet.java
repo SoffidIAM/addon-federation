@@ -99,18 +99,25 @@ public class LogoutServlet extends HttpServlet {
         		}
         	}
         	if (close) {
-        		log.info(">>> LOGOUT - redirección showClose");
+        		log.info(">>> LOGOUT - redireccion showClose");
         		g.addArgument("showClose", "true");
-        		req.getSession().invalidate();
-        		log.info(">>> LOGOUT - invalidar sesión");
+        		String internal = (String) req.getSession().getAttribute("$$soffid$$-logout-internal");
+        		if (!"true".equals(internal)) {
+        			req.getSession().invalidate();
+        			log.info(">>> LOGOUT - Invalidar sesion");
+        		} else {
+        			log.info(">>> LOGOUT - Redireccion interna, no se invalida la sesion");
+        			req.getSession().removeAttribute(SessionConstants.OPENID_HOLDERGROUP);
+        			log.info(">>> LOGOUT - Se borra el holderGroup de sesion");
+        		}
         		if (desiredTarget != null)
         		{
-        			log.info(">>> LOGOUT - redirección final a "+desiredTarget);
+        			log.info(">>> LOGOUT - redireccion final a "+desiredTarget);
         			resp.sendRedirect(desiredTarget);
         			return;
         		}
         	}
-        	log.info(">>> LOGOUT - redirección a logout.html");
+        	log.info(">>> LOGOUT - Redireccion a logout.html");
        		g.generate(resp, "logout.html"); //$NON-NLS-1$
 		} catch (Exception e) {
             String error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
@@ -118,7 +125,7 @@ public class LogoutServlet extends HttpServlet {
             LogFactory.getLog(getClass()).info("Error closing sessions ", e);
 			try {
 				g.generate(resp, "logout.html");
-				log.info(">>> LOGOUT - redirección por error a logout.html");
+				log.info(">>> LOGOUT - Redireccion por error a logout.html");
 			} catch (TextFormatException | IOException e1) {
 				throw new ServletException("Error generating logout page", e1);
 			} //$NON-NLS-1$
