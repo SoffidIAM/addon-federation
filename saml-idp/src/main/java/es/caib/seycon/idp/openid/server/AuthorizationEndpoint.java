@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.api.Group;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
+import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -90,7 +91,9 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	// Check if the holderGroup is present in session and in the scope,
 	    	// and if there is different a logout is requiered to continue.
 	    	// URI in base64 as an internal redirect
-	    	if (r.getHolderGroup()!=null && hgSession!=null && !r.getHolderGroup().equals(hgSession)) {
+	    	ServerService serverService = new RemoteServiceLocator().getServerService();
+			String internalLogout = serverService.getConfig("holdergroup.internal.logout");
+	    	if (internalLogout!=null && "true".equals(internalLogout) && r.getHolderGroup()!=null && hgSession!=null && !r.getHolderGroup().equals(hgSession)) {
 	    		String uri = "";
 	    		for (String p : req.getParameterMap().keySet())
 	    			uri = uri+(uri.isEmpty() ? "?" : "&")+p+"="+req.getParameter(p);
