@@ -98,8 +98,10 @@ public class HtmlGenerator {
             langs.add(l);
         }
 
-        if (selectedLang != null)
+        if (selectedLang != null) {
+        	internalParams.put("lang", selectedLang); //$NON-NLS-1$ //$NON-NLS-2$
         	internalParams.put("lang.active."+selectedLang, "active"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
         IdpConfig idpConfig;
         try {
             idpConfig = IdpConfig.getConfig();
@@ -216,7 +218,7 @@ public class HtmlGenerator {
         			+ "			<li class=\"lang-ca ${lang.active.ca}\"><a href=\""+url+"?lang=ca\" hreflang=\"ca\" title=\"Català\"><span>Català</span></a></li>\n"
         			+ "		</ul>\n"
         			+ "	</div>\n"
-        			+ "<p class='biglogo'><img src=\"/imgs/custom-logo.png\"/></div>"
+        			+ "<p class='biglogo'><img src=\"/imgs/custom-logo.png\" alt='Logo'/></div>"
         			+ "");
         }
         if (fm != null && fm.getHtmlFooter() != null && ! fm.getHtmlFooter().trim().isEmpty()) {
