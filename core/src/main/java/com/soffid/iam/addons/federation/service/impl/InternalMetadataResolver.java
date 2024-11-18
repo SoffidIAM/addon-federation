@@ -99,6 +99,13 @@ public class InternalMetadataResolver extends AbstractReloadingMetadataResolver 
 					p.println(member.getMetadades());
 				}
 			}
+			
+			for (FederationMember member: svc.findFederationMemberByEntityGroupAndPublicIdAndTipus(null, null, "V")) {
+				if (member.getClasse().equals("V") &&  member.getIdpType() == IdentityProviderType.SOFFID) {
+					p.println(member.getMetadades());
+				}
+			}
+			
 	    	p.println("</EntitiesDescriptor>");
 	    	p.close();
 	    	return out.toByteArray();
