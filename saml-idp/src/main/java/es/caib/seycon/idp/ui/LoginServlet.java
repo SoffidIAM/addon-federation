@@ -67,6 +67,11 @@ public class LoginServlet extends LangSupportServlet {
     			authCtx.setPublicId(entityId);
     			authCtx.initialize(req);
     			authCtx.store(req);
+            	if (! timeout && 
+            			!authCtx.isAlwaysAskForCredentials() &&
+            			auth.validateCookie(getServletContext(), req, resp, authCtx.getHostId(resp))) {
+            		return;
+            	}
         	}
         	else
         	{
@@ -83,14 +88,9 @@ public class LoginServlet extends LangSupportServlet {
 					return;
 				}
         	}
-        	if (! timeout && 
-        			!authCtx.isAlwaysAskForCredentials() && auth.validateCookie(getServletContext(), req, resp, authCtx.getHostId(resp)))
-        		return;
-        	else {
-        		authCtx.initialize(req);
-        		if (! certificateLogin(authCtx, req, resp))
-        			resp.sendRedirect(UserPasswordFormServlet.URI);
-        	}
+       		authCtx.initialize(req);
+       		if (! certificateLogin(authCtx, req, resp))
+       			resp.sendRedirect(UserPasswordFormServlet.URI);
     	} catch (Exception e) {
     		log.warn ("Error authenticating user", e);
     		throw new ServletException("Error authenticating user", e);

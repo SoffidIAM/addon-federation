@@ -31,6 +31,7 @@ import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
@@ -56,7 +57,10 @@ public class AuthorizationEndpoint extends HttpServlet {
 		try {
 			config = IdpConfig.getConfig();
 			req.getSession().setAttribute("soffid-session-type", "openid");
-			String hgSession = (String) req.getSession().getAttribute(SessionConstants.OPENID_HOLDERGROUP);
+			String hgSession = null;
+			AuthenticationContext auth = AuthenticationContext.fromRequest(req);
+			if (auth != null)
+				hgSession = auth.getSelectedHolderGroup();
 
 	    	r = new OpenIdRequest();
 	    	r.setScope(getScopeFromRequest(req));
@@ -86,23 +90,6 @@ public class AuthorizationEndpoint extends HttpServlet {
 				log.info("code_challenge = "+r.getPkceChallenge());
 				log.info("login_hint     = "+r.getLoginHint());
 				log.info("holderGroup    = "+r.getHolderGroup());
-	    	}
-
-	    	// Check if the holderGroup is present in session and in the scope,
-	    	// and if there is different a logout is requiered to continue.
-	    	// URI in base64 as an internal redirect
-	    	ServerService serverService = new RemoteServiceLocator().getServerService();
-			String internalLogout = serverService.getConfig("holdergroup.internal.logout");
-	    	if (internalLogout!=null && "true".equals(internalLogout) && r.getHolderGroup()!=null && hgSession!=null && !r.getHolderGroup().equals(hgSession)) {
-	    		String uri = "";
-	    		for (String p : req.getParameterMap().keySet())
-	    			uri = uri+(uri.isEmpty() ? "?" : "&")+p+"="+req.getParameter(p);
-	    		uri = req.getRequestURI()+uri;
-	    		req.getSession().setAttribute("$$soffid$$-logout-redirect", uri);
-	    		req.getSession().setAttribute("$$soffid$$-logout-internal", "true");
-	    		log.info(">>> HOLDERGROUP - Detected HolderGroup change (session="+hgSession+", scope="+r.getHolderGroup()+"), redirection to logout: "+uri);
-	    		resp.sendRedirect(LogoutServlet.URI);
-	    		return;
 	    	}
 
 	    	HttpSession session = req.getSession(true);

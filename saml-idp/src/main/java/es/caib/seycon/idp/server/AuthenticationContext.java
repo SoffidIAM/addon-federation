@@ -56,6 +56,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.CertificateValidator;
+import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -307,6 +308,15 @@ public class AuthenticationContext {
         
         if (allowed.isEmpty())
         	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
+        
+        // Check holder group
+		String internalLogout = new RemoteServiceLocator().getServerService().getConfig("idp.holdergroup.logout-on-change");
+		if ("true".equals(internalLogout)) {
+			String requestedHolderGroup = (String) request.getSession().getAttribute(SessionConstants.OPENID_HOLDERGROUP);
+			if (requestedHolderGroup != null &&
+					!requestedHolderGroup.equals(selectedHolderGroup))
+				return false;
+		}
         
         if (allowed.contains(method))
         {

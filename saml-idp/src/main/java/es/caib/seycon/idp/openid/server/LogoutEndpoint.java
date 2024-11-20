@@ -45,11 +45,6 @@ public class LogoutEndpoint extends HttpServlet {
 		String clientId = req.getParameter("client_id");
 		String postLogoutRedirectUri = req.getParameter("post_logout_redirect_uri");
 		String state = req.getParameter("state");
-		log.info(">>> LOGOUT - id_token_hint="+tokenHint);
-		log.info(">>> LOGOUT - post_logout_redirect_uri="+postLogoutRedirectUri);
-		log.info(">>> LOGOUT - logout_hint="+logoutHint);
-		log.info(">>> LOGOUT - client_id="+clientId);
-		log.info(">>> LOGOUT - state="+state);
 		try {
 			if (OidcDebugController.isDebug()) {
 				log.info("Received logout request");
@@ -59,34 +54,27 @@ public class LogoutEndpoint extends HttpServlet {
 				log.info("post_logout_redirect_uri = "+postLogoutRedirectUri);
 				log.info("state                    = "+state);
 			}
-			IdpConfig config = IdpConfig.getConfig();
-
 			LogoutResponse response = null;
 			
 			// Identify the response URL
 			String logoutUrl = LogoutServlet.URI;
 			if (tokenHint != null) {
 				TokenHandler th = new TokenHandler();
-				log.info(">>> LOGOUT - getToken");
 				TokenInfo t = th.getToken(tokenHint);
 				if (t != null) {
-					log.info(">>> LOGOUT - tokenInfo encontrado");
 					new TokenHandler().revoke(getServletContext(), req, t);
-					log.info(">>> LOGOUT - revocacion de la sesion");
 					if (clientId == null) {
 						clientId = t.getRequest().getFederationMember().getOpenidClientId();
-						log.info(">>> LOGOUT - clientId="+clientId);
 					}
 				}
 			}
 			if (clientId != null && postLogoutRedirectUri != null) {
 				FederationMember fm = new RemoteServiceLocator().getFederacioService().findFederationMemberByClientID(clientId);
 				if (fm != null) {
+					if (postLogoutRedirectUri.startsWith("BASE64")) {
+						postLogoutRedirectUri = new String(Base64.getDecoder().decode(postLogoutRedirectUri.substring(6)));
+					}
 					if (validateResponseUrl(postLogoutRedirectUri, fm)) {
-						if (postLogoutRedirectUri.startsWith("BASE64")) {
-							postLogoutRedirectUri = new String(Base64.getDecoder().decode(postLogoutRedirectUri.substring(6)));
-							log.info(">>> LOGOUT - postLogoutRedirectUri decodificada: "+postLogoutRedirectUri);
-						}
 						if (state != null) {
 							if (postLogoutRedirectUri.contains("?"))
 								postLogoutRedirectUri += "&state=";
@@ -95,28 +83,21 @@ public class LogoutEndpoint extends HttpServlet {
 							postLogoutRedirectUri += URLEncoder.encode(state, "UTF-8");
 						}
 						logoutUrl = postLogoutRedirectUri;
-						log.info(">>> LOGOUT - URL para redireccion: "+logoutUrl);
 					}
-				} else {
-					log.info(">>> LOGOUT - clientId no encontrado como service provider");
 				}
 			}
 			
 			Session session = new Autenticator().getSession(req, false);
 			if (session != null) {
 				response = new LogoutHandler().logout(getServletContext(), req, session, true);
-				log.info(">>> LOGOUT - hay sesion, se redirige a LogoutHandler");
 			}
 			if (response != null && response.getFrontRequests().isEmpty()) {
 				resp.sendRedirect(logoutUrl);
-				log.info(">>> LOGOUT - Redireccion (1)");
 			} else {
 				if (! logoutUrl.equals(LogoutServlet.URI)) {
 					req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
-					log.info(">>> LOGOUT - Redireccion en sesion");
 				}
 				resp.sendRedirect(LogoutServlet.URI);
-				log.info(">>> LOGOUT - Redireccion (2)");
 			}
 	    	
 		} catch (Exception e) {
@@ -126,23 +107,15 @@ public class LogoutEndpoint extends HttpServlet {
 	}
 
 	private boolean validateResponseUrl(String postLogoutRedirectUri, FederationMember fm) {
-		if (postLogoutRedirectUri.startsWith("BASE64")) {
-			log.info(">>> LOGOUT - URL en base64, es una redirección interna");
-			return true;
-		}
 		boolean ok = false;
 		for (String url: fm.getOpenidLogoutUrl()) {
     		if (postLogoutRedirectUri.equals(url) || postLogoutRedirectUri.startsWith(url+"?")) {
     			ok = true;
-    			log.info(">>> LOGOUT - postLogoutRedirectUri encontrada en el service provider (1)");
     		}
     		if (url.endsWith("*") && postLogoutRedirectUri.startsWith(url.substring(0, url.length()-1))) {
     			ok = true;
-    			log.info(">>> LOGOUT - postLogoutRedirectUri encontrada en el service provider (2)");
 			}
 		}
-		if (!ok)
-			log.info(">>> LOGOUT - postLogoutRedirectUri "+postLogoutRedirectUri+" no encontrada en el service provider");
 		return ok;
 	}
 
