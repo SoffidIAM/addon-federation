@@ -482,15 +482,32 @@ public class Autenticator {
 
 			// Check if the service provider has the holder group authentication active
 			if (r!=null && r.getFederationMember()!=null && !r.getFederationMember().isAuthWithHolderGroup()) {
+    			authCtx.setSelectedHolderGroup(null);
+    			r.setHolderGroup(null);
 				LOG.info(">>> HOLDERGROUP - The service provider has disabled the holder group authentication");
 				return false;
 			}
 
 			// HolderGroup present in the scope or session
 			if (r.getHolderGroup()!=null) {
-				authCtx.setSelectedHolderGroup(r.getHolderGroup());
-				LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
-				return false;
+				String un = authCtx.getCurrentUser().getUserName();
+				Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
+				boolean found = false;
+				for (GroupUser gu : gul) {
+					if (r.getHolderGroup().equals(gu.getGroup())) {
+						found = true;
+						break;
+					}
+				}
+				if (found) {
+					authCtx.setSelectedHolderGroup(r.getHolderGroup());
+					LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
+					return false;
+				} else {
+	    			authCtx.setSelectedHolderGroup(null);
+	    			r.setHolderGroup(null);
+	    			LOG.info(">>> HOLDERGROUP - HolderGroup "+r.getHolderGroup()+" not assigned to the user "+un);
+				}
 			}
 
 			// HolderGroup already selected
@@ -516,6 +533,7 @@ public class Autenticator {
     		if (lgu2.size()==1) {
     			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
     			authCtx.setSelectedHolderGroup(lgu2.iterator().next().getName());
+    			r.setHolderGroup(lgu2.iterator().next().getName());
     			return false;
     		} else if (lgu.size()>1) {
     			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, he has to select the group from a list");
