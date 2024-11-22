@@ -157,6 +157,17 @@ public class LogoutHandler {
 		return l;
 	}
 
+	public void internalLogout(Session session) throws IOException, InternalErrorException {
+		federationService = new RemoteServiceLocator().getFederacioService();
+		for (OauthToken token: federationService.findOauthTokenBySessionId(session.getId())) {
+			federationService.deleteOauthToken(token);
+			final TokenHandler tokenHandler = TokenHandler.instance();
+			TokenInfo t = tokenHandler.getToken(token.getFullToken());
+			if (t != null)
+				t.setExpires(System.currentTimeMillis());
+		}
+	}
+
 	private void processOpenidLogout(FederationMemberSession fms, ServletContext ctx, Session s, LogoutResponse l,
 			boolean userInitiated) throws InternalErrorException, IOException {
 		FederationMember sp;

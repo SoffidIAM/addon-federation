@@ -26,12 +26,15 @@ import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.api.Group;
+import com.soffid.iam.api.Session;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.LogoutHandler;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
@@ -90,6 +93,12 @@ public class AuthorizationEndpoint extends HttpServlet {
 				log.info("code_challenge = "+r.getPkceChallenge());
 				log.info("login_hint     = "+r.getLoginHint());
 				log.info("holderGroup    = "+r.getHolderGroup());
+	    	}
+
+	    	// Check if the holderGroup is present in session and in the scope,
+	    	if (r.getHolderGroup()!=null && hgSession!=null && !r.getHolderGroup().equals(hgSession)) {
+	    		Session session = new Autenticator().getSession(req, false);
+	    		new LogoutHandler().internalLogout(session);
 	    	}
 
 	    	HttpSession session = req.getSession(true);

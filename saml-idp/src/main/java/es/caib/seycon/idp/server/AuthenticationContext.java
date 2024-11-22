@@ -308,16 +308,7 @@ public class AuthenticationContext {
         
         if (allowed.isEmpty())
         	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
-        
-        // Check holder group
-		String internalLogout = new RemoteServiceLocator().getServerService().getConfig("idp.holdergroup.logout-on-change");
-		if ("true".equals(internalLogout)) {
-			String requestedHolderGroup = (String) request.getSession().getAttribute(SessionConstants.OPENID_HOLDERGROUP);
-			if (requestedHolderGroup != null &&
-					!requestedHolderGroup.equals(selectedHolderGroup))
-				return false;
-		}
-        
+
         if (allowed.contains(method))
         {
         	firstFactor = method.substring(0, 1);
