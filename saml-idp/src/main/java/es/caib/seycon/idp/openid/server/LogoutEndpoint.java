@@ -54,7 +54,6 @@ public class LogoutEndpoint extends HttpServlet {
 				log.info("post_logout_redirect_uri = "+postLogoutRedirectUri);
 				log.info("state                    = "+state);
 			}
-			LogoutResponse response = null;
 			
 			// Identify the response URL
 			String logoutUrl = LogoutServlet.URI;
@@ -71,9 +70,6 @@ public class LogoutEndpoint extends HttpServlet {
 			if (clientId != null && postLogoutRedirectUri != null) {
 				FederationMember fm = new RemoteServiceLocator().getFederacioService().findFederationMemberByClientID(clientId);
 				if (fm != null) {
-					if (postLogoutRedirectUri.startsWith("BASE64")) {
-						postLogoutRedirectUri = new String(Base64.getDecoder().decode(postLogoutRedirectUri.substring(6)));
-					}
 					if (validateResponseUrl(postLogoutRedirectUri, fm)) {
 						if (state != null) {
 							if (postLogoutRedirectUri.contains("?"))
@@ -88,18 +84,23 @@ public class LogoutEndpoint extends HttpServlet {
 			}
 			
 			Session session = new Autenticator().getSession(req, false);
+			LogoutResponse response = null;
 			if (session != null) {
 				response = new LogoutHandler().logout(getServletContext(), req, session, true);
 			}
 			if (response != null && response.getFrontRequests().isEmpty()) {
+				req.getSession().invalidate();
 				resp.sendRedirect(logoutUrl);
 			} else {
-				if (! logoutUrl.equals(LogoutServlet.URI)) {
-					req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
+				if (session==null && postLogoutRedirectUri!=null) {
+					resp.sendRedirect(postLogoutRedirectUri);
+				} else {
+					if (! logoutUrl.equals(LogoutServlet.URI)) {
+						req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
+					}
+					resp.sendRedirect(LogoutServlet.URI);
 				}
-				resp.sendRedirect(LogoutServlet.URI);
 			}
-	    	
 		} catch (Exception e) {
 			throw new ServletException("Error parsing request paramenters", e);
 		}

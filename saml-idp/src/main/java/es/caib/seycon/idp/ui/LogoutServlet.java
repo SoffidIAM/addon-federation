@@ -96,12 +96,7 @@ public class LogoutServlet extends HttpServlet {
         	}
         	if (close) {
         		g.addArgument("showClose", "true");
-        		String internal = (String) req.getSession().getAttribute("$$soffid$$-logout-internal");
-        		if (!"true".equals(internal)) {
-        			req.getSession().invalidate();
-        		} else {
-        			req.getSession().removeAttribute(SessionConstants.OPENID_HOLDERGROUP);
-        		}
+        		req.getSession().invalidate();
         		if (desiredTarget != null)
         		{
         			resp.sendRedirect(desiredTarget);
