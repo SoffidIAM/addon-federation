@@ -2602,9 +2602,8 @@ public class FederationServiceImpl
 		// Check requested scopes
 		//
 		for (String requestedScope: requested) {
-			boolean allowed = false;
 			if (requestedScope.equals("openid"))
-				allowed = true;
+				hsScopesToResponse.add(requestedScope);
 			else {
 				if (isScopeAllowed (sp, account, holderGroup, grants, requestedScope))
 					hsScopesToResponse.add(requestedScope);
