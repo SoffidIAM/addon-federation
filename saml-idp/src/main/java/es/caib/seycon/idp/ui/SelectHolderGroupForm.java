@@ -48,7 +48,6 @@ public class SelectHolderGroupForm extends BaseForm {
         	String serviceProvider = authCtx.getPublicId();
 
             HtmlGenerator g = new HtmlGenerator(context, req);
-            g.addArgument("ERROR", (String) req.getAttribute("ERROR")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("user", user); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("account", account); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("authMethod", authMethod); //$NON-NLS-1$ //$NON-NLS-2$
@@ -60,6 +59,18 @@ public class SelectHolderGroupForm extends BaseForm {
             log.info("SelectHolderGroupForm.doGet - Se procede a consultar los holder groups...");
             Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(authCtx.getCurrentUser().getUserName());
             log.info("SelectHolderGroupForm.doGet - Se han encontrado "+((gul!=null) ? gul.size():0)+" holder groups");
+
+            String error = (String) req.getAttribute("ERROR");
+            if (gul==null || gul.isEmpty()) {
+            	String message = Messages.getString("SelectHolderGroupForm.userWithoutHolderGroups");
+            	if (error==null || error.trim().isEmpty()) {
+            		error = message;
+            	} else {
+            		error = error+". "+message;
+            	}
+            }
+            g.addArgument("ERROR", error);
+
             StringBuffer sb = new StringBuffer();
         	FederationService fs = IdpConfig.getConfig().getFederationService();
         	for (GroupUser gu : gul) {
