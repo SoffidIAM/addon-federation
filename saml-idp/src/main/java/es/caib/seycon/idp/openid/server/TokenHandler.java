@@ -368,12 +368,14 @@ public class TokenHandler {
 
 		t.authorizationCode = null;
 		t.jwtId = generateRandomString(48);		
-		t.token = generateJWTToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		t.refreshToken = generateRandomString(48);
-		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		t.updateLastUse();
+
+		t.token = generateJWTToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
+		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
+
 		refreshTokens.put(t.refreshToken, t);
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
