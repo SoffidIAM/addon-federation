@@ -293,6 +293,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.ECPConfiguration ecp = 
 				new edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.ECPConfiguration();
 		pc = ecp;
+		ecp.setIncludeConditionsNotBefore(true);
 		if (profile.getAssertionLifetime() != null) {
 		    long lifetime = SpringConfigurationUtils.parseDurationToMillis("'assertionLifetime' on profile configuration of type " + type + " of " + federationMember,
 		            profile.getAssertionLifetime(), 0);
@@ -314,6 +315,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 	public AbstractSAMLProfileConfiguration createSaml1AttributeQueryProfile(SAMLProfile profile) {
 		AbstractSAMLProfileConfiguration pc;
 		AttributeQueryConfiguration aqc = new AttributeQueryConfiguration();
+		aqc.setIncludeConditionsNotBefore(true);
 		pc = aqc;
 		if (profile.getOutboundArtifactType() != null) {
 		    byte[] artifactTypeBytes = DatatypeHelper.intToByteArray(Integer.parseInt(profile.getOutboundArtifactType()));
@@ -340,6 +342,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		ArtifactResolutionConfiguration arc = 
 				new ArtifactResolutionConfiguration();
 		pc = arc;
+		arc.setIncludeConditionsNotBefore(true);
 		arc.setAttributeAuthority(saml1AttributeAuthority);
 		
 		ShibbolethSecurityPolicy sp = new ShibbolethSecurityPolicy("shibboleth.SAML1ArtifactResolutionSecurityPolicy");
@@ -358,6 +361,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.ArtifactResolutionConfiguration arc = 
 				new edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.ArtifactResolutionConfiguration();
 		pc = arc;
+		pc.setIncludeConditionsNotBefore(true);
 		arc.setEncryptNameID(parseCrypto(profile.getEncryptNameIds(), CryptoOperationRequirementLevel.never));
 		arc.setEncryptAssertion(parseCrypto(profile.getEncryptAssertions(), CryptoOperationRequirementLevel.never));
 		arc.setProxyCount(profile.getAssertionProxyCount() == null ? Integer.MAX_VALUE: profile.getAssertionProxyCount().intValue());
@@ -389,6 +393,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration aqc = 
 				new edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.AttributeQueryConfiguration();
 		pc = aqc;
+		pc.setIncludeConditionsNotBefore(true);
 		if (profile.getOutboundArtifactType() != null) {
 		    byte[] artifactTypeBytes = DatatypeHelper.intToByteArray(Integer.parseInt(profile.getOutboundArtifactType()));
 		    byte[] trimmedArtifactTypeBytes = { artifactTypeBytes[2], artifactTypeBytes[3] };
@@ -419,6 +424,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		sp.getPolicyRules().add( new MandatoryIssuerRule());
 		sp.getPolicyRules().add( new MandatoryAuthenticatedMessageRule());
 		aqc.setSecurityPolicy(sp);
+		pc.setIncludeConditionsNotBefore(true);
 		return pc;
 	}
 
@@ -428,6 +434,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration sso = 
 				new edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.SSOConfiguration();
 		pc = sso;
+		pc.setIncludeConditionsNotBefore(true);
 		if (profile.getOutboundArtifactType() != null) {
 		    byte[] artifactTypeBytes = DatatypeHelper.intToByteArray(Integer.parseInt(profile.getOutboundArtifactType()));
 		    byte[] trimmedArtifactTypeBytes = { artifactTypeBytes[2], artifactTypeBytes[3] };
@@ -450,6 +457,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		}
 		sso.setIncludeAttributeStatement(profile.getIncludeAttributeStatement() == null? false: profile.getIncludeAttributeStatement().booleanValue());
 		sso.setAttributeAuthority(saml2AttributeAuthority);
+		sso.setIncludeConditionsNotBefore(true);
 
 		ShibbolethSecurityPolicy sp = new ShibbolethSecurityPolicy("shibboleth.SAML2SSOSecurityPolicy");
 		sp.getPolicyRules().add( new MessageReplayRule(replayCache) );
@@ -477,6 +485,7 @@ public class RelyingPartyConfigurationManager extends SAMLMDRelyingPartyConfigur
 		edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration slo = 
 				new edu.internet2.middleware.shibboleth.common.relyingparty.provider.saml2.LogoutRequestConfiguration();
 		pc = slo;
+		pc.setIncludeConditionsNotBefore(true);
 		if (profile.getOutboundArtifactType() != null) {
 		    byte[] artifactTypeBytes = DatatypeHelper.intToByteArray(Integer.parseInt(profile.getOutboundArtifactType()));
 		    byte[] trimmedArtifactTypeBytes = { artifactTypeBytes[2], artifactTypeBytes[3] };
