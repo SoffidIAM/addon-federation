@@ -155,6 +155,32 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
 
             nameId.setValue(requestContext.getPrincipalName());
             nameId.setFormat(requiredNameIdFormat);
+            nameId.setNameQualifier(requestContext.getLocalEntityId());
+
+            AuthnRequest authnRequest = (AuthnRequest) requestContext.getInboundSAMLMessage();
+            NameIDPolicy nameIdPolicy = authnRequest.getNameIDPolicy();
+            if (nameIdPolicy != null) {
+                String spNameQualifier = DatatypeHelper.safeTrimOrNullString(nameIdPolicy.getSPNameQualifier());
+                if (spNameQualifier != null) {
+                    // Right now the resolver/encoder layer doesn't support forcing the SPNameQualifier
+                    // to be set, but if it ever does, this should detect a mismatch with NameIDPolicy.
+                    if (nameId.getSPNameQualifier() != null) {
+                        if (!nameId.getSPNameQualifier().equals(spNameQualifier)) {
+                            // Requester specified a different qualifier than we produced.
+                            requestContext.setFailureStatus(buildStatus(StatusCode.REQUESTER_URI,
+                                    StatusCode.INVALID_NAMEID_POLICY_URI,
+                                    "Invalid SPNameQualifier for this request"));
+                            throw new ProfileException("Requested SPNameQualifier '{" + spNameQualifier
+                                    + "}' conflicts with generated value '{" + nameId.getSPNameQualifier() + "}'");
+                        }
+                    } else {
+                        // Set to the requester's preference.
+                        nameId.setSPNameQualifier(spNameQualifier);
+                    }
+                } else {
+                    nameId.setSPNameQualifier(requestContext.getInboundMessageIssuer());
+                }
+            }
 
             return nameId;
     	}
