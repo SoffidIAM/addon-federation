@@ -60,12 +60,13 @@ public class IDPAgent extends Agent implements AccessLogMgr, UserMgr {
 		                	log.info ("Existing dispatcher was "+main); //$NON-NLS-1$
 		                    if (main != null) {
 		                        log.info("Stopping IDP {}", name, null); //$NON-NLS-1$
+		                        name = newName;
 		                        stopMain();
 		                    }
+	                        name = newName;
 		                    if (name == null)
 		                        log.info("Starting IDP {} (Previous {})", newName, name); //$NON-NLS-1$
 		                    main = createMain();
-		                    name = newName;
 		                    main.start(newName, getSystem());
 		                }
 		            } catch (Exception e) {
