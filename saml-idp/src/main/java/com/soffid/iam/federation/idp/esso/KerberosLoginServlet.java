@@ -170,16 +170,12 @@ public class KerberosLoginServlet extends HttpServlet {
         	log.info("Unknown principal "+principal);
         	return "ERROR|Not authorized";
         }
-        String user = principal.substring(0, split);
-        String system = principal.substring(split + 1);
-
-        
         LogonService logonService = new RemoteServiceLocator().getLogonService();
 
         Challenge challenge = 
         		logonService.requestIdpChallenge(Challenge.TYPE_KERBEROS, 
-        				system == null ? principal: user,
-        				system, 
+        				principal,
+        				null, 
         				hostSerial == null ? hostIP: hostSerial, clientIP,
         				Integer.decode(cardSupport),
         				IdpConfig.getConfig().getPublicId());
@@ -191,7 +187,7 @@ public class KerberosLoginServlet extends HttpServlet {
         }
         // Check some credentials are stored
         if ( new RemoteServiceLocator().getSecretStoreService().getAllSecrets(challenge.getUser()).isEmpty()) {
-        	throw new LogonDeniedException("No secrets available for "+user+" yet");
+        	throw new LogonDeniedException("No secrets available for "+challenge.getUser()+" yet");
         }
 
 
