@@ -71,6 +71,9 @@ public class OtpSelector {
 							if (!ucch.isEmpty())
 								challenge.setAdditionalData(ucch.iterator().next());
 						}
+					} else {
+						otpType = new StringBuffer();
+						break;
 					}
 				}
 			}
@@ -80,13 +83,11 @@ public class OtpSelector {
 				challenge.setCell(null);
 				ServiceLocator.instance().getOTPValidationService().selectToken(challenge);
 				if (challenge.getCardNumber() == null) {
+					challenge.setOtpHandler("");
+					challenge.setCardNumber("");
+					challenge.setCell("");
 					if (challenge.getAdditionalData() == null)
-						throw new InternalErrorException("The user "+challenge.getUser().getUserName()+" needs a multi-factor token ("+otpType.toString().trim()+")");
-					else {
-						challenge.setOtpHandler("");
-						challenge.setCardNumber("");
-						challenge.setCell("");
-					}
+						accepted = false;
 				}
 			}
 			return accepted;
