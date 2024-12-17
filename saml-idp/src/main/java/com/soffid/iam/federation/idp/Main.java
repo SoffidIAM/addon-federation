@@ -72,6 +72,7 @@ import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.idp.radius.server.FreeRadiusWebServer;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusServer;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.addons.passrecover.servlet.RecoverPasswordServlet;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.engine.kerberos.ChainConfiguration;
 import com.soffid.iam.sync.jetty.ProxyConnectionFactory;
@@ -186,6 +187,7 @@ import es.caib.seycon.idp.ui.rememberPassword.PasswordResetForm;
 import es.caib.seycon.idp.wsfed.WsfedEndpoint;
 import es.caib.seycon.ng.config.Config;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.sync.SeyconApplication;
 
 public class Main {
 	org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
@@ -811,6 +813,7 @@ public class Main {
         bindEssoServlet("/websession", ctx, WebSessionServlet.class);
         bindEssoServlet("/pam-notify", ctx, PamSessionServlet.class);
         bindEssoServlet("/cert", ctx, EssoCertServlet.class);
+        bindEssoServlet("/rememberPasswordServlet", ctx, RecoverPasswordServlet.class);
         
 	}
 
