@@ -12,6 +12,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.api.Group;
 import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
@@ -35,19 +36,20 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 	        	if (authCtx.isFinished()) {
 	        		String un = authCtx.getCurrentUser().getUserName();
-	        		Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
-	        		for (GroupUser gu : gul) {
-	        			if (hgId.equals(gu.getGroupId().toString())) {
+	            	for (Group group : new Autenticator().getHolderGroups(un)) {
+	        			if (hgId.equals(group.getId().toString())) {
 
 	        				// Context
-	        				authCtx.setSelectedHolderGroup(gu.getGroup());
+	        				authCtx.setSelectedHolderGroup(group.getName());
 
 	        				// Session
 	        				HttpSession s = req.getSession();
 	        				OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
-	        				r.setHolderGroup(gu.getGroup());
-	        		    	s.setAttribute(SessionConstants.OPENID_REQUEST, r);
-	        		    	s.setAttribute(SessionConstants.OPENID_HOLDERGROUP, r.getHolderGroup());
+	        				if (r != null) {
+		        				r.setHolderGroup(group.getName());
+		        		    	s.setAttribute(SessionConstants.OPENID_REQUEST, r);
+		        		    	s.setAttribute(SessionConstants.OPENID_HOLDERGROUP, r.getHolderGroup());
+	        				}
 
 	        		    	// Authenticator
 	    	                Autenticator auth = new Autenticator();

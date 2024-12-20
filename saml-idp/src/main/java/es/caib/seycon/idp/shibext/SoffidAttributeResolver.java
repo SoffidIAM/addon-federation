@@ -274,12 +274,14 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
         
 
         eo.setAttribute("ctx", ctx);
-    	Subject subject = ctx.getUserSession().getSubject();
-    	if (subject != null) {
-    		SessionPrincipal p = (SessionPrincipal) subject.getPrincipals().iterator().next();
-    		if (p != null)
-    			eo.setAttribute("holderGroup", p.getHolderGroup());
-    	}
+        if (ctx != null && ctx.getUserSession() != null) {
+        	Subject subject = ctx.getUserSession().getSubject();
+        	if (subject != null) {
+        		SessionPrincipal p = (SessionPrincipal) subject.getPrincipals().iterator().next();
+        		if (p != null)
+        			eo.setAttribute("holderGroup", p.getHolderGroup());
+        	}
+        }
 		for ( Attribute attribute: attributes)
         {
   			if (attribute.getValue() != null && !attribute.getValue().isEmpty())

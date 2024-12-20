@@ -18,6 +18,7 @@ import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 
 public class SelectHolderGroupForm extends BaseForm {
@@ -73,14 +74,11 @@ public class SelectHolderGroupForm extends BaseForm {
 
             StringBuffer sb = new StringBuffer();
         	FederationService fs = IdpConfig.getConfig().getFederationService();
-        	for (GroupUser gu : gul) {
-        		Group group = new RemoteServiceLocator().getGroupService().findGroupByGroupName(gu.getGroup());
-        		if (group.getType()!=null && fs.isOUTypeAHolderGroup(group.getType())) {
-		        	sb.append("<div>");
-		        	sb.append("<input type=\"radio\" name=\"holderGroup\" id=\"g"+group.getId()+"\" value=\""+group.getId()+"\" style=\"margin:7px\">");
-		        	sb.append("<label for=\"g"+group.getId()+"\">"+group.getName()+" - "+group.getDescription()+"</label>");
-		        	sb.append("</div>");
-        		}
+        	for (Group group : new Autenticator().getHolderGroups(user)) {
+	        	sb.append("<div class='holdergroup-selector'>");
+	        	sb.append("<input type=\"radio\" name=\"holderGroup\" id=\"g"+group.getId()+"\" value=\""+group.getId()+"\" style=\"margin:7px\">");
+	        	sb.append("<label for=\"g"+group.getId()+"\">"+group.getName()+" - "+group.getDescription()+"</label>");
+	        	sb.append("</div>");
         	}
             g.addArgument("holderGroup", sb.toString()); //$NON-NLS-1$
 

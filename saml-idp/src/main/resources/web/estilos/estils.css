@@ -388,3 +388,12 @@ img.pushImage {
     display: block;
     margin-right: auto;
 }
+
+div.holdergroup-selector {
+	padding-left: 24px;
+	padding-top: 12px;
+}
+
+div.holdergroup-selector:hover {
+	background-color: #0e5462
+}

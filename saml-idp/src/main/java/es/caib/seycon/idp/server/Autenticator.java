@@ -34,10 +34,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.StorageService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
@@ -81,7 +81,7 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.util.Base64;
 
 public class Autenticator {
-    private static final Logger LOG = LoggerFactory.getLogger(Autenticator.class);
+    private static final Log log = LogFactory.getLog(Autenticator.class);
     static Hashtable<String, Long> lastLogout = new Hashtable<>();
     
     public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth, String sessionId, String hostId) throws Exception
@@ -165,7 +165,6 @@ public class Autenticator {
         if (relyingParty != null) {
 	    	ip = config.findIdentityProviderForRelyingParty(relyingParty);
 	        if (ip == null){
-	        	LOG.info("Cannot find federation member "+relyingParty+" when loading cookie");
 				return false;
 	        }
 		}
@@ -389,8 +388,9 @@ public class Autenticator {
     public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth,
     		String hostId) throws Exception {
 
-        LOG.info("Remote user identified as "+user+". returning control back to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
-        HttpSession session = req.getSession();
+    	HttpSession session = req.getSession();
+        log.info("Remote user identified as "+user+" session type: " + session.getAttribute("soffid-session-type") + 
+        		". Returning to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
         
         String entityId = (String) session
         		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
@@ -427,7 +427,6 @@ public class Autenticator {
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
 				req.getAttribute(
 						edu.internet2.middleware.shibboleth.idp.session.Session.HTTP_SESSION_BINDING_ATTRIBUTE);
-        LOG.info("Session type " + session.getAttribute("soffid-session-type")); //$NON-NLS-1$ //$NON-NLS-2$
         String sessionType = (String) session.getAttribute("soffid-session-type");
         if (sessionType == null)
         	sessionType = "wsso";
@@ -444,21 +443,18 @@ public class Autenticator {
         } 
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
-        	LOG.info("Generating openid response");
         	String sessionHash = generateRandomSessionId();
         	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
         	AuthorizationResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else if ("cas".equals(session.getAttribute("soffid-session-type")))
         {
-        	LOG.info("Generating openid response");
         	String sessionHash = generateRandomSessionId();
         	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
         	LoginResponse.generateResponse(ctx, req, resp, type, sessionHash);
         }
         else if ("ws-fed".equals(session.getAttribute("soffid-session-type")))
         {
-        	LOG.info("Generating ws-fed response");
         	String sessionHash = generateRandomSessionId();
         	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
         	WsfedResponse.generateResponse(ctx, req, resp, type, sessionHash);
@@ -479,70 +475,87 @@ public class Autenticator {
 		try {
 
 			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
-
-			// Check if the service provider has the holder group authentication active
-			if (r!=null && r.getFederationMember()!=null && !r.getFederationMember().isAuthWithHolderGroup()) {
-    			authCtx.setSelectedHolderGroup(null);
-    			r.setHolderGroup(null);
-				LOG.info(">>> HOLDERGROUP - The service provider has disabled the holder group authentication");
+			String relyingParty = (String) session.
+					getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+			if (relyingParty == null) {
+				authCtx.setSelectedHolderGroup(null);
+				if (r != null) r.setHolderGroup(null);
+				return false;
+			}
+			
+			FederationMember fm = IdpConfig.getConfig().getFederationService().findFederationMemberByPublicId(relyingParty);
+			if (fm != null && !fm.isAuthWithHolderGroup()) {
+				authCtx.setSelectedHolderGroup(null);
+				if (r != null) r.setHolderGroup(null);
 				return false;
 			}
 
-			// HolderGroup present in the scope or session
-			if (r.getHolderGroup()!=null) {
-				String un = authCtx.getCurrentUser().getUserName();
-				Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
-				boolean found = false;
-				for (GroupUser gu : gul) {
-					if (r.getHolderGroup().equals(gu.getGroup())) {
-						found = true;
-						break;
+			List<Group> holderGroups = getHolderGroups(authCtx.getCurrentUser().getUserName());
+			// Holder group requested by the openid app
+			if (r != null && r.getHolderGroup()!=null) {
+				for (Group group: holderGroups) {
+					if (group.getName().equals(r.getHolderGroup())) {
+						authCtx.setSelectedHolderGroup(r.getHolderGroup());
+						return false;
 					}
-				}
-				if (found) {
-					authCtx.setSelectedHolderGroup(r.getHolderGroup());
-					LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
-					return false;
-				} else {
-	    			authCtx.setSelectedHolderGroup(null);
-	    			r.setHolderGroup(null);
-	    			LOG.info(">>> HOLDERGROUP - HolderGroup "+r.getHolderGroup()+" not assigned to the user "+un);
 				}
 			}
 
 			// HolderGroup already selected
 			if (authCtx.getSelectedHolderGroup()!=null) {
-				r.setHolderGroup(authCtx.getSelectedHolderGroup());
-				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getSelectedHolderGroup());
+				if (r != null)
+					r.setHolderGroup(authCtx.getSelectedHolderGroup());
 				return false;
 			}
-
+			
 			// User has one or more holderGroups
-    		String un = authCtx.getCurrentUser().getUserName();
-    		Collection<GroupUser> lgu = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
-    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups");
-    		Collection<Group> lgu2 = new LinkedList();
-    		FederationService fs = IdpConfig.getConfig().getFederationService();
-    		for (GroupUser gu : lgu) {
-    			Group g = new RemoteServiceLocator().getGroupService().findGroupById(gu.getGroupId());
-    			if (g.getType()!=null && fs.isOUTypeAHolderGroup(g.getType())) {
-    				lgu2.add(g);
-    			}
-    		}
-    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type");
-    		if (lgu2.size()==1) {
-    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
-    			authCtx.setSelectedHolderGroup(lgu2.iterator().next().getName());
-    			r.setHolderGroup(lgu2.iterator().next().getName());
+			if (holderGroups.isEmpty()) {
+    			authCtx.setSelectedHolderGroup(null);
+    			if (r != null)
+					r.setHolderGroup(null);
     			return false;
-    		} else if (lgu.size()>1) {
-    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, he has to select the group from a list");
+			}
+			else if (holderGroups.size()==1) {
+    			final String groupName = holderGroups.iterator().next().getName();
+				authCtx.setSelectedHolderGroup(groupName);
+				if (r != null)
+					r.setHolderGroup(groupName);
+    			return false;
+    		} else {
     			return true;
     		}
 
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			LogFactory.getLog(getClass()).warn("Error guessing holder group", e);
+		}
 
 		return false;
+	}
+
+	public List<Group> getHolderGroups(String userName) throws InternalErrorException, IOException {
+		List<Group> groups = new LinkedList<>();
+		User user = new RemoteServiceLocator().getUserService().findUserByUserName(userName);
+		if (user == null)
+			return groups;
+		Group g = fetchHolderGroup(user.getPrimaryGroup());
+		if (g != null)
+			groups.add(g);
+		for (GroupUser gu: new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(userName)) {
+			g = fetchHolderGroup(gu.getGroup());
+			if (g != null)
+				groups.add(g);
+		}
+		return groups;
+	}
+
+	private Group fetchHolderGroup(String groupName) throws InternalErrorException, IOException {
+		Group group = new RemoteServiceLocator().getGroupService().findGroupByGroupName(groupName);
+		if (group == null || group.getType() == null)
+			return null;
+		if (new RemoteServiceLocator().getFederacioService().isOUTypeAHolderGroup(group.getType()))
+			return group;
+		else
+			return null;
 	}
 
 	protected void doSamlLogin(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp,
