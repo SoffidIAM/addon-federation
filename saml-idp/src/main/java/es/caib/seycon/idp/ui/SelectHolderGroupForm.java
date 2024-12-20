@@ -75,7 +75,7 @@ public class SelectHolderGroupForm extends BaseForm {
             StringBuffer sb = new StringBuffer();
         	FederationService fs = IdpConfig.getConfig().getFederationService();
         	for (Group group : new Autenticator().getHolderGroups(user)) {
-	        	sb.append("<div class='holdergroup-selector'>");
+	        	sb.append("<div class='holdergroup-selector' onclick='document.getElementById(\"g"+group.getId()+"\").checked = true;'>");
 	        	sb.append("<input type=\"radio\" name=\"holderGroup\" id=\"g"+group.getId()+"\" value=\""+group.getId()+"\" style=\"margin:7px\">");
 	        	sb.append("<label for=\"g"+group.getId()+"\">"+group.getName()+" - "+group.getDescription()+"</label>");
 	        	sb.append("</div>");
