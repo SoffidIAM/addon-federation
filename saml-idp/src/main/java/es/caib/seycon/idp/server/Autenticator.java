@@ -230,7 +230,6 @@ public class Autenticator {
 				}
 		        if (! requestedUser.isEmpty() && !user.equals(requestedUser))
 		        {
-//					LOG.info("Session cookie is valid, but requested user does not match");
 		            HttpSession session = req.getSession();
 		            session.removeAttribute(SessionConstants.SEU_USER);
 		            return false;
@@ -484,7 +483,7 @@ public class Autenticator {
 			if (r!=null && r.getFederationMember()!=null && !r.getFederationMember().isAuthWithHolderGroup()) {
     			authCtx.setSelectedHolderGroup(null);
     			r.setHolderGroup(null);
-				LOG.info(">>> HOLDERGROUP - The service provider has disabled the holder group authentication");
+				LOG.info("The service provider has disabled the holder group authentication");
 				return false;
 			}
 
@@ -501,26 +500,26 @@ public class Autenticator {
 				}
 				if (found) {
 					authCtx.setSelectedHolderGroup(r.getHolderGroup());
-					LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
+					LOG.info("HolderGroup present in the scope: "+r.getHolderGroup());
 					return false;
 				} else {
 	    			authCtx.setSelectedHolderGroup(null);
 	    			r.setHolderGroup(null);
-	    			LOG.info(">>> HOLDERGROUP - HolderGroup "+r.getHolderGroup()+" not assigned to the user "+un);
+	    			LOG.info("HolderGroup "+r.getHolderGroup()+" not assigned to the user "+un);
 				}
 			}
 
 			// HolderGroup already selected
 			if (authCtx.getSelectedHolderGroup()!=null) {
 				r.setHolderGroup(authCtx.getSelectedHolderGroup());
-				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getSelectedHolderGroup());
+				LOG.info("HolderGroup already selected: "+authCtx.getSelectedHolderGroup());
 				return false;
 			}
 
 			// User has one or more holderGroups
     		String un = authCtx.getCurrentUser().getUserName();
     		Collection<GroupUser> lgu = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
-    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups");
+    		LOG.info("The user "+un+" has "+lgu.size()+" userGroups");
     		Collection<Group> lgu2 = new LinkedList();
     		FederationService fs = IdpConfig.getConfig().getFederationService();
     		for (GroupUser gu : lgu) {
@@ -529,14 +528,14 @@ public class Autenticator {
     				lgu2.add(g);
     			}
     		}
-    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type");
+    		LOG.info("The user "+un+" has "+lgu.size()+" userGroups of holderGroup type");
     		if (lgu2.size()==1) {
-    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
+    			LOG.info("The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
     			authCtx.setSelectedHolderGroup(lgu2.iterator().next().getName());
     			r.setHolderGroup(lgu2.iterator().next().getName());
     			return false;
     		} else if (lgu.size()>1) {
-    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, he has to select the group from a list");
+    			LOG.info("The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, he has to select the group from a list");
     			return true;
     		}
 

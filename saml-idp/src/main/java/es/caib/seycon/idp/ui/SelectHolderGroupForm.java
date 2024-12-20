@@ -34,10 +34,8 @@ public class SelectHolderGroupForm extends BaseForm {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    	log.info(">>> HOLDERGROUP - SelectHolderGroupForm.doGet");
         super.doGet(req, resp);
         try {
-        	log.info(">>> HOLDERGROUP - SelectHolderGroupForm.doGet, authenticating");
         	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
         	if (authCtx==null)
         		throw new ServletException("URL not valid at this time");
@@ -56,9 +54,7 @@ public class SelectHolderGroupForm extends BaseForm {
             g.addArgument("title", Messages.getString("selectHolderGroup")); //$NON-NLS-1$ //$NON-NLS-2$
             g.addArgument("selectHolderGroupUrl", SelectHolderGroupAction.URI); //$NON-NLS-1$
 
-            log.info("SelectHolderGroupForm.doGet - Se procede a consultar los holder groups...");
             Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(authCtx.getCurrentUser().getUserName());
-            log.info("SelectHolderGroupForm.doGet - Se han encontrado "+((gul!=null) ? gul.size():0)+" holder groups");
 
             String error = (String) req.getAttribute("ERROR");
             if (gul==null || gul.isEmpty()) {
@@ -87,7 +83,7 @@ public class SelectHolderGroupForm extends BaseForm {
             g.generate(resp, "selectHolderGroupPage.html"); //$NON-NLS-1$
 
         } catch (Exception e) {
-        	log.info("SelectHolderGroupForm.doGet - Error genérico: "+e.getMessage());
+        	log.info("SelectHolderGroupForm.doGet - Error generico: "+e.getMessage());
             throw new ServletException(e);
 		}
     }

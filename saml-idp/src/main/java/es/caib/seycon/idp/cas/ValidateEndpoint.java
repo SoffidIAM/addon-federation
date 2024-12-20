@@ -42,7 +42,6 @@ public class ValidateEndpoint extends HttpServlet {
 			try {
 				TokenHandler h = TokenHandler.instance();
 				TokenInfo t = null;
-				log.info(">>> LOGOUT - getToken");
 				t = h.getToken(ticket);
 				if (t == null ||  
 						! service.equals(t.getRequest().getFederationMember().getPublicId())) {
