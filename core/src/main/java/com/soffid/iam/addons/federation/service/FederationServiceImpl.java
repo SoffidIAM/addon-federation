@@ -2634,7 +2634,6 @@ public class FederationServiceImpl
 				sb.append(" ");
 			sb.append(scopesToResponse);
 		}
-		log.info("Final filtered scopes: "+sb.toString());
 		return sb.toString();
 	}
 
