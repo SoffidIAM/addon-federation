@@ -37,6 +37,8 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	private Collection<UserCredentialType> tokens;
 
 	private Collection<String> otps;
+
+	private String currentAuthenticationMethod;
 	
 	public ActualAdaptiveEnvironment(User user, String sourceIp, String hostId, 
 			boolean deviceCertificate, boolean esso) throws IOException, InternalErrorException {
@@ -314,6 +316,15 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 			}
 		}
 		return mdays;
+	}
+
+	@Override
+	public String currentAuthenticationMethod() {
+		return currentAuthenticationMethod;
+	}
+
+	public void setCurrentAuthenticationMethod(String currentAuthenticationMethod) {
+		this.currentAuthenticationMethod = currentAuthenticationMethod;
 	}
 
 }

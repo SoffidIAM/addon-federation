@@ -365,6 +365,9 @@ public class AuthenticationContext {
     	env.setServiceProvider(publicId);
     	env.setSourceIp(remoteIp);
     	env.setUser(currentUser);
+    	if (step == 2) {
+    		env.setCurrentAuthenticationMethod(getUsedMethod());
+    	}
 		AuthenticationMethod m = new RemoteServiceLocator().getUserBehaviorService().getAuthenticationMethod(fm, env );
 		alwaysAskForCredentials = Boolean.TRUE.equals( m.getAlwaysAskForCredentials() );
 

@@ -140,4 +140,8 @@ public class AdaptiveEnvironment implements Serializable {
 	public Double displacement() throws InternalErrorException {
 		return null;
 	}
+	
+	public String currentAuthenticationMethod() {
+		return null;
+	}
 }
