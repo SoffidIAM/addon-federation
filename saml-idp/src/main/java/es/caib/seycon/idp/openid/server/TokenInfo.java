@@ -122,7 +122,6 @@ public class TokenInfo {
 	}
 
 	boolean isExpired() {
-		log.info(">>> HOLDERGROUP - Hora sistema: "+System.currentTimeMillis()+", hora expiracion: "+expires);
 		return System.currentTimeMillis() > expires;
 	}
 

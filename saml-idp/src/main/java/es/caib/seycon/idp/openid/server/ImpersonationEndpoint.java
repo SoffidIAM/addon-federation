@@ -60,7 +60,6 @@ public class ImpersonationEndpoint extends HttpServlet {
 		TokenInfo t = null;
 			
 		try {
-			log.info(">>> LOGOUT - getToken");
 			t = h.getToken(token);
 			if ( t == null)
 			{

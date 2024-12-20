@@ -101,6 +101,7 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
 			encoder2.setAttributeName(att.getOid() == null || att.getOid().trim().isEmpty() ? att.getShortName(): att.getOid());
 			if (att.getShortName().equals("uid")) {
 				def.setSourceAttributeID("uid");
+				def.getDependencyIds().add("seu");
 			}
 			def.getAttributeEncoders().add(encoder2);
 			data.definitions.add(def);

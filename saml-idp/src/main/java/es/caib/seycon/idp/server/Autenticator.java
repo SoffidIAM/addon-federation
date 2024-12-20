@@ -229,7 +229,6 @@ public class Autenticator {
 				}
 		        if (! requestedUser.isEmpty() && !user.equals(requestedUser))
 		        {
-//					LOG.info("Session cookie is valid, but requested user does not match");
 		            HttpSession session = req.getSession();
 		            session.removeAttribute(SessionConstants.SEU_USER);
 		            return false;

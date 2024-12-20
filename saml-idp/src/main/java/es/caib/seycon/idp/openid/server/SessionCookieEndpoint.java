@@ -55,7 +55,6 @@ public class SessionCookieEndpoint extends HttpServlet {
 		Session session;
 		TokenInfo t = null;
 		try {
-			log.info(">>> LOGOUT - getToken");
 			t = h.getToken(token);
 			if ( t == null)
 			{

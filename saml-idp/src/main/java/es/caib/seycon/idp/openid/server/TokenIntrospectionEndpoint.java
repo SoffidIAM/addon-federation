@@ -53,7 +53,6 @@ public class TokenIntrospectionEndpoint extends HttpServlet {
 					buildError(resp, "unauthorized_client", "Wrong client credentials", null);
 					return;
 				}
-				log.info(">>> LOGOUT - getToken");
 				TokenInfo t = h.getToken(tokenId);
 				JSONObject o = new JSONObject();
 				if (t == null || t.isExpired())

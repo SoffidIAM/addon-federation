@@ -51,7 +51,6 @@ public class RevokeEndpoint extends HttpServlet {
 			if ("refresh_token".equals(token_type_hint)) {
 				t = th.getRefreshToken(token);
 			} else {
-				log.info(">>> LOGOUT - getToken");
 				t = th.getToken(token);
 			}
 			

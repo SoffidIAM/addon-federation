@@ -2285,7 +2285,6 @@ public class FederationServiceImpl
 
 	@Override
 	protected SamlValidationResults handleValidateSessionCookie(String sessionCookie) throws Exception {
-		log.info("handleValidateSessionCookie()");
 		return getDelegate().validateSessionCookie(sessionCookie);
 	}
 
@@ -2635,7 +2634,6 @@ public class FederationServiceImpl
 				sb.append(" ");
 			sb.append(scopesToResponse);
 		}
-		log.info(">>> FILTERSCOPES - Final scopes: "+sb.toString());
 		return sb.toString();
 	}
 

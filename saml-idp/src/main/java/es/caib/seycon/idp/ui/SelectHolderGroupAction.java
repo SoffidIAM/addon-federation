@@ -30,7 +30,6 @@ public class SelectHolderGroupAction extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String error = null;
 		try {
-			log.info(">>> HOLDERGROUP - SelectHolderGroupAction.doPost");
 			String hgId = req.getParameter("holderGroup"); //$NON-NLS-1$
 			if (hgId!=null) {
 	        	AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
@@ -54,7 +53,6 @@ public class SelectHolderGroupAction extends HttpServlet {
 	        		    	// Authenticator
 	    	                Autenticator auth = new Autenticator();
 	    	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
-	    	                log.info(">>> HOLDERGROUP - authentication ok");
 	    	                return;
 	        			}
 	        		}
