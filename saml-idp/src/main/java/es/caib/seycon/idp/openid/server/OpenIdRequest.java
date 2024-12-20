@@ -24,7 +24,18 @@ public class OpenIdRequest {
 	String pkceAlgorithm;
 	FederationMember federationMember;
 	private HashSet<String> responseTypeSet;
+	String holderGroup;
 	
+	public String getHolderGroup() {
+		return holderGroup;
+	}
+
+
+	public void setHolderGroup(String holderGroup) {
+		this.holderGroup = holderGroup;
+	}
+
+
 	public String toString() {
 		return "[Type: "+type+" Scope: "+scope+", ClientId: "+clientId+", ResponseType: "+responseType+", RedirectURL: "+redirectUrl+
 				", State: "+state+", Nonce: "+nonce+", Display: "+display+", Prompt: "+prompt+", MaxAge: "+maxAge

@@ -75,6 +75,12 @@
 			dataType='BOOLEAN'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		<customfield3
+			id="/federationMember/authWithHolderGroup"
+			label="${c:l('federacio.authWithHolderGroup')}"
+			bind="/federationMember/authWithHolderGroup"
+			dataType='BOOLEAN'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3
 			label="${c:l('federacio.roles')}"
 			bind="/federationMember/roles"
 			multiValue="true"
@@ -237,6 +243,8 @@
   value: scope
 - name: "${c:l('federacio.zul.roles')}"
   value: roles
+- name: "${c:l('federacio.zul.scopeByDefault')}"
+  value: byDefault
 				]]></attribute>
 				</datatable>
 				<div width="100%" style="text-align: right"  if="${soffid:isUserInRole('user:printer:create')}" >
@@ -254,6 +262,7 @@
 					<form id="form" width="100%" dataPath="../scopesgrid:/">
 						<customfield3 label="${c:l('federacio.zul.scope') }" dataType="STRING_TYPE" bind="scope" required="true" id="scope"/>
 						<customfield3 label="${c:l('federacio.zul.roles') }" dataType="ROLE_TYPE" bind="roles" multiValue="true"/>
+						<customfield3 label="${c:l('federacio.zul.scopeByDefault') }" dataType="BOOLEAN_TYPE" bind="byDefault" required="false" id="scopeByDefault"/>
 					</form>
 					<div style="text-align: right; width: 100%">
 						<button image="/img/undo-r.svg" label="${c:l('common.undo')}" 

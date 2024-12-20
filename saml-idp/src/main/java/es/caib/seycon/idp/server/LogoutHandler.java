@@ -126,6 +126,7 @@ public class LogoutHandler {
 		for (OauthToken token: federationService.findOauthTokenBySessionId(s.getId())) {
 			federationService.deleteOauthToken(token);
 			final TokenHandler tokenHandler = TokenHandler.instance();
+			log.info(">>> LOGOUT - getToken");
 			TokenInfo t = tokenHandler.getToken(token.getFullToken());
 			if (t != null)
 				t.setExpires(System.currentTimeMillis());
@@ -154,6 +155,17 @@ public class LogoutHandler {
 		}
 
 		return l;
+	}
+
+	public void internalLogout(Session session) throws IOException, InternalErrorException {
+		federationService = new RemoteServiceLocator().getFederacioService();
+		for (OauthToken token: federationService.findOauthTokenBySessionId(session.getId())) {
+			federationService.deleteOauthToken(token);
+			final TokenHandler tokenHandler = TokenHandler.instance();
+			TokenInfo t = tokenHandler.getToken(token.getFullToken());
+			if (t != null)
+				t.setExpires(System.currentTimeMillis());
+		}
 	}
 
 	private void processOpenidLogout(FederationMemberSession fms, ServletContext ctx, Session s, LogoutResponse l,
@@ -221,6 +233,7 @@ public class LogoutHandler {
 			for (OauthToken token: federationService.findOauthTokenBySessionId(s.getId())) {
 				if (fms.getFederationMember().equals( token.getServiceProvider() ) &&
 					fms.getSessionHash().equals(token.getOauthSession())) {
+					log.info(">>> LOGOUT - getToken");
 					TokenInfo t = tokenHandler.getToken(token.getTokenId());
 					if (t != null) {
 						if (sp.getOpenidLogoutUrlBack() != null && ! sp.getOpenidLogoutUrlBack().isEmpty())

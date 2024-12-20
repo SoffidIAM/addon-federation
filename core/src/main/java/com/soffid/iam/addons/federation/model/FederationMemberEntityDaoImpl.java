@@ -287,6 +287,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.getRoles().add(ra.getRole().getName()+"@"+ra.getRole().getSystem().getName());
 			}
 			loadScopes(sp, target);
+			target.setAuthWithHolderGroup((source.getAuthWithHolderGroup()!=null) ? source.getAuthWithHolderGroup().booleanValue() : false);
 		}
 		
 		target.getKeytabs().clear();
@@ -357,7 +358,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				sp.getServiceProviderType() == ServiceProviderType.OPENID_REGISTER ) {
 			target.setAllowedScopes( getAllowedScopeEntityDao().toAllowedScopeList(sp.getAllowedScopes()));
 			if (target.getAllowedScopes().isEmpty()) {
-				target.getAllowedScopes().add(new AllowedScope(null, "*", new LinkedList<String>()));
+				target.getAllowedScopes().add(new AllowedScope(null, "*", new LinkedList<String>(), Boolean.FALSE));
 			}
 			for (AllowedScope scope: target.getAllowedScopes()) {
 				if (scope.getScope().equals("openid"))
@@ -365,7 +366,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 					return;
 				}
 			}
-			target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>()));
+			target.getAllowedScopes().add(new AllowedScope(null, "openid", new LinkedList<String>(), Boolean.TRUE));
 		}
 	}
 

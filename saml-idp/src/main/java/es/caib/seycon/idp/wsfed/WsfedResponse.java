@@ -75,7 +75,7 @@ public class WsfedResponse  {
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
     	return new AuthorizationHandler().checkAuthorization(user, member,
 				authCtx == null ? null: authCtx.getHostId(response),
-				request.getRemoteAddr());
+				request.getRemoteAddr(), authCtx.getSelectedHolderGroup());
 	}
 
 	private static void wsfedFlow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, 

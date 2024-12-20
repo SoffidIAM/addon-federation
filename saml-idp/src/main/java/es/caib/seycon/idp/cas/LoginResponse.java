@@ -62,7 +62,7 @@ public class LoginResponse  {
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
     	return new AuthorizationHandler().checkAuthorization(user, r.getFederationMember(),
 				authCtx == null ? null: authCtx.getHostId(response),
-				request.getRemoteAddr());
+				request.getRemoteAddr(), authCtx.getSelectedHolderGroup());
 	}
 
 	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, ServletException {
@@ -83,7 +83,7 @@ public class LoginResponse  {
 
 		h.generateToken(token, att, request, authType);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId(), token.getHolderGroup());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);

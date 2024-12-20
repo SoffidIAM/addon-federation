@@ -24,18 +24,19 @@ import java.util.Map;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.JWTCreator.Builder;
+import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Account;
@@ -52,12 +53,10 @@ import com.soffid.iam.sync.service.ServerService;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.server.LogoutHandler;
 import es.caib.seycon.idp.server.LogoutResponse;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
-import es.caib.seycon.util.Base64;
 
 public class TokenHandler {
 	HashMap<String, TokenInfo> authorizationCodes = new HashMap<String, TokenInfo>();
@@ -66,7 +65,8 @@ public class TokenHandler {
 	LinkedList<TokenInfo> pendingTokens = new LinkedList<TokenInfo>();
 	LinkedList<TokenInfo> activeTokens = new LinkedList<TokenInfo>();
 	static TokenHandler instance;
-	
+	Log log = LogFactory.getLog(getClass());
+
 	public static TokenHandler instance() {
 		if (instance == null)
 			instance = new TokenHandler();
@@ -95,6 +95,7 @@ public class TokenHandler {
 			t.setSessionKey(session.getKey());
 		}
 		t.setOauthSessionId(sessionHash);
+		t.setHolderGroup(request.getHolderGroup());
 		authorizationCodes.put(t.getAuthorizationCode(), t);
 		pendingTokens.addLast(t);
 		
@@ -367,12 +368,14 @@ public class TokenHandler {
 
 		t.authorizationCode = null;
 		t.jwtId = generateRandomString(48);		
-		t.token = generateJWTToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		t.refreshToken = generateRandomString(48);
-		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
 		Long timeOut = IdpConfig.getConfig().getFederationMember().getSessionTimeout();
 		t.expires = System.currentTimeMillis() + (timeOut == null ? 600000 : timeOut.longValue() * 1000); // 10 minutes
 		t.updateLastUse();
+
+		t.token = generateJWTToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
+		t.refreshTokenFull = generateRefreshToken(IdpConfig.getConfig(), t, att, req.getRequestURI().contains("/auth/realms/soffid/"));
+
 		refreshTokens.put(t.refreshToken, t);
 		tokens.put(t.getToken(), t);
 		activeTokens.addLast(t);
@@ -555,10 +558,22 @@ public class TokenHandler {
 			} catch (Exception e) {}
 			if (jwtid != null) {
 				OauthToken o = getFederationService().findOauthTokenByToken(getIdentityProvider(), jwtid);
-				if (o != null)
+				if (o != null) {
 					ti = parseOauthToken(o);
+					if (ti.isExpired())
+						log.info(">>> LOGOUT - id_token encontrado en la base de datos, pero esta expirado");
+					else
+						log.info(">>> LOGOUT - id_token encontrado en la base de datos");
+				}
 			}
+		} else {
+			if (ti.isExpired())
+				log.info(">>> LOGOUT - id_token encontrado en cache, pero esta expirado");
+			else
+				log.info(">>> LOGOUT - id_token encontrado en cache");
 		}
+		if (ti==null)
+			log.info(">>> LOGOUT - id_token no encontrado");
 		if (ti == null || ti.isExpired())
 			return null;
 		else
@@ -624,6 +639,7 @@ public class TokenHandler {
 		o.setPkceAlgorithm(t.getPkceAlgorithm());
 		o.setPkceChallenge(t.getPkceChallenge());
 		o.setNonce(t.getRequest().getNonce());
+		o.setHolderGroup(t.getHolderGroup());
 		return o;
 	}
 	
@@ -649,6 +665,7 @@ public class TokenHandler {
 		t.setSessionId(o.getSessionId());
 		t.setSessionKey(o.getSessionKey());
 		t.setOauthSessionId(o.getOauthSession());
+		t.setHolderGroup(o.getHolderGroup());
 		return t;
 	}
 

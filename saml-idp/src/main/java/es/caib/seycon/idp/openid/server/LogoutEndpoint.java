@@ -2,6 +2,7 @@ package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.Base64;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -53,9 +54,6 @@ public class LogoutEndpoint extends HttpServlet {
 				log.info("post_logout_redirect_uri = "+postLogoutRedirectUri);
 				log.info("state                    = "+state);
 			}
-			IdpConfig config = IdpConfig.getConfig();
-
-			LogoutResponse response = null;
 			
 			// Identify the response URL
 			String logoutUrl = LogoutServlet.URI;
@@ -86,16 +84,23 @@ public class LogoutEndpoint extends HttpServlet {
 			}
 			
 			Session session = new Autenticator().getSession(req, false);
-			if (session != null)
+			LogoutResponse response = null;
+			if (session != null) {
 				response = new LogoutHandler().logout(getServletContext(), req, session, true);
+			}
 			if (response != null && response.getFrontRequests().isEmpty()) {
+				req.getSession().invalidate();
 				resp.sendRedirect(logoutUrl);
 			} else {
-				if (! logoutUrl.equals(LogoutServlet.URI))
-					req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
-				resp.sendRedirect(LogoutServlet.URI);
+				if (session==null && postLogoutRedirectUri!=null) {
+					resp.sendRedirect(postLogoutRedirectUri);
+				} else {
+					if (! logoutUrl.equals(LogoutServlet.URI)) {
+						req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
+					}
+					resp.sendRedirect(LogoutServlet.URI);
+				}
 			}
-	    	
 		} catch (Exception e) {
 			throw new ServletException("Error parsing request paramenters", e);
 		}
@@ -105,10 +110,12 @@ public class LogoutEndpoint extends HttpServlet {
 	private boolean validateResponseUrl(String postLogoutRedirectUri, FederationMember fm) {
 		boolean ok = false;
 		for (String url: fm.getOpenidLogoutUrl()) {
-    		if (postLogoutRedirectUri.equals(url) || postLogoutRedirectUri.startsWith(url+"?")) 
+    		if (postLogoutRedirectUri.equals(url) || postLogoutRedirectUri.startsWith(url+"?")) {
     			ok = true;
-    		if (url.endsWith("*") && postLogoutRedirectUri.startsWith(url.substring(0, url.length()-1))) 
+    		}
+    		if (url.endsWith("*") && postLogoutRedirectUri.startsWith(url.substring(0, url.length()-1))) {
     			ok = true;
+			}
 		}
 		return ok;
 	}

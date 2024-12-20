@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -44,6 +45,7 @@ public class LogoutServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 	public static final String URI = "/logout.jsp"; //$NON-NLS-1$
+	Log log = LogFactory.getLog(getClass());
 
     void process (HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, IOException, ServletException {
         HtmlGenerator g = new HtmlGenerator(getServletContext(), req);

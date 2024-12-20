@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -33,31 +34,27 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.http.HttpRequest;
-import org.jfree.util.Log;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.service.FederationService;
+import com.soffid.iam.api.Group;
+import com.soffid.iam.api.GroupUser;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.federation.idp.LanguageFilter;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
-import com.soffid.iam.service.SessionService;
 import com.soffid.iam.ssl.SeyconKeyStore;
 import com.soffid.iam.sync.service.ServerService;
 
-import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationEngine;
 import edu.internet2.middleware.shibboleth.idp.authn.AuthenticationException;
-import edu.internet2.middleware.shibboleth.idp.authn.LoginContext;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginContextEntry;
 import edu.internet2.middleware.shibboleth.idp.authn.LoginHandler;
 import edu.internet2.middleware.shibboleth.idp.authn.Saml2LoginContext;
@@ -68,7 +65,6 @@ import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.AuthorizationResponse;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
-import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
 import es.caib.seycon.idp.session.SessionListener;
@@ -76,6 +72,7 @@ import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.shibext.UidEvaluator;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
+import es.caib.seycon.idp.ui.SelectHolderGroupForm;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.idp.wsfed.WsfedResponse;
 import es.caib.seycon.ng.comu.TipusSessio;
@@ -419,7 +416,12 @@ public class Autenticator {
 				return;
 			}
 		}
-		
+
+		// Handle the selection of the holderGroup
+		if (hasToRequestDomains(session, authCtx)) {
+			resp.sendRedirect(SelectHolderGroupForm.URI);
+			return;
+		}
 
 		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
@@ -438,7 +440,7 @@ public class Autenticator {
     			req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
-            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session);
+            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session, authCtx.getSelectedHolderGroup());
         } 
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
@@ -473,9 +475,79 @@ public class Autenticator {
         }
     }
 
+	private boolean hasToRequestDomains(HttpSession session, AuthenticationContext authCtx) {
+		try {
+
+			OpenIdRequest r = (OpenIdRequest) session.getAttribute(SessionConstants.OPENID_REQUEST);
+
+			// Check if the service provider has the holder group authentication active
+			if (r!=null && r.getFederationMember()!=null && !r.getFederationMember().isAuthWithHolderGroup()) {
+    			authCtx.setSelectedHolderGroup(null);
+    			r.setHolderGroup(null);
+				LOG.info(">>> HOLDERGROUP - The service provider has disabled the holder group authentication");
+				return false;
+			}
+
+			// HolderGroup present in the scope or session
+			if (r.getHolderGroup()!=null) {
+				String un = authCtx.getCurrentUser().getUserName();
+				Collection<GroupUser> gul = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
+				boolean found = false;
+				for (GroupUser gu : gul) {
+					if (r.getHolderGroup().equals(gu.getGroup())) {
+						found = true;
+						break;
+					}
+				}
+				if (found) {
+					authCtx.setSelectedHolderGroup(r.getHolderGroup());
+					LOG.info(">>> HOLDERGROUP - HolderGroup present in the scope: "+r.getHolderGroup());
+					return false;
+				} else {
+	    			authCtx.setSelectedHolderGroup(null);
+	    			r.setHolderGroup(null);
+	    			LOG.info(">>> HOLDERGROUP - HolderGroup "+r.getHolderGroup()+" not assigned to the user "+un);
+				}
+			}
+
+			// HolderGroup already selected
+			if (authCtx.getSelectedHolderGroup()!=null) {
+				r.setHolderGroup(authCtx.getSelectedHolderGroup());
+				LOG.info(">>> HOLDERGROUP - HolderGroup already selected: "+authCtx.getSelectedHolderGroup());
+				return false;
+			}
+
+			// User has one or more holderGroups
+    		String un = authCtx.getCurrentUser().getUserName();
+    		Collection<GroupUser> lgu = new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(un);
+    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups");
+    		Collection<Group> lgu2 = new LinkedList();
+    		FederationService fs = IdpConfig.getConfig().getFederationService();
+    		for (GroupUser gu : lgu) {
+    			Group g = new RemoteServiceLocator().getGroupService().findGroupById(gu.getGroupId());
+    			if (g.getType()!=null && fs.isOUTypeAHolderGroup(g.getType())) {
+    				lgu2.add(g);
+    			}
+    		}
+    		LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type");
+    		if (lgu2.size()==1) {
+    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, auto selected group "+lgu2.iterator().next().getName());
+    			authCtx.setSelectedHolderGroup(lgu2.iterator().next().getName());
+    			r.setHolderGroup(lgu2.iterator().next().getName());
+    			return false;
+    		} else if (lgu.size()>1) {
+    			LOG.info(">>> HOLDERGROUP - The user "+un+" has "+lgu.size()+" userGroups of holderGroup type, he has to select the group from a list");
+    			return true;
+    		}
+
+		} catch (Exception e) {}
+
+		return false;
+	}
+
 	protected void doSamlLogin(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp,
 			edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession, String type, String user,
-			boolean externalAuth, String hostId, HttpSession session)
+			boolean externalAuth, String hostId, HttpSession session, String holderGroup)
 			throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException,
 			KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException,
 			SignatureException, UnknownUserException, Exception, ServletException {
@@ -486,11 +558,11 @@ public class Autenticator {
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 		if (member != null && new AuthorizationHandler().checkAuthorization(user, member,
 				authCtx == null ? null: authCtx.getHostId(resp),
-				req.getRemoteAddr())) {
+				req.getRemoteAddr(), authCtx.getSelectedHolderGroup())) {
 			final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
 			String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 			
-			Principal principal = new SessionPrincipal(user, soffidSession);
+			Principal principal = new SessionPrincipal(user, soffidSession, holderGroup);
 			
 			req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
 			req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);
@@ -511,6 +583,8 @@ public class Autenticator {
 			if (saml2LoginContext == null) {
 				saml2LoginContext = (Saml2LoginContext) session.getAttribute("$$soffid-old-login-context$$");
 				String saml2LoginContextId = (String) session.getAttribute("$$soffid-old-login-context-id$$");
+				if (saml2LoginContext != null)
+					saml2LoginContext.setProperty("holderGroup", holderGroup);
 				StorageService<String, LoginContextEntry> storageService = (StorageService<String, LoginContextEntry>) 
 						HttpServletHelper.getStorageService(ctx);
 				storageService.put(HttpServletHelper.DEFAULT_LOGIN_CTX_PARITION, 

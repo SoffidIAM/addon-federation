@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -9,6 +10,7 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -23,12 +25,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.AllowedScope;
+import com.soffid.iam.api.Group;
+import com.soffid.iam.api.Session;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
+import com.soffid.iam.sync.service.ServerService;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
-import es.caib.seycon.idp.session.LoginTimeoutHandler;
+import es.caib.seycon.idp.server.LogoutHandler;
 import es.caib.seycon.idp.ui.LoginServlet;
+import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -51,11 +59,14 @@ public class AuthorizationEndpoint extends HttpServlet {
 		OpenIdRequest r;
 		try {
 			config = IdpConfig.getConfig();
-		
 			req.getSession().setAttribute("soffid-session-type", "openid");
+			String hgSession = null;
+			AuthenticationContext auth = AuthenticationContext.fromRequest(req);
+			if (auth != null)
+				hgSession = auth.getSelectedHolderGroup();
+
 	    	r = new OpenIdRequest();
-	    	
-	    	r.setScope(req.getParameter("scope"));
+	    	r.setScope(getScopeFromRequest(req));
 	    	r.setClientId(req.getParameter("client_id"));
 	    	r.setResponseType(req.getParameter("response_type"));
 	    	r.setState(req.getParameter("state"));
@@ -65,21 +76,31 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	r.setPkceAlgorithm(req.getParameter("code_challenge_method"));
 	    	r.setPkceChallenge(req.getParameter("code_challenge"));
 	    	r.setLoginHint(req.getParameter("login_hint"));
+	    	r.setHolderGroup(getHolderGroupFromScopeAndSession(r.getScope(), hgSession));
 	    	if (r.getFederationMember() != null && r.getRedirectUrl() == null) {
 	    		if (r.getFederationMember().getOpenidUrl() != null && !r.getFederationMember().getOpenidUrl().isEmpty())
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
 	    	}
 	    	if (OidcDebugController.isDebug()) {
 				log.info("Received authorization request:");
-				log.info("client_id     = "+r.getClientId());
-				log.info("response_type = "+r.getResponseType());
-				log.info("state         = "+r.getState());
-				log.info("nonce         = "+r.getNonce());
-				log.info("redirect_uri  = "+r.getRedirectUrl());
-				log.info("scope         = "+req.getParameter("scope"));
-				log.info("code_algorithm= "+r.getPkceAlgorithm());
-				log.info("code_challenge= "+r.getPkceChallenge());
+				log.info("client_id      = "+r.getClientId());
+				log.info("response_type  = "+r.getResponseType());
+				log.info("state          = "+r.getState());
+				log.info("nonce          = "+r.getNonce());
+				log.info("redirect_uri   = "+r.getRedirectUrl());
+				log.info("scope          = "+r.getScope());
+				log.info("code_algorithm = "+r.getPkceAlgorithm());
+				log.info("code_challenge = "+r.getPkceChallenge());
+				log.info("login_hint     = "+r.getLoginHint());
+				log.info("holderGroup    = "+r.getHolderGroup());
 	    	}
+
+	    	// Check if the holderGroup is present in session and in the scope,
+	    	if (r.getHolderGroup()!=null && hgSession!=null && !r.getHolderGroup().equals(hgSession)) {
+	    		Session session = new Autenticator().getSession(req, false);
+	    		new LogoutHandler().internalLogout(session);
+	    	}
+
 	    	HttpSession session = req.getSession(true);
 	    	if (r.getFederationMember() != null) {
 		    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
@@ -106,12 +127,70 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    	HttpSession session = req.getSession();
 	    	session.setAttribute(SessionConstants.OPENID_REQUEST, r);
 	    	session.setAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM, r.getFederationMember().getPublicId());
-	    	
+
+	    	if (r.getHolderGroup()!=null)
+	    		session.setAttribute(SessionConstants.OPENID_HOLDERGROUP, r.getHolderGroup());
+
     		clientCredentialsGrantType(req, resp);
 	    	
     	} catch (Exception e) {
             generateError(r, "server_error", e.toString(), resp);
 		}
+	}
+
+	private String getScopeFromRequest(HttpServletRequest req) {
+		String[] a = req.getParameterValues("scope");
+		if (a!=null && a.length>0) {
+			HashMap<String, String> hm = new HashMap<String, String>();
+			for (String i : a) {
+				for (String i2 : i.split(" ")) {
+					hm.put(i2.trim(), i2.trim());
+				}
+			}
+			String o = "";
+			for (String i : hm.keySet()) {
+				if (!i.trim().isEmpty()) {
+					if (o.length()>0)
+						o = o+" ";
+					o = o+i;
+				}
+			}
+			return o;
+		}
+		return null;
+	}
+
+	private String getHolderGroupFromScopeAndSession(String scope, String sessionHolderGroup) {
+		if (scope==null || !scope.toLowerCase().contains("holdergroup:"))
+			return getHolderGroupFromSession(sessionHolderGroup);
+
+		String[] sa = scope.trim().split(" ");
+		for (String s : sa) {
+			if (s.toLowerCase().startsWith("holdergroup:")) {
+				String hg = s.substring(s.indexOf(":")+1);
+				if (hg!=null && !hg.trim().isEmpty()) {
+					try {
+						hg =  URLDecoder.decode(hg,"UTF-8");
+						Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(hg);
+						if (g!=null)
+							return g.getName();
+					} catch (InternalErrorException | IOException e) {}
+				}
+				return getHolderGroupFromSession(sessionHolderGroup);
+			}
+		}
+		return getHolderGroupFromSession(sessionHolderGroup);
+	}
+
+	private String getHolderGroupFromSession(String sessionHolderGroup) {
+		if (sessionHolderGroup!=null) {
+			try {
+				Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(sessionHolderGroup);
+				if (g!=null)
+					return g.getName();
+			} catch (InternalErrorException | IOException e) {}
+		}
+		return null;
 	}
 
 	private void clientCredentialsGrantType(HttpServletRequest req, HttpServletResponse resp)
@@ -167,6 +246,9 @@ public class AuthorizationEndpoint extends HttpServlet {
 	    				break;
 	    			}
 	    		}
+        		if (s.startsWith("holdergroup:")) {
+        			found = true;
+        		}
 		    	if (!found) {
 		    		generateError(r, "invalid_scope", "The requested scope "+s+" is not allowed due to system policies", resp);
 		    		return false;

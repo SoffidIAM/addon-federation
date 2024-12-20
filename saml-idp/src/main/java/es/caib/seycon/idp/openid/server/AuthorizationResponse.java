@@ -77,7 +77,7 @@ public class AuthorizationResponse  {
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
     	return new AuthorizationHandler().checkAuthorization(user, member,
 				authCtx == null ? null: authCtx.getHostId(response),
-				request.getRemoteAddr());
+				request.getRemoteAddr(), authCtx.getSelectedHolderGroup());
 	}
 
 	private static void implicitFLow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
@@ -88,7 +88,7 @@ public class AuthorizationResponse  {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true), sessionHash);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId(), token.getHolderGroup());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
@@ -202,7 +202,7 @@ public class AuthorizationResponse  {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true), sessionHash);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId(), token.getHolderGroup());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);

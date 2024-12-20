@@ -49,6 +49,7 @@ import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.session.LoginTimeoutHandler;
+import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
 public class SoffidSSOProfileHandler extends SSOProfileHandler {
@@ -85,8 +86,10 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
 					else {
 						ctx.updateAllowedAuthenticationMethods();
 					}
+		    		httpRequest.getSession().removeAttribute(SessionConstants.OPENID_HOLDERGROUP);
 					if (ctx.isAlwaysAskForCredentials() || loginContext.isForceAuthRequired()) {
 						loginContext.setPrincipalAuthenticated(true);
+						loginContext.setProperty("authenticationContext", ctx.getSelectedHolderGroup());
 						Cookie[] requestCookies = httpRequest.getCookies();
 						if (requestCookies != null) {
 							for (Cookie requestCookie : requestCookies) {

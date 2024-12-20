@@ -56,6 +56,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.ui.CertificateValidator;
+import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.comu.AccountType;
 import es.caib.seycon.ng.exception.AccountAlreadyExistsException;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -97,6 +98,16 @@ public class AuthenticationContext {
 	private String browser;
 	private String cpu;
 	private RecoverPasswordChallenge recoverChallenge;
+
+	public String getSelectedHolderGroup() {
+		return selectedHolderGroup;
+	}
+
+	public void setSelectedHolderGroup(String holderGroupSelected) {
+		this.selectedHolderGroup = holderGroupSelected;
+	}
+
+	private String selectedHolderGroup;
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
@@ -303,7 +314,7 @@ public class AuthenticationContext {
         
         if (allowed.isEmpty())
         	throw new InternalErrorException("No common authentication method allowed by client request and system policy");
-        
+
         if (allowed.contains(method))
         {
         	firstFactor = method.substring(0, 1);

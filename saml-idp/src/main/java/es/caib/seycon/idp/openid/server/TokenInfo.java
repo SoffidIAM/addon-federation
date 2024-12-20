@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
-import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.api.TokenType;
 
@@ -25,7 +26,10 @@ public class TokenInfo {
 	private TokenType type;
 	public String refreshTokenFull;
 	public String oauthSessionId;
-	
+	private String holderGroup;
+
+	Log log = LogFactory.getLog(getClass());
+
 	public String toString() {
 		return "[Token: "+token+", RefreshToken: "+refreshToken+", AuthorizationCode: "+authorizationCode
 				+", User: "+user+", AuthenticationMethod: "+authentication+", SessionId: "+sessionId
@@ -116,8 +120,9 @@ public class TokenInfo {
 	public void setExpiresRefresh(long expriresRefresh) {
 		this.expiresRefresh = expriresRefresh;
 	}
-	
+
 	boolean isExpired() {
+		log.info(">>> HOLDERGROUP - Hora sistema: "+System.currentTimeMillis()+", hora expiracion: "+expires);
 		return System.currentTimeMillis() > expires;
 	}
 
@@ -183,5 +188,13 @@ public class TokenInfo {
 
 	public void setOauthSessionId(String oauthSessionId) {
 		this.oauthSessionId = oauthSessionId;
+	}
+
+	public String getHolderGroup() {
+		return holderGroup;
+	}
+
+	public void setHolderGroup(String holderGroup) {
+		this.holderGroup = holderGroup;
 	}
 }

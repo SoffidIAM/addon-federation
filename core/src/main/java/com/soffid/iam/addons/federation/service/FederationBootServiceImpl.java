@@ -121,6 +121,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
 		testAttribute("Session key", "SessionKey", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.6", null);
+		testAttribute("Holder group", "HolderGroup", "urn:oid:1.3.6.1.4.1.22896.3.1.7", "holder_group");
 		
     	for (DataType md: ServiceLocator.instance().getAdditionalDataService().findDataTypes(MetadataScope.USER))
     	{
@@ -250,6 +251,7 @@ public class FederationBootServiceImpl extends FederationBootServiceBase
 		testAttribute("Session ID", "SessionId", "urn:oid:1.3.6.1.4.1.22896.3.1.1", "session_id");
 		testAttribute("Session key", "SessionKey", "urn:oid:1.3.6.1.4.1.22896.3.1.2", null);
 		testAttribute("Accounts & Passwords", "Secrets", "urn:oid:1.3.6.1.4.1.22896.3.1.6", null);
+		testAttribute("Holder group", "HolderGroup", "urn:oid:1.3.6.1.4.1.22896.3.1.7", "holder_group");
 		testHostAttribute("device", "Device type");
 		testHostAttribute("detectedOs", "Operating system");
 		testHostAttribute("browser", "Internet browser");

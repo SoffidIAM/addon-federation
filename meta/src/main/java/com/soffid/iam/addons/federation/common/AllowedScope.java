@@ -12,4 +12,6 @@ public class AllowedScope {
 	String scope;
 	
 	List<String> roles;
+
+	boolean byDefault;
 }

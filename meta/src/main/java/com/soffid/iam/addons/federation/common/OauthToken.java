@@ -3,11 +3,7 @@ package com.soffid.iam.addons.federation.common;
 import java.util.Date;
 
 import com.soffid.iam.addons.federation.api.TokenType;
-import com.soffid.iam.model.TenantEntity;
-import com.soffid.mda.annotation.Column;
-import com.soffid.mda.annotation.Entity;
 import com.soffid.mda.annotation.Identifier;
-import com.soffid.mda.annotation.Index;
 import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.ValueObject;
 
@@ -72,4 +68,7 @@ public class OauthToken {
 	
 	@Nullable
 	String pkceAlgorithm;
+
+	@Nullable
+	String holderGroup;
 }
