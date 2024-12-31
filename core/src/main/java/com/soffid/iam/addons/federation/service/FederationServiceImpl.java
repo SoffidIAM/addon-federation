@@ -137,6 +137,7 @@ import com.soffid.iam.api.AttributeVisibilityEnum;
 import com.soffid.iam.api.Audit;
 import com.soffid.iam.api.Configuration;
 import com.soffid.iam.api.DataType;
+import com.soffid.iam.api.Group;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.MailDomain;
 import com.soffid.iam.api.MetadataScope;
@@ -2648,7 +2649,7 @@ public class FederationServiceImpl
 					}
 					else {
 						if (grants[0]==null) {
-							grants[0] = fetchGrants(account);
+							grants[0] = fetchGrants(account, holderGroup);
 						}
 						boolean found = false;
 						for (AllowedScopeRoleEntity rs : scope.getRoles()) {
@@ -2668,11 +2669,16 @@ public class FederationServiceImpl
 		return false;
 	}
 
-	protected Collection<RoleGrant> fetchGrants(Account account) throws InternalErrorException {
+	protected Collection<RoleGrant> fetchGrants(Account account, String holderGroup) throws InternalErrorException {
 		Collection<RoleGrant> grants;
 		if (account instanceof UserAccount) {
 			UserEntity userEntity = getUserEntityDao().findByUserName(((UserAccount) account).getUser());
-			grants = getApplicationService().findEffectiveRoleGrantByUser(userEntity.getId());
+			Group group = holderGroup == null ? null :
+				getGroupService().findGroupByGroupName(holderGroup);
+			if (group == null)
+				grants = getApplicationService().findEffectiveRoleGrantByUser(userEntity.getId());
+			else
+				grants = getApplicationService().findEffectiveRoleGrantByUserAndHolderGroup(userEntity.getId(), group.getId());
 		} else {
 			grants = getApplicationService().findEffectiveRoleGrantByAccount(account.getId());
 		}

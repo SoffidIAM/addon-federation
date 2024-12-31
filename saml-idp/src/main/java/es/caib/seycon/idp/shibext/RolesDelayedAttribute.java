@@ -6,8 +6,10 @@ import java.util.LinkedList;
 
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.api.Account;
+import com.soffid.iam.api.Group;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
+import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.service.ServerService;
 
 public class RolesDelayedAttribute extends DelayedAttribute
@@ -16,18 +18,30 @@ public class RolesDelayedAttribute extends DelayedAttribute
 	private ServerService serverService;
 	private Account account;
 	private User user;
-	public RolesDelayedAttribute(String name, Attribute att, ServerService service, User user, Account account) {
+	private String holderGroup;
+	public RolesDelayedAttribute(String name, Attribute att, ServerService service, User user, Account account, String holderGroup) {
 		super(name, null, null, att, false);
 		this.serverService = service;
 		this.account = account;
 		this.user =  user;
+		this.holderGroup = holderGroup;
 	}
 
 	protected Collection<Object> doResolve() {
 		try {
-	        Collection<RoleGrant> roles = user == null ?
+			Collection<RoleGrant> roles;
+			Group group = null;
+			if (holderGroup != null) group = serverService.getGroupInfo(holderGroup, null);
+			if (group == null)
+				roles = user == null ?
 	        		serverService.getAccountRoles(account.getName(), account.getSystem()) :
 	        		serverService.getUserRoles(user.getId(), null);
+			else {
+				roles = user == null ?
+		        		serverService.getAccountRoles(account.getName(), account.getSystem()) :
+		        		new RemoteServiceLocator().getApplicationService()
+		        			.findEffectiveRoleGrantByUserAndHolderGroup(user.getId(), group.getId());
+			}
 	        LinkedList<Object> l = new LinkedList<Object>();
 	        for (RoleGrant role : roles) {
 	            String v = role.getRoleName();

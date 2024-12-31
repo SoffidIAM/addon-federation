@@ -36,12 +36,13 @@ import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.AuthorizationHandler;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownGroupException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationResponse  {
 	static Log log = LogFactory.getLog(AuthorizationResponse.class);
 	
-	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException
+	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, UnknownGroupException
 	{
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
@@ -71,7 +72,7 @@ public class AuthorizationResponse  {
     				(r.getState() != null ? "&state="+r.getState(): ""));
 	}
 
-	private static boolean checkAuthorization(String user, OpenIdRequest r, HttpServletRequest request, HttpServletResponse response) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
+	private static boolean checkAuthorization(String user, OpenIdRequest r, HttpServletRequest request, HttpServletResponse response) throws InternalErrorException, UnknownUserException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownGroupException {
 		FederationService fs = new RemoteServiceLocator().getFederacioService();
     	FederationMember member = fs.findFederationMemberByClientID(r.getClientId());
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(request);
@@ -202,7 +203,8 @@ public class AuthorizationResponse  {
 		TokenHandler h = TokenHandler.instance();
 		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true), sessionHash);
 		final IdpConfig config = IdpConfig.getConfig();
-		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId(), token.getHolderGroup());
+		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), 
+				r.getFederationMember().getPublicId(), token.getHolderGroup());
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);

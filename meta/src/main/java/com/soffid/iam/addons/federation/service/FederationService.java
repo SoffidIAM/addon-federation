@@ -68,6 +68,7 @@ import es.caib.seycon.ng.servei.AplicacioService;
 import es.caib.seycon.ng.servei.DispatcherService;
 import es.caib.seycon.ng.servei.DominiService;
 import es.caib.seycon.ng.servei.DominiUsuariService;
+import es.caib.seycon.ng.servei.GrupService;
 import es.caib.seycon.ng.servei.SessioService;
 import es.caib.seycon.ng.sync.servei.LogonService;
 import roles.Tothom;
@@ -139,7 +140,8 @@ import roles.Tothom;
 	SelfCertificateValidationService.class,
 	IdpNetworkConfigEntity.class,
 	es.caib.seycon.ng.model.TipusUnitatOrganitzativaEntity.class,
-	es.caib.seycon.ng.servei.TipusUnitatOrganitzativaService.class
+	es.caib.seycon.ng.servei.TipusUnitatOrganitzativaService.class,
+	GrupService.class
 })
 public abstract class FederationService {
 

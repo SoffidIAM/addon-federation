@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
+import com.soffid.iam.api.Group;
 import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
@@ -27,13 +28,14 @@ import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.Messages;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownGroupException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationHandler {
 	static Log log = LogFactory.getLog(AuthorizationHandler.class);
 	
 	public boolean checkAuthorization(String user, FederationMember member, String clientHost, String clientIp, String holderGroup)
-					throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException {
+					throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, UnknownUserException, UnknownGroupException {
     	ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
     	final String systemName = IdpConfig.getConfig().getSystem().getName();
     	log.info("Getting information of "+user+" at "+systemName);
@@ -55,7 +57,29 @@ public class AuthorizationHandler {
     		}
     		if (member.getRoles() != null && !member.getRoles().isEmpty()) {
     			boolean found = false;
-    			for (RoleGrant role: new RemoteServiceLocator().getServerService().getUserRoles(ui.getId(), null)) {
+    			Collection<RoleGrant> roles;
+    			Group group = null;
+    			if (holderGroup != null) 
+    				group = new RemoteServiceLocator()
+    					.getServerService()
+    					.getGroupInfo(holderGroup, null);
+    			if (group == null)
+    				roles = ui == null ?
+    						new RemoteServiceLocator()
+    							.getServerService()
+    							.getAccountRoles(user, systemName) :
+    	        			new RemoteServiceLocator()
+    	        				.getServerService()
+    	        				.getUserRoles(ui.getId(), null);
+    			else 
+    				roles = ui == null ?
+    						new RemoteServiceLocator()
+							.getServerService()
+							.getAccountRoles(user, systemName) :
+    		        		new RemoteServiceLocator().getApplicationService()
+    		        			.findEffectiveRoleGrantByUserAndHolderGroup(ui.getId(), group.getId());
+    			
+    			for (RoleGrant role: roles) {
     				if (member.getRoles().contains(role.getRoleName()+"@"+role.getSystem())) {
     					if (role.getHolderGroup()==null || (holderGroup!=null && holderGroup.equals(role.getHolderGroup()))) {
 							found = true;

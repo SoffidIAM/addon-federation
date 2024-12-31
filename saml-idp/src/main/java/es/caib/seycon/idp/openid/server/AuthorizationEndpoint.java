@@ -39,6 +39,7 @@ import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.LogoutServlet;
 import es.caib.seycon.idp.ui.SessionConstants;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.exception.UnknownGroupException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class AuthorizationEndpoint extends HttpServlet {
@@ -194,7 +195,7 @@ public class AuthorizationEndpoint extends HttpServlet {
 	}
 
 	private void clientCredentialsGrantType(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException {
+			throws ServletException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, UnknownGroupException {
 		String user = (String) req.getSession().getAttribute(SessionConstants.SEU_USER);
 		if ("none".equals(req.getParameter("prompt")) && user != null) {
 			AuthorizationResponse.generateResponse(getServletContext(), req, resp, "P", null);

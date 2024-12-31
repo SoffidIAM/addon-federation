@@ -274,13 +274,16 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
         ObjectTranslator translator = new ObjectTranslator(c.getSystem(), server, new LinkedList<ExtensibleObjectMapping>());
         
 
+        String holderGroup = null;
         eo.setAttribute("ctx", ctx);
         if (ctx != null && ctx.getUserSession() != null) {
         	Subject subject = ctx.getUserSession().getSubject();
         	if (subject != null) {
         		SessionPrincipal p = (SessionPrincipal) subject.getPrincipals().iterator().next();
-        		if (p != null)
-        			eo.setAttribute("holderGroup", p.getHolderGroup());
+        		if (p != null) {
+        			holderGroup = p.getHolderGroup();
+        			eo.setAttribute("holderGroup", holderGroup);
+        		}
         	}
         }
 		for ( Attribute attribute: attributes)
@@ -292,7 +295,7 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
   						ctx instanceof DummySamlRequestContext);
   				m.put(attribute.getShortName(), b);
         	} else if ("urn:oid:1.3.6.1.4.1.5923.1.5.1.1".equals(attribute.getOid())) {
-               	m.put("memberOf",  new RolesDelayedAttribute("memberOf", attribute, server, ui, account));
+               	m.put("memberOf",  new RolesDelayedAttribute("memberOf", attribute, server, ui, account, holderGroup));
         	} else if ("urn:oid:1.3.6.1.4.1.22896.3.1.6".equals(attribute.getOid())) {
             	String rpid = ctx.getInboundMessageIssuer();
                	m.put("Secrets",  new SecretsDelayedAttribute("Secrets", ui, attribute, rpid));

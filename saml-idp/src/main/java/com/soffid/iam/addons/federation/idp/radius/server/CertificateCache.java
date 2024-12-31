@@ -54,8 +54,6 @@ public class CertificateCache {
 			do {
 				object = pemParser.readObject();
 				if (object == null) break;
-				System.out.println(">>> object  ="+object);
-				System.out.println(">>> instance of ="+object.getClass());
 				if (object instanceof X509CertificateHolder)
 				{
 					certs.add(converter2.getCertificate((X509CertificateHolder) object));
