@@ -581,6 +581,7 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		
 		 w.getFellow("r_esso_createLocalAccounts").setVisible(SamlProfileEnumeration.ESSO == classe);
 		 w.getFellow("r_esso_enableCloseSession").setVisible(SamlProfileEnumeration.ESSO == classe);
+		 w.getFellow("r_esso_pam").setVisible(SamlProfileEnumeration.ESSO == classe);
 		 w.getFellow("r_esso_forceStartupLogin").setVisible(SamlProfileEnumeration.ESSO == classe);
 		 w.getFellow("r_esso_hostnameFormat").setVisible(SamlProfileEnumeration.ESSO == classe);
 		 w.getFellow("r_esso_idleTimeout").setVisible(SamlProfileEnumeration.ESSO == classe);

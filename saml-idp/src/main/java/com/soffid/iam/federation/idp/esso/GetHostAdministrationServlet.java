@@ -22,6 +22,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.engine.db.ConnectionPool;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.web.Messages;
+import com.sun.tools.javac.jvm.Target;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownHostException;
@@ -37,9 +38,10 @@ public class GetHostAdministrationServlet extends HttpServlet
 	{
         String hostIP = com.soffid.iam.utils.Security.getClientIp();
         String hostName = req.getParameter("host"); //$NON-NLS-1$
+        String serialNumber = req.getParameter("serial"); //$NON-NLS-1$
         String usuariPeticio = req.getParameter("user"); //$NON-NLS-1$
         String passPeticio = req.getParameter("pass"); //$NON-NLS-1$
-
+        
         PasswordValidation validPassword = PasswordValidation.PASSWORD_WRONG;
 
         try
@@ -69,7 +71,7 @@ public class GetHostAdministrationServlet extends HttpServlet
                         || (usuariPeticio != null && "".equals(usuariPeticio.trim()))) //$NON-NLS-1$
                     throw new Exception(Messages.getString("GetHostAdministrationServlet.IncorrectParamsMessage")); //$NON-NLS-1$
 
-                String resultat = getHostAdministration(hostName, hostIP, usuariPeticio);
+                String resultat = getHostAdministration(hostName, hostIP, usuariPeticio, serialNumber);
                 writer.write("OK|" + resultat); //$NON-NLS-1$
                 log.info(String.format(
     				"Admin user-password retrieved from host '{}', user request '{}' IP '%1$s'", 
@@ -98,12 +100,13 @@ public class GetHostAdministrationServlet extends HttpServlet
     }
 
     public String getHostAdministration(String hostname, String hostIP,
-		String usuariPeticio) throws InternalErrorException, IOException,
+		String usuariPeticio, String serialNumber) throws InternalErrorException, IOException,
 		UnknownHostException, SystemException, RollbackException,
 		HeuristicMixedException, HeuristicRollbackException,
 		NotSupportedException
 	{    
-        String userPass[] = new RemoteServiceLocator().getEssoService().getHostAdministration(hostname, hostIP, usuariPeticio);
+    	String userPass[];
+   		userPass = new RemoteServiceLocator().getEssoService().getHostAdministration(hostname, hostIP, serialNumber, usuariPeticio);
         if (userPass[0] == null || userPass[1] == null)
         	throw new InternalErrorException(Messages.getString("GetHostAdministrationServlet.NoAdminAccountMessage")); //$NON-NLS-1$
         return userPass[0] + "|" + userPass[1]; //$NON-NLS-1$

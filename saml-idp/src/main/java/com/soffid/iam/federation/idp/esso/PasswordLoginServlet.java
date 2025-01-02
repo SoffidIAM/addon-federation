@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.rmi.RemoteException;
-import java.security.PrivilegedAction;
 import java.sql.Timestamp;
 
-import javax.security.auth.Subject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -17,10 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ietf.jgss.GSSContext;
 
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
-import com.soffid.iam.addons.federation.esso.OtpSelector;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.PasswordValidation;
@@ -31,16 +26,13 @@ import com.soffid.iam.api.sso.Secret;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.service.SessionService;
 import com.soffid.iam.sync.service.LogonService;
-import com.soffid.iam.sync.service.SecretStoreService;
 import com.soffid.iam.sync.service.ServerService;
-import com.soffid.iam.utils.ConfigurationCache;
 
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.ng.exception.BadPasswordException;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.InvalidPasswordException;
 import es.caib.seycon.ng.exception.LogonDeniedException;
-import es.caib.seycon.util.Base64;
 
 public class PasswordLoginServlet extends HttpServlet {
 
@@ -66,6 +58,8 @@ public class PasswordLoginServlet extends HttpServlet {
                 writer.write(doStartAction(req, resp));
             else if ("changePass".equals(action))
                 writer.write(doChangePassAction(req, resp));
+            else if ("getAccountSecrets".equals(action))
+                writer.write(doAccountSecretsAction(req, resp));
             else if ("getSecrets".equals(action))
                 writer.write(doSecretsAction(req, resp));
             else if ("createSession".equals(action))
@@ -199,7 +193,34 @@ public class PasswordLoginServlet extends HttpServlet {
         }
     }
 
-	protected String dumpSecrets(boolean encode, String sessionKey, final User user)
+    private String doAccountSecretsAction(HttpServletRequest req, HttpServletResponse resp)
+            throws InternalErrorException, IOException {
+        final Challenge challenge = getChallenge(req);
+        if (challenge == null)
+            return "ERROR|Unknown ticket";
+        else {
+            String account = req.getParameter("account");
+        	challengeStore.removeChallenge(challenge);
+        	String userPass[];
+       		userPass = new RemoteServiceLocator().getEssoService()
+       				.getAccountCredentials(
+       						challenge.getChallengeId(),
+       						challenge.getUser().getUserName(),
+       						account);
+       		
+       		if (userPass == null)
+       			return "ERROR|Account not available";
+       		
+    		StringBuffer result = new StringBuffer("OK");
+    		result.append('|');
+        	result.append( encodeSecret(userPass[0]));
+        	result.append('|');
+        	result.append( encodeSecret(userPass[1]));
+        	return result.toString();
+        }
+    }
+
+    protected String dumpSecrets(boolean encode, String sessionKey, final User user)
 			throws InternalErrorException, IOException {
 		StringBuffer result = new StringBuffer("OK");
 		
@@ -297,19 +318,21 @@ public class PasswordLoginServlet extends HttpServlet {
         }
         User usuari = serverService.getUserInfo(user, domain);
 
+        if (usuari == null) 
+        	return "es.caib.seycon.UnknownUserException";
         PasswordValidation result = logonService.validatePassword(user, domain, pass);
         if (result == PasswordValidation.PASSWORD_GOOD) {
-        	log.info("Prestart action GOOD "+user+" "+domain);
             if (! usuari.getActive().booleanValue()) {
                 log.info("login "+user+" is disabled: not authorized");
-                return "ERROR";
+                return "es.caib.seycon.LogonDeniedException";
             }
+            log.info("Prestart action GOOD "+user+" "+domain);
         } else if (result == PasswordValidation.PASSWORD_GOOD_EXPIRED) {
             log.info("login "+user+": password expired");
             return "EXPIRED";
         } else {
             log.info("login "+user+": not valid");
-            return "ERROR";
+            return "es.caib.seycon.LogonDeniedException";
         }
 
         return "OK";

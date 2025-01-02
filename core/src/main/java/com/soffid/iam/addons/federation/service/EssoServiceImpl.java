@@ -1,14 +1,19 @@
 package com.soffid.iam.addons.federation.service;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -35,6 +40,9 @@ import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.VaultFolder;
 import com.soffid.iam.common.security.SoffidPrincipal;
+import com.soffid.iam.model.AccessLogEntity;
+import com.soffid.iam.model.ServiceEntity;
+import com.soffid.iam.model.SessionEntity;
 import com.soffid.iam.security.SoffidPrincipalImpl;
 import com.soffid.iam.service.AccountService;
 import com.soffid.iam.service.AdditionalDataService;
@@ -44,6 +52,7 @@ import com.soffid.iam.service.DispatcherService;
 import com.soffid.iam.service.NetworkService;
 import com.soffid.iam.service.NetworkServiceImpl;
 import com.soffid.iam.service.UserDomainService;
+import com.soffid.iam.sync.engine.kerberos.KerberosManager;
 import com.soffid.iam.sync.engine.session.SessionManager;
 import com.soffid.iam.sync.service.SecretStoreService;
 import com.soffid.iam.sync.web.Messages;
@@ -377,13 +386,14 @@ public class EssoServiceImpl extends EssoServiceBase {
 	}
 
 	@Override
-	protected String[] handleGetHostAdministration(String hostname, String hostIP, String user) throws Exception {
+	protected String[] handleGetHostAdministration(String hostname, String hostIP, String serialNumber,
+			String user) throws Exception {
         NetworkService xs = getNetworkService();
         AuthorizationService as = getAuthorizationService();
         SoffidPrincipal principal = getPrincipal(getUserAccount(user));
         
         boolean trackIp = "true".equals( ConfigurationCache.getProperty("SSOTrackHostAddress"));
-        Host maq = xs.findHostByName(hostname);
+        Host maq = xs.findHostBySerialNumber(serialNumber);
         if (maq == null)
             throw new InternalErrorException(String.format(
 				Messages.getString("GetHostAdministrationServlet.NoHostFoundMessage"), hostname)); //$NON-NLS-1$
@@ -402,50 +412,62 @@ public class EssoServiceImpl extends EssoServiceBase {
             throw ex;
         }
 
-        Security.nestedLogin(principal);
-        try
-        {
-            boolean authorized = false;
-            for (String auth: principal.getRoles())
-            {
-                if (auth.equals(Security.AUTO_HOST_ALL_SUPPORT_VNC))
-                {
-                    authorized = true;
-                    break;
-                }
-            }
-            if (!authorized)
-            {
-                Long nivell = xs.findAccessLevelByHostNameAndNetworkName(maq.getName(), maq.getNetworkCode());
-                if (nivell.longValue() >= NetworkServiceImpl.SUPORT)
-                    authorized = true;
-            }
-            
-            if ( authorized )
-            {
-                String userPass[] = xs.getHostAdminUserAndPassword(hostname);
-                if (userPass[0] == null || userPass[1] == null)
-                    throw new InternalErrorException(Messages.getString("GetHostAdministrationServlet.NoAdminAccountMessage")); //$NON-NLS-1$
-                return userPass; //$NON-NLS-1$
-            }
-            else
-            {
-                Audit auditoria = new Audit();
-                auditoria.setAction("N"); // Administrador //$NON-NLS-1$
-                auditoria.setHost(hostname);
-                auditoria.setAuthor(user);
-                auditoria.setObject("SC_ADMMAQ"); //$NON-NLS-1$
-                auditoria.setCalendar(Calendar.getInstance());
-    
-                AuditService auditoriaService = getAuditService();
-                auditoriaService.create(auditoria);
-                throw new InternalErrorException(Messages.getString("GetHostAdministrationServlet.UnauthorizedUser")); //$NON-NLS-1$
-            }
-        }
-        finally
-        {
-            Security.nestedLogoff();
-        }
+       	return getAdministratorPassword(hostname, user, principal, maq);
+	}
+
+	private String quote(String targetAccount) {
+		return targetAccount.replace("\\", "\\\\")
+				.replace("\"","\\\"")
+				.replace("\'", "\\\'");
+	}
+
+	protected String[] getAdministratorPassword(String hostname, String user, 
+			SoffidPrincipal principal, Host maq) throws InternalErrorException {
+        NetworkService xs = getNetworkService();
+		Security.nestedLogin(principal);
+		try
+		{
+			boolean authorized = false;
+			for (String auth: principal.getRoles())
+			{
+				if (auth.equals(Security.AUTO_HOST_ALL_SUPPORT_VNC))
+				{
+					authorized = true;
+					break;
+				}
+			}
+			if (!authorized)
+			{
+				Long nivell = xs.findAccessLevelByHostNameAndNetworkName(maq.getName(), maq.getNetworkCode());
+				if (nivell.longValue() >= NetworkServiceImpl.SUPORT)
+					authorized = true;
+			}
+			
+			if ( authorized )
+			{
+				String userPass[] = xs.getHostAdminUserAndPassword(hostname);
+				if (userPass[0] == null || userPass[1] == null)
+					throw new InternalErrorException(Messages.getString("GetHostAdministrationServlet.NoAdminAccountMessage")); //$NON-NLS-1$
+				return userPass; //$NON-NLS-1$
+			}
+			else
+			{
+				Audit auditoria = new Audit();
+				auditoria.setAction("N"); // Administrador //$NON-NLS-1$
+				auditoria.setHost(hostname);
+				auditoria.setAuthor(user);
+				auditoria.setObject("SC_ADMMAQ"); //$NON-NLS-1$
+				auditoria.setCalendar(Calendar.getInstance());
+				
+				AuditService auditoriaService = getAuditService();
+				auditoriaService.create(auditoria);
+				throw new InternalErrorException(Messages.getString("GetHostAdministrationServlet.UnauthorizedUser")); //$NON-NLS-1$
+			}
+		}
+		finally
+		{
+			Security.nestedLogoff();
+		}
 	}
 
 	@Override
@@ -561,6 +583,93 @@ public class EssoServiceImpl extends EssoServiceBase {
 		else
 			return null;
 	}
+
+	@Override
+	protected String[] handleGetAccountCredentials(String sessionId, String user, String targetAccount)
+			throws Exception {
+		Collection<SessionEntity> sessions = getSessionEntityDao().findByKey(sessionId);
+		if (sessions.isEmpty())
+			return null;
+		for (SessionEntity session: sessions) {
+			AccessLogEntity li = session.getLoginLogInfo();
+			if (li != null) {
+				ServiceEntity p = getServiceEntityDao().findByName("DPAM");
+				if (p == null) {
+					p = getServiceEntityDao().newServiceEntity();
+					p.setName("DPAM");
+					p.setDescription("Desktop PAM");
+					getServiceEntityDao().create(p);
+				}
+				li.setProtocol(p);
+				li.setEndDate(new Date());
+				li.setAccountName(targetAccount);
+				getAccessLogEntityDao().update(li);
+			}
+		}
+		getSessionEntityDao().remove(sessions);
+        SoffidPrincipal principal = getPrincipal(getUserAccount(user));
+        return getSharedAccountPassword(user, principal, targetAccount);
+	}
+
+	private String[] getSharedAccountPassword(String user,
+			SoffidPrincipal principal, String targetAccount) throws InternalErrorException, FileNotFoundException, IOException {
+		String accName;
+		String domain;
+		String targetSystem = null;
+		if (targetAccount.contains("\\")) {
+			accName = targetAccount.substring(targetAccount.indexOf("\\")+1);
+			domain = targetAccount.substring(0, targetAccount.indexOf("\\"));
+		} else {
+			accName = targetAccount;
+			domain = null;
+		}
+		Map<String, String> domains = new KerberosManager().getDomainsToSystemMap();
+		if (domain != null) {
+			targetSystem = domains.get(domain.toUpperCase());
+		}
+		Account best = null;
+		int weight = 0;
+		final List<Account> accounts = getAccountService().findSharedAccountsByUser(principal.getUserName());
+		for (Account account: accounts) {
+			if (account.getName().equalsIgnoreCase(targetAccount) ||
+					account.getName().equalsIgnoreCase(accName) &&
+					account.getSystem().equalsIgnoreCase(targetSystem)) {
+				best = account;
+				weight = 10;
+				break;
+			}
+			if (weight < 5 && targetSystem == null && (
+					account.getName().equalsIgnoreCase(accName) && 
+					domains.containsValue(account.getSystem()) ||
+					account.getName().toLowerCase().endsWith("\\"+accName))) {
+				weight = 5;
+				best = account;
+			}
+			if (account.getName().equalsIgnoreCase(accName) && targetSystem == null && weight == 0) {
+				weight = 1;
+				best = account;
+			}
+		}
+		if (best == null) {
+			return null;
+		}
+		String targetName = best.getName();
+		if (! targetName.contains("\\")) {
+			for (String d: domains.keySet()) {
+				if (domains.get(d).equals(best.getSystem()))
+				{
+					targetName = d.toUpperCase()+"\\"+targetName;
+					break;
+				}
+			}
+		}
+		Password password = getSecretStoreService().getPassword(best.getId());
+		if (password == null)
+			return null;
+		else
+			return new String[] {targetName, password.getPassword()};
+	}
+
 
 }
 

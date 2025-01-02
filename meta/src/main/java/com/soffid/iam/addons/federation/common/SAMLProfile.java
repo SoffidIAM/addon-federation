@@ -143,4 +143,6 @@ public class SAMLProfile {
 	@Nullable String accountLabel;	
 
 	@Nullable String adminAccountLabel;	
+	
+	@Nullable Boolean enableSharedAccounts;
 }

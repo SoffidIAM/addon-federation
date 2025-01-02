@@ -125,6 +125,8 @@ public class QueryServlet extends HttpServlet {
 			return profile.getAccountLabel() == null || profile.getAccountLabel().isBlank() ? null: profile.getAccountLabel();
 		case "/config/adminAccountLabel":
 			return profile.getAdminAccountLabel() == null || profile.getAdminAccountLabel().isBlank() ? null: profile.getAdminAccountLabel();
+		case "/config/enableSharedAccounts":
+			return profile.getEnableSharedAccounts() == null ? "false": profile.getEnableSharedAccounts().toString();
 		default:
 			return null;
 		}

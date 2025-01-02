@@ -607,6 +607,12 @@
 				dataType="BOOLEAN"
 				bind="createLocalAccounts"
 				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+				
+			<customfield3 id="r_esso_pam" label="${c:l('federa_profile.zul.enableSharedAccounts')}"
+				dataType="BOOLEAN"
+				bind="enableSharedAccounts"
+				readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" ></customfield3>
+				
 			<customfield3 id="r_esso_offlineDays" label="${c:l('federa_profile.zul.offlineDays')}"
 				dataType="NUMBER"
 				bind="offlineDays"

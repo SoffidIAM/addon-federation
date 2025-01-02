@@ -15,6 +15,9 @@ import es.caib.seycon.ng.comu.Password;
 import es.caib.seycon.ng.comu.PuntEntrada;
 import es.caib.seycon.ng.comu.Sessio;
 import es.caib.seycon.ng.exception.InternalErrorException;
+import es.caib.seycon.ng.model.RegistreAccesEntity;
+import es.caib.seycon.ng.model.ServeiEntity;
+import es.caib.seycon.ng.model.SessioEntity;
 import es.caib.seycon.ng.servei.AccountService;
 import es.caib.seycon.ng.servei.AuditoriaService;
 import es.caib.seycon.ng.servei.AutoritzacioService;
@@ -45,7 +48,10 @@ import es.caib.seycon.ng.sync.servei.SecretStoreService;
 	AuditoriaService.class,
 	LogonService.class,
 	XarxaService.class,
-	PuntEntradaService.class
+	PuntEntradaService.class,
+	SessioEntity.class,
+	RegistreAccesEntity.class,
+	ServeiEntity.class,
 })
 public class EssoService {
     public boolean auditPasswordQuery(String user, String key, @Nullable String account,
@@ -70,8 +76,12 @@ public class EssoService {
     public Maquina findHostBySerialNumber(String serialNumber) {return null;}
     
     public String[] getHostAdministration(String hostname, String hostIP,
+    		String serialNumber,
     		String user) { return null;} 
     
+    public String[] getAccountCredentials(String sessionId,
+    		String user, @Nullable String targetAccount) { return null;} 
+
     public void setHostAdministration(String hostSerial,
     		String user, Password password) { } 
 

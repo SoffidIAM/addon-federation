@@ -53,4 +53,6 @@ public abstract class EssoProfileEntity extends com.soffid.iam.addons.federation
 	@Column(name = "PRO_ADMLAB")
 	@Nullable String adminAccountLabel;	
 
+	@Column(name="PRO_ENSHAC")
+	@Nullable Boolean enableSharedAccounts;
 }
