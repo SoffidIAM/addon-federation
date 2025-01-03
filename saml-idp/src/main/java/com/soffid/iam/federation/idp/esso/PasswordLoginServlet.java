@@ -209,7 +209,7 @@ public class PasswordLoginServlet extends HttpServlet {
        						account);
        		
        		if (userPass == null)
-       			return "ERROR|Account not available";
+       			return "DENIED|Account not available";
        		
     		StringBuffer result = new StringBuffer("OK");
     		result.append('|');
