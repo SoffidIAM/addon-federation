@@ -62,7 +62,8 @@ public class AuthorizationHandler {
     			if (holderGroup != null) 
     				group = new RemoteServiceLocator()
     					.getServerService()
-    					.getGroupInfo(holderGroup, null);
+    					.getGroupInfo(holderGroup, 
+    							systemName );
     			if (group == null)
     				roles = ui == null ?
     						new RemoteServiceLocator()

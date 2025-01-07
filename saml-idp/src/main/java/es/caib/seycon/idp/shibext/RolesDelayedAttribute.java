@@ -12,6 +12,8 @@ import com.soffid.iam.api.User;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.service.ServerService;
 
+import es.caib.seycon.idp.config.IdpConfig;
+
 public class RolesDelayedAttribute extends DelayedAttribute
 {
 
@@ -31,7 +33,8 @@ public class RolesDelayedAttribute extends DelayedAttribute
 		try {
 			Collection<RoleGrant> roles;
 			Group group = null;
-			if (holderGroup != null) group = serverService.getGroupInfo(holderGroup, null);
+			if (holderGroup != null) group = serverService.getGroupInfo(holderGroup,
+					IdpConfig.getConfig().getSystem().getName());
 			if (group == null)
 				roles = user == null ?
 	        		serverService.getAccountRoles(account.getName(), account.getSystem()) :
