@@ -532,17 +532,22 @@ public class Autenticator {
 	}
 
 	public List<Group> getHolderGroups(String userName) throws InternalErrorException, IOException {
+		Set<String> groupNames = new HashSet<>();
 		List<Group> groups = new LinkedList<>();
 		User user = new RemoteServiceLocator().getUserService().findUserByUserName(userName);
 		if (user == null)
 			return groups;
 		Group g = fetchHolderGroup(user.getPrimaryGroup());
-		if (g != null)
+		if (g != null) {
 			groups.add(g);
+			groupNames.add(g.getName());
+		}
 		for (GroupUser gu: new RemoteServiceLocator().getGroupService().findUsersGroupByUserName(userName)) {
 			g = fetchHolderGroup(gu.getGroup());
-			if (g != null)
+			if (g != null && !groupNames.contains(g.getName())) {
 				groups.add(g);
+				groupNames.add(g.getName());
+			}
 		}
 		return groups;
 	}
