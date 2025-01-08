@@ -75,7 +75,7 @@
 			dataType='BOOLEAN'
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		<customfield3
-			id="/federationMember/authWithHolderGroup"
+			id="authWithHolderGroup"
 			label="${c:l('federacio.authWithHolderGroup')}"
 			bind="/federationMember/authWithHolderGroup"
 			dataType='BOOLEAN'

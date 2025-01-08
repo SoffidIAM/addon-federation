@@ -111,6 +111,12 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 				spType != ServiceProviderType.WS_FEDERATION &&
 				spType != ServiceProviderType.TACACSP &&
 				spType != ServiceProviderType.OPENID_REGISTER);
+		((CustomField3)getFellow("authWithHolderGroup")).setVisible(
+				spType == ServiceProviderType.OPENID_CONNECT ||
+				spType == ServiceProviderType.CAS ||
+				spType == ServiceProviderType.WS_FEDERATION ||
+				spType == ServiceProviderType.SOFFID_SAML ||
+				spType == ServiceProviderType.SAML);
 		((CustomField3)getFellow("metadades")).setDisabled(spType != ServiceProviderType.SAML);
 //		((CustomField3)getFellow("oauthKey")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
 //		((CustomField3)getFellow("oauthSecret")).setVisible(spType == ServiceProviderType.OPENID_CONNECT);
