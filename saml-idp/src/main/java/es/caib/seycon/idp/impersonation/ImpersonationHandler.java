@@ -25,9 +25,14 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler.Context;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -69,12 +74,18 @@ public class ImpersonationHandler {
 	List<HttpCookie> internalCookies = new LinkedList<>();
 	int retries = 0;
 	ImpersonateSession session = new ImpersonateSession();
+	private HttpServletRequest originalRequest;
+	private HttpServletResponse originalResponse;
 
-	public void impersonate (ServletContext ctx, String url, TokenInfo ti) throws Exception {
+	public void impersonate (ServletContext ctx, String url, TokenInfo ti,
+			HttpServletRequest originalRequest,
+			HttpServletResponse originalResponse) throws Exception {
 		config = IdpConfig.getConfig();
 		this.url = url;
 		this.ctx = ctx;
 		this.token = ti;
+		this.originalRequest = originalRequest;
+		this.originalResponse = originalResponse;
 		readInitialUrl();
 	}
 
@@ -225,9 +236,15 @@ public class ImpersonationHandler {
 		return m;
 	}
 
-	private void processInternalRequest(URL target, Map<String, String[]> map, String method) throws ServletException, IOException {
+	private void processInternalRequest(URL target, Map<String, String[]> map, 
+			String method) throws ServletException, IOException {
+		ServletContextHandler.Context c = (Context) ctx;
+		ServletContextHandler.Context targetContext = (Context) c.getContext(target.getPath());
 		RequestDispatcher d = ctx.getRequestDispatcher(target.getPath());
-		ImpersonateRequest request = new ImpersonateRequest();
+
+		ImpersonateResponse response = new ImpersonateResponse(originalResponse);
+		ImpersonateRequest request = new ImpersonateRequest(originalRequest);
+		
 		request.setAttribute("$$internaltoken$$", token);
 		request.setCharacterEncoding("UTF-8");
 		request.setCtx(ctx);
@@ -246,7 +263,6 @@ public class ImpersonationHandler {
 			}
 		}
 		setCookies(request, config.getHostName());
-		ImpersonateResponse response = new ImpersonateResponse();
 		// Create the filter chain
 		ImpersonationFilterChain chain = new ImpersonationFilterChain(d);
 		chain.addFilter(new P3PFilter());

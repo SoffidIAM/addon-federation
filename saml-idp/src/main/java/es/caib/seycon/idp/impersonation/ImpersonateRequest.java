@@ -26,6 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRegistration;
 import javax.servlet.ServletRequest;
+import javax.servlet.ServletRequestWrapper;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -34,9 +35,17 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
 
+import org.eclipse.jetty.server.HttpChannel;
+import org.eclipse.jetty.server.HttpInput;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.servlet.ServletHolder;
 
-public class ImpersonateRequest implements HttpServletRequest {
+public class ImpersonateRequest extends ServletRequestWrapper implements HttpServletRequest {
+	public ImpersonateRequest(ServletRequest req) {
+		super(req);
+	}
+
 	Map<String, Object> attributes = new HashMap<>();
 	Map<String, String[]> parameters = new HashMap<>();
 	Map<String, String> headers = new HashMap<>();
@@ -294,11 +303,11 @@ public class ImpersonateRequest implements HttpServletRequest {
 		return DispatcherType.INCLUDE;
 	}
 
-	public Map<String, Object> getAttributes() {
+	public Map<String, Object> getInternalAttributes() {
 		return attributes;
 	}
 
-	public void setAttributes(Map<String, Object> attributes) {
+	public void setInternalAttributes(Map<String, Object> attributes) {
 		this.attributes = attributes;
 	}
 
@@ -569,3 +578,4 @@ public class ImpersonateRequest implements HttpServletRequest {
 		cookies.add(cookie);
 	}
 }
+

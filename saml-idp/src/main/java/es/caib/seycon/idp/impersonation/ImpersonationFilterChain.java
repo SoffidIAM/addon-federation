@@ -10,15 +10,22 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.eclipse.jetty.server.Dispatcher;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 
 public class ImpersonationFilterChain implements FilterChain {
 	RequestDispatcher dispatcher;
 	LinkedList<Filter> filters = new LinkedList<Filter>();
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
-		if (filters.isEmpty())
+		if (filters.isEmpty()) {
 			dispatcher.include(request, response);
-		else {
+		} else {
 			Filter filter = filters.pop();
 			filter.doFilter(request, response, this);
 		}

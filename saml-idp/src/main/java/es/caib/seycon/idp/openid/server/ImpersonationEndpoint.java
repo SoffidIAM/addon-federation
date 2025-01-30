@@ -76,16 +76,18 @@ public class ImpersonationEndpoint extends HttpServlet {
 				log.warn("Trying to get access with wrong url. Requested: ["+url+"] \nAccepted: "+fm.getImpersonations());
 				return;
 			}
-			impersonate (fm, url, t, resp);
+			impersonate (fm, url, t, req, resp);
 		} catch (Throwable e) {
 			log.warn("Error impersonating session", e);
 			buildError(resp, "Error impersonating session");
 		}
 	}
 
-	private void impersonate(FederationMember fm, String url, TokenInfo t, HttpServletResponse resp) throws Exception {
+	private void impersonate(FederationMember fm, String url, TokenInfo t, 
+			HttpServletRequest req,
+			HttpServletResponse resp) throws Exception {
 		ImpersonationHandler h = new ImpersonationHandler();
-		h.impersonate(getServletContext(), url, t);
+		h.impersonate(getServletContext(), url, t, req, resp);
 		JSONArray a = new JSONArray();
 		for (HttpCookie cookie: h.getServerCookies()) {
 			JSONObject o = new JSONObject();

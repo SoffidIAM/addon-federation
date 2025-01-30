@@ -48,9 +48,9 @@ public class OpenidConnectConsumer extends OAuth2Consumer
 		ServiceBuilder serviceBuilder = new ServiceBuilder(fm.getOauthKey())
 				.apiSecret(fm.getOauthSecret().getPassword());
 		
-		Object scope = cfg.optString("scope");
+		Object scope = cfg.optString("scope", null);
 		if (scope == null)
-			scope = cfg.optString("supported_scopes");
+			scope = cfg.optString("supported_scopes", null);
 		if (scope == null)
 			scope = "openid";
 		

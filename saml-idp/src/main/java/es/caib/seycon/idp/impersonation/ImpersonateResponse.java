@@ -3,7 +3,6 @@ package es.caib.seycon.idp.impersonation;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,11 +12,16 @@ import java.util.Locale;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletResponse;
+import javax.servlet.ServletResponseWrapper;
 import javax.servlet.WriteListener;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-public class ImpersonateResponse implements HttpServletResponse {
+public class ImpersonateResponse extends ServletResponseWrapper implements HttpServletResponse {
+	public ImpersonateResponse(ServletResponse resp) {
+		super(resp);
+	}
+
 	ByteArrayOutputStream out = new ByteArrayOutputStream();
 	
 	private String characterEncoding;
@@ -268,7 +272,7 @@ public class ImpersonateResponse implements HttpServletResponse {
 		return out;
 	}
 
-	public int getContentLength() {
+	public long getContentLength() {
 		return contentLength;
 	}
 
@@ -283,5 +287,4 @@ public class ImpersonateResponse implements HttpServletResponse {
 	public List<String[]> getHeaders() {
 		return headers;
 	}
-
 }
