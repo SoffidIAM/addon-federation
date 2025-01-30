@@ -33,6 +33,7 @@ import javax.xml.transform.TransformerException;
 
 import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.jetty.http.HttpCookie.SameSite;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.LoginService;
@@ -640,6 +641,8 @@ public class Main {
         
        	sessionHandler.setHttpOnly(true);
        	sessionHandler.setSecureRequestOnly(true);
+       	if (Boolean.TRUE.equals(IdpConfig.getConfig().getFederationMember().getAllowIncludeInIframe()))
+       		sessionHandler.setSameSite(SameSite.NONE);
 
        	sessionHandler.setMaxInactiveInterval(timeout); // 20 minutes timeout
         sessionHandler.addEventListener(new SessionListener());
@@ -816,7 +819,7 @@ public class Main {
         bindEssoServlet("/websession", ctx, WebSessionServlet.class);
         bindEssoServlet("/pam-notify", ctx, PamSessionServlet.class);
         bindEssoServlet("/cert", ctx, EssoCertServlet.class);
-        bindEssoServlet("/rememberPasswordServlet", ctx, RecoverPasswordServlet.class);
+        bindEssoServlet("/rememberPasswordServlet", ctx, com.soffid.iam.federation.idp.esso.RecoverPasswordServlet.class);
         
 	}
 

@@ -94,6 +94,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setOauthKey(idp.getOauthKey());
 			target.setOauthSecret(idp.getOauthSecret() == null ? null: Password.decode(idp.getOauthSecret()));
 			target.setAuthenticationMethods(idp.getAuthenticationMethods());
+			target.setAllowIncludeInIframe(idp.getAllowIncludeInIframe());
 			if (target.getAuthenticationMethods() == null)
 			{
 				StringBuffer s = new StringBuffer();
@@ -511,6 +512,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			idp.setOauthKey(source.getOauthKey());
 			idp.setOauthSecret(source.getOauthSecret() == null ? null: source.getOauthSecret().toString());
 			idp.setLoginHintScript(source.getLoginHintScript());
+			idp.setAllowIncludeInIframe(source.getAllowIncludeInIframe());
 			
 			idp.setPublicId(source.getPublicId());
 			idp.setPublicKey(source.getPublicKey());

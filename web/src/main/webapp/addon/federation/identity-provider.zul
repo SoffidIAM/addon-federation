@@ -100,6 +100,11 @@
 			bind="/federationMember/hostName"
 			dataType='STRING' maxlength="255"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 id="allowIncludeInIframe"
+			label="${c:l('federacio.zul.allowIncludeInIframe')}"
+			bind="/federationMember/allowIncludeInIframe"
+			dataType='BOOLEAN'
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		<div sclass="databox" id="networkDiv">
 			<label sclass="label" value="${c:l('federacio.zul.networkPorts')}"/>
 			<div sclass="container">

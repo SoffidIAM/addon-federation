@@ -36,6 +36,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.jetty.http.HttpCookie;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.StorageService;
 
@@ -328,6 +329,12 @@ public class Autenticator {
         	String digestString = Base64.encodeBytes(digest);
         	String value = user.getId().toString()+"_"+digestString;
         	Cookie cookie = new Cookie(ip.getSsoCookieName(), value);
+           	if (Boolean.TRUE.equals(
+           			IdpConfig
+           			.getConfig()
+           			.getFederationMember()
+           			.getAllowIncludeInIframe()))
+           		cookie.setComment(HttpCookie.SAME_SITE_NONE_COMMENT);
        		cookie.setMaxAge ( -1 );
         	cookie.setSecure(true);
         	cookie.setHttpOnly(true);
@@ -820,6 +827,12 @@ public class Autenticator {
         	cookie.setHttpOnly(true);
         	cookie.setSecure(true);
 			cookie.setPath("/");
+           	if (Boolean.TRUE.equals(
+           			IdpConfig
+           			.getConfig()
+           			.getFederationMember()
+           			.getAllowIncludeInIframe()))
+           		cookie.setComment(HttpCookie.SAME_SITE_NONE_COMMENT);
         	if (ip.getSsoCookieDomain() != null && ip.getSsoCookieDomain().length() > 0)
         		cookie.setDomain(ip.getSsoCookieDomain());
         	return cookie;

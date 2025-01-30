@@ -103,4 +103,10 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Column(name="FED_LANG", length = 4)
 	@Nullable
 	String language;
+	
+	@Description("Allow the IDP to be included in an iframe")
+	@Column(name="FED_INCIFR")
+	@Nullable
+	public Boolean allowIncludeInIframe;
+
 }

@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.eclipse.jetty.http.HttpCookie;
 import org.json.JSONObject;
 import org.opensaml.xml.io.UnmarshallingException;
 
@@ -42,7 +43,8 @@ public class SessionChecker {
 	private static final String ATTRIBUTE_NAME = "$soffid$session-tracker";
 	private static final String COOKIE_NAME = "_session_checker";
 
-	public void registerSession(HttpServletRequest req, HttpServletResponse resp) throws UnsupportedEncodingException, UnmarshallingException {
+	public void registerSession(HttpServletRequest req, HttpServletResponse resp) 
+			throws Exception {
 		HttpSession session = req.getSession();
         String relyingParty = (String) session.
                 getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
@@ -58,6 +60,14 @@ public class SessionChecker {
         	
         	final Cookie cookie = new Cookie(COOKIE_NAME, c);
         	cookie.setPath("/");
+           	if (Boolean.TRUE.equals(
+           			IdpConfig
+           			.getConfig()
+           			.getFederationMember()
+           			.getAllowIncludeInIframe()))
+           		cookie.setComment(HttpCookie.SAME_SITE_NONE_COMMENT);
+			cookie.setSecure(true);
+			cookie.setHttpOnly(true);
 			resp.addCookie(cookie);
         }
 	}

@@ -141,6 +141,9 @@ public class FederationMember {
 	public Boolean consent;
 
 	@Nullable
+	public Boolean allowIncludeInIframe;
+
+	@Nullable
 	@Attribute(defaultValue = "Boolean.FALSE")
 	public Boolean disableSSL;
 

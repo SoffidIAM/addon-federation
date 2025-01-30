@@ -34,6 +34,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.jetty.http.HttpCookie;
 
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
@@ -529,6 +530,12 @@ public class AuthenticationContext {
 				c2.setMaxAge(Integer.MAX_VALUE);
 				c2.setHttpOnly(true);
 				c2.setPath("/");
+	           	if (Boolean.TRUE.equals(
+	           			IdpConfig
+	           			.getConfig()
+	           			.getFederationMember()
+	           			.getAllowIncludeInIframe()))
+	           		c2.setComment(HttpCookie.SAME_SITE_NONE_COMMENT);
 				resp.addCookie(c2);
 			}
 			if (hostId != null) {
@@ -819,6 +826,12 @@ public class AuthenticationContext {
 				c2.setMaxAge(Integer.MAX_VALUE);
 				c2.setHttpOnly(true);
 				c2.setPath("/");
+	           	if (Boolean.TRUE.equals(
+	           			IdpConfig
+	           			.getConfig()
+	           			.getFederationMember()
+	           			.getAllowIncludeInIframe()))
+	           		c2.setComment(HttpCookie.SAME_SITE_NONE_COMMENT);
 				resp.addCookie(c2);
 			}
 			
