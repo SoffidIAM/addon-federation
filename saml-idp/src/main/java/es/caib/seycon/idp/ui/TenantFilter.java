@@ -51,6 +51,18 @@ public class TenantFilter implements Filter {
 		if (req.getPathInfo() != null)
 			uri += req.getPathInfo();
 		
+		if ("TRACK".equals(req.getMethod()) ||
+				"TRACE".equals(req.getMethod()))
+		{
+			res.setStatus(res.SC_FORBIDDEN);
+			return;
+		}
+		// Security headers
+		res.addHeader("X-Content-Type-Options", "nosniff");
+		res.addHeader("Strict-Transport-Security", "max-age=31536000");
+		res.addHeader("Content-Security-Policy", 
+				"script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/;"
+				+ "frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/");
 		try {
 			IdpConfig config = IdpConfig.getConfig();
 			int realPort = request.getLocalPort();

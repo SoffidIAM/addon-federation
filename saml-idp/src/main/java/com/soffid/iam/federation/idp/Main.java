@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
 import javax.servlet.DispatcherType;
@@ -34,6 +35,7 @@ import javax.xml.transform.TransformerException;
 import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.jetty.http.HttpCookie.SameSite;
+import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.LoginService;
@@ -647,6 +649,8 @@ public class Main {
        	sessionHandler.setMaxInactiveInterval(timeout); // 20 minutes timeout
         sessionHandler.addEventListener(new SessionListener());
         
+        MimeTypes mt = ctx.getMimeTypes();
+        mt.addMimeMapping("js", "text/javascript");
         return ctx;
     }
 

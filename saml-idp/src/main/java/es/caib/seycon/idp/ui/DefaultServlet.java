@@ -44,7 +44,9 @@ public class DefaultServlet extends HttpServlet {
     		}
         } else {
             resp.setStatus(HttpServletResponse.SC_OK);
-            String mimeType =  MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(s);
+            
+            String mimeType = req.getServletContext().getMimeType(s); 
+            		// MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(s);
             for (int i = 0; i < mimes.length; i+=2) {
                 if (s.endsWith(mimes[i]))
                     mimeType = mimes[i+1];
