@@ -426,6 +426,8 @@ public class TokenHandler {
 				.withJWTId(t.getJwtId())
 				.withKeyId(c.getHostName())
 				.withIssuer(getIssuer(c, keycloak))
+				.withClaim("acr", "https://soffid.com/acr/"+t.getAuthenticationMethod())
+				.withClaim("amr", toAmr(t.getAuthenticationMethod()))
 				.withClaim("sid", t.getOauthSessionId());
 
 		completeJWTBuilder(t, att, builder, false);
@@ -437,6 +439,25 @@ public class TokenHandler {
 		String signedToken = builder.sign(algorithmRS);
 		
 		return signedToken;
+	}
+
+	private List toAmr(String authenticationMethod) {
+		List<String> s = new LinkedList<>();
+		for (char ch: authenticationMethod.toCharArray()) {
+			switch (ch) {
+			case 'P': s.add("pwd"); break;
+			case 'K': s.add("wia"); break;
+			case 'E': s.add("https://soffid.com/amr/external"); break;
+			case 'O': s.add("otp"); break;
+			case 'M': s.add("https://soffid.com/amr/mail"); break;
+			case 'S': s.add("sms"); break;
+			case 'I': s.add("pin"); break;
+			case 'C': s.add("sc"); break;
+			case 'F': s.add("hwk"); break;
+			case 'Z': s.add("mca"); break;
+			}
+		}
+		return s;
 	}
 
 	public void completeJWTBuilder(TokenInfo t, Map<String, Object> att, Builder builder, boolean onlySubject) throws InternalErrorException, IOException {
