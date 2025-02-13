@@ -95,7 +95,11 @@ public class OauthTokenEntity {
 	@Column (name="TOK_HOLGRO", length = 150)
 	@Nullable
 	String holderGroup;
-	
+
+	@Column (name="TOK_SCOPE", length = 150)
+	@Nullable
+	String scope;
+
 	@Column (name="TOK_TEN_ID")
 	TenantEntity tenant;
 	

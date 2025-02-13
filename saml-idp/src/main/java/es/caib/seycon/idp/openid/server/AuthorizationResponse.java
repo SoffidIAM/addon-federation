@@ -93,6 +93,8 @@ public class AuthorizationResponse  {
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
+		h.updateToken(token);
+
 		Map<String, Object> att;
 		try {
 			att = new UserAttributesGenerator().generateAttributes(ctx, token);
@@ -208,6 +210,7 @@ public class AuthorizationResponse  {
 		token.setScope(scopes);
 		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
 		token.setAuthenticationMethod(authenticationMethod);
+		h.updateToken(token);
 		
 		StringBuffer sb = new StringBuffer();
 		String url = r.getRedirectUrl();
