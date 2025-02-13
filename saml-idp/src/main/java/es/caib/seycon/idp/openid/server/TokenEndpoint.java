@@ -229,6 +229,7 @@ public class TokenEndpoint extends HttpServlet {
 							t.setAuthenticationMethod("P");
 							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId(), t.getHolderGroup());
 							t.setScope(scopes);
+							h.updateToken(t);
 						} else {
 							authCtx.authenticationFailure(username, Messages.getString("UserPasswordAction.8"));
 							logRecorder.addErrorLogEntry("OPENID",

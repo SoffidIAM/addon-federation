@@ -705,5 +705,9 @@ public class TokenHandler {
 		
 		getFederationService().updateOauthToken(generateOauthToken(t));
 	}
+
+	public void updateToken(TokenInfo token) throws InternalErrorException {
+		getFederationService().updateOauthToken(generateOauthToken(token));
+	}
 }
 
