@@ -5,6 +5,7 @@ import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Depends;
 import com.soffid.mda.annotation.Entity;
 import com.soffid.mda.annotation.Identifier;
+import com.soffid.mda.annotation.Nullable;
 
 import es.caib.seycon.ng.model.RolEntity;
 
@@ -20,6 +21,7 @@ public class AllowedScopeEntity {
 	@Column(name="SAS_SCOPE", length = 256)
 	String scope;
 
+	@Nullable
 	@Column(name="SAS_BYDEFAULT", defaultValue="false")
 	Boolean byDefault;
 }
