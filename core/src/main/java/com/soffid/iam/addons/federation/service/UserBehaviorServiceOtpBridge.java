@@ -17,7 +17,7 @@ public class UserBehaviorServiceOtpBridge {
 		Set<String> types = new HashSet<>();
 		OtpService otpService = (OtpService) com.soffid.iam.ServiceLocator.instance().getService(OtpService.SERVICE_NAME);
 		for (OtpDevice cred: otpService.findUserDevices(userName)) {
-			if (cred.getStatus() == OtpStatus.VALIDATED) {
+			if (cred.getStatus() == OtpStatus.VALIDATED || cred.getStatus() == OtpStatus.LOCKED) {
 				types.add(cred.getType().toString());
 			}
 		}

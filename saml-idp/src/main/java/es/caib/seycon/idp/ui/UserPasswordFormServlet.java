@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
@@ -24,6 +26,7 @@ import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
+import com.soffid.iam.addons.otp.service.OtpService;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.User;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
@@ -39,6 +42,7 @@ import es.caib.seycon.idp.openid.server.AuthorizationResponse;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.idp.ui.broker.SAMLSSORequest;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
 import es.caib.seycon.idp.ui.cred.ValidateUserPushCredentialServlet;
@@ -76,7 +80,7 @@ public class UserPasswordFormServlet extends BaseForm {
         String requestedUser = "";
         String userReadonly = "dummy";
         AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
-        
+        boolean registerOtp = false;
         
         try {
         	if ( ctx != null && ctx.getStep() > 0 ) {
@@ -189,7 +193,10 @@ public class UserPasswordFormServlet extends BaseForm {
         	g.addArgument("fingerprintEnforced", "false");
         	// Hack for embedded internet explorer
         	String userAgent = req.getHeader("User-Agent");
-            boolean otpAllowed = ctx.getNextFactor().contains("O") || ctx.getNextFactor().contains("S") || ctx.getNextFactor().contains("I") || ctx.getNextFactor().contains("M");
+        	
+        	////////// OTP
+
+        	boolean otpAllowed = ctx.getNextFactor().contains("O") || ctx.getNextFactor().contains("S") || ctx.getNextFactor().contains("I") || ctx.getNextFactor().contains("M");
             if (otpAllowed && !requestedUser.trim().isEmpty())
             {
             	User user;
@@ -318,14 +325,22 @@ public class UserPasswordFormServlet extends BaseForm {
             	String msg = String.format(Messages.getString("certificateWarning"), days);
             	g.addArgument("certificateWarning", msg);
             }
-            if (g.getArgument("ERROR") == null) {
+            
+            // Check to register token
+            
+    		if (noAuthenticationMethod(g, ctx) && Boolean.TRUE.equals(ip.getAllowRegisterOtp()))
+    			registerOtp = true;
+    		else if (g.getArgument("ERROR") == null) {
             	if ( ctx.getAllowedAuthenticationMethods().isEmpty())
             		g.addArgument("ERROR", Messages.getString("accessDenied"));
             	else if (noAuthenticationMethod(g, ctx)) {
-            		g.addArgument("ERROR", Messages.getString("noAuthenticationMethod"));
+           			g.addArgument("ERROR", Messages.getString("noAuthenticationMethod"));
             	}
             }
-        	if ( ctx.getStep() > 0 || ctx.getUser() != null)
+            if (registerOtp && new OTPGenerator().generateOtp(req, resp, g)) {
+            	// Nothing to do
+            }
+            else if ( ctx.getStep() > 0 || ctx.getUser() != null)
         		g.generate(resp, "loginPage2.html"); //$NON-NLS-1$
         	else
         		g.generate(resp, "loginPage.html"); //$NON-NLS-1$

@@ -15,4 +15,7 @@ public class AuthenticationMethod {
 
 	@Nullable 
 	Boolean alwaysAskForCredentials;
+
+	@Nullable
+	public Boolean allowRegisterOtp;
 }

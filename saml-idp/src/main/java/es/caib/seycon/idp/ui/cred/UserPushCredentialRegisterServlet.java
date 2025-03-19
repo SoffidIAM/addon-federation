@@ -51,7 +51,6 @@ public class UserPushCredentialRegisterServlet extends BaseForm {
         	
 			final UserCredentialService userCredentialService = new RemoteServiceLocator().getUserCredentialService();
         	User user = userCredentialService.findUserForNewCredentialURI(hash);
-        	
         	JSONObject o = new JSONObject();
         	if (user == null) {
         		o.put("success", false);

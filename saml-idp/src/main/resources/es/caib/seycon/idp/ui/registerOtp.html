@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+		<title>Soffid SAML Identity Provider</title> <!-- css -->
+		<link href="/estilos/estils.css" rel="stylesheet" type="text/css"
+			media="screen" />
+		<style>
+${raw:htmlCSS}
+</style>
+		<link href="https://www.soffid.com" rel="author" type="text/html" />
+
+		<script src="/js/jquery-3.6.0.slim.min.js"></script>
+		{if enableCaptcha} 
+		<script src="https://www.google.com/recaptcha/api.js?render=${captchaKey}"></script>
+		{endif}
+</head>
+
+<body onLoad="init();" class="bodylogin">
+
+	${raw:htmlHeader}
+
+	<div class="login">
+		<p class="loginheader">
+			<a href="https://www.soffid.com/" target="_blank"><img
+				src="/img/logo.png" alt="Soffid logo" class="logo" /></a>
+		</p>
+		<div class="loginbox">
+			<p class="header">${title}</p>
+			<div class="logintype" id="passlogin">
+				<form method="post" action="${userUrl}" id="form-pass">
+					<div class="upinput">
+						<span class="labeltextbox"> <span class="label">
+								${Username}: </span> <input autofocus name="j_username" id="j_username"
+							${userReadonly}="readonly" type="text" autocomplete="off"
+							value="${requestedUser}" style="width: 8em" />
+						</span>
+					</div>
+					<div class="upbutton">
+						<input id="loginpassbutton" name="formUCboton" type="submit"
+							value="${Login}" />
+					</div>
+				</form>
+			</div>
+			<p />
+			<div class="nologintype" id="recoverlogin">
+				<p>${OTPmsg}</p>
+				<img src="${image}" class="otp"></img>
+				<form method="post" action="${createOtpUrl}">
+					<div class="upinput">
+						${OTPPin} ${otpToken}: <input name="pin" id="pin" type="text" />
+					</div>
+					<div class="upbutton">
+						<input name="formUCboton" type="submit" value="${register.accept}" />
+					</div>
+				</form>
+			</div>
+			<p>
+		</div>
+		<p />
+		{if ERROR}
+		<p id="errormsg" style="color:red;">${ERROR}</p>
+		{endif}
+	</div>
+
+	${raw:htmlFooter}
+
+	<div class="centered" style="visibility: hidden" id="progressdiv">
+		<img class="centeredimage" src="/img/progress.gif" />
+	</div>
+	<script>
+		$("form").submit(function() {
+			$(":submit", this).attr("disabled", "disabled");
+		});
+		$("#loginpassbutton").click(function() {
+			$("#progressdiv").css("visibility", "visible");
+			$("#passlogin").fadeOut("slow");
+			$("#errormsg").fadeOut("slow");
+		});
+	</script>
+
+</body>
+
+</html>

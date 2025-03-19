@@ -26,6 +26,10 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@ForeignKey (foreignColumn="SPI_VIP_ID")
 	public java.util.Collection<com.soffid.iam.addons.federation.model.ServiceProviderVirtualIdentityProviderEntity> serviceProviderVirtualIdentityProvider;
 
+	@Column (name="FED_REGOTP")
+	@Nullable
+	public Boolean allowRegisterOtp;
+
 	@Column (name="ALLOW_REGISTER")
 	@Nullable
 	public boolean allowRegister;

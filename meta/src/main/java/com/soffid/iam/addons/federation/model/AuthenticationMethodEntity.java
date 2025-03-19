@@ -37,4 +37,9 @@ public class AuthenticationMethodEntity {
 	@Column(name = "AAU_ASKCRE")
 	@Nullable 
 	Boolean alwaysAskForCredentials;
+	
+	@Column (name="AAU_REGOTP")
+	@Nullable
+	public Boolean allowRegisterOtp;
+
 }

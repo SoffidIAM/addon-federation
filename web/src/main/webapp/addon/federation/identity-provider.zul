@@ -278,6 +278,12 @@
 			id="id_allowRecover"  onChange="ref:handler.enableIDPComponents()"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 	
+		<customfield3 label="${c:l('federacio.zul.allowRegisterOtp')}"
+			dataType="BOOLEAN"
+			bind="/federationMember/allowRegisterOtp" 
+			id="id_allowRegisterOtp"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
 		<customfield3 label="${c:l('federacio.zul.allowRegister')}"
 			dataType="BOOLEAN"
 			bind="/federationMember/allowRegister" 
@@ -744,6 +750,10 @@
 								<rows>
 								</rows>
 							</grid>
+							<customfield3 label="${c:l('federacio.zul.allowRegisterOtp')}"
+								dataType="BOOLEAN"
+								bind="/allowRegisterOtp" 
+								readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 						</div>
 						<div style="text-align: right">
 							<div width="25px">

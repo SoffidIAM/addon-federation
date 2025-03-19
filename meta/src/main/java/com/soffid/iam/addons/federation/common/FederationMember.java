@@ -125,6 +125,9 @@ public class FederationMember {
 	@Nullable 
 	String authenticationMethods;
 	
+	@Nullable
+	public Boolean allowRegisterOtp;
+
 	@Nullable 
 	Boolean alwaysAskForCredentials;
 

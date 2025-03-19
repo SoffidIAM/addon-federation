@@ -152,6 +152,14 @@ p.header {
 	color: white;
 }
 
+.nologintype img.otp {
+	display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 16px;
+    
+}
+
 .cancellogintype {
 	/* border-radius: 8px; */
 	padding: 5px 10px 10px 5px;
@@ -398,3 +406,4 @@ div.holdergroup-selector {
 div.holdergroup-selector:hover {
 	background-color: #A6D514;
 }
+

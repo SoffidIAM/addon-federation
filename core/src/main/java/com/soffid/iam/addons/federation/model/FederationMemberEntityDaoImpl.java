@@ -94,6 +94,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setOauthKey(idp.getOauthKey());
 			target.setOauthSecret(idp.getOauthSecret() == null ? null: Password.decode(idp.getOauthSecret()));
 			target.setAuthenticationMethods(idp.getAuthenticationMethods());
+			target.setAllowRegisterOtp(idp.getAllowRegisterOtp());
 			target.setAllowIncludeInIframe(idp.getAllowIncludeInIframe());
 			if (target.getAuthenticationMethods() == null)
 			{
@@ -187,6 +188,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setAuthenticationMethods(s.toString().trim());
 				
 			}
+			target.setAllowRegisterOtp(vip.getAllowRegisterOtp());
 			target.setAlwaysAskForCredentials(vip.getAlwaysAskForCredentials());
 			target.setKerberosDomain(vip.getKerberosDomain());
 			target.setSsoCookieDomain(vip.getSsoCookieDomain());
@@ -536,6 +538,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			
 			idp.setKerberosDomain(source.getKerberosDomain());
 			idp.setAuthenticationMethods(source.getAuthenticationMethods());
+			idp.setAllowRegisterOtp(source.getAllowRegisterOtp());
 			idp.setAlwaysAskForCredentials(source.getAlwaysAskForCredentials());
 			idp.setSsoCookieDomain(source.getSsoCookieDomain());
 			idp.setSsoCookieName(source.getSsoCookieName());
@@ -605,6 +608,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 
 			vip.setKerberosDomain(source.getKerberosDomain());
 			vip.setAuthenticationMethods(source.getAuthenticationMethods());
+			vip.setAllowRegisterOtp(source.getAllowRegisterOtp());
 			vip.setAlwaysAskForCredentials(source.getAlwaysAskForCredentials());
 			vip.setSsoCookieDomain(source.getSsoCookieDomain());
 			vip.setSsoCookieName(source.getSsoCookieName());

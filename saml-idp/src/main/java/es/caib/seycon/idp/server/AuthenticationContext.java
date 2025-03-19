@@ -45,6 +45,7 @@ import com.soffid.iam.addons.federation.idp.radius.attribute.RadiusAttribute;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.impl.IssueHelper;
+import com.soffid.iam.addons.otp.common.OtpDevice;
 import com.soffid.iam.addons.passrecover.common.RecoverPasswordChallenge;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.AccountStatus;
@@ -87,6 +88,8 @@ public class AuthenticationContext {
 	long timestamp = 0;
 	private Challenge challenge;
 	private Collection<UserCredentialChallenge> pushChallenge;
+	OtpDevice otpDeviceToRegister;
+	Challenge otpDeviceChallenge;
 	
 	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
@@ -1048,6 +1051,22 @@ public class AuthenticationContext {
 
 	public RecoverPasswordChallenge getRecoverChallenge() {
 		return recoverChallenge;
+	}
+
+	public OtpDevice getOtpDeviceToRegister() {
+		return otpDeviceToRegister;
+	}
+
+	public void setOtpDeviceToRegister(OtpDevice otpDeviceToRegister) {
+		this.otpDeviceToRegister = otpDeviceToRegister;
+	}
+
+	public Challenge getOtpDeviceChallenge() {
+		return otpDeviceChallenge;
+	}
+
+	public void setOtpDeviceChallenge(Challenge otpDeviceChallenge) {
+		this.otpDeviceChallenge = otpDeviceChallenge;
 	}
 
 
