@@ -2972,13 +2972,13 @@ public class FederationServiceImpl
 	}
 
 	@Override
-	public boolean handleIsOUTypeAHolderGroup(String OUName) {
-		try {
-			OUType ou = getOrganizationalUnitTypeService().findOUTypeByName(OUName);
-			return ou.isRoleHolder();
-		} catch (InternalErrorException e) {
-			e.printStackTrace();
-		}
-		return false;
+	public boolean handleIsOUTypeAHolderGroup(String OUName) throws Exception {
+		OUType ou = getOrganizationalUnitTypeService().findOUTypeByName(OUName);
+		return ou.isRoleHolder();
+	}
+
+	@Override
+	public void handleDeleteExpiredOauthTokens() throws Exception {
+		getOauthTokenEntityDao().deleteExpiredOauthTokens();
 	}
 }

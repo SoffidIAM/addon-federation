@@ -61,6 +61,7 @@ public class LogoutEndpoint extends HttpServlet {
 				TokenHandler th = new TokenHandler();
 				TokenInfo t = th.getToken(tokenHint);
 				if (t != null) {
+					if (OidcDebugController.isDebug()) log.info("Token sent to be revoked");
 					new TokenHandler().revoke(getServletContext(), req, t);
 					if (clientId == null) {
 						clientId = t.getRequest().getFederationMember().getOpenidClientId();
@@ -79,6 +80,7 @@ public class LogoutEndpoint extends HttpServlet {
 							postLogoutRedirectUri += URLEncoder.encode(state, "UTF-8");
 						}
 						logoutUrl = postLogoutRedirectUri;
+						if (OidcDebugController.isDebug()) log.info("logoutUrl: "+logoutUrl);
 					}
 				}
 			}
@@ -86,18 +88,23 @@ public class LogoutEndpoint extends HttpServlet {
 			Session session = new Autenticator().getSession(req, false);
 			LogoutResponse response = null;
 			if (session != null) {
+				if (OidcDebugController.isDebug()) log.info("PRE LogoutHandler.logout");
 				response = new LogoutHandler().logout(getServletContext(), req, session, true);
+				if (OidcDebugController.isDebug()) log.info("POST LogoutHandler.logout");
 			}
 			if (response != null && response.getFrontRequests().isEmpty()) {
 				req.getSession().invalidate();
+				if (OidcDebugController.isDebug()) log.info("sendRedirect logoutUrl");
 				resp.sendRedirect(logoutUrl);
 			} else {
 				if (session==null && postLogoutRedirectUri!=null) {
+					if (OidcDebugController.isDebug()) log.info("sendRedirect postLogoutRedirectUri");
 					resp.sendRedirect(postLogoutRedirectUri);
 				} else {
 					if (! logoutUrl.equals(LogoutServlet.URI)) {
 						req.getSession().setAttribute("$$soffid$$-logout-redirect", logoutUrl);
 					}
+					if (OidcDebugController.isDebug()) log.info("sendRedirect LogoutServlet");
 					resp.sendRedirect(LogoutServlet.URI);
 				}
 			}

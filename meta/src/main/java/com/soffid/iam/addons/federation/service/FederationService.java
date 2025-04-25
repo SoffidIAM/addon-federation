@@ -706,4 +706,9 @@ public abstract class FederationService {
 
 	@Description("Retrieve if an organizational unit has the holderGroup checked")
 	public boolean isOUTypeAHolderGroup(String OUName) {return false;}
+
+	@Description("Delete expired oauth tokens from the database")
+	@Operation(grantees={com.soffid.iam.addons.federation.roles.federation_delete.class})
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public void deleteExpiredOauthTokens() {}
 }

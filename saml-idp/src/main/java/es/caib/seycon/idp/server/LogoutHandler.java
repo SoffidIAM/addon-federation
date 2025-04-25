@@ -95,6 +95,7 @@ import edu.internet2.middleware.shibboleth.common.relyingparty.RelyingPartyConfi
 import edu.internet2.middleware.shibboleth.common.relyingparty.provider.SAMLMDRelyingPartyConfigurationManager;
 import edu.internet2.middleware.shibboleth.idp.util.HttpServletHelper;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.openid.server.OidcDebugController;
 import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenInfo;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -116,27 +117,42 @@ public class LogoutHandler {
 		for ( FederationMemberSession fms: federationMemberSessions) {
 			FederationMember fm = federationService.findFederationMemberByPublicId(fms.getFederationMember());
 			if (fm.getServiceProviderType() == ServiceProviderType.OPENID_CONNECT)
+				if (OidcDebugController.isDebug()) log.info("PRE processOpenidLogout");
 				processOpenidLogout(fms, ctx, s, l, userInitiated);
+				if (OidcDebugController.isDebug()) log.info("POST processOpenidLogout");
 			if (fm.getServiceProviderType() == ServiceProviderType.CAS)
 				processCasLogout(fms, ctx, s, l, userInitiated);
 			if (fm.getServiceProviderType() == ServiceProviderType.SAML || fm.getServiceProviderType() == ServiceProviderType.SOFFID_SAML)
 				processSamlLogout(fms, ctx, s, l, userInitiated);
 		}
 		
-		for (OauthToken token: federationService.findOauthTokenBySessionId(s.getId())) {
+		if (OidcDebugController.isDebug()) log.info("PRE findOauthTokenBySessionId");
+		List<OauthToken> tokenList = federationService.findOauthTokenBySessionId(s.getId());
+		if (OidcDebugController.isDebug()) log.info("POST findOauthTokenBySessionId");
+
+		for (OauthToken token: tokenList) {
+			if (OidcDebugController.isDebug()) log.info("PRE deleteOauthToken");
 			federationService.deleteOauthToken(token);
+			if (OidcDebugController.isDebug()) log.info("POST deleteOauthToken");
 			final TokenHandler tokenHandler = TokenHandler.instance();
+			if (OidcDebugController.isDebug()) log.info("PRE getToken");
 			TokenInfo t = tokenHandler.getToken(token.getFullToken());
+			if (OidcDebugController.isDebug()) log.info("POST getToken");
 			if (t != null)
 				t.setExpires(System.currentTimeMillis());
 		}
 		
 		if (! userInitiated || l.getFrontRequests().isEmpty()) {
+			if (OidcDebugController.isDebug()) log.info("PRE getRemoteService");
 			FederationService svc = (FederationService) new RemoteServiceLocator().getRemoteService(FederationService.REMOTE_PATH);
+			if (OidcDebugController.isDebug()) log.info("POST getRemoteService");
 			if (req != null) {
+				if (OidcDebugController.isDebug()) log.info("PRE getFederationMember");
 				FederationMember ip = IdpConfig.getConfig().getFederationMember();
+				if (OidcDebugController.isDebug()) log.info("POST getFederationMember");
 		    	for (Cookie c: req.getCookies())
 		    	{
+		    		if (OidcDebugController.isDebug()) log.info("cookie");
 		    		if (c.getName().equals(ip.getSsoCookieName()))
 		    		{
 		    			svc.expireSessionCookie(c.getValue());
@@ -145,9 +161,12 @@ public class LogoutHandler {
 			}
 			try {
 				for ( FederationMemberSession fms: federationMemberSessions) {
+					if (OidcDebugController.isDebug()) log.info("federation");
 	    			svc.deleteFederatioMemberSession(fms);
 				}
+				if (OidcDebugController.isDebug()) log.info("PRE destroySession");
 				new RemoteServiceLocator().getSessionService().destroySession(s);
+				if (OidcDebugController.isDebug()) log.info("POST destroySession");
 			} catch (InternalErrorException e) {
 				// Ignore already closed session
 			}
@@ -169,17 +188,20 @@ public class LogoutHandler {
 
 	private void processOpenidLogout(FederationMemberSession fms, ServletContext ctx, Session s, LogoutResponse l,
 			boolean userInitiated) throws InternalErrorException, IOException {
+		if (OidcDebugController.isDebug()) log.info("processOpenidLogout");
 		FederationMember sp;
 		try {
 			sp = new RemoteServiceLocator().getFederacioService().findFederationMemberByPublicId(fms.getFederationMember());
 			IdpConfig c = IdpConfig.getConfig();
 			final TokenHandler tokenHandler = TokenHandler.instance();
 			String token = tokenHandler.generateLogoutToken(c, fms.getUserName(), fms.getSessionHash(), sp);
+			if (OidcDebugController.isDebug()) log.info("generateLogoutToken done");
 			if (sp.getOpenidLogoutUrlBack() != null && ! sp.getOpenidLogoutUrlBack().isEmpty())
 			{
 				String url = sp.getOpenidLogoutUrlBack();
 				if (url != null && !url.isEmpty()) {
 					try {
+						if (OidcDebugController.isDebug()) log.info("start connection");
 						HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
 						conn.setRequestMethod("POST");
 						conn.setDoOutput(true);
@@ -194,6 +216,7 @@ public class LogoutHandler {
 						while (is.read() >= 0) ;
 						is.close();
 						federationService.deleteFederatioMemberSession(fms);
+						if (OidcDebugController.isDebug()) log.info("end connection");
 						return;
 					} catch (Exception e) {
 						log.warn("Error closing session from "+ fms.getFederationMember(), e);
@@ -213,6 +236,7 @@ public class LogoutHandler {
 				frontLogoutRequest.setDescription(sp.getName());
 				frontLogoutRequest.setPublicId(sp.getPublicId());
 				frontLogoutRequest.setUrl(new URI(url));
+				if (OidcDebugController.isDebug()) log.info("front logout request");
 				l.getFrontRequests().add(frontLogoutRequest);
 				return;
 			}
