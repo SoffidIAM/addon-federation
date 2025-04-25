@@ -320,6 +320,13 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		if ( Boolean.TRUE.equals( ((CustomField3)getFellow("oid_passsword_clientcred")).getValue()))
 			s.add("PC");
 		
+		if ( Boolean.TRUE.equals( ((CustomField3)getFellow("oid_clientcred")).getValue())) {
+			getFellow("openidClientIdentity").setVisible(true);
+			s.add("CC");
+		} else {
+			getFellow("openidClientIdentity").setVisible(false);
+		}
+
 		DataNode dn = (DataNode) XPathUtils.eval(this, "/");
 		dn.update();
 	}
@@ -331,6 +338,8 @@ public class ServiceProvider extends Form2 implements XPathSubscriber, AfterComp
 		((CustomField3)getFellow("oid_authcode")).setValue(s.contains("AC"));
 		((CustomField3)getFellow("oid_password")).setValue(s.contains("PA"));
 		((CustomField3)getFellow("oid_passsword_clientcred")).setValue(s.contains("PC"));
+		((CustomField3)getFellow("oid_clientcred")).setValue(s.contains("CC"));
+		getFellow("openidClientIdentity").setVisible(s.contains("CC"));
 	}
 
 	

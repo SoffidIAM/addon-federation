@@ -12,6 +12,7 @@ import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.mda.annotation.*;
 
 import es.caib.seycon.ng.model.DispatcherEntity;
+import es.caib.seycon.ng.model.UsuariEntity;
 
 @Entity (table="" ,
 		discriminatorValue="S" )
@@ -64,6 +65,10 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Description("Open ID mechanisms (comma separated list of values): Implicit, AuthorizationCode, Password, PasswordClientCredentals")
 	@Nullable
 	public String openidMechanism;
+
+	@Description("Bound identity for client_credentials grant")
+	@Nullable
+	public UsuariEntity openidClientIdentity;
 
 	@Description("Allow users with accounts on the system")
 	@Nullable

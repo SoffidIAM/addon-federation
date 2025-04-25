@@ -60,6 +60,8 @@ public class TokenEndpoint extends HttpServlet {
 			grantCode(req, resp, authorizationCode, authentication);
 		} else if ("password".equals(grantType)) {
 			passwordGrant(req, resp, authentication);
+		} else if ("client_credentials".equals(grantType)) {
+			clientCredentialsGrant(req, resp, authentication);
 		} else if ("refresh_token".equals(grantType)) {
 			refreshToken(req, resp, authentication);
 		} else {
@@ -253,6 +255,174 @@ public class TokenEndpoint extends HttpServlet {
 					buildError(resp, "invalid_request", "Password authentication is not allowed");
 					return;
 				}
+			}
+
+			Map<String, Object> att;
+			try {
+				att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
+			} catch (AttributeResolutionException e) {
+				log.warn("Error resolving attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (AttributeFilteringException e) {
+				log.warn("Error filtering attributes", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (InternalErrorException e) {
+				log.warn("Error evaluating claims", e);
+				buildError(resp, "Error resolving attributes", t);
+				return;
+			} catch (Exception e) {
+				log.warn("Error generating response", e);
+				buildError(resp, "Error generating response", t);
+				return;
+			}
+			try {
+				h.generateToken(t, att, req, "P");
+			} catch (Exception e) {
+				log.info("Error generating token", e);
+				buildError(resp, "server_error", "Internal error " + e.toString());
+				return;
+			}
+
+			generatTokenResponse(req, resp, att, h, t);
+		} catch (Exception e) {
+			log.warn("Error generating token response", e);
+			buildError(resp, e.toString());
+		}
+	}
+
+	private void clientCredentialsGrant(HttpServletRequest req, HttpServletResponse resp, String authentication)
+			throws IOException, ServletException {
+		try {
+			IdpConfig config = IdpConfig.getConfig();
+			String clientId = req.getParameter("client_id");
+			String clientSecret = req.getParameter("client_secret");
+
+			if (isDebug()) {
+				log.info("Received token request with password mechanism:");
+				log.info("client_id     = "+clientId);
+				log.info("client_secret = "+ofuscate(clientSecret));
+				log.info("auth header   = "+ofuscate(authentication));
+				log.info("scope         = "+req.getParameter("scope"));
+			}
+
+			TokenHandler h = TokenHandler.instance();
+			OpenIdRequest request = new OpenIdRequest();
+			req.getSession().setAttribute(SessionConstants.OPENID_REQUEST, request);
+	    	
+			if (authentication != null && authentication.toLowerCase().startsWith("basic ")) {
+				String decoded = new String(Base64.decode(authentication.substring(6)), "UTF-8");
+				String clientId2 = decoded.substring(0, decoded.indexOf(":"));
+				if (clientId != null && !clientId.equals(clientId2)) {
+					buildError(resp, "invalid_request", "Client id and credentials mismatch");
+					return;
+				} else {
+					clientId = clientId2;
+					clientSecret = decoded.substring(decoded.indexOf(":") + 1 );
+					if (config.getFederationService().findFederationMemberByClientID(clientId) == null) {
+						clientId = URLDecoder.decode(clientId, "UTF-8");
+						clientSecret = URLDecoder.decode(clientSecret, "UTF-8");
+					}
+				}
+			}
+			request.setClientId(clientId);
+			if (clientId == null || clientId.isEmpty()) {
+				if (authentication == null) {
+					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					resp.setHeader("WWW-Authenticate", "Basic realm=\"Client credentials\"");
+				} else {
+					buildError(resp, "invalid_request", "Missing client id parameter");
+				}
+				return;
+			}
+
+			request.setFederationMember(
+					config.getFederationService().findFederationMemberByClientID(request.getClientId()));
+			if (request.getFederationMember() == null) {
+				buildError(resp, "unauthorized_client", "Wrong client id");
+				return;
+			}
+			
+			// Check scope
+			boolean found = false;
+			request.setScope(req.getParameter("scope"));
+	    	if (request.getScope() != null) {
+		    	for (String s: request.getScope().split(" +"))
+		    	{
+		    		if (s.equalsIgnoreCase("openid")) found = true;
+	        		for (AllowedScope scope: request.getFederationMember().getAllowedScopes()) {
+	        			if (scope.getScope().equals("*") || scope.getScope().equals(s)) {
+	        				found = true;
+	        				break;
+	        			}
+	        		}
+	        		if (s.startsWith("holdergroup:")) {
+	        			found = true;
+	        		}
+	        		if (!found) {
+	        			buildError(resp, "invalid_scope", "The requested scope "+s+" is not allowed due to system policies");
+	        			return;
+	        		}
+		    	}
+	    	} else {
+	    		found = true;
+	    	}
+	    	if (! found)
+	    	{
+	            buildError(resp, "invalid_scope", "The requested scope does not contain the scope openid: "+request.getScope());
+	    	}
+
+    		// Check authentication mechanism
+			if (request.getFederationMember().getOpenidMechanism().contains("CC")) {
+				Digest pass = request.getFederationMember().getOpenidSecret();
+				if (clientId != null && clientSecret != null) {
+					if (pass == null || ! pass.validate(clientSecret)) {
+						buildError(resp, "invalid_client", "Wrong client credentials");
+						return;
+					}
+				} else {
+					if (authentication == null) {
+						resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+						resp.setHeader("WWW-Authenticate", "Basic realm=\"Client credentials\"");
+						return;
+					}
+					if (!validAuthentication(authentication, request.getFederationMember())) {
+						buildError(resp, "invalid_client", "Wrong client credentials");
+						return;
+					}
+				}
+				log.info("Accepted mechanism PC for " + request.getFederationMember().getPublicId() + " / "
+						+ authentication);
+			} else {
+				buildError(resp, "unsupported_grant_type", "Not authorized to use password grant type");
+				return;
+			}
+
+
+			String username = request.getFederationMember().getOpenidClientIdentity();
+			TokenInfo t;
+			if (username == null || username.trim().isEmpty()) {
+				buildError(resp, "invalid_client", "Wrong user credentials. Missing username configuration");
+				return;
+			} else {
+				AuthenticationContext authCtx = new AuthenticationContext();
+				authCtx.setPublicId(request.getFederationMember().getPublicId());
+				authCtx.initialize(req);
+				LogRecorder logRecorder = LogRecorder.getInstance();
+				// 1. Mask the context as authenticated
+				authCtx.authenticated(username, "P", resp);
+				// 2. Register Soffid session
+				Autenticator autenticator = new Autenticator();
+				String oauthSessionId = autenticator.generateRandomSessionId();
+				autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false, oauthSessionId, null);
+				// Generate token
+				t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true), oauthSessionId);
+				t.setUser(username);
+				t.setAuthenticationMethod("P");
+				String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId(), t.getHolderGroup());
+				t.setScope(scopes);
+				h.updateToken(t);
 			}
 
 			Map<String, Object> att;

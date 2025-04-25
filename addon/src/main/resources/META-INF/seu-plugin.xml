@@ -12,7 +12,8 @@
 	<core name="Jackson databind library" resource="jackson-databind-2.9.5.jar"/>
 	<core name="Jackson core library" resource="jackson-core-2.9.5.jar"/>
 	<core name="Jackson annotations library" resource="jackson-annotations-2.9.5.jar"/>
-	
+	<core name="ZXing core library" resource="core-3.3.0.jar"/>
+	<core name="ZXing javase library" resource="javase-3.3.0.jar"/>
 	<core name="Federation common classes" resource="federation-common-${pom.version}.jar"/>
 	<webService name="Federation REST Web Service API" resource="federation-webservice-${project.version}.jar"/>
 	<web name="Federation web files" resource="federation-web-${pom.version}.war"/>

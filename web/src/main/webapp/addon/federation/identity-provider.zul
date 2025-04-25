@@ -290,6 +290,30 @@
 			id="id_allowRegister"  onChange="ref:handler.enableIDPComponents()"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 			
+		<customfield3 label="${c:l('federacio.zul.allowFacephiRegister')}"
+			dataType="BOOLEAN"
+			bind="/federationMember/allowFacephiRegister" 
+			id="id_allowFacephiRegister"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+		<customfield3 label="Facephi Id"
+			dataType="STRING"
+			bind="/federationMember/facephiId" 
+			id="id_facephiId"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+		<customfield3 label="Facephi key"
+			dataType="STRING"
+			bind="/federationMember/facephiKey" 
+			id="id_facephiKey"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
+		<customfield3 label="Facephi API key"
+			dataType="STRING"
+			bind="/federationMember/facephiApiKey" 
+			id="id_facephiApiKey"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
 		<customfield3 label="${c:l('federacio.zul.registerProcess')}"
 			dataType="STRING"
 			bind="/federationMember/registerWorkflow" 
@@ -732,6 +756,10 @@
 								dataType="BOOLEAN"
 								bind="/alwaysAskForCredentials"
 								readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+							<customfield3 label="${c:l('federacio.zul.allowRegisterOtp')}"
+								dataType="BOOLEAN"
+								bind="/allowRegisterOtp" 
+								readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 							<grid use="com.soffid.iam.addons.federation.web.AuthenticationGrid" fixedLayout="true" bind="/authenticationMethods"
 								style="margin-left: 192px" align="center">
 								<columns>
@@ -750,10 +778,6 @@
 								<rows>
 								</rows>
 							</grid>
-							<customfield3 label="${c:l('federacio.zul.allowRegisterOtp')}"
-								dataType="BOOLEAN"
-								bind="/allowRegisterOtp" 
-								readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
 						</div>
 						<div style="text-align: right">
 							<div width="25px">

@@ -235,6 +235,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				target.setOpenidMechanism(new HashSet<String>());
 			else
 				target.setOpenidMechanism( new HashSet<String> ( Arrays.asList( sp.getOpenidMechanism().split(",") )) );
+			if (sp.getOpenidClientIdentity() == null)
+				target.setOpenidClientIdentity(null);
+			else
+				target.setOpenidClientIdentity(sp.getOpenidClientIdentity().getUserName());
 			target.setOpenidClientId(sp.getOpenidClientId());
 			target.setOpenidSecret(Digest.decode(sp.getOpenidSecret()));
 			List<String> l = new LinkedList<>();
@@ -403,6 +407,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 		target.setAlwaysAskForCredentials(vip.getAlwaysAskForCredentials());
 		target.setAllowRecover(vip.isAllowRecover());
 		target.setAllowRegister(vip.isAllowRegister());
+		target.setAllowFacephiRegister( Boolean.TRUE.equals(vip.getAllowFacephiRegister()));
+		target.setFacephiKey(vip.getFacephiKey());
+		target.setFacephiApiKey(vip.getFacephiApiKey());
+		target.setFacephiId(vip.getFacephiId());
 		target.setRegisterWorkflow(vip.getRegisterWorkflow());
 		target.setUserTypeToRegister(vip.getUserTypeToRegister() == null? null :
 			vip.getUserTypeToRegister().getName());
@@ -683,6 +691,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 				if (sb.length()>0) sb.append(",");
 				sb.append(s);
 			}
+			if (source.getOpenidClientIdentity() == null || source.getOpenidClientIdentity().isBlank())
+				sp.setOpenidClientIdentity(null);
+			else
+				sp.setOpenidClientIdentity(getUserEntityDao().findByUserName(source.getOpenidClientIdentity()));
 			sp.setOpenidMechanism(sb.toString());
 			sp.setOpenidClientId(source.getOpenidClientId());
 			sp.setOpenidSecret(source.getOpenidSecret() == null ? null : source.getOpenidSecret().toString());
@@ -725,6 +737,10 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 		vip.setAlwaysAskForCredentials(source.getAlwaysAskForCredentials());
 		vip.setAllowRecover(source.isAllowRecover());
 		vip.setAllowRegister(source.isAllowRegister());
+		vip.setAllowFacephiRegister( source.isAllowFacephiRegister());
+		vip.setFacephiKey(source.getFacephiKey());
+		vip.setFacephiApiKey(source.getFacephiApiKey());
+		vip.setFacephiId(source.getFacephiId());
 		vip.setMailHost(source.getMailHost());
 		vip.setMailSenderAddress(source.getMailSenderAddress());
 		vip.setRegisterWorkflow(source.getRegisterWorkflow());

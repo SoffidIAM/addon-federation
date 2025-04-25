@@ -10,6 +10,7 @@ import com.soffid.mda.annotation.*;
 
 import es.caib.seycon.ng.model.DispatcherEntity;
 import es.caib.seycon.ng.model.RolEntity;
+import es.caib.seycon.ng.model.UsuariEntity;
 import es.caib.seycon.ng.servei.ConfiguracioService;
 
 @Entity (table="SC_FEDERA" ,
@@ -29,6 +30,7 @@ import es.caib.seycon.ng.servei.ConfiguracioService;
 	AllowedScopeEntity.class,
 	AllowedScopeRoleEntity.class,
 	ConfiguracioService.class,
+	UsuariEntity.class, 
 	RolEntity.class})
 public abstract class FederationMemberEntity {
 

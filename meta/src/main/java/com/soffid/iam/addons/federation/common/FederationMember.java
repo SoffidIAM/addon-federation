@@ -20,6 +20,7 @@ import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.ValueObject;
 
 import es.caib.seycon.ng.comu.Password;
+import es.caib.seycon.ng.model.UsuariEntity;
 
 @ValueObject 
 @JsonObject(hibernateClass = FederationMemberEntity.class)
@@ -115,6 +116,17 @@ public class FederationMember {
 	public java.util.Collection<java.lang.String> serviceProviderPublicId;
 
 	public boolean allowRegister;
+
+	public boolean allowFacephiRegister;
+	
+	@Nullable
+	public String facephiKey;
+
+	@Nullable
+	public String facephiId;
+
+	@Nullable
+	public String facephiApiKey;
 
 	@Description ("Workflow for new user aproval")
 	@Nullable
@@ -237,6 +249,10 @@ public class FederationMember {
 	@Attribute(defaultValue="new java.util.HashSet()")
 	@Nullable
 	public Set<String> openidMechanism;
+
+	@Description("Bound identity for client_credentials grant")
+	@Nullable
+	public String openidClientIdentity;
 
 	// Radius attributes
 	@Description("Source IPs or IP ranges, for Radius clients")

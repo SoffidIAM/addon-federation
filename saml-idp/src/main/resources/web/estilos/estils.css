@@ -407,3 +407,43 @@ div.holdergroup-selector:hover {
 	background-color: #A6D514;
 }
 
+div#initial {
+	line-height: 40px;
+}
+
+div#initial button {
+  background-color: #a6ff00;
+  border: solid 1px #808080;
+  border-radius: 6px;
+  padding: 8px 12px 8px 12px;
+}
+
+div#initial button:hover {
+  background-color: #80d800;
+}
+
+
+
+
+div#frommobile img {
+  display: block;
+  margin-left: auto;
+  marign-right: auto;
+}
+
+
+div#fromwebcam {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  height: 100%;
+  width: 100%;
+  background-color: white;
+}
+
+div#fromwebcam .login {
+  text-align: center;
+  font-size: 18px;
+}  
+  
+

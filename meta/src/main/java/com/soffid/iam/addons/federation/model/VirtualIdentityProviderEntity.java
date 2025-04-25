@@ -30,6 +30,23 @@ public abstract class VirtualIdentityProviderEntity extends com.soffid.iam.addon
 	@Nullable
 	public Boolean allowRegisterOtp;
 
+	@Column (name="FED_FACPHI")
+	@Nullable
+	public Boolean allowFacephiRegister;
+	
+	@Column (name="FED_FPHKEY")
+	@Nullable
+	public String facephiKey;
+
+	@Column (name="FED_FPHID")
+	@Nullable
+	public String facephiId;
+
+	@Column (name="FED_FPAPKY")
+	@Nullable
+	public String facephiApiKey;
+
+
 	@Column (name="ALLOW_REGISTER")
 	@Nullable
 	public boolean allowRegister;

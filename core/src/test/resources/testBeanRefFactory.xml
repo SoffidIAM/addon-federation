@@ -11,7 +11,8 @@
         <constructor-arg>
            <list>
                 <value>console-test-applicationContext.xml</value>
-                <value>plugin-test-applicationContext.xml</value>
+                <value>classpath*:plugin-test-applicationContext.xml</value>
+                <value>classpath*:addon-test-applicationContext.xml</value>
                 <value>applicationContext-testDataSource.xml</value>
            </list>
         </constructor-arg>

@@ -507,10 +507,15 @@ public class FederationServiceImpl
 				for ( Iterator<AllowedScope> iterator2 = l.iterator(); iterator2.hasNext();) {
 					AllowedScope scope = iterator2.next();
 					if (scope.getId().longValue()==imp.getId().longValue()) {
-						checkIfScopeAlreadyExists(scope, entity.getAllowedScopes());
-						updateScope(imp, scope);
+						if (checkIfScopeAlreadyExists(scope, entity.getAllowedScopes()))
+						{
+							getAllowedScopeRoleEntityDao().remove(imp.getRoles());
+							getAllowedScopeEntityDao().remove(imp);
+						} else {
+							updateScope(imp, scope);
+							iterator2.remove();
+						}
 						found = true;
-						iterator2.remove();
 						break;
 					}
 				}
@@ -521,26 +526,27 @@ public class FederationServiceImpl
 				}
 			}
 			for (AllowedScope scope: l) {
-				checkIfScopeAlreadyExists(scope, entity.getAllowedScopes());
-				AllowedScopeEntity scopeEntity = getAllowedScopeEntityDao().newAllowedScopeEntity();
-				scopeEntity.setServiceProvider(entity);
-				scopeEntity.setScope(scope.getScope());
-				scopeEntity.setByDefault(Boolean.valueOf(scope.isByDefault()));
-				getAllowedScopeEntityDao().create(scopeEntity);
-				updateScope(scopeEntity, scope);
-				entity.getAllowedScopes().add(scopeEntity);
+				if (!checkIfScopeAlreadyExists(scope, entity.getAllowedScopes())) {
+					AllowedScopeEntity scopeEntity = getAllowedScopeEntityDao().newAllowedScopeEntity();
+					scopeEntity.setServiceProvider(entity);
+					scopeEntity.setScope(scope.getScope());
+					scopeEntity.setByDefault(Boolean.valueOf(scope.isByDefault()));
+					getAllowedScopeEntityDao().create(scopeEntity);
+					updateScope(scopeEntity, scope);
+					entity.getAllowedScopes().add(scopeEntity);
+				}
 			}
 		}
 	}
 
-	private void checkIfScopeAlreadyExists(AllowedScope scopeFront, Collection<AllowedScopeEntity> lsDB) throws java.lang.Exception{
+	private boolean checkIfScopeAlreadyExists(AllowedScope scopeFront, Collection<AllowedScopeEntity> lsDB) throws java.lang.Exception{
 		if (scopeFront!=null) {
 			for (AllowedScopeEntity scopeDB : lsDB) {
 				if (scopeFront.getScope().equals(scopeDB.getScope()) &&
 						(scopeFront.getId()==null || scopeFront.getId().longValue()!=scopeDB.getId().longValue())) {
 					if ((scopeDB.getRoles()==null || scopeDB.getRoles().isEmpty()) &&
 							(scopeFront.getRoles()==null || scopeFront.getRoles().isEmpty())) {
-						throw new InternalErrorException(Messages.getString("FederacioServiceImpl.SameRoleWithoutRoles"));
+						return true;
 					} else if (scopeDB.getRoles()!=null && !scopeDB.getRoles().isEmpty() &&
 							scopeFront.getRoles()!=null && !scopeFront.getRoles().isEmpty() &&
 							scopeDB.getRoles().size()==scopeFront.getRoles().size()) {
@@ -560,11 +566,12 @@ public class FederationServiceImpl
 							areEquals = found;
 						}
 						if (areEquals)
-							throw new InternalErrorException(Messages.getString("FederacioServiceImpl.SameRoleWithRoles"));
+							return true;
 					}
 				}
 			}
 		}
+		return false;
 	}
 
 	private void updateScope(AllowedScopeEntity entity, AllowedScope scope) {

@@ -168,6 +168,10 @@
 			onChange="ref:handler.updateOpenidMechanism"
 			label="${c:l('federacio.zul.openidGrantType.password_client_credentials')}"
 			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
+		<customfield3 dataType="BOOLEAN" id="oid_clientcred" 
+			onChange="ref:handler.updateOpenidMechanism"
+			label="${c:l('federacio.zul.openidGrantType.client_credentials')}"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 
 		<customfield3 dataType="STRING"  id="openidClientId"
 			bind="/federationMember/openidClientId"
@@ -188,6 +192,13 @@
 				onClick="ref:handler.clearOpenidSecret"
 				disabled="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		</div>
+
+		<customfield3 dataType="USER"  id="openidClientIdentity"
+			required="true"
+			bind="/federationMember/openidClientIdentity"
+			maxLength="100"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"
+			label="${c:l('federacio.zul.openidClientIdentity')}"/>
 
 		<customfield3 dataType="STRING" id="openidSectorIdentifierUrl"
 			bind="/federationMember/openidSectorIdentifierUrl"

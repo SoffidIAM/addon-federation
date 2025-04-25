@@ -14,3 +14,4 @@ target
 /webservice/.project
 /webservice/.settings/
 /webservice/target/
+core/src/test/resources/*.jpg

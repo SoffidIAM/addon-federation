@@ -163,7 +163,7 @@ public class KerberosLoginServlet extends HttpServlet {
         {
         	return "ERROR|Not authorized";
         }
-        int split = principal.lastIndexOf('@');
+        int split = principal.lastIndexOf('@'); // principal name has the form account@system.
         if (split < 0)
         {
         	resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -174,8 +174,8 @@ public class KerberosLoginServlet extends HttpServlet {
 
         Challenge challenge = 
         		logonService.requestIdpChallenge(Challenge.TYPE_KERBEROS, 
-        				principal,
-        				null, 
+        				principal.substring(0, split),
+        				principal.substring(split+1), 
         				hostSerial == null ? hostIP: hostSerial, clientIP,
         				Integer.decode(cardSupport),
         				IdpConfig.getConfig().getPublicId());

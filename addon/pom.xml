@@ -49,7 +49,7 @@
 						</goals>
 						<configuration>
 							<outputDirectory>${project.build.directory}/classes</outputDirectory>
-							<includeGroupIds>${pom.groupId}, com.github.scribejava, com.maxmind.geoip2,com.maxmind.db,com.fasterxml.jackson.core</includeGroupIds>
+							<includeGroupIds>${pom.groupId}, com.github.scribejava, com.maxmind.geoip2,com.maxmind.db,com.fasterxml.jackson.core,com.google.zxing</includeGroupIds>
 							<overWriteIfNewer>true</overWriteIfNewer>
 						</configuration>
 					</execution>
