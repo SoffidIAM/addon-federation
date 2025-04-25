@@ -1,0 +1,117 @@
+#app * {
+	font-size: 18px;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0
+}
+
+html, body, #app {
+	width: 100%;
+	height: 100%
+	display: flex; 
+	flex-direction: column
+}
+
+header, footer {
+	background-color: #343a40;
+	color: #fff
+}
+
+.header, .footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center
+}
+
+#app .logo {
+	display: none;
+}
+
+.header, .footer, #app {
+	max-width: 1280px;
+	margin: 0 auto
+}
+
+.framework {
+	font-size: 15px;
+	padding: 14px;
+	background-color: #f7df1e;
+	color: #000;
+	font-weight: 700
+}
+
+#app {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 8px
+}
+
+main {
+	display: flex;
+	flex-direction: column;
+	max-width: 1280px;
+	height: 100%;
+	margin: 0 8px;
+	padding-bottom: 8px
+}
+
+.title {
+	display: flex;
+	justify-content: space-between
+}
+
+.h2 {
+	font-size: 1.2em
+}
+
+.title, .sdk-section {
+	padding: 8px
+}
+
+.sdk-section {
+	width: 100%
+}
+
+.sdk-section {
+	position: relative;
+	flex: 1;
+}
+
+#widgetContainer {
+	height: 100%
+}
+
+.small {
+	font-size: 14px
+}
+
+.onboarding-finished {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	font-weight: 700;
+	color: #343a40
+}
+
+facephi-selphi {
+	--color-primary: #f7df1e;
+	--color-secondary: #ffffff;
+	--color-hover: #f7df1e77;
+	--color-progress-bar: #f7df1e;
+	--color-loading: #f7df1e;
+	--color-tutorial-tshirt: #f7df1e;
+	--color-tutorial-progress: #f7df1e;
+	--display-logo: "block"
+}
+
+facephi-selphid {
+	--color-primary: #f7df1e;
+	--color-hover: #f7df1e77;
+	--color-loading: #f7df1e;
+	--color-tutorial-background: #f7df1e;
+	--display-logo: "block"
+}
+
+div#app .header__container.sc-widget-header  { display: none };
+

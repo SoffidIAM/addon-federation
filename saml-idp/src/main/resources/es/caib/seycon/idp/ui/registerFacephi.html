@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+
+<head>
+	
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Soffid SAML Identity Provider</title>
+	
+	<!-- css -->
+	<link href="estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
+    <link rel="stylesheet" crossorigin href="assets/index-CEqf8FVk.css">
+	<style>
+		${raw:htmlCSS}
+	</style>
+	<!-- /css -->
+	
+	<script src="js/jquery-3.6.0.slim.min.js"></script>
+	<script>
+	
+		var extractionData = null;
+		var result = null;
+		function selphiCompleted(ev) {
+			
+			console.log("SELPHI ---------------------------------");
+			console.log(ev);
+			var e = ev.detail.detail;
+			if (e.result) {
+				document.getElementById("firstStep").style.display='none';
+				document.getElementById("secondStep").style.display='';
+				result = e.result;
+				extractionData = null;
+			}
+			else if (e.extractionData) {
+				extractionData = e.extractionData;
+				document.getElementById("secondStep").style.display='none';
+				document.getElementById("thirdStep").style.display='';
+				var form = document.getElementById("submitForm");
+				form.elements.data.value = JSON.stringify({result: result, extractionData: extractionData});
+				form.submit();
+			}
+		}
+		
+    function showFacephi() {
+      document.getElementById("initial").style.display='none';
+      document.getElementById("fromwebcam").style.display=null;
+    }
+
+    function showQr() {
+      document.getElementById("initial").style.display='none';
+      document.getElementById("frommobile").style.display=null;
+    }
+    
+		function onLoad() {
+/*			var sdk = document.getElementsByTagName("facephi-sdk-provider")
+				.item(0);
+			sdk.addEventListener('extractionFinish',selphiCompleted);
+			sdk.addEventListener('userCancel', () => {
+				window.location = "${loginPage}";
+			});
+      */
+			var sdk = document.getElementsByTagName("facephi-selphid-widget")
+				.item(0);
+			sdk.addEventListener('extractionFinish',selphiCompleted);
+		}
+    
+	</script>
+</head>
+
+<body onload="onLoad()">
+	${raw:htmlHeader}
+
+  <script>
+    const SELPHID_CONFIG = '<facephi-selphid-widget disable-exit="true"></facephi-selphid-widget>';
+  </script>
+  
+  <div id="initial" class="login">
+      You can use your ID card and a selphi to register yourself. <br>
+      You can register from this device, or from your table or mobile phone<br>
+      <button onclick="showFacephi()">From this device</button>
+      <button style="float: right" onclick="showQr()">From your mobile phone</button>
+      
+  </div>
+  <div id="frommobile" style="display:  none; text-align: center" class="login">
+    Please, scan this QR from your mobile phone.
+    <img src="${qr}" style="width: 200px"/>
+  </div>
+	
+  <div id="fromwebcam" style="display: none">
+    <div id="firstStep" class="login">${facephi.description1}</div>
+    <div id="secondStep" class="login" style="display:none">${facephi.description2}</div>
+    <div id="thirdStep" class="login" style="display:none">${facephi.description3}</div>
+
+    <form id="submitForm" method="post" action="${registerUrl}"><input type="hidden" name="data"></input></form>
+    <div id="app">
+      <section class="sdk-section">
+        <!-- SDK Provider -->
+        <facephi-sdk-provider 
+          apikey="${facephiKey}"
+          steps="START, SELPHID_WIDGET, SELPHI_WIDGET, FINISH"
+          show-logo="false"
+          disabled
+          customer-id="${facephiId}"
+          language="${lang}"	
+        >
+        <facephi-selphid-widget disable-exit="true">
+        </facephi-selphid-widget>
+        </facephi-sdk-provider>
+
+      </section>
+    </div>
+  </div>
+  <script type="module" src="assets/index-WKQCmRab.js"></script>
+	
+	${raw:htmlFooter}
+
+	<div class="centered" style="visibility:hidden" id="progressdiv">
+		<img class="centeredimage" src="img/progress.gif"/>
+	</div>
+	<script>
+		$("#registerButton").click(function () {
+			$("#progressdiv").css("visibility", "visible");
+			$("#registerlogin").fadeOut("slow");
+		});
+	</script>
+</body>
+</html>
