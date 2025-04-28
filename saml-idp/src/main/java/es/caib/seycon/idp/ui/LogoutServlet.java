@@ -32,6 +32,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
+import es.caib.seycon.idp.openid.server.OidcDebugController;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.FrontLogoutRequest;
 import es.caib.seycon.idp.server.LogoutHandler;
@@ -52,13 +53,16 @@ public class LogoutServlet extends HttpServlet {
         try {
         	boolean close = false;
         	String desiredTarget = (String) req.getSession().getAttribute("$$soffid$$-logout-redirect");
+        	if (OidcDebugController.isDebug()) log.info("desiredTarget: "+desiredTarget);
         	g.addArgument("logoutList", "[]");
         	Session session = new Autenticator().getSession(req, false);
         	if (session == null) {
     			close = true;
         	}
         	else if (isSafeLogout(req)) {
+        		if (OidcDebugController.isDebug()) log.info("PRE isSafeLogout and LogoutHandler");
         		LogoutResponse r = new LogoutHandler().logout(getServletContext(), req, session, true);
+        		if (OidcDebugController.isDebug()) log.info("POST isSafeLogout and LogoutHandler");
         		if (r.getFrontRequests() != null && ! r.getFrontRequests().isEmpty()) {
         			JSONArray a = new JSONArray();
         			for ( FrontLogoutRequest fr: r.getFrontRequests()) {
@@ -69,7 +73,10 @@ public class LogoutServlet extends HttpServlet {
         			}
                 	g.addArgument("logoutList", a.toString());
                 	g.addArgument("showProgress", "true");
+                	if (OidcDebugController.isDebug()) log.info("LogoutHandler");
+                	if (OidcDebugController.isDebug()) log.info("PRE LogoutHandler 2");
             		new LogoutHandler().logout(getServletContext(), req, session, false);
+            		if (OidcDebugController.isDebug()) log.info("POST LogoutHandler 2");
         		} else {
         			close = true;
         		}
@@ -78,6 +85,7 @@ public class LogoutServlet extends HttpServlet {
         	{
         		List<FederationMemberSession> sessions = countSessions(session);
         		if (sessions.isEmpty()) {
+        			if (OidcDebugController.isDebug()) log.info("LogoutHandler 2");
             		new LogoutHandler().logout(getServletContext(), req, session, false);
         			close = true;
         		}
@@ -99,10 +107,12 @@ public class LogoutServlet extends HttpServlet {
         		req.getSession().invalidate();
         		if (desiredTarget != null)
         		{
+        			if (OidcDebugController.isDebug()) log.info("sendRedirect to desiredTarget");
         			resp.sendRedirect(desiredTarget);
         			return;
         		}
         	}
+        	if (OidcDebugController.isDebug()) log.info("logout.html");
        		g.generate(resp, "logout.html"); //$NON-NLS-1$
 		} catch (Exception e) {
             String error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$

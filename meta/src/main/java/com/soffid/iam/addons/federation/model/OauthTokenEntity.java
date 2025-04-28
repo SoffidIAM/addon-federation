@@ -7,6 +7,7 @@ import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.model.TenantEntity;
 import com.soffid.mda.annotation.Column;
+import com.soffid.mda.annotation.DaoOperation;
 import com.soffid.mda.annotation.Depends;
 import com.soffid.mda.annotation.Entity;
 import com.soffid.mda.annotation.Identifier;
@@ -110,6 +111,9 @@ public class OauthTokenEntity {
 	OauthTokenEntity findByRefreshToken(String refreshToken) { return null;}
 	
 	List<OauthTokenEntity> findBySessionId(Long sessionId){return null;}
+
+	@DaoOperation
+	public void deleteExpiredOauthTokens() {}
 }
 
 @Index(entity = OauthTokenEntity.class, name = "SC_OAUTOK_TOK_UK", columns = {"TOK_TEN_ID", "TOK_TOKEN"})

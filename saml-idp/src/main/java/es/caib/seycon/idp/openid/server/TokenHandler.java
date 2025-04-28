@@ -103,10 +103,11 @@ public class TokenHandler {
 		return t;
 	}
 	
-	long last;
+	private long last = 0;
+
 	private void expireTokens() throws InternalErrorException {
 		long now = System.currentTimeMillis();
-		if (now > last + 120000) return; // Only purge after 2 minutes
+		if (now < last + 120000) return; // Only purge after 2 minutes
 		last = System.currentTimeMillis();
 		synchronized (pendingTokens) {
 			for ( Iterator<TokenInfo> it = pendingTokens.iterator(); it.hasNext();) 
@@ -139,6 +140,10 @@ public class TokenHandler {
 				}
 			}
 		}
+
+		// Finally, expired oauth tokens are deleted from the database,
+		// due to a unclosed sessions
+		getFederationService().deleteExpiredOauthTokens();
 	}
 
 	private String generateRandomString (int length)
@@ -681,13 +686,18 @@ public class TokenHandler {
 	public LogoutResponse revoke(ServletContext ctx, HttpServletRequest req, TokenInfo t) throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException {
 		if (t.getAuthorizationCode() != null)
 		{
+			if (OidcDebugController.isDebug()) log.info("Removing authorizationCode");
 			authorizationCodes.remove(t.getAuthorizationCode());
 			pendingTokens.remove(t);
 		}
-		if (t.refreshToken != null) 
+		if (t.refreshToken != null) {
+			if (OidcDebugController.isDebug()) log.info("Removing refreshTokens");
 			refreshTokens.remove(t.refreshToken);
+		}
+		if (OidcDebugController.isDebug()) log.info("Removing token");
 		tokens.remove(t.token);
-		
+
+		if (OidcDebugController.isDebug()) log.info("Removing oauthToken");
 		getFederationService().deleteOauthToken(generateOauthToken(t));
 
 		return null;
