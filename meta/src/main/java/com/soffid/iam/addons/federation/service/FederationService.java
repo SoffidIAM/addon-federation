@@ -22,6 +22,7 @@ import java.util.Map;
  */
 import org.springframework.transaction.annotation.Transactional;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
@@ -521,7 +522,8 @@ public abstract class FederationService {
 	@Description("Generates a SAML request to formard to the IdP")
 	SamlRequest generateSamlRequest (String serviceProvider, String identityProvider,
 			@Nullable String subject,
-			long sessionSeconds) {return null;}
+			long sessionSeconds,
+			@Nullable LevelOfAssuranceEnum loa) {return null;}
 
 	@Operation(grantees={federation_serviceProvider.class})
 	@Description("Generates a SAML request to formard to the IdP")

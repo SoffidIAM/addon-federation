@@ -316,6 +316,10 @@ span.labeltextbox input {
 	margin-top: -4px;
 }
 
+button.float-right {
+	float: right;
+}
+
 @media only screen and (max-width: 500px) {
 	.login {
 		width: auto;
@@ -323,6 +327,13 @@ span.labeltextbox input {
 		padding: 15px;
 	}
 	
+	.login.register button {
+		display: block;
+		margin-left: auto;
+		margin-right: auto;
+		margin-bottom: 16px;
+		float: none;
+	}
 	.logintype , .loginbox, .logintype2 , .nologintype, .cancellogintype, #language {
 		width: auto;
 	}
@@ -428,7 +439,7 @@ div#initial button:hover {
 div#frommobile img {
   display: block;
   margin-left: auto;
-  marign-right: auto;
+  margin-right: auto;
 }
 
 

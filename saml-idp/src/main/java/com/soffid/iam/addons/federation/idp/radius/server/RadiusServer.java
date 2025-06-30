@@ -56,7 +56,6 @@ import javax.servlet.ServletContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.soffid.iad.addons.federation.idp.tacacs.TacacsKeyManager;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.idp.radius.attribute.IntegerAttribute;
@@ -67,6 +66,7 @@ import com.soffid.iam.addons.federation.idp.radius.attribute.VendorSpecificAttri
 import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccountingRequest;
 import com.soffid.iam.addons.federation.idp.radius.packet.RadiusPacket;
+import com.soffid.iam.addons.federation.idp.tacacs.TacacsKeyManager;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Password;

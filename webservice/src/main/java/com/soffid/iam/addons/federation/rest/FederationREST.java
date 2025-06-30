@@ -114,7 +114,8 @@ public class FederationREST {
 
 			// Generate request
 			SamlRequest r = federationService.generateSamlRequest(request.getServiceProviderName(),
-					request.getIdentityProvider(), request.getUser(), Long.parseLong(request.getSessionSeconds()));
+					request.getIdentityProvider(), request.getUser(), Long.parseLong(request.getSessionSeconds()),
+					com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum.UNDEFINED);
 			return ResponseBuilder.responseOk(r);
 		} catch (Exception e) {
 			return ResponseBuilder.errorGeneric(e);

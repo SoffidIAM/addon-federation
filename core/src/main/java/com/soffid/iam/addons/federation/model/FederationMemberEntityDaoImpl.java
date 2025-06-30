@@ -231,6 +231,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setCertificateChain(sp.getCertificateChain());
 			target.setUidExpression(sp.getUidExpression());
 			target.setConsent(sp.getConsent());
+			target.setLevelOfAssurance(sp.getLevelOfAssurance());
 			if (sp.getOpenidMechanism() == null || sp.getOpenidMechanism().isEmpty() )
 				target.setOpenidMechanism(new HashSet<String>());
 			else
@@ -683,6 +684,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			sp.setNameIdFormat(source.getNameIdFormat());
 			sp.setUidExpression(source.getUidExpression());
 			sp.setConsent(source.getConsent());
+			sp.setLevelOfAssurance(source.getLevelOfAssurance());
 			if (source.getCertificateChain() != null)
 				sp.setCertificateChain(source.getCertificateChain());
 			StringBuffer sb = new StringBuffer();

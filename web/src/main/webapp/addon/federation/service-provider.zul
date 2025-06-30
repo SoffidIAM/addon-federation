@@ -69,6 +69,12 @@
 			bind="/federationMember/uidExpression"
 			selectIcon="/img/pencil.svg"
 			javascript='{"loginHint":"java.lang.String", "serviceLocator":"com.soffid.iam.ServiceLocator"}' />
+		<customfield3 id="levelOfAssurance"
+			label="${c:l('federacio.zul.levelOfAssurance')}"
+			bind="/federationMember/levelOfAssurance"
+			dataType='STRING'
+			enumeration="com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}"/>
 		<customfield3 id="consent"
 			label="${c:l('federacio.zul.consent')}"
 			bind="/federationMember/consent"

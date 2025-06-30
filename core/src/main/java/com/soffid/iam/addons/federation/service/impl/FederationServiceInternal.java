@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.opensaml.core.config.InitializationException;
 
 import com.soffid.iam.ServiceLocator;
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
@@ -258,14 +259,17 @@ public class FederationServiceInternal {
 			return object.toString();
 	}
 
-	public SamlRequest generateRequest(String serviceProvider, String identityProvider, String userName, long sessionSeconds) throws InternalErrorException {
+	public SamlRequest generateRequest(String serviceProvider, String identityProvider, String userName, 
+			long sessionSeconds, 
+			LevelOfAssuranceEnum levelOfAssurance) throws InternalErrorException {
 		IdentityProviderEntity fm = findIdentityProvider (identityProvider);
 
 		if (fm == null)
 			throw new InternalErrorException ("Cannot find identity provider with public id "+identityProvider);
 		
 		if (fm.getIdpType() == IdentityProviderType.SAML || fm.getIdpType() == IdentityProviderType.SOFFID)
-			return samlService.generateSamlRequest(serviceProvider, identityProvider, userName, sessionSeconds);
+			return samlService.generateSamlRequest(serviceProvider, identityProvider, userName, 
+					sessionSeconds, levelOfAssurance );
 		else 
 			return oidcService.generateOidcRequest(serviceProvider, identityProvider, userName, sessionSeconds);
 		

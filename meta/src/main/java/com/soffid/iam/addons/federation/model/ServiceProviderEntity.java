@@ -8,6 +8,7 @@ package com.soffid.iam.addons.federation.model;
 import java.util.Collection;
 import java.util.Date;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.mda.annotation.*;
 
@@ -96,11 +97,15 @@ public abstract class ServiceProviderEntity extends com.soffid.iam.addons.federa
 	@Nullable
 	Boolean freeRadius;
 
-
 	@Description("Ask consent to share information with this service provider")
 	@Column (name="FED_CONSEN")
 	@Nullable
 	public Boolean consent;
+
+	@Description("Default level of assurance")
+	@Column (name="FED_LEVASS", defaultValue = "com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum.UNDEFINED")
+	@Nullable
+	public LevelOfAssuranceEnum levelOfAssurance;
 
 	@Description("Dynamic registration token")
 	@Column(name="FED_REGTOK", length = 128)

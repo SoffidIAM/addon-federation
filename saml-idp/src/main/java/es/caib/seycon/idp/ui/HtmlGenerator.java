@@ -100,6 +100,7 @@ public class HtmlGenerator {
 
         if (selectedLang != null) {
         	internalParams.put("lang", selectedLang); //$NON-NLS-1$ //$NON-NLS-2$
+        	internalParams.put("lang_lower", selectedLang == null ? "" : selectedLang.toLowerCase()); //$NON-NLS-1$ //$NON-NLS-2$
         	internalParams.put("lang.active."+selectedLang, "active"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         IdpConfig idpConfig;

@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${lang}" lang="${lang}">
 
 <head>
-	
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge" >
 	<title>Soffid SAML Identity Provider</title>
 	
 	<!-- css -->
 	<link href="estilos/estils.css" rel="stylesheet" type="text/css" media="screen" />
-    <link rel="stylesheet" crossorigin href="assets/index-CEqf8FVk.css">
+  <link rel="stylesheet" crossorigin href="assets/index-CEqf8FVk.css">
+  <script type="module" crossorigin src="/assets/index-WKQCmRab.js"></script>
 	<style>
 		${raw:htmlCSS}
 	</style>
@@ -35,7 +37,16 @@
 				document.getElementById("secondStep").style.display='none';
 				document.getElementById("thirdStep").style.display='';
 				var form = document.getElementById("submitForm");
-				form.elements.data.value = JSON.stringify({result: result, extractionData: extractionData});
+				form.elements.data.value = JSON.stringify(
+						{frontDocument: result.imagesFullsize.frontDocument,
+						 backDocument: result.imagesFullsize.backDocument,
+						 faceDocument: result.images.faceImage,
+						 image: extractionData.bestImageCropped.data,
+						 imageTokenized: extractionData.bestImageTokenized,
+						 imageFull: extractionData.bestImage.data,
+						 templateRaw: extractionData.templateRaw.data});
+				document.getElementById("fromwebcam").style.display = "none";
+				document.getElementById("progressdiv").style.display = "";
 				form.submit();
 			}
 		}
@@ -51,16 +62,14 @@
     }
     
 		function onLoad() {
-/*			var sdk = document.getElementsByTagName("facephi-sdk-provider")
+			var sdk = document.getElementsByTagName("facephi-sdk-provider")
 				.item(0);
 			sdk.addEventListener('extractionFinish',selphiCompleted);
-			sdk.addEventListener('userCancel', () => {
-				window.location = "${loginPage}";
-			});
-      */
+      /*
 			var sdk = document.getElementsByTagName("facephi-selphid-widget")
 				.item(0);
 			sdk.addEventListener('extractionFinish',selphiCompleted);
+      */
 		}
     
 	</script>
@@ -68,16 +77,16 @@
 
 <body onload="onLoad()">
 	${raw:htmlHeader}
-
-  <script>
-    const SELPHID_CONFIG = '<facephi-selphid-widget disable-exit="true"></facephi-selphid-widget>';
-  </script>
-  
-  <div id="initial" class="login">
+ 
+  <div id="initial" class="login register">
+		{if ERROR}
+		<p id="errormsg" style="color:red;">${ERROR}</p>
+		{endif}
+	
       You can use your ID card and a selphi to register yourself. <br>
       You can register from this device, or from your table or mobile phone<br>
       <button onclick="showFacephi()">From this device</button>
-      <button style="float: right" onclick="showQr()">From your mobile phone</button>
+      <button class="float-right" onclick="showQr()">From your mobile phone</button>
       
   </div>
   <div id="frommobile" style="display:  none; text-align: center" class="login">
@@ -86,7 +95,9 @@
   </div>
 	
   <div id="fromwebcam" style="display: none">
-    <div id="firstStep" class="login">${facephi.description1}</div>
+    <div id="firstStep" class="login">
+    ${facephi.description1}
+    </div>
     <div id="secondStep" class="login" style="display:none">${facephi.description2}</div>
     <div id="thirdStep" class="login" style="display:none">${facephi.description3}</div>
 
@@ -98,23 +109,22 @@
           apikey="${facephiKey}"
           steps="START, SELPHID_WIDGET, SELPHI_WIDGET, FINISH"
           show-logo="false"
-          disabled
           customer-id="${facephiId}"
-          language="${lang}"	
+          language="${lang_lower}"	
         >
-        <facephi-selphid-widget disable-exit="true">
-        </facephi-selphid-widget>
         </facephi-sdk-provider>
 
       </section>
     </div>
   </div>
-  <script type="module" src="assets/index-WKQCmRab.js"></script>
 	
 	${raw:htmlFooter}
 
-	<div class="centered" style="visibility:hidden" id="progressdiv">
-		<img class="centeredimage" src="img/progress.gif"/>
+	<div class="centered" style="display: none; width: 80%; margin-left: -40%; text-align: center;" 
+		id="progressdiv">
+		<img class="centeredimage" src="img/progress.gif" 
+		style="display: block; position:static; margin-left: auto; margin-right: auto;"/>
+		${facephi.description3}
 	</div>
 	<script>
 		$("#registerButton").click(function () {

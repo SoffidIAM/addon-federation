@@ -9,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml.saml2.core.Assertion;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.model.FederationMemberEntityDao;
 import com.soffid.iam.addons.federation.model.IdentityProviderEntity;
@@ -96,8 +97,10 @@ public abstract class AbstractFederationService {
 	}
 
 	public SamlRequest generateRequest(String serviceProvider, String identityProvider, String userName,
-			long sessionSeconds) throws InternalErrorException {
-		return serviceBase.generateRequest(serviceProvider, identityProvider, userName, sessionSeconds);
+			long sessionSeconds,
+			LevelOfAssuranceEnum loa) throws InternalErrorException {
+		return serviceBase.generateRequest(serviceProvider, identityProvider, userName, sessionSeconds,
+				loa);
 	}
 
 	public SamlRequest generateLogout(String serviceProvider, String identityProvider, String userName, boolean forced,

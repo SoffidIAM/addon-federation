@@ -9,20 +9,25 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.namespace.QName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.opensaml.Configuration;
 import org.opensaml.common.SAMLObjectBuilder;
+import org.opensaml.saml2.common.Extensions;
+import org.opensaml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml2.core.AuthnRequest;
 import org.opensaml.saml2.core.NameID;
 import org.opensaml.saml2.core.NameIDPolicy;
+import org.opensaml.saml2.core.RequestedAuthnContext;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.ws.transport.http.HTTPInTransport;
 import org.opensaml.ws.transport.http.HTTPOutTransport;
@@ -30,6 +35,7 @@ import org.opensaml.ws.transport.http.HttpServletRequestAdapter;
 import org.opensaml.ws.transport.http.HttpServletResponseAdapter;
 import org.opensaml.xml.util.DatatypeHelper;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 
@@ -86,6 +92,10 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
 					else {
 						ctx.updateAllowedAuthenticationMethods();
 					}
+					
+					AuthnRequest authnreq = ((Saml2LoginContext) loginContext).getAuthenticiationRequestXmlObject();
+					fetchLevelOfAssurance(ctx, authnreq);
+					
 		    		httpRequest.getSession().removeAttribute(SessionConstants.OPENID_HOLDERGROUP);
 					if (ctx.isAlwaysAskForCredentials() || loginContext.isForceAuthRequired()) {
 						loginContext.setPrincipalAuthenticated(true);
@@ -109,7 +119,24 @@ public class SoffidSSOProfileHandler extends SSOProfileHandler {
 		pendingSession.remove();
     }
 
-    protected void resolveAttributes(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
+    private void fetchLevelOfAssurance(AuthenticationContext ctx, AuthnRequest request) {
+    	RequestedAuthnContext authctx = request.getRequestedAuthnContext();
+    	if (authctx != null) {
+    		List<AuthnContextClassRef> accr = authctx.getAuthnContextClassRefs();
+    		if (accr != null) {
+    			for (AuthnContextClassRef cr: authctx.getAuthnContextClassRefs()) {
+    				if (cr.getAuthnContextClassRef().equals("http://eidas.europa.eu/LoA/low"))
+    					ctx.setLevelOfAssurance(LevelOfAssuranceEnum.LOW);
+    				if (cr.getAuthnContextClassRef().equals("http://eidas.europa.eu/LoA/high"))
+    					ctx.setLevelOfAssurance(LevelOfAssuranceEnum.HIGH);
+    				if (cr.getAuthnContextClassRef().equals("http://eidas.europa.eu/LoA/substantial"))
+    					ctx.setLevelOfAssurance(LevelOfAssuranceEnum.SUBSTANTIAL);
+    			}
+    		}
+    	}
+	}
+
+	protected void resolveAttributes(BaseSAML2ProfileRequestContext<?, ?, ?> requestContext) throws ProfileException {
         AbstractSAML2ProfileConfiguration profileConfiguration = requestContext.getProfileConfiguration();
         SAML2AttributeAuthority attributeAuthority = profileConfiguration.getAttributeAuthority();
         try {

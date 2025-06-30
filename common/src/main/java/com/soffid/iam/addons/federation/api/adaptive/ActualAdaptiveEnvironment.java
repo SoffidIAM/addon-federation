@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.soffid.iam.addons.federation.api.GeoInformation;
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.common.UserCredentialType;
 import com.soffid.iam.addons.federation.remote.RemoteServiceLocator;
@@ -33,6 +34,7 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	private String serviceProvider;
 	private boolean deviceCertificate;
 	private boolean isEsso;
+	private LevelOfAssuranceEnum levelOfAssurance;
 	
 	private Collection<UserCredentialType> tokens;
 
@@ -49,6 +51,14 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 		this.isEsso = esso;
 	}
 
+	public LevelOfAssuranceEnum levelOfAssurance() {
+		return levelOfAssurance;
+	}
+	
+	public void setLevelOfAssurance(LevelOfAssuranceEnum levelOfAssurance) {
+		this.levelOfAssurance = levelOfAssurance;
+	}
+	
 	@Override
 	public boolean newDevice() throws InternalErrorException {
 		if (hostId == null || user == null)

@@ -66,6 +66,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import com.soffid.iam.ServiceLocator;
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.adaptive.AdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.Attribute;
@@ -2274,7 +2275,8 @@ public class FederationServiceImpl
 	@Override
 	protected SamlRequest handleGenerateSamlRequest(String serviceProvider, String identityProvider,
 			String userName,
-			long sessionSeconds) throws Exception {
+			long sessionSeconds,
+			LevelOfAssuranceEnum levelOfAssurance) throws Exception {
 		if (userName != null && !userName.trim().isEmpty())
 		{
 			for (FederationMemberEntity fm: getIdentityProviderEntityDao().findFMByPublicId(identityProvider))
@@ -2288,7 +2290,8 @@ public class FederationServiceImpl
 				}
 			}
 		}
-		return getDelegate().generateRequest (serviceProvider, identityProvider, userName, sessionSeconds);
+		return getDelegate().generateRequest (serviceProvider, identityProvider, userName, 
+				sessionSeconds, levelOfAssurance);
 	}
 
 	@Override

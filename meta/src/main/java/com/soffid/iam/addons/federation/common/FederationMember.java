@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.soffid.iam.addons.federation.api.Digest;
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
 import com.soffid.mda.annotation.Attribute;
 import com.soffid.mda.annotation.Column;
@@ -154,6 +155,11 @@ public class FederationMember {
 	
 	@Nullable
 	public Boolean consent;
+
+	@Description("Default level of assurance")
+	@Attribute (defaultValue = "com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum.UNDEFINED")
+	@Nullable
+	public LevelOfAssuranceEnum levelOfAssurance;
 
 	@Nullable
 	public Boolean allowIncludeInIframe;

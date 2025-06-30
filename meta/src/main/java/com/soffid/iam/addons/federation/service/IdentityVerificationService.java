@@ -52,10 +52,10 @@ public abstract class IdentityVerificationService {
 		return null;
 	}
 	
-	public FacialVerification authenticateFacial(String identityProvider, String image1, String image2) 
+	public FacialVerification authenticateFacial(String identityProvider, byte[] image1, byte[] image2) 
 	{ return null; }
 
-	public LivenessVerification passiveLiveness(String identityProvider, String image1) 
+	public LivenessVerification passiveLiveness(String identityProvider, byte[] image1) 
 	{ return null; }
 
 }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.soffid.iam.addons.federation.api.GeoInformation;
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
 import com.soffid.iam.addons.federation.service.GeoInformationService;
 import com.soffid.iam.api.Host;
@@ -143,5 +144,9 @@ public class AdaptiveEnvironment implements Serializable {
 	
 	public String currentAuthenticationMethod() {
 		return null;
+	}
+	
+	public LevelOfAssuranceEnum levelOfAssurance() {
+		return LevelOfAssuranceEnum.UNDEFINED;
 	}
 }

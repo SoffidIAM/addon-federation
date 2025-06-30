@@ -161,11 +161,11 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 				IdentityProviderType.OPENID_CONNECT.equals( idpType ));
 
 		Boolean allowRegister = (Boolean) XPathUtils.eval(this, "federationMember/allowRegister");
-		Boolean allowFacephiRegister = false; // (Boolean) XPathUtils.eval(this, "federationMember/allowFacephiRegister");
+		Boolean allowFacephiRegister = (Boolean) XPathUtils.eval(this, "federationMember/allowFacephiRegister");
 		if ( Boolean.TRUE.equals(allowRegister) && marcat)
 		{
 			
-			((CustomField3)getFellow("id_allowFacephiRegister")).setVisible(false);
+			((CustomField3)getFellow("id_allowFacephiRegister")).setVisible(true);
 			getFellow("id_facephiApiKey").setVisible(allowFacephiRegister);
 			getFellow("id_facephiKey").setVisible(allowFacephiRegister);
 			getFellow("id_facephiId").setVisible(allowFacephiRegister);

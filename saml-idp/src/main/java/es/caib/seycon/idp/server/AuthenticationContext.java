@@ -36,6 +36,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.http.HttpCookie;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.UserCredential;
 import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
@@ -90,7 +91,27 @@ public class AuthenticationContext {
 	private Collection<UserCredentialChallenge> pushChallenge;
 	OtpDevice otpDeviceToRegister;
 	Challenge otpDeviceChallenge;
+	LevelOfAssuranceEnum levelOfAssurance = null;
 	
+	public LevelOfAssuranceEnum getLevelOfAssurance() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
+		if (levelOfAssurance != null) {
+			return levelOfAssurance;
+		}
+		if (publicId == null)
+			return LevelOfAssuranceEnum.UNDEFINED;
+		
+		IdpConfig config = IdpConfig.getConfig();
+    	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
+		if (fm == null || fm.getLevelOfAssurance() == null)
+			return LevelOfAssuranceEnum.UNDEFINED;
+		else
+			return fm.getLevelOfAssurance();
+	}
+
+	public void setLevelOfAssurance(LevelOfAssuranceEnum levelOfAssurance) {
+		this.levelOfAssurance = levelOfAssurance;
+	}
+
 	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
 	private boolean alwaysAskForCredentials;
@@ -175,6 +196,7 @@ public class AuthenticationContext {
     	
     	FederationMember idp = config.getFederationMember();
         String relyingParty = (String) request.getSession().getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
+        levelOfAssurance = null;
         
         if (relyingParty != null) {
         	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
@@ -369,6 +391,7 @@ public class AuthenticationContext {
     	env.setServiceProvider(publicId);
     	env.setSourceIp(remoteIp);
     	env.setUser(currentUser);
+    	env.setLevelOfAssurance(getLevelOfAssurance());
     	if (step == 2) {
     		env.setCurrentAuthenticationMethod(getUsedMethod());
     	}

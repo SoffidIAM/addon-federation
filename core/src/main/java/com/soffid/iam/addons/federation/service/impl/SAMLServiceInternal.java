@@ -160,6 +160,7 @@ import org.w3c.dom.TypeInfo;
 import org.xml.sax.SAXException;
 
 import com.soffid.iam.addons.federation.FederationServiceLocator;
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.addons.federation.model.FederationMemberEntity;
@@ -390,7 +391,8 @@ public class SAMLServiceInternal extends AbstractFederationService {
 	private SamlRequestEntityDao samlRequestEntityDao;
 	private SessionService sessionService;
 
-	public SamlRequest generateSamlRequest(String serviceProvider, String identityProvider, String userName, long sessionSeconds) throws InternalErrorException {
+	public SamlRequest generateSamlRequest(String serviceProvider, String identityProvider, String userName, long sessionSeconds, 
+			LevelOfAssuranceEnum levelOfAssurance) throws InternalErrorException {
 		try {
 			// Get the assertion builder based on the assertion element name
 			SAMLObjectBuilder<AuthnRequest> builder = (SAMLObjectBuilder<AuthnRequest>) builderFactory.getBuilder(AuthnRequest.DEFAULT_ELEMENT_NAME);
@@ -477,7 +479,7 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				req.setSubject(newSubject );
 			}
 
-			addEidasTags(req, idp);
+			addEidasTags(req, idp, levelOfAssurance);
 			
 			// Sign again
 			Element xml = sign (signatureOwner, builderFactory, (SignableSAMLObject) req, idp);
@@ -507,7 +509,8 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		}
 	}
 
-	private void addEidasTags(AuthnRequest req, EntityDescriptor idp) {
+	private void addEidasTags(AuthnRequest req, EntityDescriptor idp, 
+			LevelOfAssuranceEnum levelOfAssurance) {
 		org.opensaml.saml.saml2.metadata.Extensions extensions = idp.getExtensions();
 		if (extensions != null) {
 			for (XMLObject extension: extensions.getUnknownXMLObjects(new QName("http://eidas.europa.eu/saml-extensions", "Provider"))) {
@@ -531,6 +534,12 @@ public class SAMLServiceInternal extends AbstractFederationService {
 				AuthnContextClassRef acc = new AuthnContextClassRefBuilder().buildObject();
 				
 				String securityLevel = extension.getDOM().getAttribute("SecurityLevel");
+				if (levelOfAssurance == LevelOfAssuranceEnum.LOW)
+					securityLevel = "http://eidas.europa.eu/LoA/low";
+				else if (levelOfAssurance == LevelOfAssuranceEnum.HIGH)
+					securityLevel = "http://eidas.europa.eu/LoA/high";
+				else if (levelOfAssurance == LevelOfAssuranceEnum.SUBSTANTIAL)
+					securityLevel = "http://eidas.europa.eu/LoA/substantial";
 				if (securityLevel == null)
 					acc.setAuthnContextClassRef("http://eidas.europa.eu/LoA/low");
 				else

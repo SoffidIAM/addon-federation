@@ -2,7 +2,9 @@ package com.soffid.iam.addons.federation.service;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -176,17 +178,18 @@ public class IdentityVerificationServiceImpl extends IdentityVerificationService
 			df.setDocumentCountry(document.optString("country", null));
 			df.setDocumentNumber(document.optString("number", null));
 			df.setDocumentType(document.optString("type", null));
-			if (document.has("validUntil"))
+			if (document.optString("validUntil", null) != null)
 				df.setDocumentValidUntil(new SimpleDateFormat("yyyy-MM-dd").parse(
 						document.getString("validUntil")));
 			final JSONObject person = verification.getJSONObject("person");
 			df.setFirstName(person.optString("firstName", null));
  			df.setLastName(person.optString("lastName", null));
- 			if (person.has("dateOfBirth"))
+ 			if (person.optString("dateOfBirth", null) != null)
 				df.setBirthDate(new SimpleDateFormat("yyyy-MM-dd").parse(
 						person.getString("dateOfBirth")));
 			df.setReason(verification.optString("reason", null));
-			df.setSuccess("success".equals(response.get("status")));
+			df.setSuccess("approved".equals(verification.get("status")));
+			df.setFinished(true);
 			return df;
 		}
 		else
@@ -198,25 +201,43 @@ public class IdentityVerificationServiceImpl extends IdentityVerificationService
 
 	@Override
 	protected FacialVerification handleAuthenticateFacial(String identityProvider,
-			String image1, String image2) throws Exception {
+			byte[] face, byte[] template) throws Exception {
 		String key = getApiKey(identityProvider);
+		
+		{
+			FileOutputStream f1 = new FileOutputStream("/tmp/image1");
+			OutputStreamWriter ow = new OutputStreamWriter(f1);
+			JSONWriter writer = new JSONWriter(ow);
+			writer.object();
+			writer.key("token1");
+			writer.value(Base64.getEncoder().encodeToString(face));
+			
+			writer.key("token2");
+			writer.value(Base64.getEncoder().encodeToString(template));
+			
+			writer.key("method");
+			writer.value(3); // IDCARD Face
+			writer.endObject();
+			ow.close();
+			f1.close();
+		}
 		
 		if (key == null)
 			throw new InternalErrorException("Cannot find API key for identity provider "+identityProvider);
 
 		FacephiInvocation i = new FacephiInvocation(key);
-		i.invoke("https://api.identity-platform.io/verify/documentValidation/v2/start",
+		i.invoke("https://api.identity-platform.io/services/authenticateFacial",
 				(w) -> {
 					JSONWriter writer = new JSONWriter(w);
 					writer.object();
 					writer.key("token1");
-					writer.value(image1);
+					writer.value(Base64.getEncoder().encodeToString(face));
 					
 					writer.key("token2");
-					writer.value(image2);
+					writer.value(Base64.getEncoder().encodeToString(template));
 					
-					writer.key("type");
-					writer.value(3);
+					writer.key("method");
+					writer.value(3); // IDCARD Face
 					writer.endObject();
 					w.close();
 					
@@ -237,19 +258,19 @@ public class IdentityVerificationServiceImpl extends IdentityVerificationService
 	}
 
 	@Override
-	protected LivenessVerification handlePassiveLiveness(String identityProvider, String image1) throws Exception {
+	protected LivenessVerification handlePassiveLiveness(String identityProvider, byte[] image1) throws Exception {
 		String key = getApiKey(identityProvider);
 		
 		if (key == null)
 			throw new InternalErrorException("Cannot find API key for identity provider "+identityProvider);
 
 		FacephiInvocation i = new FacephiInvocation(key);
-		i.invoke("https://api.identity-platform.io/verify/documentValidation/v2/start",
+		i.invoke("https://api.identity-platform.io/services/evaluatePassiveLivenessToken",
 				(w) -> {
 					JSONWriter writer = new JSONWriter(w);
 					writer.object();
 					writer.key("imageBuffer");
-					writer.value(image1);
+					writer.value(Base64.getEncoder().encodeToString(image1));
 					writer.endObject();
 					w.close();
 					

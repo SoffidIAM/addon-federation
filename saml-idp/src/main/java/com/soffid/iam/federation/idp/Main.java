@@ -63,8 +63,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.context.ContextLoaderListener;
 import org.xml.sax.SAXException;
 
-import com.soffid.iad.addons.federation.idp.tacacs.TacacsServer;
-import com.soffid.iad.addons.federation.idp.tacacs.TacacsServerListener;
 import com.soffid.iam.ServiceLocator;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
@@ -74,6 +72,8 @@ import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.idp.radius.server.FreeRadiusWebServer;
 import com.soffid.iam.addons.federation.idp.radius.server.RadiusServer;
+import com.soffid.iam.addons.federation.idp.tacacs.TacacsServer;
+import com.soffid.iam.addons.federation.idp.tacacs.TacacsServerListener;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.addons.passrecover.servlet.RecoverPasswordServlet;
 import com.soffid.iam.ssl.SeyconKeyStore;
@@ -270,7 +270,7 @@ public class Main {
     
             // Deploy war
             ServletContextHandler ctx = deployWar();
-    
+            
             // Start
             server.addEventListener(listener );
             lastException = null;
@@ -655,6 +655,8 @@ public class Main {
         
         MimeTypes mt = ctx.getMimeTypes();
         mt.addMimeMapping("js", "text/javascript");
+        
+        ctx.setMaxFormContentSize(200_000_000); // 200 MB for identity validation images
         return ctx;
     }
 

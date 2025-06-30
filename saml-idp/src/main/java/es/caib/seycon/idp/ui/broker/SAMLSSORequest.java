@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
@@ -61,7 +62,8 @@ public class SAMLSSORequest extends BaseForm {
 					cfg.getPublicId(),
 					idp,
 					user,
-					timeOut == null ? 30*60: timeOut.longValue());
+					timeOut == null ? 30*60: timeOut.longValue(),
+					LevelOfAssuranceEnum.UNDEFINED);
 			if (samlRequest.getMethod().equals( "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST") )
 			{
 				resp.setContentType("text/html; charset=UTF-8");

@@ -89,7 +89,8 @@ public class RegisterAction extends HttpServlet {
 					}
 				}
 			}
-			if (!amf.getIdentityProvider().isAllowRegister()) {
+			if (!amf.getIdentityProvider().isAllowRegister() ||
+					amf.getIdentityProvider().isAllowFacephiRegister()) {
 				throw new ServletException("Not authorized to self register");
 			}
 

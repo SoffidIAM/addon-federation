@@ -6,6 +6,7 @@ import com.soffid.mda.annotation.ValueObject;
 
 @ValueObject
 public class DocumentVerification {
+	boolean finished;
 	boolean success;
 	int code;
 	String status;

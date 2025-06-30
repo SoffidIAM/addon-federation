@@ -79,7 +79,7 @@ public class AuthenticationMethodFilter {
     	IdpConfig config = IdpConfig.getConfig();
 
     	if (relyingParty == null)
-    		throw new InternalErrorException ("Cannot guess relying party");
+    		return config.getFederationMember();
 
     	return config.findIdentityProviderForRelyingParty(relyingParty);
     }

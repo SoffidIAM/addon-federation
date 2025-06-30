@@ -723,6 +723,7 @@
 										"failuresForSameIp":"java.lang.Integer",
 										"failuresForSameUser":"java.lang.Integer",
 										"failuresRatio":"java.lang.Integer",
+										"levelOfAuthentication":"java.lang.Integer",
 										"currentAuthenticationMethod":"java.lang.String",
 										"hour":"java.lang.Integer",
 										"identityProvider":"java.lang.String",

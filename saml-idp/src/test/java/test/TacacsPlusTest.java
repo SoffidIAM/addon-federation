@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeoutException;
 
-import com.soffid.iad.addons.federation.idp.tacacs.AcctReply;
-import com.soffid.iad.addons.federation.idp.tacacs.Argument;
-import com.soffid.iad.addons.federation.idp.tacacs.AuthenReply;
-import com.soffid.iad.addons.federation.idp.tacacs.SessionClient;
-import com.soffid.iad.addons.federation.idp.tacacs.TAC_PLUS;
-import com.soffid.iad.addons.federation.idp.tacacs.TAC_PLUS.AUTHEN.SVC;
-import com.soffid.iad.addons.federation.idp.tacacs.TacacsClient;
+import com.soffid.iam.addons.federation.idp.tacacs.AcctReply;
+import com.soffid.iam.addons.federation.idp.tacacs.Argument;
+import com.soffid.iam.addons.federation.idp.tacacs.AuthenReply;
+import com.soffid.iam.addons.federation.idp.tacacs.SessionClient;
+import com.soffid.iam.addons.federation.idp.tacacs.TAC_PLUS;
+import com.soffid.iam.addons.federation.idp.tacacs.TacacsClient;
+import com.soffid.iam.addons.federation.idp.tacacs.TAC_PLUS.AUTHEN.SVC;
 
 public class TacacsPlusTest {
 	String host = "localhost";
