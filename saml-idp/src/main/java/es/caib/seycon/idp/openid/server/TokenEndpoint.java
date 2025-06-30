@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -23,11 +24,9 @@ import org.json.JSONObject;
 import com.soffid.iam.addons.federation.api.Digest;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
-import com.soffid.iam.addons.federation.common.FederationMemberSession;
+import com.soffid.iam.api.Group;
 import com.soffid.iam.api.Password;
-import com.soffid.iam.api.Session;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
-import com.soffid.iam.utils.ConfigurationCache;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -131,8 +130,12 @@ public class TokenEndpoint extends HttpServlet {
 			
 			// Check scope
 			boolean found = false;
-			request.setScope(req.getParameter("scope"));
-	    	if (request.getScope() != null) {
+			String hgSession = null;
+			request.setScope(getScopeFromRequest(req));
+			if (isDebug()) log.info("getScope: "+request.getScope());
+			request.setHolderGroup(getHolderGroupFromScopeAndSession(request.getScope(), hgSession));
+			if (isDebug()) log.info("getHolderGroup: "+request.getHolderGroup());
+			if (request.getScope() != null) {
 		    	for (String s: request.getScope().split(" +"))
 		    	{
 		    		if (s.equalsIgnoreCase("openid")) found = true;
@@ -746,4 +749,63 @@ public class TokenEndpoint extends HttpServlet {
 		super.service(req, resp);
 	}
 
+	private String getScopeFromRequest(HttpServletRequest req) {
+		String[] a = req.getParameterValues("scope");
+		if (a!=null && a.length>0) {
+			HashMap<String, String> hm = new HashMap<String, String>();
+			for (String i : a) {
+				for (String i2 : i.split(" ")) {
+					hm.put(i2.trim(), i2.trim());
+				}
+			}
+			String o = "";
+			for (String i : hm.keySet()) {
+				if (!i.trim().isEmpty()) {
+					if (o.length()>0)
+						o = o+" ";
+					o = o+i;
+				}
+			}
+			return o;
+		}
+		return null;
+	}
+
+	private String getHolderGroupFromScopeAndSession(String scope, String sessionHolderGroup) {
+		if (scope==null || !scope.toLowerCase().contains("holdergroup:"))
+			return getHolderGroupFromSession(sessionHolderGroup);
+
+		String[] sa = scope.trim().split(" ");
+		for (String s : sa) {
+			if (s.toLowerCase().startsWith("holdergroup:")) {
+				if (isDebug()) log.info("s: "+s);
+				String hg = s.substring(s.indexOf(":")+1);
+				if (hg!=null && !hg.trim().isEmpty()) {
+					try {
+						hg =  URLDecoder.decode(hg,"UTF-8");
+						Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(hg);
+						if (g!=null)
+							return g.getName();
+					} catch (InternalErrorException | IOException e) {}
+				}
+				return getHolderGroupFromSession(sessionHolderGroup);
+			}
+		}
+		return getHolderGroupFromSession(sessionHolderGroup);
+	}
+
+	private String getHolderGroupFromSession(String sessionHolderGroup) {
+		if (sessionHolderGroup!=null) {
+			try {
+				Group g = new RemoteServiceLocator().getGroupService().findGroupByGroupName(sessionHolderGroup);
+				if (g!=null) {
+					if (isDebug()) log.info("g: "+g.getName());
+					return g.getName();
+				} else {
+					if (isDebug()) log.info("g: null");
+				}
+			} catch (InternalErrorException | IOException e) {}
+		}
+		return null;
+	}
 }
