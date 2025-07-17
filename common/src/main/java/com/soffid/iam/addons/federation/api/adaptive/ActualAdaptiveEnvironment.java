@@ -121,7 +121,7 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 	@Override
 	public int daysSinceLastLogon() throws InternalErrorException {
 		if (user == null)
-			return 0;
+			return 3650;
 		Date lastLogon = getService().getLastLogon(user.getId());
 		if (lastLogon == null)
 			return 3650;
@@ -129,6 +129,24 @@ public class ActualAdaptiveEnvironment extends AdaptiveEnvironment {
 		long days = System.currentTimeMillis() - lastLogon.getTime();
 		return (int) (days / 1000L / 60L / 60L / 24L);
 	}
+
+	@Override
+	public int daysSinceLastLogonFromSameHost () throws InternalErrorException
+	{
+		if (user == null)
+			return 3650;
+		if (hostId == null)
+			return 3650;
+		
+		Date lastLogon = getService().getLastLogon(user.getId(), hostId);
+					
+		if (lastLogon == null)
+			return 3650;
+		
+		long days = System.currentTimeMillis() - lastLogon.getTime();
+		return (int) (days / 1000L / 60L / 60L / 24L);
+	}
+	
 
 //	@Override
 //	public int daysSinceLastCompatibleLogon() {

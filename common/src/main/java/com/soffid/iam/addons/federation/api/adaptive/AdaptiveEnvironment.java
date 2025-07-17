@@ -72,7 +72,7 @@ public class AdaptiveEnvironment implements Serializable {
 		return 0;
 	}
 	
-	public int daysSinceLastLogonFromSameHost ()
+	public int daysSinceLastLogonFromSameHost () throws InternalErrorException
 	{
 		return 0;
 	}
