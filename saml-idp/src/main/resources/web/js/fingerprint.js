@@ -13,10 +13,11 @@ var createCredentialDefaultArgs = {
             name: "soffid",
             displayName: "Soffid user"
         },
-        pubKeyCredParams: [{
-            type: "public-key",
-            alg: -7
-        }],
+        pubKeyCredParams: [
+          {type: "public-key", alg: -7 /*Ed25519*/},
+          {type: "public-key", alg: -8 /*ES256*/},
+          {type: "public-key", alg: -257 /*Rs256*/}
+        ],
         attestation: "direct"
     }
 };
