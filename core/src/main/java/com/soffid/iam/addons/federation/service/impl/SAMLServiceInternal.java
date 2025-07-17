@@ -101,6 +101,7 @@ import org.opensaml.saml.saml2.core.AttributeValue;
 import org.opensaml.saml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
 import org.opensaml.saml.saml2.core.AuthnRequest;
+import org.opensaml.saml.saml2.core.AuthnStatement;
 import org.opensaml.saml.saml2.core.Conditions;
 import org.opensaml.saml.saml2.core.EncryptedAssertion;
 import org.opensaml.saml.saml2.core.Extensions;
@@ -318,6 +319,19 @@ public class SAMLServiceInternal extends AbstractFederationService {
 		{
 			result.setFailureReason("Cannot get user name. Format "+nameID.getFormat()+" not supported");
 			return result;
+		}
+		
+		
+		if (assertion.getAuthnStatements() != null) {
+			for (AuthnStatement authStmt: assertion.getAuthnStatements()) {
+				if (authStmt.getAuthnContext() != null) {
+					if (authStmt.getAuthnContext().getAuthnContextClassRef() != null)
+						result.setAuthenticationContext(authStmt
+								.getAuthnContext()
+								.getAuthnContextClassRef()
+								.getAuthnContextClassRef());
+				}
+			}
 		}
 		
 		StringBuffer sb = new StringBuffer();

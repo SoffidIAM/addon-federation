@@ -70,6 +70,14 @@ import nl.basjes.parse.useragent.UserAgent.ImmutableUserAgent;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
 
 public class AuthenticationContext {
+	public String getActualAuthenticationContext() {
+		return actualAuthenticationContext;
+	}
+
+	public void setActualAuthenticationContext(String actualAuthenticationContext) {
+		this.actualAuthenticationContext = actualAuthenticationContext;
+	}
+
 	String publicId;
 	Set<String> requestedAuthenticationMethod;
 	int step;
@@ -92,6 +100,7 @@ public class AuthenticationContext {
 	OtpDevice otpDeviceToRegister;
 	Challenge otpDeviceChallenge;
 	LevelOfAssuranceEnum levelOfAssurance = null;
+	String actualAuthenticationContext = null;
 	
 	public LevelOfAssuranceEnum getLevelOfAssurance() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		if (levelOfAssurance != null) {
@@ -101,7 +110,7 @@ public class AuthenticationContext {
 			return LevelOfAssuranceEnum.UNDEFINED;
 		
 		IdpConfig config = IdpConfig.getConfig();
-    	FederationMember fm = config.findIdentityProviderForRelyingParty(publicId);
+    	FederationMember fm = config.getFederationService().findFederationMemberByPublicId(publicId);
 		if (fm == null || fm.getLevelOfAssurance() == null)
 			return LevelOfAssuranceEnum.UNDEFINED;
 		else
@@ -1091,6 +1100,5 @@ public class AuthenticationContext {
 	public void setOtpDeviceChallenge(Challenge otpDeviceChallenge) {
 		this.otpDeviceChallenge = otpDeviceChallenge;
 	}
-
 
 }

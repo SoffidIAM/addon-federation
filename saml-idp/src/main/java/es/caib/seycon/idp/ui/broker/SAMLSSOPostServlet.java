@@ -141,6 +141,7 @@ public class SAMLSSOPostServlet extends BaseForm {
 			else
 			{
         		AuthenticationContext ctx = AuthenticationContext.fromRequest(req);
+        		ctx.setActualAuthenticationContext(sl.getAuthenticationContext());
         		String accountName = findIdpAccount(sl.getUser(), cfg.getSystem());
         		ctx.authenticated(accountName, "E", resp);
         		ctx.store(req);

@@ -28,4 +28,6 @@ public class SamlValidationResults {
 	Usuari user;
 	
 	String failureReason;
+	
+	String authenticationContext;
 }

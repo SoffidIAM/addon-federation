@@ -40,6 +40,7 @@ import org.eclipse.jetty.http.HttpCookie;
 import org.opensaml.saml2.core.AuthnContext;
 import org.opensaml.util.storage.StorageService;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
@@ -445,7 +446,10 @@ public class Autenticator {
     			req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
-            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session, authCtx.getSelectedHolderGroup());
+            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session, 
+            		authCtx.getSelectedHolderGroup(),
+            		authCtx.getLevelOfAssurance(),
+            		authCtx.getActualAuthenticationContext());
         } 
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
@@ -570,8 +574,10 @@ public class Autenticator {
 	}
 
 	protected void doSamlLogin(ServletContext ctx, HttpServletRequest req, HttpServletResponse resp,
-			edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession, String type, String user,
-			boolean externalAuth, String hostId, HttpSession session, String holderGroup)
+			edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession, String type, 
+			String user,
+			boolean externalAuth, String hostId, HttpSession session, String holderGroup,
+			LevelOfAssuranceEnum loa, String actualAuthenticationContextClass)
 			throws InternalErrorException, IOException, UnrecoverableKeyException, InvalidKeyException,
 			KeyStoreException, NoSuchAlgorithmException, CertificateException, NoSuchProviderException,
 			SignatureException, UnknownUserException, Exception, ServletException {
@@ -621,7 +627,10 @@ public class Autenticator {
 			else 
 			{
 				List<String> set = saml2LoginContext.getRequestedAuthenticationMethods();
-				String actualLogin = toSamlAuthenticationMethod(type);
+				
+				String actualLogin = actualAuthenticationContextClass != null ?
+						actualAuthenticationContextClass :
+						toSamlAuthenticationMethod(loa, type);
 				if (set.isEmpty() || set.contains(actualLogin))
 					req.setAttribute(LoginHandler.AUTHENTICATION_METHOD_KEY, actualLogin);
 				else
@@ -718,11 +727,17 @@ public class Autenticator {
     		return false;
     }
     
-	public String toSamlAuthenticationMethod (String method)
+	public String toSamlAuthenticationMethod (LevelOfAssuranceEnum loa, String method)
 	{
-		if (method == null)
+		if (loa == LevelOfAssuranceEnum.HIGH)
+			return "http://eidas.europa.eu/LoA/high";
+		else if (loa == LevelOfAssuranceEnum.SUBSTANTIAL)
+			return "http://eidas.europa.eu/LoA/substantial";
+		else if (loa == LevelOfAssuranceEnum.LOW)
+			return "http://eidas.europa.eu/LoA/low";
+		else if (method == null)
 			return null;
-		if (method.equals("P"))
+		else if (method.equals("P"))
 			return AuthnContext.PPT_AUTHN_CTX;
 		else if (method.equals("PO"))
 			return AuthnContext.MTFC_AUTHN_CTX;
