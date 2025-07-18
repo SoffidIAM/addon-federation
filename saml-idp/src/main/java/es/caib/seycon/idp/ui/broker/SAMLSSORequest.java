@@ -63,7 +63,7 @@ public class SAMLSSORequest extends BaseForm {
 					idp,
 					user,
 					timeOut == null ? 30*60: timeOut.longValue(),
-					LevelOfAssuranceEnum.UNDEFINED);
+					ctx.getLevelOfAssurance());
 			if (samlRequest.getMethod().equals( "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST") )
 			{
 				resp.setContentType("text/html; charset=UTF-8");
