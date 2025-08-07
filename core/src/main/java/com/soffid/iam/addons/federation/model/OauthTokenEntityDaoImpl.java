@@ -38,12 +38,12 @@ public class OauthTokenEntityDaoImpl extends OauthTokenEntityDaoBase {
 				 return;
 			
 			q = getSession().createQuery("delete from com.soffid.iam.addons.federation.model.OauthTokenScopeEntityImpl "
-					+ "where token.id in :l");
+					+ "where token.id in (:l)");
 			q.setParameterList("l", l);
 			q.executeUpdate();
 			
 			q = getSession().createQuery("delete from com.soffid.iam.addons.federation.model.OauthTokenEntityImpl "
-					+ "where id in :l");
+					+ "where id in (:l)");
 			q.setParameterList("l", l);
 			q.executeUpdate();
 		} while (System.currentTimeMillis() - now.getTime() < 60_000); // 1 minute maximum
