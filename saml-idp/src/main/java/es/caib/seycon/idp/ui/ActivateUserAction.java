@@ -21,6 +21,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.InternalErrorException;
 
@@ -77,6 +78,9 @@ public class ActivateUserAction extends HttpServlet {
       				try {
       					new Autenticator().autenticate2(u.getUserName(), getServletContext(), req, resp, "P", false, null);
                         return;
+      		        } catch (RoleRestrictionException e) {
+      		            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+      		            LogFactory.getLog(getClass()).info("Error activating account", e);
       				} catch (Exception e)
       				{
       					

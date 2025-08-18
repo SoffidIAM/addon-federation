@@ -33,6 +33,7 @@ import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.comu.TypeEnumeration;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -174,6 +175,13 @@ public class RegisterAction extends HttpServlet {
 								ctx.getUsedMethod(), false, ctx.getHostId(resp));
 						return;
 					}
+		        } catch (RoleRestrictionException e) {
+		            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+		            req.setAttribute("ERROR", error);
+					req.setAttribute("register", params); //$NON-NLS-1$
+
+					RequestDispatcher dispatcher = req.getRequestDispatcher(RegisterFormServlet.URI);
+					dispatcher.forward(req, resp);
 				} catch (Exception e) {
 					error = Messages.getString("UserPasswordAction.internal.error");
 		            LogFactory.getLog(getClass()).info("Error registering user ", e);

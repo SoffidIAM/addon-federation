@@ -16,6 +16,7 @@ import com.soffid.iam.sync.engine.kerberos.KerberosManager;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.comu.Challenge;
@@ -106,6 +107,9 @@ public class NtlmAction extends HttpServlet {
 	    			ctx.authenticationFailure(ctx.getUser(), Messages.getString("PasswordChangeRequiredAction.unknown.user"));
 	            error = String.format(Messages.getString("PasswordChangeRequiredAction.unknown.user"), principal); //$NON-NLS-1$
     		}
+        } catch (RoleRestrictionException e) {
+            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+            LogFactory.getLog(getClass()).info("Error identifying user", e);
     	} catch (Exception e) {
             error = Messages.getString("UserPasswordAction.internal.error"); //$NON-NLS-1$
             LogFactory.getLog(getClass()).info("Error validating kerberos token ", e);

@@ -19,6 +19,7 @@ import es.caib.seycon.InvalidPasswordException;
 import es.caib.seycon.idp.client.PasswordManager;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
@@ -108,6 +109,10 @@ public class PasswordChangeRequiredAction extends HttpServlet {
 	        			req.getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);
 	        		}
         		}
+	        } catch (RoleRestrictionException e) {
+	            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+	            req.setAttribute("ERROR", error);
+	            LogFactory.getLog(getClass()).info("Error identifying user", e);
         	} catch (Exception e)
         	{
         		log.warn("Error reseting password", e);

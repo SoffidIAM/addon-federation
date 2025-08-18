@@ -272,6 +272,13 @@
 	</div>
 	<div sclass="section" id="advancedSection" >
 		<customfield3 sclass="databox separator" type="SEPARATOR" label="${c:l('federacio.zul.advancedauthentication') }" />
+
+		<customfield3 label="${c:l('federacio.zul.restrictToRole')}"
+			dataType="ROLE"
+			bind="/federationMember/restrictToRole" 
+			id="id_restrictToRole"  onChange="ref:handler.enableIDPComponents()"
+			readonly="${!soffid:isUserInRole('federation:create') &amp;&amp; !soffid:isUserInRole('federation:update')}" />
+
 		<customfield3 label="${c:l('federacio.zul.allowRecover')}"
 			dataType="BOOLEAN"
 			bind="/federationMember/allowRecover" 

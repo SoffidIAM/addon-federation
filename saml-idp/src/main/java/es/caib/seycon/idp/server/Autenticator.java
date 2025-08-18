@@ -47,6 +47,7 @@ import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.Group;
 import com.soffid.iam.api.GroupUser;
+import com.soffid.iam.api.RoleGrant;
 import com.soffid.iam.api.Session;
 import com.soffid.iam.api.User;
 import com.soffid.iam.api.UserAccount;
@@ -429,6 +430,8 @@ public class Autenticator {
 			resp.sendRedirect(SelectHolderGroupForm.URI);
 			return;
 		}
+		
+		checkRoleRestriction(authCtx);
 
 		edu.internet2.middleware.shibboleth.idp.session.Session shibbolethSession = 
 				(edu.internet2.middleware.shibboleth.idp.session.Session) 
@@ -480,6 +483,28 @@ public class Autenticator {
         	
         }
     }
+
+	private boolean checkRoleRestriction(AuthenticationContext authCtx) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException, UnknownUserException, RoleRestrictionException {
+		IdpConfig cfg = IdpConfig.getConfig();
+		FederationMember idp = cfg.getFederationMember();
+		String role = idp.getRestrictToRole();
+		if (role == null || role.isEmpty())
+			return true;
+		else {
+			Collection<RoleGrant> roles ;
+			if (authCtx.getCurrentUser() == null) 
+				roles = new RemoteServiceLocator().getServerService().getAccountRoles(authCtx.getUser(), 
+					cfg.getSystem().getName());
+			else
+				roles = new RemoteServiceLocator().getServerService()
+					.getUserRoles(authCtx.getCurrentUser().getId(), null);
+			for (RoleGrant grant: roles) {
+				if ( idp.getRestrictToRole().equals (grant.getRoleName()+"@"+grant.getSystem()))
+					return true;
+			}
+			throw new RoleRestrictionException("User does not has role "+idp.getRestrictToRole());
+		}
+	}
 
 	private boolean hasToRequestDomains(HttpSession session, AuthenticationContext authCtx) {
 		try {

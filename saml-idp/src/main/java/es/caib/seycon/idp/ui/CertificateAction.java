@@ -26,6 +26,7 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.textformatter.TextFormatException;
 import es.caib.seycon.idp.ui.cred.ValidateCredential;
@@ -94,6 +95,10 @@ public class CertificateAction extends HttpServlet {
             			}
             			return;
             		}
+                } catch (RoleRestrictionException e) {
+                    String error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+                    req.setAttribute("ERROR", error);
+                    LogFactory.getLog(getClass()).info("Error activating account", e);
             	} catch (Exception e) {
         			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
                     LogFactory.getLog(getClass()).info("Error validating certificate ", e);

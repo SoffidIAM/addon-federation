@@ -29,6 +29,7 @@ import com.soffid.iam.service.AccountService;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.ui.BaseForm;
 import es.caib.seycon.idp.ui.LoginServlet;
 import es.caib.seycon.idp.ui.Messages;
@@ -157,6 +158,12 @@ public class SAMLSSOPostServlet extends BaseForm {
         		    dispatcher.forward(req, resp);
         		}
 			}
+        } catch (RoleRestrictionException e) {
+            String error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+            req.setAttribute("ERROR", error);
+            LogFactory.getLog(getClass()).info("Error validating saml request", e);
+		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
+		    dispatcher.forward(req, resp);
 		} catch (Exception e) {
 			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
             LogFactory.getLog(getClass()).info("Error validating saml request ", e);

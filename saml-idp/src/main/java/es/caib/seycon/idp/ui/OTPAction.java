@@ -30,6 +30,7 @@ import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
 import es.caib.seycon.idp.server.CaptchaVerifier;
 import es.caib.seycon.idp.server.CreateIssueHelper;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.ng.exception.UnknownUserException;
@@ -176,6 +177,9 @@ public class OTPAction extends HttpServlet {
             	}
             } catch (UnknownUserException e) {
             	error = Messages.getString("UserPasswordAction.wrong.password"); //$NON-NLS-1$
+	        } catch (RoleRestrictionException e) {
+	            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+	            LogFactory.getLog(getClass()).info("Error identifying user", e);
             } catch (Exception e) {
                 error = Messages.getString("UserPasswordAction.internal.error");
                 String s = "";

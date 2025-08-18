@@ -8,8 +8,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.LogFactory;
+
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.shibext.LogRecorder;
 
 public class ConsentAction extends HttpServlet {
@@ -43,6 +46,9 @@ public class ConsentAction extends HttpServlet {
 				resp.sendRedirect(CancelAction.URI);
 				
 			}
+        } catch (RoleRestrictionException e) {
+            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+            LogFactory.getLog(getClass()).info("Error indentifying user", e);
 		} catch (Exception e) {
 			error = "An internal error has been detected: " + e.toString();
 			e.printStackTrace();

@@ -26,6 +26,7 @@ import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSyste
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.session.LoginTimeoutHandler;
 import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.ng.exception.InternalErrorException;
@@ -82,10 +83,16 @@ public class LoginServlet extends LangSupportServlet {
 				if (!timeout && !authCtx.isAlwaysAskForCredentials() && authCtx.isPreviousAuthenticationMethodAllowed(req) &&
 						auth.getSession(req, false) != null)
 				{
-					auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), 
-							false,
-		            		authCtx.getHostId(resp));
-					return;
+					try {
+						auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), 
+								false,
+			            		authCtx.getHostId(resp));
+						return;
+			        } catch (RoleRestrictionException e) {
+			            String error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+			            req.setAttribute("ERROR", error);
+			            LogFactory.getLog(getClass()).info("Error identifying user", e);
+			        }
 				}
         	}
        		authCtx.initialize(req);
@@ -140,6 +147,10 @@ public class LoginServlet extends LangSupportServlet {
     					return true;
     				}
     			}
+            } catch (RoleRestrictionException e) {
+                String error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+                req.setAttribute("ERROR", error);
+                LogFactory.getLog(getClass()).info("Error activating account", e);
     		} catch (Exception e) {
     			req.setAttribute("ERROR", Messages.getString("UserPasswordAction.internal.error"));
     			LogFactory.getLog(getClass()).info("Error validating certificate ", e);

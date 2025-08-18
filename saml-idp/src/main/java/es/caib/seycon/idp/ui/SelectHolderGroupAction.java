@@ -19,6 +19,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 
 public class SelectHolderGroupAction extends HttpServlet {
 
@@ -63,6 +64,8 @@ public class SelectHolderGroupAction extends HttpServlet {
 			} else {
         		error = "No se ha seleccionado ningún elemento"; //$NON-NLS-1$
 			}
+        } catch (RoleRestrictionException e) {
+            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
 		} catch (Exception e) {
 			error = "An internal error has been detected: " + e.toString();
 			e.printStackTrace();

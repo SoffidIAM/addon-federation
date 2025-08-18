@@ -21,6 +21,7 @@ import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.ValueObject;
 
 import es.caib.seycon.ng.comu.Password;
+import es.caib.seycon.ng.model.RolEntity;
 import es.caib.seycon.ng.model.UsuariEntity;
 
 @ValueObject 
@@ -364,4 +365,9 @@ public class FederationMember {
 	@Nullable
 	@Description("Use the holder group in the authentication process")
 	public boolean authWithHolderGroup;
+	
+	@Description("Restrict access to a subset of users")
+	@Nullable
+	String restrictToRole;
+
 }

@@ -293,6 +293,20 @@ public class Main {
             if (tacacs != null && Boolean.TRUE.equals(tacacs.getEnabled())) {
             	createTacacsServer (tacacs, ctx.getServletContext() );
             }
+            
+            new Thread( () -> {
+            	while (true) {
+	            	try {
+	            		IdpConfig.getConfig().getFederationService().deleteExpiredOauthTokens();
+	            		Thread.sleep(60000);
+	            	} catch (InterruptedException e) {
+	            		// Exit
+	            	} catch (Exception e) {
+	            		// Retry
+	            		log.warn("Error deleting old tokens", e);
+	            	}
+            	}
+            });
         } finally {
             if (oldClassLoader != null)
                 Thread.currentThread().setContextClassLoader(oldClassLoader);

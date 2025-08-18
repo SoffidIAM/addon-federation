@@ -32,6 +32,7 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.session.SessionChecker;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.BaseForm;
@@ -114,6 +115,9 @@ public class ValidateUserPushCredentialServlet extends BaseForm {
 					}
 				}
 			}
+        } catch (RoleRestrictionException e) {
+            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+            LogFactory.getLog(getClass()).info("Error vaidating push authentication ", e);
 		} catch (Exception e ) {
 			log.warn("Error validating push authentication", e);
 			error = Messages.getString("UserPasswordAction.internal.error");

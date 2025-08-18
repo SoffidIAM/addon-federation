@@ -9,6 +9,7 @@ import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.mda.annotation.*;
 
 import es.caib.seycon.ng.comu.Password;
+import es.caib.seycon.ng.model.RolEntity;
 
 @Entity (table="" ,
 		discriminatorValue="I" )
@@ -109,4 +110,7 @@ public abstract class IdentityProviderEntity extends com.soffid.iam.addons.feder
 	@Nullable
 	public Boolean allowIncludeInIframe;
 
+	@Description("Restrict access to a subset of users")
+	@Nullable
+	RolEntity restrictToRole;
 }

@@ -164,6 +164,9 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setCaptchaSecret(idp.getCaptchaSecret() == null ? null: Password.decode(idp.getCaptchaSecret()));
 			target.setCaptchaThreshold(idp.getCaptchaThreshold());
 			target.setLanguage(idp.getLanguage());
+			target.setRestrictToRole( idp.getRestrictToRole() == null ?
+					null: 
+					idp.getRestrictToRole().getName()+"@"+idp.getRestrictToRole().getSystem().getName());
 		} else if (source instanceof VirtualIdentityProviderEntity) {
 			target.setClasse("V"); //$NON-NLS-1$
 			// VirtualIdentityProvider
@@ -602,6 +605,11 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 
 			}			
 			
+			if ( source.getRestrictToRole() == null || source.getRestrictToRole().isEmpty()) {
+				idp.setRestrictToRole(null);
+			} else {
+				idp.setRestrictToRole(getRoleEntityDao().findByShortName(source.getRestrictToRole()));
+			}
 			updateRegisterAttributes(source, idp);
 			
 			target = idp;

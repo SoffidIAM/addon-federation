@@ -19,6 +19,7 @@ import es.caib.seycon.InvalidPasswordException;
 import es.caib.seycon.idp.client.ServerLocator;
 import es.caib.seycon.idp.server.Autenticator;
 import es.caib.seycon.idp.server.AuthenticationContext;
+import es.caib.seycon.idp.server.RoleRestrictionException;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.ui.AuthenticationMethodFilter;
 import es.caib.seycon.idp.ui.Messages;
@@ -109,7 +110,12 @@ public class PasswordResetAction extends HttpServlet {
         		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         		    dispatcher.forward(req, resp);
         		}
-        	} 
+	        } catch (RoleRestrictionException e) {
+	            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$
+                req.setAttribute("ERROR", error); //$NON-NLS-1$
+                RequestDispatcher dispatcher = req.getRequestDispatcher(PasswordResetForm.URI);
+                dispatcher.forward(req, resp);
+	        } 
         	catch (Exception e)
         	{
                 error = Messages.getString("PasswordChangeRequiredAction.internal.error")+e.toString(); //$NON-NLS-1$

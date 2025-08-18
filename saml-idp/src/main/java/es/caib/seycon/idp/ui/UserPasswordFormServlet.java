@@ -336,6 +336,11 @@ public class UserPasswordFormServlet extends BaseForm {
             	else if (noAuthenticationMethod(g, ctx)) {
            			g.addArgument("ERROR", Messages.getString("noAuthenticationMethod"));
             	}
+            	else if (config.getFederationMember().getRestrictToRole() != null &&
+            			!config.getFederationMember().getRestrictToRole().isEmpty())
+            	{
+            		g.addArgument("ERROR", Messages.getString("MaintenanceMode"));
+            	}
             }
             if (registerOtp && new OTPGenerator().generateOtp(req, resp, g)) {
             	// Nothing to do
