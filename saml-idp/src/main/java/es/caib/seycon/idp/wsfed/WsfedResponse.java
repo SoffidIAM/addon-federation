@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.service.FederationService;
 import com.soffid.iam.api.SamlRequest;
@@ -49,7 +50,8 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 public class WsfedResponse  {
 	static Log log = LogFactory.getLog(WsfedResponse.class);
 	
-	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, UnknownGroupException
+	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, 
+			String authType, LevelOfAssuranceEnum loa, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, UnknownGroupException
 	{
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
@@ -61,7 +63,7 @@ public class WsfedResponse  {
 			unauthorized(request, response, r, user);
 		} else  {
 			log.info("Returnig authorization flow");
-			wsfedFlow(ctx, request, response, authType, sessionHash);			
+			wsfedFlow(ctx, request, response, authType, loa, sessionHash);			
 		}
 	}
 
@@ -80,7 +82,7 @@ public class WsfedResponse  {
 	}
 
 	private static void wsfedFlow(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, 
-			String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
+			String authType, LevelOfAssuranceEnum loa, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		WsfedRequest r = (WsfedRequest) s.getAttribute(SessionConstants.WSFED_REQUEST);
@@ -90,6 +92,7 @@ public class WsfedResponse  {
 			TokenInfo t = new TokenInfo();
 			t.setAuthentication(System.currentTimeMillis());
 			t.setAuthenticationMethod(authType);
+			t.setLoa(loa);
 			t.setCreated(System.currentTimeMillis());
 			t.setExpires(System.currentTimeMillis());
 			t.setUser(user);

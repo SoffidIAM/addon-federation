@@ -79,7 +79,10 @@ public class RegisterOtpAction extends HttpServlet {
             		if ( ctx.isFinished())
             		{
             			new Autenticator().autenticate2(ctx.getUser(), 
-            						getServletContext(),req, resp, ctx.getUsedMethod(), false, 
+            						getServletContext(),req, resp, 
+            						ctx.getUsedMethod(), 
+	            					ctx.getLevelOfAssurance(),
+	            					false, 
             						ctx.getHostId(resp));
             			return;
             		}

@@ -3,6 +3,7 @@ package es.caib.seycon.idp.shibext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.Attribute;
 import com.soffid.iam.api.Account;
 import com.soffid.iam.api.User;
@@ -291,6 +293,19 @@ public class SoffidAttributeResolver extends ShibbolethAttributeResolver
   			if (attribute.getValue() != null && !attribute.getValue().isEmpty())
    			{
   				eo.put("ctx", ctx);
+  				eo.put("authenticationMethod", ctx.getPrincipalAuthenticationMethod());
+  				LevelOfAssuranceEnum loa;
+				Subject subject = ctx.getUserSession().getSubject();
+				for (Principal principal: subject.getPrincipals()) {
+					if (principal instanceof SessionPrincipal) {
+						loa = ((SessionPrincipal) principal).getLoa();
+						if (loa != null && loa != LevelOfAssuranceEnum.UNDEFINED) {
+							eo.put("loa", "http://eidas.europa.eu/LoA/"+loa.getValue().toLowerCase());
+						}
+					}
+				}
+  				
+  				
   				DelayedAttribute b = new DelayedAttribute(attribute.getShortName(), translator, eo, attribute, 
   						ctx instanceof DummySamlRequestContext);
   				m.put(attribute.getShortName(), b);

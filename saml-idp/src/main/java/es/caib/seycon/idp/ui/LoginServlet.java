@@ -84,8 +84,10 @@ public class LoginServlet extends LangSupportServlet {
 						auth.getSession(req, false) != null)
 				{
 					try {
-						auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), 
-								false,
+						auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, 
+								authCtx.getUsedMethod(), 
+            					authCtx.getLevelOfAssurance(),
+            					false,
 			            		authCtx.getHostId(resp));
 						return;
 			        } catch (RoleRestrictionException e) {
@@ -143,7 +145,10 @@ public class LoginServlet extends LangSupportServlet {
     					if (authCtx.getCertificateWarning() != null)
     	        			resp.sendRedirect(CertificateAction.URI);
     					else
-    						new Autenticator().autenticate2(certUser, getServletContext(),req, resp, authCtx.getUsedMethod(), true, authCtx.getHostId(resp));
+    						new Autenticator().autenticate2(certUser, getServletContext(),req, resp, 
+    								authCtx.getUsedMethod(), 
+	            					authCtx.getLevelOfAssurance(),
+	            					true, authCtx.getHostId(resp));
     					return true;
     				}
     			}

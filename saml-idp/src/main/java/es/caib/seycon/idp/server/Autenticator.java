@@ -200,7 +200,9 @@ public class Autenticator {
 		String user = ti.getUser();
 		if (user == null)
 			return false;
-		autenticate2(user, ctx, req, resp, ti.getAuthenticationMethod(), false, null);
+		autenticate2(user, ctx, req, resp, 
+				ti.getAuthenticationMethod(), ti.getLoa(),
+				false, null);
 		return true;
 	}
 
@@ -255,7 +257,7 @@ public class Autenticator {
 						authCtx.store(req);
 						return false;
 					} else {
-						autenticate2(user, ctx, req, resp, "E", false, hostId);
+						autenticate2(user, ctx, req, resp, "E", null, false, hostId);
 						return true;
 					}
 		        }
@@ -297,6 +299,7 @@ public class Autenticator {
 					        req.getSession().setAttribute("$$soffid_session$$", session);
 							autenticate2(account.getName(), ctx, req, resp,  
 									session.getAuthenticationMethod() == null ? "E" : session.getAuthenticationMethod(), 
+									null,
 									true, hostId);
 			        		return true;
 						}
@@ -389,11 +392,11 @@ public class Autenticator {
     	throw new InternalErrorException("Not authorized to log in");
     }
     
-	public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, boolean externalAuth, String hostId) throws Exception {
-    	autenticate2(user, ctx, req, resp, type, type, externalAuth, hostId);
-    }
-    
-    public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, HttpServletResponse resp, String type, String actualType, boolean externalAuth,
+    public void autenticate2 (String user, ServletContext ctx, HttpServletRequest req, 
+    		HttpServletResponse resp, 
+    		String authenticationMethod,
+    		LevelOfAssuranceEnum loa,
+    		boolean externalAuth,
     		String hostId) throws Exception {
 
     	HttpSession session = req.getSession();
@@ -403,7 +406,8 @@ public class Autenticator {
         String entityId = (String) session
         		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
         session.setAttribute(SessionConstants.SEU_USER, user);
-        session.setAttribute(SessionConstants.AUTHENTICATION_USED, type);
+        session.setAttribute(SessionConstants.AUTHENTICATION_USED, authenticationMethod);
+        session.setAttribute(SessionConstants.LEVEL_OF_ASSURANCE, loa);
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 		if (authCtx == null)
 		{
@@ -411,8 +415,8 @@ public class Autenticator {
 			authCtx.setPublicId(entityId);
 			authCtx.initialize( req );
 		}
-		authCtx.setFirstFactor(type.substring(0, 1));
-		authCtx.setSecondFactor(type.substring(1));
+		authCtx.setFirstFactor(authenticationMethod.substring(0, 1));
+		authCtx.setSecondFactor(authenticationMethod.substring(1));
 		authCtx.setStep(2);
 		authCtx.setUser(user);
 		authCtx.store(req);
@@ -444,12 +448,12 @@ public class Autenticator {
         	sessionType = sessionType.toUpperCase();
     	LogRecorder.getInstance().addSuccessLogEntry(
     			sessionType,
-    			user, actualType, entityId,
+    			user, authenticationMethod, entityId,
     			authCtx.getHostId(resp),
     			req.getRemoteAddr(), req.getSession(), shibbolethSession, null);
         if ("saml".equals(session.getAttribute("soffid-session-type")))
         {
-            doSamlLogin(ctx, req, resp, shibbolethSession, type, user, externalAuth, hostId, session, 
+            doSamlLogin(ctx, req, resp, shibbolethSession, authenticationMethod, user, externalAuth, hostId, session, 
             		authCtx.getSelectedHolderGroup(),
             		authCtx.getLevelOfAssurance(),
             		authCtx.getActualAuthenticationContext());
@@ -457,24 +461,26 @@ public class Autenticator {
         else if ("openid".equals(session.getAttribute("soffid-session-type")))
         {
         	String sessionHash = generateRandomSessionId();
-        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
-        	AuthorizationResponse.generateResponse(ctx, req, resp, type, sessionHash);
+        	final String soffidSession = generateSession(req, resp, user, authenticationMethod, externalAuth, sessionHash, hostId);
+        	AuthorizationResponse.generateResponse(ctx, req, resp, 
+        			authenticationMethod, loa, sessionHash);
         }
         else if ("cas".equals(session.getAttribute("soffid-session-type")))
         {
         	String sessionHash = generateRandomSessionId();
-        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
-        	LoginResponse.generateResponse(ctx, req, resp, type, sessionHash);
+        	final String soffidSession = generateSession(req, resp, user, authenticationMethod, externalAuth, sessionHash, hostId);
+        	LoginResponse.generateResponse(ctx, req, resp, authenticationMethod, loa, sessionHash);
         }
         else if ("ws-fed".equals(session.getAttribute("soffid-session-type")))
         {
         	String sessionHash = generateRandomSessionId();
-        	final String soffidSession = generateSession(req, resp, user, type, externalAuth, sessionHash, hostId);
-        	WsfedResponse.generateResponse(ctx, req, resp, type, sessionHash);
+        	final String soffidSession = generateSession(req, resp, user, authenticationMethod, externalAuth, sessionHash, hostId);
+        	WsfedResponse.generateResponse(ctx, req, resp, authenticationMethod, loa, sessionHash);
         }
         else
         {
-        	generateSession(req, resp, user, type, externalAuth, generateRandomSessionId(), hostId);
+        	generateSession(req, resp, user, authenticationMethod,
+        			externalAuth, generateRandomSessionId(), hostId);
 	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	        if (returnPath != null) 
 	        {
@@ -617,7 +623,8 @@ public class Autenticator {
 			final String soffidSession = generateSession(req, resp, user, type, externalAuth, null, hostId);
 			String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 			
-			Principal principal = new SessionPrincipal(user, soffidSession, holderGroup);
+			Principal principal = new SessionPrincipal(user, soffidSession, holderGroup,
+					loa);
 			
 			req.setAttribute(LoginHandler.PRINCIPAL_KEY, principal);
 			req.setAttribute(LoginHandler.PRINCIPAL_NAME_KEY, user);

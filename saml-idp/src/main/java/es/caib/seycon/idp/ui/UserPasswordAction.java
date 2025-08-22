@@ -99,7 +99,10 @@ public class UserPasswordAction extends HttpServlet {
             	}
     			if ( ctx != null && ctx.isFinished())
     			{
-    				new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+    				new Autenticator().autenticate2(u, getServletContext(),req, resp, 
+    						ctx.getUsedMethod(),
+        					ctx.getLevelOfAssurance(),
+        					false, ctx.getHostId(resp));
     				return;
     			}
                 if (v.validate(u, new Password(p))) {
@@ -132,7 +135,10 @@ public class UserPasswordAction extends HttpServlet {
 	            			ctx.store(req);
 	            			if ( ctx.isFinished())
 	            			{
-	            				new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+	            				new Autenticator().autenticate2(u, getServletContext(),req, resp, 
+	            						ctx.getUsedMethod(), 
+		            					ctx.getLevelOfAssurance(),
+		            					false, ctx.getHostId(resp));
 	            				return;
 	            			}
 	            			else

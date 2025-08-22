@@ -35,6 +35,7 @@ import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.OauthToken;
@@ -73,7 +74,9 @@ public class TokenHandler {
 		return instance;
 	}
 	
-	public synchronized TokenInfo generateAuthenticationRequest ( OpenIdRequest request, String user, String authType, Session session, String sessionHash) throws InternalErrorException
+	public synchronized TokenInfo generateAuthenticationRequest ( OpenIdRequest request, String user, 
+			String authType, LevelOfAssuranceEnum loa,
+			Session session, String sessionHash) throws InternalErrorException
 	{
 		expireTokens();
 		
@@ -86,6 +89,7 @@ public class TokenHandler {
 		t.expires = t.created + 120000; // 2 Minutes to get token
 		t.authentication = t.created;
 		t.setAuthenticationMethod(authType);
+		t.setLoa(loa);
 		t.setScope(request.getScope());
 		t.setPkceAlgorithm(request.getPkceAlgorithm());
 		t.setPkceChallenge(request.getPkceChallenge());
@@ -629,6 +633,7 @@ public class TokenHandler {
 		o.setType(t.getType());
 		o.setAuthenticated(new Date(t.authentication));
 		o.setAuthenticationMethod(t.getAuthenticationMethod());
+		o.setLoa(t.getLoa());
 		o.setAuthorizationCode(t.getAuthorizationCode());
 		o.setCreated(new Date(t.getCreated()));
 		o.setExpires(new Date(t.getExpires()));
@@ -662,6 +667,7 @@ public class TokenHandler {
 		t.setType(o.getType());
 		t.setAuthentication(o.getAuthenticated().getTime());
 		t.setAuthenticationMethod(o.getAuthenticationMethod());
+		t.setLoa(o.getLoa());
 		t.setAuthorizationCode(o.getAuthorizationCode());
 		t.setCreated(o.getCreated().getTime());
 		t.setExpires(o.getExpires().getTime());

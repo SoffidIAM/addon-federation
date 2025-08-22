@@ -172,7 +172,9 @@ public class RegisterAction extends HttpServlet {
 					ctx.store(req);
 					if (ctx.isFinished()) {
 						new Autenticator().autenticate2(accountName, getServletContext(), req, resp,
-								ctx.getUsedMethod(), false, ctx.getHostId(resp));
+								ctx.getUsedMethod(), 
+            					ctx.getLevelOfAssurance(),
+            					false, ctx.getHostId(resp));
 						return;
 					}
 		        } catch (RoleRestrictionException e) {

@@ -103,7 +103,11 @@ public class ValidateUserPushCredentialServlet extends BaseForm {
 	            		ctx.store(req);
 	            		if ( ctx.isFinished())
 	            		{
-	            			new Autenticator().autenticate2(account.getName(), getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+	            			new Autenticator().autenticate2(account.getName(), getServletContext(),
+	            					req, resp, 
+	            					ctx.getUsedMethod(), 
+	            					ctx.getLevelOfAssurance(),
+	            					false, ctx.getHostId(resp));
 	            			return;
 	            		}
 	            		else

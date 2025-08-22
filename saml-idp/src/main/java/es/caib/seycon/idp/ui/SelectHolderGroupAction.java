@@ -53,7 +53,10 @@ public class SelectHolderGroupAction extends HttpServlet {
 
 	        		    	// Authenticator
 	    	                Autenticator auth = new Autenticator();
-	    	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, authCtx.getUsedMethod(), false, authCtx.getHostId(resp));
+	    	                auth.autenticate2(authCtx.getUser(), getServletContext(), req, resp, 
+	    	                		authCtx.getUsedMethod(), 
+	            					authCtx.getLevelOfAssurance(),
+	            					false, authCtx.getHostId(resp));
 	    	                return;
 	        			}
 	        		}

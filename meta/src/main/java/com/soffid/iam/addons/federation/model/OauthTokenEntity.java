@@ -3,6 +3,7 @@ package com.soffid.iam.addons.federation.model;
 import java.util.Date;
 import java.util.List;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.model.TenantEntity;
@@ -34,6 +35,10 @@ public class OauthTokenEntity {
 	@Nullable
 	@Column (name="TOK_AUTMET")
 	String authenticationMethod;
+
+	@Nullable
+	@Column (name="TOK_LOA")
+	LevelOfAssuranceEnum loa;
 
 	@Nullable
 	@Column (name="TOK_USER")

@@ -103,7 +103,10 @@ public class PasswordChangeRequiredAction extends HttpServlet {
 	        	        String returnPath = (String) session.getAttribute(SessionConstants.AUTHENTICATION_REDIRECT);
 	        	        if (PasswordChangeForm.URI.equals(returnPath))
 	        	        	session.setAttribute(SessionConstants.AUTHENTICATION_REDIRECT, PasswordChangedForm.URI);
-	        			new Autenticator().autenticate2(user, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+	        			new Autenticator().autenticate2(user, getServletContext(),req, resp, 
+	        					ctx.getUsedMethod(), 
+            					ctx.getLevelOfAssurance(),
+            					false, ctx.getHostId(resp));
 	        			return;
 	        		} else {
 	        			req.getRequestDispatcher(UserPasswordFormServlet.URI).forward(req, resp);

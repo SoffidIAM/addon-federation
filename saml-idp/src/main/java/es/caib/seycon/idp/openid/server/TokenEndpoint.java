@@ -229,9 +229,13 @@ public class TokenEndpoint extends HttpServlet {
 							String oauthSessionId = autenticator.generateRandomSessionId();
 							autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false, oauthSessionId, null);
 							// Generate token
-							t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true), oauthSessionId);
+							t = h.generateAuthenticationRequest(request, username, 
+									authCtx.getUsedMethod(), 
+									authCtx.getLevelOfAssurance(),
+									autenticator.getSession(req, true), oauthSessionId);
 							t.setUser(username);
 							t.setAuthenticationMethod("P");
+							t.setLoa(null);
 							String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId(), t.getHolderGroup());
 							t.setScope(scopes);
 							h.updateToken(t);
@@ -420,10 +424,14 @@ public class TokenEndpoint extends HttpServlet {
 				String oauthSessionId = autenticator.generateRandomSessionId();
 				autenticator.generateSession(req, resp, username, authCtx.getUsedMethod(), false, oauthSessionId, null);
 				// Generate token
-				t = h.generateAuthenticationRequest(request, username, authCtx.getUsedMethod(), autenticator.getSession(req, true), oauthSessionId);
+				t = h.generateAuthenticationRequest(request, username, 
+						authCtx.getUsedMethod(),
+						authCtx.getLevelOfAssurance(),
+						autenticator.getSession(req, true), oauthSessionId);
 				t.setUser(username);
 				t.setAuthenticationMethod("P");
 				String scopes = config.getFederationService().filterScopes(request.getScope(), username, config.getSystem().getName(), request.getFederationMember().getPublicId(), t.getHolderGroup());
+				t.setLoa(null);
 				t.setScope(scopes);
 				h.updateToken(t);
 			}

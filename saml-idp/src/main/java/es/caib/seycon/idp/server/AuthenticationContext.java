@@ -482,7 +482,7 @@ public class AuthenticationContext {
 		else if (secondFactor == null) return firstFactor;
 		else return firstFactor + secondFactor;
 	}
-	
+
 	public boolean isFinished ()
 	{
 		return step == 2;

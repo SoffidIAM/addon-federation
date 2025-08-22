@@ -105,7 +105,10 @@ public class PasswordResetAction extends HttpServlet {
         		ctx.store(req);
         		if ( ctx.isFinished())
         		{
-        			new Autenticator().autenticate2(user, getServletContext(), req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+        			new Autenticator().autenticate2(user, getServletContext(), req, resp, 
+        					ctx.getUsedMethod(), 
+        					ctx.getLevelOfAssurance(),
+        					false, ctx.getHostId(resp));
         		} else {
         		    RequestDispatcher dispatcher = req.getRequestDispatcher(UserPasswordFormServlet.URI);
         		    dispatcher.forward(req, resp);

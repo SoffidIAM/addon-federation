@@ -1,6 +1,7 @@
 package es.caib.seycon.idp.openid.server;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
@@ -198,9 +199,10 @@ public class AuthorizationEndpoint extends HttpServlet {
 			throws ServletException, IOException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, UnknownGroupException {
 		String user = (String) req.getSession().getAttribute(SessionConstants.SEU_USER);
 		if ("none".equals(req.getParameter("prompt")) && user != null) {
-			AuthorizationResponse.generateResponse(getServletContext(), req, resp, "P", null);
+			AuthorizationResponse.generateResponse(getServletContext(), req, resp, "P",null, null);
 			return;
 		} 
+		
 		RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);
 		dispatcher.forward(req, resp);
 	}

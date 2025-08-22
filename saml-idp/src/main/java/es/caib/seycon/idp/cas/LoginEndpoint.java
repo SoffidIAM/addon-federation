@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.TokenType;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
@@ -69,7 +70,10 @@ public class LoginEndpoint extends HttpServlet {
 	    	
 	    	String user = (String) req.getSession().getAttribute(SessionConstants.SEU_USER);
 	    	if (req.getParameter("renew") != null && user != null) {
-	    		LoginResponse.generateResponse(getServletContext(), req, resp, "P", null);
+	    		LoginResponse.generateResponse(getServletContext(), req, resp, 
+	    				(String) session.getAttribute(SessionConstants.AUTHENTICATION_USED),
+	    				(LevelOfAssuranceEnum) session.getAttribute(SessionConstants.LEVEL_OF_ASSURANCE),
+	    				null);
 	    		return;
 	    	} 
 	    	RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);

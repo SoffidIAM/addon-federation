@@ -24,6 +24,8 @@ import org.opensaml.ws.transport.OutTransport;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.security.credential.Credential;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
+
 import edu.internet2.middleware.shibboleth.common.attribute.BaseAttribute;
 import edu.internet2.middleware.shibboleth.common.profile.provider.SAMLProfileRequestContext;
 import edu.internet2.middleware.shibboleth.common.relyingparty.ProfileConfiguration;
@@ -337,7 +339,9 @@ public class DummySamlRequestContext implements
 
 			@Override
 			public Subject getSubject() {
-				Principal principal = new SessionPrincipal(token.getUser(), null, token.getHolderGroup());
+				Principal principal = new SessionPrincipal(token.getUser(), null, 
+						token.getHolderGroup(),
+						token.getLoa());
 				Set<Principal> principals = new HashSet<Principal> ();
 				Set<?> pubCredentals = new HashSet<Object>();
 				Set<?> privCredentials = new HashSet<Object>();
@@ -410,7 +414,7 @@ public class DummySamlRequestContext implements
 	public String getPrincipalAuthenticationMethod() {
 		return token.getAuthenticationMethod();
 	}
-
+	
 	public String getPrincipalName() {
 		return token.getUser();
 	}

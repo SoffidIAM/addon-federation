@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.opensaml.saml2.core.AuthnContext;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.User;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
@@ -76,7 +77,10 @@ public class ActivateUserAction extends HttpServlet {
       			if (existingSession)
       			{
       				try {
-      					new Autenticator().autenticate2(u.getUserName(), getServletContext(), req, resp, "P", false, null);
+      					new Autenticator().autenticate2(u.getUserName(), getServletContext(), 
+      							req, resp, "P", 
+      							LevelOfAssuranceEnum.LOW,
+      							false, null);
                         return;
       		        } catch (RoleRestrictionException e) {
       		            error = Messages.getString("SystemAccessRestricted"); //$NON-NLS-1$

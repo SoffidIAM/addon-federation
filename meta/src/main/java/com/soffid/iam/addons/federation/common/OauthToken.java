@@ -2,7 +2,9 @@ package com.soffid.iam.addons.federation.common;
 
 import java.util.Date;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.TokenType;
+import com.soffid.mda.annotation.Column;
 import com.soffid.mda.annotation.Identifier;
 import com.soffid.mda.annotation.Nullable;
 import com.soffid.mda.annotation.ValueObject;
@@ -23,6 +25,9 @@ public class OauthToken {
 	@Nullable
 	String authenticationMethod;
 	
+	@Nullable
+	LevelOfAssuranceEnum loa;
+
 	@Nullable
 	String user;
 	

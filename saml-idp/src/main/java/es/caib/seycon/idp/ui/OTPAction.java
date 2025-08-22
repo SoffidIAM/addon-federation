@@ -158,11 +158,17 @@ public class OTPAction extends HttpServlet {
 	            		ctx.store(req);
 	            		if ( ctx.isFinished())
 	            		{
-	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+	            			new Autenticator().autenticate2(u, getServletContext(),req, resp, 
+	            					ctx.getUsedMethod(),
+	            					ctx.getLevelOfAssurance(),
+	            					false, ctx.getHostId(resp));
 	            			return;
 	            		}
 	            	} else if (ctx.isFinished()) { // User has pressed the login button twice
-            			new Autenticator().autenticate2(u, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+            			new Autenticator().autenticate2(u, getServletContext(),req, resp, 
+            					ctx.getUsedMethod(),
+            					ctx.getLevelOfAssurance(),
+            					false, ctx.getHostId(resp));
             			return;
 	                } else {
 	            		if (ctx != null)

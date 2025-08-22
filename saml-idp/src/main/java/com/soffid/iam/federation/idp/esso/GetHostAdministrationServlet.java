@@ -22,7 +22,6 @@ import com.soffid.iam.federation.idp.RemoteServiceLocator;
 import com.soffid.iam.sync.engine.db.ConnectionPool;
 import com.soffid.iam.sync.service.LogonService;
 import com.soffid.iam.sync.web.Messages;
-import com.sun.tools.javac.jvm.Target;
 
 import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownHostException;

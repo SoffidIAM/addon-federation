@@ -95,7 +95,8 @@ public class OauthResponseAction extends HttpServlet {
     		ctx.store(req);
     		if ( ctx.isFinished())
     		{
-	            auth.autenticate2(account, getServletContext(), req, resp, ctx.getUsedMethod(), consumer.getRelyingParty(),
+	            auth.autenticate2(account, getServletContext(), req, resp, ctx.getUsedMethod(), 
+	            		ctx.getLevelOfAssurance(),
 	            		true,
 	            		ctx.getHostId(resp));
     		} else {

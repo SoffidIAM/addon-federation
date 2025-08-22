@@ -3,6 +3,7 @@ package es.caib.seycon.idp.openid.server;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.api.TokenType;
 
 public class TokenInfo {
@@ -17,6 +18,15 @@ public class TokenInfo {
 	long expiresRefresh;
 	long authentication;
 	private String authenticationMethod;
+	private LevelOfAssuranceEnum loa;
+	public LevelOfAssuranceEnum getLoa() {
+		return loa;
+	}
+
+	public void setLoa(LevelOfAssuranceEnum loa) {
+		this.loa = loa;
+	}
+
 	Long sessionId;
 	String sessionKey;
 	String jwtId;

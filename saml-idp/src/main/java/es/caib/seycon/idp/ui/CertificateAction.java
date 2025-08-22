@@ -91,7 +91,11 @@ public class CertificateAction extends HttpServlet {
             			{
             				generateWarningPage(req, resp, ctx);
             			} else {
-	            			new Autenticator().autenticate2(certUser, getServletContext(),req, resp, ctx.getUsedMethod(), false, ctx.getHostId(resp));
+	            			new Autenticator().autenticate2(certUser, getServletContext(),
+	            					req, resp, 
+	            					ctx.getUsedMethod(), 
+	            					ctx.getLevelOfAssurance(),
+	            					false, ctx.getHostId(resp));
             			}
             			return;
             		}

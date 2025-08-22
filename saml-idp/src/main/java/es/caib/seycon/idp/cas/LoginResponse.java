@@ -23,6 +23,8 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
+
 import es.caib.seycon.idp.config.IdpConfig;
 import es.caib.seycon.idp.openid.server.OpenIdRequest;
 import es.caib.seycon.idp.openid.server.TokenHandler;
@@ -39,7 +41,8 @@ import es.caib.seycon.ng.exception.UnknownUserException;
 public class LoginResponse  {
 	static Log log = LogFactory.getLog(LoginResponse.class);
 	
-	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, UnknownGroupException
+	public static void generateResponse (ServletContext ctx, HttpServletRequest request, HttpServletResponse response, String authType, 
+				LevelOfAssuranceEnum loa, String sessionHash) throws IOException, ServletException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException, UnknownUserException, UnknownGroupException
 	{
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
@@ -51,7 +54,7 @@ public class LoginResponse  {
 			unauthorized(request, response, r, user);
 		} else {
 			log.info("Returnig authorization flow");
-			authorizationFlow (request, response, authType, sessionHash);			
+			authorizationFlow (request, response, authType, loa, sessionHash);			
 		}
 	}
 
@@ -66,13 +69,15 @@ public class LoginResponse  {
 				request.getRemoteAddr(), authCtx.getSelectedHolderGroup());
 	}
 
-	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, String authType, String sessionHash) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, ServletException {
+	private static void authorizationFlow(HttpServletRequest request, HttpServletResponse response, 
+			String authType, LevelOfAssuranceEnum loa, String sessionHash) throws IOException, InternalErrorException, UnrecoverableKeyException, InvalidKeyException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, ServletException {
 		HttpSession s = request.getSession();
 		String user = (String) s.getAttribute(SessionConstants.SEU_USER);
 		OpenIdRequest r = (OpenIdRequest) s.getAttribute(SessionConstants.OPENID_REQUEST);
 
 		TokenHandler h = TokenHandler.instance();
-		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, new Autenticator().getSession(request, true), sessionHash);
+		TokenInfo token = h.generateAuthenticationRequest(r, user, authType, loa, 
+				new Autenticator().getSession(request, true), sessionHash);
 
 		Map<String, Object> att;
 		try {
@@ -86,8 +91,8 @@ public class LoginResponse  {
 		final IdpConfig config = IdpConfig.getConfig();
 		String scopes = config.getFederationService().filterScopes(r.getScope(), user, config.getSystem().getName(), r.getFederationMember().getPublicId(), token.getHolderGroup());
 		token.setScope(scopes);
-		String authenticationMethod = (String) s.getAttribute(SessionConstants.AUTHENTICATION_USED);
-		token.setAuthenticationMethod(authenticationMethod);
+		token.setAuthenticationMethod(authType);
+		token.setLoa(loa);
 		h.updateToken(token);
 		
 		StringBuffer sb = new StringBuffer();

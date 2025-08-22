@@ -23,6 +23,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.AllowedScope;
 import com.soffid.iam.addons.federation.common.FederationMember;
 
@@ -93,7 +94,10 @@ public class WsfedEndpoint extends HttpServlet {
 	    	
 			String user = (String) req.getSession().getAttribute(SessionConstants.SEU_USER);
 			if (user != null) {
-				WsfedResponse.generateResponse(getServletContext(), req, resp, "P", null);
+				WsfedResponse.generateResponse(getServletContext(), req, resp, 
+	    				(String) session.getAttribute(SessionConstants.AUTHENTICATION_USED),
+	    				(LevelOfAssuranceEnum) session.getAttribute(SessionConstants.LEVEL_OF_ASSURANCE),
+						null);
 				return;
 			} 
 			RequestDispatcher dispatcher = req.getRequestDispatcher(LoginServlet.URI);
