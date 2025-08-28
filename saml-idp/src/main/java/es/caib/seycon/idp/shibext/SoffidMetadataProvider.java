@@ -41,7 +41,7 @@ public class SoffidMetadataProvider extends BaseMetadataProvider implements Obse
 	org.opensaml.xml.parse.ParserPool parser;
 	
     /** Class logger. */
-    private final Logger log = LoggerFactory.getLogger(ChainingMetadataProvider.class);
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     /** List of registered observers. */
     private List<Observer> observers;
@@ -136,14 +136,14 @@ public class SoffidMetadataProvider extends BaseMetadataProvider implements Obse
     /** {@inheritDoc} */
     public EntityDescriptor getEntityDescriptor(String entityID) throws MetadataProviderException {
 		TenantMetadataProvider provider = getCurrentTenantProvider();
-		log.info("Searching for "+entityID+" in "+provider.getMetadataIdentifier());
+//		log.info("Searching for "+entityID+" in "+provider.getMetadataIdentifier());
 		return provider.getEntityDescriptor(entityID);
     }
 
     /** {@inheritDoc} */
     public List<RoleDescriptor> getRole(String entityID, QName roleName) throws MetadataProviderException {
 		TenantMetadataProvider provider = getCurrentTenantProvider();
-		log.info("Searching role "+roleName+" for "+entityID+" in "+provider.getMetadataIdentifier());
+//		log.info("Searching role "+roleName+" for "+entityID+" in "+provider.getMetadataIdentifier());
 		return provider.getRole(entityID, roleName);
     }
 
@@ -151,7 +151,7 @@ public class SoffidMetadataProvider extends BaseMetadataProvider implements Obse
     public RoleDescriptor getRole(String entityID, QName roleName, String supportedProtocol)
             throws MetadataProviderException {
 		TenantMetadataProvider provider = getCurrentTenantProvider();
-		log.info("Searching role "+roleName+" for "+entityID+" in "+provider.getMetadataIdentifier()+" Protocol "+supportedProtocol);
+//		log.info("Searching role "+roleName+" for "+entityID+" in "+provider.getMetadataIdentifier()+" Protocol "+supportedProtocol);
 		return provider.getRole(entityID, roleName, supportedProtocol);
     }
 

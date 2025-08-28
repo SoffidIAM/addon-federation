@@ -283,7 +283,7 @@ public class HtmlGenerator {
         try {
         	String tenant = IdpConfig.getConfig().getSystem().getTenant();
 			final String name = "com/soffid/iam/idp/ui/"+tenant+"/"+page;
-			LogFactory.getLog(getClass()).info("Generating page for "+name);
+//			LogFactory.getLog(getClass()).info("Generating page for "+name);
 			in = getClass().getClassLoader().getParent().getResourceAsStream(name);
 		} catch (Exception e) {
 		}
