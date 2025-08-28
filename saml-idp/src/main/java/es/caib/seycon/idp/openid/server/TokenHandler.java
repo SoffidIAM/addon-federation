@@ -439,6 +439,17 @@ public class TokenHandler {
 				.withClaim("amr", toAmr(t.getAuthenticationMethod()))
 				.withClaim("sid", t.getOauthSessionId());
 
+		if (keycloak) {
+			builder.withClaim("typ", "Bearer");
+			addOptionalAttribute(builder, "realm_access", att);
+			addOptionalAttribute(builder, "resource_access", att);
+			addOptionalAttribute(builder, "preferred_username", att);
+			addOptionalAttribute(builder, "email", att);
+			addOptionalAttribute(builder, "given_name", att);
+			addOptionalAttribute(builder, "name", att);
+			addOptionalAttribute(builder, "family_name", att);
+		}
+
 		completeJWTBuilder(t, att, builder, false);
 
 		KeyPair keyPair = c.getKeyPair();
