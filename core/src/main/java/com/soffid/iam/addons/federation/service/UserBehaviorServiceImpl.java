@@ -119,20 +119,54 @@ public class UserBehaviorServiceImpl extends UserBehaviorServiceBase {
 
 	@Override
 	protected String handleRegisterHost(String hostIp, String device, String browser, String os, String cpu) throws Exception {
-		String hostName = hostIp + "_" + System.currentTimeMillis();
-		byte b[] = new byte[24];
-		SecureRandom r = new SecureRandom();
-		r.nextBytes(b);
-		String serialNumber = System.currentTimeMillis()+"_"+Base64.encodeBytes(b);
-		Host h = getNetworkService().registerDynamicIP(hostName, hostIp, serialNumber);
-		h.getAttributes().put("device", device);
-		h.getAttributes().put("detectedOs", os);
-		h.getAttributes().put("browser", browser);
-		h.getAttributes().put("cpu", cpu);
-		h.setLastSeen(Calendar.getInstance());
-		updateOs(h, device, os);
-		getNetworkService().update(h);
-		return serialNumber;
+		if ("Hacker".equalsIgnoreCase(device)) {
+			Host h = null;
+			for (Host host: getNetworkService()
+					.findHostByTextAndJsonQuery(null,
+							"ip eq \""+hostIp+"\" and deleted eq false and dynamicIp eq false",
+							0, 1)
+					.getResources()) {
+				h = host;
+			}
+			if (h == null)
+				h = getNetworkService().findHostByIp(hostIp);
+			if (h == null) {
+				String hostName = hostIp + "_" + System.currentTimeMillis();
+				byte b[] = new byte[24];
+				SecureRandom r = new SecureRandom();
+				r.nextBytes(b);
+				String serialNumber = System.currentTimeMillis()+"_"+Base64.encodeBytes(b);
+				h = getNetworkService().registerDynamicIP(hostName, hostIp, serialNumber);
+				return serialNumber;
+			}
+			else
+			{
+				if (h.getSerialNumber() == null) {
+					byte b[] = new byte[24];
+					SecureRandom r = new SecureRandom();
+					r.nextBytes(b);
+					String serialNumber = System.currentTimeMillis()+"_"+Base64.encodeBytes(b);
+					h.setSerialNumber(serialNumber);
+					getNetworkService().update(h);
+				}
+				return h.getSerialNumber();
+			}
+		} else {
+			String hostName = hostIp + "_" + System.currentTimeMillis();
+			byte b[] = new byte[24];
+			SecureRandom r = new SecureRandom();
+			r.nextBytes(b);
+			String serialNumber = System.currentTimeMillis()+"_"+Base64.encodeBytes(b);
+			Host h = getNetworkService().registerDynamicIP(hostName, hostIp, serialNumber);
+			h.getAttributes().put("device", device);
+			h.getAttributes().put("detectedOs", os);
+			h.getAttributes().put("browser", browser);
+			h.getAttributes().put("cpu", cpu);
+			h.setLastSeen(Calendar.getInstance());
+			updateOs(h, device, os);
+			getNetworkService().update(h);
+			return serialNumber;
+		}
 	}
 
 	private void updateOs(Host h, String device, String os) throws InternalErrorException {
