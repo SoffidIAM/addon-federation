@@ -89,6 +89,11 @@ public class Autenticator {
     
     public String generateSession (HttpServletRequest req, HttpServletResponse resp, String principal, String type, boolean externalAuth, String sessionId, String hostId) throws Exception
     {
+    	String userAgent = req.getHeader("User-agent");
+    	if (userAgent == null && hostId == null) {
+    		return "";
+    	}
+    	
         HttpSession session = req.getSession();
         ServerService server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
         

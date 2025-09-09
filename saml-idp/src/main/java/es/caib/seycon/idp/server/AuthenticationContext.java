@@ -101,6 +101,7 @@ public class AuthenticationContext {
 	Challenge otpDeviceChallenge;
 	LevelOfAssuranceEnum levelOfAssurance = null;
 	String actualAuthenticationContext = null;
+	String userAgent;
 	
 	public LevelOfAssuranceEnum getLevelOfAssurance() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		if (levelOfAssurance != null) {
@@ -318,7 +319,8 @@ public class AuthenticationContext {
 			.build();
 
 	public void parseUserAgent(HttpServletRequest req) {
-		
+		userAgent = req.getHeader("User-Agent");
+    	
 		Map<String,String> headers = new HashMap<>();
 		for (Enumeration<String> e = req.getHeaderNames(); e.hasMoreElements(); ) {
 			String key = e.nextElement();
