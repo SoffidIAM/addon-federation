@@ -78,8 +78,6 @@ public class TokenHandler {
 			String authType, LevelOfAssuranceEnum loa,
 			Session session, String sessionHash) throws InternalErrorException
 	{
-		expireTokens();
-		
 		TokenInfo t = new TokenInfo();
 		t.setType(request.getType());
 		t.setUser(user);
@@ -109,16 +107,17 @@ public class TokenHandler {
 	
 	private long last = 0;
 
-	private void expireTokens() throws InternalErrorException {
+	public void expireTokens() throws InternalErrorException {
 		long now = System.currentTimeMillis();
 		if (now < last + 120000) return; // Only purge after 2 minutes
 		last = System.currentTimeMillis();
+		LinkedList<OauthToken> list = new LinkedList<OauthToken>();
 		synchronized (pendingTokens) {
 			for ( Iterator<TokenInfo> it = pendingTokens.iterator(); it.hasNext();) 
 			{
 				TokenInfo t = it.next();
 				if (t.isExpired()) {
-					getFederationService().deleteOauthToken(generateOauthToken(t));
+					list.add(generateOauthToken(t));
 					it.remove();
 				}
 				else if (t.isNotUsed()) {
@@ -126,6 +125,7 @@ public class TokenHandler {
 				}
 			}
 		}
+
 		synchronized (activeTokens) {
 	 		for ( Iterator<TokenInfo> it = activeTokens.iterator(); it.hasNext();) 
 			{
@@ -133,7 +133,7 @@ public class TokenHandler {
 				if (t.isExpired() && t.isRefreshExpired()) {
 					if (t.getRefreshToken() != null)
 						refreshTokens.remove(t.getRefreshToken());
-					getFederationService().deleteOauthToken(generateOauthToken(t));
+					list.add(generateOauthToken(t));
 					it.remove();
 					LogRecorder.getInstance().flushLogoutEntry("OPENID_"+t.getJwtId());
 				}
@@ -144,10 +144,8 @@ public class TokenHandler {
 				}
 			}
 		}
-
-		// Finally, expired oauth tokens are deleted from the database,
-		// due to a unclosed sessions
-		getFederationService().deleteExpiredOauthTokens();
+		for (OauthToken token: list)
+			getFederationService().deleteOauthToken(token);
 	}
 
 	private String generateRandomString (int length)
@@ -161,7 +159,6 @@ public class TokenHandler {
 
 	public TokenInfo getAuthorizationCode(String authorizationCode) throws InternalErrorException 
 	{
-		expireTokens();
 		TokenInfo ti = authorizationCodes.get(authorizationCode);
 		if (ti == null) {
 			OauthToken o = getFederationService().findOauthTokenByAuthorizationCode(getIdentityProvider(), authorizationCode);
@@ -181,7 +178,6 @@ public class TokenHandler {
 		} catch (Exception e) {
 			
 		}
-		expireTokens();
 		TokenInfo ti = refreshTokens.get(refreshToken);
 		if (ti == null) {
 			OauthToken o = getFederationService().findOauthTokenByRefreshToken(getIdentityProvider(), refreshToken);

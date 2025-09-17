@@ -120,6 +120,7 @@ import es.caib.seycon.idp.openid.server.RegisterEndpoint;
 import es.caib.seycon.idp.openid.server.RevokeEndpoint;
 import es.caib.seycon.idp.openid.server.SessionCookieEndpoint;
 import es.caib.seycon.idp.openid.server.TokenEndpoint;
+import es.caib.seycon.idp.openid.server.TokenHandler;
 import es.caib.seycon.idp.openid.server.TokenIntrospectionEndpoint;
 import es.caib.seycon.idp.openid.server.UserInfoEndpoint;
 import es.caib.seycon.idp.session.SessionCallbackServlet;
@@ -298,6 +299,7 @@ public class Main {
             	while (true) {
 	            	try {
 	            		IdpConfig.getConfig().getFederationService().deleteExpiredOauthTokens();
+	            		TokenHandler.instance().expireTokens();
 	            		Thread.sleep(60000);
 	            	} catch (InterruptedException e) {
 	            		// Exit
