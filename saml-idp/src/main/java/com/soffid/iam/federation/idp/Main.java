@@ -105,6 +105,7 @@ import com.soffid.iam.utils.ConfigurationCache;
 import com.soffid.iam.utils.Security;
 
 import es.caib.seycon.idp.cas.LoginEndpoint;
+import es.caib.seycon.idp.cas.SamlValidateEndpoint;
 import es.caib.seycon.idp.cas.ServiceValidateEndpoint;
 import es.caib.seycon.idp.cas.ValidateEndpoint;
 import es.caib.seycon.idp.cert.DelegateToApplicationSslContextFactory;
@@ -924,7 +925,12 @@ public class Main {
 		servlet.setName("cas-serviceValidateEndpoint.v3"); //$NON-NLS-1$
 		servlet.setInitParameter("version", "3");
 		ctx.addServlet(servlet, "/cas/p3/serviceValidate"); //$NON-NLS-1$
-	}
+
+		servlet = new ServletHolder(SamlValidateEndpoint.class);
+		servlet.setInitOrder(2);
+		servlet.setName("cas-samlValidateEndpoint"); //$NON-NLS-1$
+		ctx.addServlet(servlet, "/cas/samlValidate"); //$NON-NLS-1$
+}
 
 	private void configureWsfedProfile(ServletContextHandler ctx, SAMLProfile openIdProfile) {
 		ServletHolder servlet;

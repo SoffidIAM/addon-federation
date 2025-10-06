@@ -50,7 +50,7 @@ public class LoginEndpoint extends HttpServlet {
 	    		r.setRedirectUrl(r.getFederationMember().getOpenidUrl().iterator().next());
 	    	}
 	    	String method = req.getParameter("method");
-	    	if ( ! ("GET".equals(method) || "POST".equals(method) || "HADER".equals(method))) {
+	    	if ( ! ("GET".equals(method) || "POST".equals(method) || "HEADER".equals(method))) {
 	    		method = "GET";
 	    	}
 	    	r.setResponseType(method);
