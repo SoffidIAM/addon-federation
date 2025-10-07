@@ -155,7 +155,7 @@ public class SamlValidateEndpoint extends HttpServlet {
 	private void success(ServletOutputStream out, TokenInfo t, Map<String, Object> atts) throws TransformerConfigurationException, TransformerException, TransformerFactoryConfigurationError, IOException, ParserConfigurationException, UnrecoverableKeyException, InvalidKeyException, DOMException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, InternalErrorException {
 		String user = (String) atts.get("uid");
 		
-		SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-YYYY'T'HH:mm:ss'Z'");
+		SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSS'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		String authenticationDate = sdf.format(t.getCreated());
 		
