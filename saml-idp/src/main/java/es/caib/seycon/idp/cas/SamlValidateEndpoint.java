@@ -182,13 +182,14 @@ public class SamlValidateEndpoint extends HttpServlet {
 		o2.appendChild(o1);
 		
 		Element o11 = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:protocol", "Status");
+		o11.setAttribute("saml1p", "urn:oasis:names:tc:SAML:1.0:protocol");
 		o1.appendChild(o11);
 		
 		Element o111 = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:protocol", "StatusCode");
-		o111.setAttribute("Value",  "samlp:Success");
+		o111.setAttribute("Value",  "saml1p:Success");
 		o11.appendChild(o111);
 		
-		o11 = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "Assertion");
+		o11 = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "Assertion");
 		o1.appendChild(o11);
 		o11.setAttribute("AssertionID", generateRandomString());
 		o11.setAttribute("IssueInstant", sdf.format(new Date()));
@@ -196,30 +197,30 @@ public class SamlValidateEndpoint extends HttpServlet {
 		o11.setAttribute("MajorVersion", "1");
 		o11.setAttribute("MinorVersion", "1");
 		
-		Element ob = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "Conditions");
+		Element ob = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "Conditions");
 		ob.setAttribute("NotBefore", sdf.format(new Date()));
 		ob.setAttribute("NotAfter", sdf.format(new Date( System.currentTimeMillis() + 5 * 60_000 )));
 		o11.appendChild(ob);
 		
-		Element oc = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "AudienceRestrictionCondition");
+		Element oc = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "AudienceRestrictionCondition");
 		ob.appendChild(oc);
 		
-		Element od = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "Audience");
+		Element od = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "Audience");
 		oc.appendChild(od);
 		od.appendChild(doc.createTextNode(t.getRequest().getFederationMember().getPublicId()));
 		
-		ob = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "AttributeStatement");
+		ob = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "AttributeStatement");
 		o11.appendChild(ob);
-		oc = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "Subject");
+		oc = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "Subject");
 		ob.appendChild(oc);
-		od = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "NameIdentifier");
+		od = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "NameIdentifier");
 		oc.appendChild(od);
 		od.appendChild(doc.createTextNode(t.getUser()));
 		
-		od = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "SubjectConfirmation");
+		od = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "SubjectConfirmation");
 		oc.appendChild(od);
 		
-		Element oe = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "ConfirmationMethod");
+		Element oe = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "ConfirmationMethod");
 		od.appendChild(oe);
 		oe.appendChild(doc.createTextNode("urn:oasis:names:tc:SAML:1.0:cm:artifact"));
 
@@ -227,12 +228,12 @@ public class SamlValidateEndpoint extends HttpServlet {
 			String v = stringify ( entry.getValue() );
 			if (v != null) {
 				try {
-					oc = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "Attribute");
+					oc = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "Attribute");
 					ob.appendChild(oc);
 					oc.setAttribute("AttributeName", entry.getKey());
-					oc.setAttribute("AttributeNamespace", "http://www.ja-syg.org/products/cas/");
+					oc.setAttribute("AttributeNamespace", "http://www.soffid.com/idp/cas/");
 					
-					od = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "AttributeValue");
+					od = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "AttributeValue");
 					oc.appendChild(od);
 					od.appendChild(doc.createTextNode(v));
 				} catch (Exception e) {
@@ -241,7 +242,7 @@ public class SamlValidateEndpoint extends HttpServlet {
 			}
 		}
 
-		ob = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "AuthenticationStatement");
+		ob = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "AuthenticationStatement");
 		ob.setAttribute("AuthenticationMethod", 
 				t.getLoa() == LevelOfAssuranceEnum.LOW ?
 						"http://eidas.europa.eu/LoA/low" :
@@ -250,17 +251,19 @@ public class SamlValidateEndpoint extends HttpServlet {
 				t.getLoa() == LevelOfAssuranceEnum.SUBSTANTIAL ?
 						"http://eidas.europa.eu/LoA/low" :
 							"http://eidas.europa.eu/LoA/undefined" );
+		ob.setAttribute("AuthenticationInstant", authenticationDate);
+		
 		o11.appendChild(ob);
-		oc = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "Subject");
+		oc = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "Subject");
 		ob.appendChild(oc);
-		od = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "NameIdentifier");
+		od = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "NameIdentifier");
 		oc.appendChild(od);
 		od.appendChild(doc.createTextNode(t.getUser()));
 		
-		od = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "SubjectConfirmation");
+		od = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "SubjectConfirmation");
 		oc.appendChild(od);
 		
-		oe = doc.createElementNS("urn:ooasis:names:tc:SAML:1.0:assertion", "ConfirmationMethod");
+		oe = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "ConfirmationMethod");
 		od.appendChild(oe);
 		oe.appendChild(doc.createTextNode("urn:oasis:names:tc:SAML:1.0:cm:artifact"));
 

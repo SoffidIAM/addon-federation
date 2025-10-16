@@ -356,7 +356,7 @@ public class AuthenticationContext {
         {
         	firstFactor = method.substring(0, 1);
         	secondFactor = method.length() > 1 ? method.substring(1,2) : null;
-        	nextFactor = null;
+            nextFactor = new HashSet<String>();
         	step = 2;
         	return true;
         }
