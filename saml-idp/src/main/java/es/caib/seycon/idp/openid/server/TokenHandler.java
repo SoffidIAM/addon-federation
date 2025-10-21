@@ -16,6 +16,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,21 +61,21 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.ng.exception.UnknownUserException;
 
 public class TokenHandler {
-	HashMap<String, TokenInfo> authorizationCodes = new HashMap<String, TokenInfo>();
-	HashMap<String, TokenInfo> refreshTokens = new HashMap<String, TokenInfo>();
-	HashMap<String, TokenInfo> tokens = new HashMap<String, TokenInfo>();
+	Hashtable<String, TokenInfo> authorizationCodes = new Hashtable<String, TokenInfo>();
+	Hashtable<String, TokenInfo> refreshTokens = new Hashtable<String, TokenInfo>();
+	Hashtable<String, TokenInfo> tokens = new Hashtable<String, TokenInfo>();
 	LinkedList<TokenInfo> pendingTokens = new LinkedList<TokenInfo>();
 	LinkedList<TokenInfo> activeTokens = new LinkedList<TokenInfo>();
 	static TokenHandler instance;
 	Log log = LogFactory.getLog(getClass());
-
+	
 	public static TokenHandler instance() {
 		if (instance == null)
 			instance = new TokenHandler();
 		return instance;
 	}
 	
-	public synchronized TokenInfo generateAuthenticationRequest ( OpenIdRequest request, String user, 
+	public TokenInfo generateAuthenticationRequest ( OpenIdRequest request, String user, 
 			String authType, LevelOfAssuranceEnum loa,
 			Session session, String sessionHash) throws InternalErrorException
 	{
@@ -99,7 +100,9 @@ public class TokenHandler {
 		t.setOauthSessionId(sessionHash);
 		t.setHolderGroup(request.getHolderGroup());
 		authorizationCodes.put(t.getAuthorizationCode(), t);
-		pendingTokens.addLast(t);
+		synchronized(pendingTokens) {
+			pendingTokens.addLast(t);
+		}
 		
 		getFederationService().createOauthToken(generateOauthToken(t));
 		return t;
@@ -190,7 +193,7 @@ public class TokenHandler {
 			return ti;
 	}
 
-	public synchronized void generateToken(TokenInfo t, Map<String, Object> att,
+	public void generateToken(TokenInfo t, Map<String, Object> att,
 			HttpServletRequest req, String authType) 
 		throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException 
 	{
@@ -198,7 +201,9 @@ public class TokenHandler {
 		if (t.getAuthorizationCode() != null)
 		{
 			authorizationCodes.remove(t.getAuthorizationCode());
-			pendingTokens.remove(t);
+			synchronized (pendingTokens) {
+				pendingTokens.remove(t);
+			}
 		}
 		getFederationService().deleteOauthToken(generateOauthToken(t));
 		
@@ -230,7 +235,9 @@ public class TokenHandler {
 		}
 		
 		tokens.put(t.getToken(), t);
-		activeTokens.addLast(t);
+		synchronized(activeTokens) {
+			activeTokens.addLast(t);
+		}
 		getFederationService().createOauthToken(generateOauthToken(t));
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
 		if (t.getType() == TokenType.TOKEN_CAS) {
@@ -356,12 +363,14 @@ public class TokenHandler {
 		}
 	}
 
-	public synchronized void renewToken(TokenInfo t,  Map<String, Object> att,
+	public void renewToken(TokenInfo t,  Map<String, Object> att,
 			HttpServletRequest req) throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		if (t.getAuthorizationCode() != null)
 		{
 			authorizationCodes.remove(t.getAuthorizationCode());
-			pendingTokens.remove(t);
+			synchronized(pendingTokens) {
+				pendingTokens.remove(t);
+			}
 		}
 		if (t.refreshToken != null) 
 			refreshTokens.remove(t.refreshToken);
@@ -383,7 +392,9 @@ public class TokenHandler {
 
 		refreshTokens.put(t.refreshToken, t);
 		tokens.put(t.getToken(), t);
-		activeTokens.addLast(t);
+		synchronized (activeTokens) {
+			activeTokens.addLast(t);
+		}
 
 		getFederationService().createOauthToken(generateOauthToken(t));
 		AuthenticationContext authCtx = AuthenticationContext.fromRequest(req);
@@ -701,7 +712,9 @@ public class TokenHandler {
 		{
 			if (OidcDebugController.isDebug()) log.info("Removing authorizationCode");
 			authorizationCodes.remove(t.getAuthorizationCode());
-			pendingTokens.remove(t);
+			synchronized(pendingTokens) {
+				pendingTokens.remove(t);
+			}
 		}
 		if (t.refreshToken != null) {
 			if (OidcDebugController.isDebug()) log.info("Removing refreshTokens");
