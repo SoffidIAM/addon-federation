@@ -40,7 +40,7 @@ public class DataConnector extends BaseDataConnector {
 
         Long t = System.currentTimeMillis();
         try {
-        	server = ServerLocator.getInstance().getRemoteServiceLocator().getServerService();
+        	server = new RemoteServiceLocator().getServerService();
         	IdpConfig config = IdpConfig.getConfig();
 
         	attributes = new RemoteServiceLocator().getFederacioService().findAtributs(null, null, null);
