@@ -582,10 +582,14 @@ public class AuthenticationContext {
 			ubh.registerLogon(currentUser.getId(), remoteIp, hostId, getUsedMethod());
 			if (currentAccount != null) {
 				currentAccount = new RemoteServiceLocator().getAccountService().findAccountById(currentAccount.getId());
-				currentAccount.setLastLogin(Calendar.getInstance());
-				try {
-					new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
-				} catch (AccountAlreadyExistsException e) {
+				Calendar ll = currentAccount.getLastLogin();
+				if (ll == null || 
+					System.currentTimeMillis() - ll.getTime().getTime() > 600_000) {
+					currentAccount.setLastLogin(Calendar.getInstance());
+					try {
+						new RemoteServiceLocator().getAccountService().updateAccount(currentAccount);
+					} catch (AccountAlreadyExistsException e) {
+					}
 				}
 				Audit a = new Audit();
 				a.setAccount(currentAccount.getName());
