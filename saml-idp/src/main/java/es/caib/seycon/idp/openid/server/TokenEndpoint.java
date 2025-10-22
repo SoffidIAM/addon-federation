@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.collections.map.LRUMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
@@ -27,6 +28,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.api.Group;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
+import com.soffid.iam.utils.Security;
 
 import edu.internet2.middleware.shibboleth.common.attribute.filtering.AttributeFilteringException;
 import edu.internet2.middleware.shibboleth.common.attribute.resolver.AttributeResolutionException;
@@ -41,6 +43,7 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.seycon.util.Base64;
 
 public class TokenEndpoint extends HttpServlet {
+	LRUMap attributesCache = new LRUMap(500);
 	/**
 	 * 
 	 */
@@ -266,7 +269,18 @@ public class TokenEndpoint extends HttpServlet {
 
 			Map<String, Object> att;
 			try {
-				att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
+				String label = Security.getCurrentTenantName()+"/"+t.user;
+				AttributesMapEntry entry = (AttributesMapEntry) attributesCache.get(label);
+				if (entry == null ||
+						System.currentTimeMillis() - entry.timestamp > 15*60_000) {
+					att = new UserAttributesGenerator().generateAttributes(getServletContext(), t);
+					entry = new AttributesMapEntry();
+					entry.attributes = att;
+					entry.timestamp = System.currentTimeMillis();
+					attributesCache.put(label, entry);
+				} else {
+					att  = entry.attributes;
+				}
 			} catch (AttributeResolutionException e) {
 				log.warn("Error resolving attributes", e);
 				buildError(resp, "Error resolving attributes", t);
@@ -816,4 +830,10 @@ public class TokenEndpoint extends HttpServlet {
 		}
 		return null;
 	}
+}
+
+
+class AttributesMapEntry {
+	long timestamp;
+	Map<String, Object> attributes;
 }
