@@ -82,7 +82,13 @@ public class LogoutEndpoint extends HttpServlet {
 						logoutUrl = postLogoutRedirectUri;
 						if (OidcDebugController.isDebug()) log.info("logoutUrl: "+logoutUrl);
 					}
+					else
+						postLogoutRedirectUri = null;
 				}
+				else
+					postLogoutRedirectUri = null;
+			} else {
+				postLogoutRedirectUri = null;
 			}
 			
 			Session session = new Autenticator().getSession(req, false);
