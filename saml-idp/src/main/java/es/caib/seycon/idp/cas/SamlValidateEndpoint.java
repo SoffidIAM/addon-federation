@@ -182,7 +182,7 @@ public class SamlValidateEndpoint extends HttpServlet {
 		o2.appendChild(o1);
 		
 		Element o11 = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:protocol", "Status");
-		o11.setAttribute("saml1p", "urn:oasis:names:tc:SAML:1.0:protocol");
+		o11.setAttribute("xmlns:saml1p", "urn:oasis:names:tc:SAML:1.0:protocol");
 		o1.appendChild(o11);
 		
 		Element o111 = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:protocol", "StatusCode");
@@ -199,7 +199,7 @@ public class SamlValidateEndpoint extends HttpServlet {
 		
 		Element ob = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "Conditions");
 		ob.setAttribute("NotBefore", sdf.format(new Date()));
-		ob.setAttribute("NotAfter", sdf.format(new Date( System.currentTimeMillis() + 5 * 60_000 )));
+		ob.setAttribute("NotOnOrAfter", sdf.format(new Date( System.currentTimeMillis() + 5 * 60_000 )));
 		o11.appendChild(ob);
 		
 		Element oc = doc.createElementNS("urn:oasis:names:tc:SAML:1.0:assertion", "AudienceRestrictionCondition");
