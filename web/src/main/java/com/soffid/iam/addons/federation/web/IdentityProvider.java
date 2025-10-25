@@ -1,6 +1,8 @@
 package com.soffid.iam.addons.federation.web;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -28,6 +30,7 @@ import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
+import com.soffid.iam.addons.federation.common.ProgressiveProfile;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
 import com.soffid.iam.addons.federation.service.ejb.FederationService;
 import com.soffid.iam.addons.federation.service.ejb.FederationServiceHome;
@@ -42,8 +45,10 @@ import es.caib.seycon.ng.exception.InternalErrorException;
 import es.caib.zkib.binder.BindContext;
 import es.caib.zkib.component.DataTable;
 import es.caib.zkib.component.Form2;
+import es.caib.zkib.component.ReorderEvent;
 import es.caib.zkib.component.Wizard;
 import es.caib.zkib.datamodel.DataNode;
+import es.caib.zkib.datamodel.DataNodeCollection;
 import es.caib.zkib.datasource.XPathUtils;
 import es.caib.zkib.events.XPathEvent;
 import es.caib.zkib.events.XPathRerunEvent;
@@ -190,6 +195,8 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		getFellow("sslKey").setVisible(true);
 		getFellow("certificatechainSsl").setVisible(true);
 		getFellow("profilesSection").setVisible(
+				IdentityProviderType.SOFFID.equals( idpType ) || "V".equals(clazz));
+		getFellow("progressiveProfile").setVisible(
 				IdentityProviderType.SOFFID.equals( idpType ) || "V".equals(clazz));
 		serviceProviderSelect(null);
 		onEnableCaptcha(null);
@@ -765,5 +772,82 @@ public class IdentityProvider extends Form2 implements XPathSubscriber, AfterCom
 		getFellow("captchaKey").setVisible(enable);
 		getFellow("captchaSecret").setVisible(enable);
 		getFellow("captchaThreshold").setVisible(enable);
+	}
+	
+	public void multiselectProgressiveProfile(Event ev) {
+		DataTable dt = (DataTable) getFellow("progressiveprofilegrid");
+		Component deleteProgressiveProfileButton = getFellow("deleteProgressiveProfileButton");
+		deleteProgressiveProfileButton.setVisible(dt.getSelectedIndexes().length > 0);
+	}
+	
+	public void deleteProgressiveProfile(Event ev) {
+		DataTable dt = (DataTable) getFellow("progressiveprofilegrid");
+		dt.deleteSelectedItem();
+	}
+
+	public void addProgressiveProfile(Event ev) throws Exception {
+		DataTable dt = (DataTable) getFellow("progressiveprofilegrid");
+		FederationMember fm = (FederationMember) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember");
+		int last = 0;
+		for (ProgressiveProfile pp: fm.getProgressiveProfiles()) {
+			if (pp.getOrder().intValue() >= last) last = pp.getOrder().intValue() + 1;
+		}
+		ProgressiveProfile progressiveProfile = new ProgressiveProfile();
+		progressiveProfile.setOrder(new Long(last));
+		XPathUtils.createPath(getDataSource(), getXPath()+"federationMember/progressiveProfiles", progressiveProfile);
+		dt.setSelectedIndex(fm.getProgressiveProfiles().size()-1);
+		Window w = (Window) getFellow("progressiveProfileWindow");
+		w.doHighlighted();	
+	}
+
+	public void applyProgressiveProfile(Event ev) {
+		Window w = (Window) getFellow("progressiveProfileWindow");
+		Component f = w.getFellow("form");
+		if (validateAttributes(f)) {
+			DataTable dt = (DataTable) getFellow("progressiveprofilegrid");
+			dt.updateClientRow(dt.getSelectedIndex());
+			dt.setSelectedIndex(-1);
+			w.setVisible(false);
+		}
+		
+	}
+
+	public void onSelectProgressiveProfile(Event ev) {
+		Window w = (Window) getFellow("progressiveProfileWindow");
+		w.doHighlighted();
+	}
+
+	public void reorderProgressiveProfile (ReorderEvent event) {
+		DataTable dt = (DataTable) getFellow("progressiveprofilegrid"); 
+
+		FederationMember fm = (FederationMember) es.caib.zkib.datasource.XPathUtils.eval(this, "/federationMember");
+		List<ProgressiveProfile> collection = fm.getProgressiveProfiles();
+		
+		ProgressiveProfile src = (ProgressiveProfile) event.getSrcObject();
+		
+		long order = 1;
+		for (int i = 0; i < collection.size(); i++) {
+			ProgressiveProfile target = collection.get(i);
+			if ( target != src) {
+				if (target == event.getInsertBeforeObject()) {
+					src.setOrder(order++);
+					dt.updateClientRow((int)order-2);
+				}
+				target.setOrder(order++);
+				dt.updateClientRow((int)order-2);
+			}
+		}
+		if (event.getInsertBeforeObject() == null) {
+			src.setOrder(order++);
+			dt.updateClientRow((int)order-2);
+		}
+		collection.sort(new Comparator<ProgressiveProfile>() {
+			@Override
+			public int compare(ProgressiveProfile o1, ProgressiveProfile o2) {
+				return o1.getOrder().compareTo(o2.getOrder());
+			}
+		});
+		
+		((DataNode)es.caib.zkib.datasource.XPathUtils.eval(this, "/")).update();
 	}
 }

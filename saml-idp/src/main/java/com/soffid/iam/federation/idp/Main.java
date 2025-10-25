@@ -134,6 +134,7 @@ import es.caib.seycon.idp.ui.CancelAction;
 import es.caib.seycon.idp.ui.CertificateAction;
 import es.caib.seycon.idp.ui.ChangeUserAction;
 import es.caib.seycon.idp.ui.CheckSessionAliveServlet;
+import es.caib.seycon.idp.ui.CompleteProfileForm;
 import es.caib.seycon.idp.ui.ConsentAction;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.DefaultServlet;
@@ -159,6 +160,7 @@ import es.caib.seycon.idp.ui.PasswordRecoveryForm;
 import es.caib.seycon.idp.ui.PasswordRecoveryModuleAction;
 import es.caib.seycon.idp.ui.PasswordRecoveryModuleAction2;
 import es.caib.seycon.idp.ui.PasswordRecoveryModuleForm;
+import es.caib.seycon.idp.ui.ProgressiveProfileAction;
 import es.caib.seycon.idp.ui.RegisterAction;
 import es.caib.seycon.idp.ui.RegisterFacephiAction;
 import es.caib.seycon.idp.ui.RegisterFormServlet;
@@ -627,6 +629,8 @@ public class Main {
         ctx.addServlet(SAMLSSORequest.class, SAMLSSORequest.URI);
         ctx.addServlet(SelectHolderGroupForm.class, SelectHolderGroupForm.URI);
         ctx.addServlet(SelectHolderGroupAction.class, SelectHolderGroupAction.URI);
+        ctx.addServlet(CompleteProfileForm.class, CompleteProfileForm.URI);
+        ctx.addServlet(ProgressiveProfileAction.class, ProgressiveProfileAction.URI);
 
         try {
             ctx.addServlet(PasswordRememberAction.class, PasswordRememberAction.URI);

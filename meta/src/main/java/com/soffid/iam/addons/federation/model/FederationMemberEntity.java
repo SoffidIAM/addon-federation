@@ -31,7 +31,8 @@ import es.caib.seycon.ng.servei.ConfiguracioService;
 	AllowedScopeRoleEntity.class,
 	ConfiguracioService.class,
 	UsuariEntity.class, 
-	RolEntity.class})
+	RolEntity.class,
+	ProgressiveProfileEntity.class})
 public abstract class FederationMemberEntity {
 
 	@Column (name="FED_ID")

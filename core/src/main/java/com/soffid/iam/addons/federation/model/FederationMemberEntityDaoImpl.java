@@ -27,6 +27,7 @@ import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.IdentityProviderType;
 import com.soffid.iam.addons.federation.common.IdpNetworkConfig;
 import com.soffid.iam.addons.federation.common.IdpNetworkEndpointType;
+import com.soffid.iam.addons.federation.common.ProgressiveProfile;
 import com.soffid.iam.addons.federation.common.ServiceProviderType;
 import com.soffid.iam.api.Password;
 import com.soffid.iam.model.GroupEntity;
@@ -167,6 +168,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			target.setRestrictToRole( idp.getRestrictToRole() == null ?
 					null: 
 					idp.getRestrictToRole().getName()+"@"+idp.getRestrictToRole().getSystem().getName());
+			target.setProgressiveProfiles(loadProgressiveProfiles(idp));
 		} else if (source instanceof VirtualIdentityProviderEntity) {
 			target.setClasse("V"); //$NON-NLS-1$
 			// VirtualIdentityProvider
@@ -218,6 +220,7 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 			
 			generateRegisterValues(target, vip);
 			loadAuthenticatioMethods (vip, target);
+			target.setProgressiveProfiles(loadProgressiveProfiles(vip));
 		} else if (source instanceof ServiceProviderEntity) {
 			target.setClasse("S"); //$NON-NLS-1$
 			target.setIdpType(null);
@@ -309,6 +312,22 @@ public class FederationMemberEntityDaoImpl extends com.soffid.iam.addons.federat
 							((VirtualIdentityProviderEntity) source).getKeytabs()));
 		}
 
+	}
+
+	private List<ProgressiveProfile> loadProgressiveProfiles(VirtualIdentityProviderEntity source) {
+		LinkedList<ProgressiveProfile> l = new LinkedList<ProgressiveProfile>();
+		for (ProgressiveProfileEntity fe: source.getProgressiveProfiles()) {
+			ProgressiveProfile f = getProgressiveProfileEntityDao()
+					.toProgressiveProfile(fe);
+			l.add(f);
+		}
+		l.sort(new Comparator<ProgressiveProfile>() {
+			@Override
+			public int compare(ProgressiveProfile o1, ProgressiveProfile o2) {
+				return o1.getOrder().intValue() - o2.getOrder().intValue();
+			}
+		});
+		return l;
 	}
 
 	private void generateDefaultNetworkConfigs(IdentityProviderEntity idp, FederationMember target) {

@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -41,10 +42,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -83,6 +86,7 @@ import com.soffid.iam.addons.federation.common.KerberosKeytab;
 import com.soffid.iam.addons.federation.common.OauthToken;
 import com.soffid.iam.addons.federation.common.Policy;
 import com.soffid.iam.addons.federation.common.PolicyCondition;
+import com.soffid.iam.addons.federation.common.ProgressiveProfile;
 import com.soffid.iam.addons.federation.common.SAMLProfile;
 import com.soffid.iam.addons.federation.common.SAMLRequirementEnumeration;
 import com.soffid.iam.addons.federation.common.SamlProfileEnumeration;
@@ -113,6 +117,8 @@ import com.soffid.iam.addons.federation.model.OauthTokenScopeEntity;
 import com.soffid.iam.addons.federation.model.PolicyConditionEntity;
 import com.soffid.iam.addons.federation.model.PolicyEntity;
 import com.soffid.iam.addons.federation.model.ProfileEntity;
+import com.soffid.iam.addons.federation.model.ProgressiveProfileEntity;
+import com.soffid.iam.addons.federation.model.ProgressiveProfileFieldEntity;
 import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml1ArtifactResolutionProfileEntity;
 import com.soffid.iam.addons.federation.model.Saml1AttributeQueryProfileEntity;
@@ -155,6 +161,8 @@ import com.soffid.iam.api.UserAccount;
 import com.soffid.iam.api.UserData;
 import com.soffid.iam.api.UserDomain;
 import com.soffid.iam.api.UserType;
+import com.soffid.iam.bpm.api.ProcessDefinition;
+import com.soffid.iam.bpm.api.ProcessInstance;
 import com.soffid.iam.bpm.service.scim.ScimHelper;
 import com.soffid.iam.config.Config;
 import com.soffid.iam.interp.Evaluator;
@@ -261,12 +269,14 @@ public class FederationServiceImpl
 			if (entity instanceof IdentityProviderEntity) {
 				updateUi(entity, federationMember);
 				updateIdpConfigs((IdentityProviderEntity) entity, federationMember);
+				updateProgressiveProfile((VirtualIdentityProviderEntity)entity, federationMember);
 			}
 			if (entity instanceof VirtualIdentityProviderEntity)
 			{
 				updateKeytabs((VirtualIdentityProviderEntity) entity, federationMember);
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) entity, federationMember);
 				((VirtualIdentityProviderEntity) entity).setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
+				updateProgressiveProfile((VirtualIdentityProviderEntity)entity, federationMember);
 			}
 			if (entity instanceof ServiceProviderEntity) {
 				updateImpersonations((ServiceProviderEntity) entity, federationMember);
@@ -671,6 +681,7 @@ public class FederationServiceImpl
 				idp.setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
 				updateAuthenticationMethods((VirtualIdentityProviderEntity) idp, federationMember);
 				updateUi(entity, federationMember);
+				updateProgressiveProfile(idp, federationMember);
 				getIdentityProviderEntityDao().update(idp);
 				String desc = idp.getPublicId() + (idp.getName() != null ? " - " + idp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "U", desc); //$NON-NLS-1$ //$NON-NLS-2$
@@ -715,6 +726,7 @@ public class FederationServiceImpl
 				}
 				// update ketyabs
 				updateKeytabs (vip, federationMember);
+				updateProgressiveProfile(vip, federationMember);
 				vip.setAlwaysAskForCredentials(federationMember.getAlwaysAskForCredentials());
 				updateAuthenticationMethods(vip, federationMember);
 				getFederationMemberEntityDao().update(vip);
@@ -739,6 +751,44 @@ public class FederationServiceImpl
 			return getFederationMemberEntityDao().toFederationMember(entity);
 		} else
 			throw new SeyconException(Messages.getString("FederacioServiceImpl.UserNotAuthorizedToUpdateFederationMember")); //$NON-NLS-1$
+	}
+
+	private void updateProgressiveProfile(VirtualIdentityProviderEntity vip, FederationMember federationMember) {
+		deleteProgressiveProfile(vip);
+		
+		List<ProgressiveProfile> progressiveProfiles = new LinkedList<>( federationMember.getProgressiveProfiles() );
+		
+		progressiveProfiles.sort(new Comparator<ProgressiveProfile>() {
+			@Override
+			public int compare(ProgressiveProfile o1, ProgressiveProfile o2) {
+				return o1.getOrder().intValue() - o2.getOrder().intValue();
+			}
+		});
+		
+		int num = 0;
+		for (ProgressiveProfile pp: progressiveProfiles) {
+			ProgressiveProfileEntity ppe = getProgressiveProfileEntityDao().progressiveProfileToEntity(pp);
+			ppe.setOrder(new Long( num ++ ) );
+			ppe.setIdentityProvider(vip);
+			vip.getProgressiveProfiles().add(ppe);
+			getProgressiveProfileEntityDao().create(ppe);
+			for (String field: pp.getFields()) {
+				ProgressiveProfileFieldEntity ppfe = getProgressiveProfileFieldEntityDao()
+						.newProgressiveProfileFieldEntity();
+				ppfe.setField(field);
+				ppfe.setProfile(ppe);
+				getProgressiveProfileFieldEntityDao().create(ppfe);
+				ppe.getFields().add(ppfe);
+			}
+		}
+	}
+
+	private void deleteProgressiveProfile(VirtualIdentityProviderEntity vip) {
+		for (ProgressiveProfileEntity pp: vip.getProgressiveProfiles()) {
+			getProgressiveProfileFieldEntityDao().remove(pp.getFields());
+		}
+		getProgressiveProfileEntityDao().remove(vip.getProgressiveProfiles());
+		vip.getProgressiveProfiles().clear();
 	}
 
 	private void updateKeytabs(VirtualIdentityProviderEntity vip, FederationMember federationMember) {
@@ -825,6 +875,7 @@ public class FederationServiceImpl
 				}
 				getIdpNetworkConfigEntityDao().remove(idp.getNetworkConfigs());
 				getKerberosKeytabEntityDao().remove(idp.getKeytabs());
+				deleteProgressiveProfile(idp);
 				getIdentityProviderEntityDao().remove(idp);
 
 				String desc = idp.getPublicId() + (idp.getName() != null ? " - " + idp.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -841,11 +892,11 @@ public class FederationServiceImpl
 				vip.setServiceProviderVirtualIdentityProvider(null);
 				getProfileEntityDao().remove(vip.getProfiles());
 				getKerberosKeytabEntityDao().remove(vip.getKeytabs());
+				deleteProgressiveProfile(vip);
 				getVirtualIdentityProviderEntityDao().remove(vip);
 
 				String desc = vip.getPublicId() + (vip.getName() != null ? " - " + vip.getName() : ""); //$NON-NLS-1$ //$NON-NLS-2$
 				creaAuditoria("SC_FEDERA", "D", desc); //$NON-NLS-1$ //$NON-NLS-2$
-
 			} else if (entity instanceof ServiceProviderEntity) {
 				// SP
 				ServiceProviderEntity sp = (ServiceProviderEntity) entity;
@@ -2983,5 +3034,59 @@ public class FederationServiceImpl
 	@Override
 	public void handleDeleteExpiredOauthTokens() throws Exception {
 		getOauthTokenEntityDao().deleteExpiredOauthTokens();
+	}
+
+	@Override
+	protected void handleCompleteUserProfile(String userName, Map<String, String> params, ProgressiveProfile profile)
+			throws Exception {
+		User user = getUserService().findUserByUserName(userName);
+		if (user == null)
+			return;
+		if (profile.getProcessDefinition() == null || 
+				profile.getProcessDefinition().isBlank()) {
+			for (Entry<String, String> entry: params.entrySet()) {
+				for (DataType dt: 
+					getAdditionalDataService().findDataTypesByObjectTypeAndName(
+						User.class.getName(), entry.getKey())) {
+					if (Boolean.TRUE.equals(dt.getBuiltin())) {
+						BeanUtils.setProperty(user, entry.getKey(), entry.getValue());
+					}
+					else
+					{
+						user.getAttributes().put(entry.getKey(), entry.getValue());
+					}
+				}
+			}
+			getUserService().update(user);
+		} else {
+			List<ProcessDefinition> allProcessDefinitions = getBpmEngine().findAllProcessDefinitions(true);
+			Security.nestedLogin(userName, Security.ALL_PERMISSIONS);
+			try {
+				for (ProcessDefinition def: allProcessDefinitions) {
+					if (def.getName().equals(profile.getProcessDefinition())) {
+						ProcessInstance p = getBpmEngine().newProcess(def, false);
+						p.getVariables().putAll(params);
+						if (!params.containsKey("userSelector"))
+							p.getVariables().put("userSelector", userName);
+						if (!params.containsKey("action"))
+							p.getVariables().put("action", "M");
+						if (!params.containsKey("userName"))
+							p.getVariables().put("userName", userName);
+						if (!params.containsKey("firstName"))
+							p.getVariables().put("firstName", user.getFirstName());
+						if (!params.containsKey("lastName"))
+							p.getVariables().put("lastName", user.getLastName());
+						if (!params.containsKey("fullName"))
+							p.getVariables().put("fullName", user.getFullName());
+						getBpmEngine().update(p);
+						getBpmEngine().signal(p);
+						return;
+					}
+				}
+				throw new InternalErrorException("Cannot start workflow "+profile.getProcessDefinition());
+			} finally {
+				Security.nestedLogoff();
+			}
+		}
 	}
 }

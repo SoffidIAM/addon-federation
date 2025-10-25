@@ -74,6 +74,7 @@ import es.caib.seycon.idp.session.SessionListener;
 import es.caib.seycon.idp.shibext.LogRecorder;
 import es.caib.seycon.idp.shibext.SessionPrincipal;
 import es.caib.seycon.idp.shibext.UidEvaluator;
+import es.caib.seycon.idp.ui.CompleteProfileForm;
 import es.caib.seycon.idp.ui.ConsentFormServlet;
 import es.caib.seycon.idp.ui.SelectHolderGroupForm;
 import es.caib.seycon.idp.ui.SessionConstants;
@@ -405,8 +406,6 @@ public class Autenticator {
     		String hostId) throws Exception {
 
     	HttpSession session = req.getSession();
-        log.info("Remote user identified as "+user+" session type: " + session.getAttribute("soffid-session-type") + 
-        		". Returning to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
         
         String entityId = (String) session
         		.getAttribute(ExternalAuthnSystemLoginHandler.RELYING_PARTY_PARAM);
@@ -429,13 +428,25 @@ public class Autenticator {
 		// Search for consent
 		if (authCtx.getPublicId() != null && !authCtx.getPublicId().trim().isEmpty()) {
 			if ( ! authCtx.hasConsent()) {
+		        log.info("Remote user identified as "+user+" session type: " + session.getAttribute("soffid-session-type") + 
+		        		". Sending to consent form "); //$NON-NLS-1$ //$NON-NLS-2$
 				resp.sendRedirect(ConsentFormServlet.URI);
 				return;
 			}
 		}
+		
+		// Ask for progressive profile completion
+		if (authCtx.getProgressiveProfile() != null) {
+	        log.info("Remote user identified as "+user+" session type: " + session.getAttribute("soffid-session-type") + 
+	        		". Sending to profile completion form "); //$NON-NLS-1$ //$NON-NLS-2$
+			resp.sendRedirect(CompleteProfileForm.URI);
+			return;
+		}
 
 		// Handle the selection of the holderGroup
 		if (hasToRequestDomains(session, authCtx)) {
+	        log.info("Remote user identified as "+user+" session type: " + session.getAttribute("soffid-session-type") + 
+	        		". Sending to group selector form "); //$NON-NLS-1$ //$NON-NLS-2$
 			resp.sendRedirect(SelectHolderGroupForm.URI);
 			return;
 		}
@@ -451,6 +462,8 @@ public class Autenticator {
         	sessionType = "wsso";
         else
         	sessionType = sessionType.toUpperCase();
+        log.info("Remote user identified as "+user+" session type: " + session.getAttribute("soffid-session-type") + 
+        		". Returning to authentication engine "); //$NON-NLS-1$ //$NON-NLS-2$
     	LogRecorder.getInstance().addSuccessLogEntry(
     			sessionType,
     			user, authenticationMethod, entityId,

@@ -42,6 +42,7 @@ import com.soffid.iam.addons.federation.api.UserCredentialChallenge;
 import com.soffid.iam.addons.federation.api.adaptive.ActualAdaptiveEnvironment;
 import com.soffid.iam.addons.federation.common.AuthenticationMethod;
 import com.soffid.iam.addons.federation.common.FederationMember;
+import com.soffid.iam.addons.federation.common.ProgressiveProfile;
 import com.soffid.iam.addons.federation.idp.radius.attribute.RadiusAttribute;
 import com.soffid.iam.addons.federation.idp.radius.packet.AccessRequest;
 import com.soffid.iam.addons.federation.service.UserBehaviorService;
@@ -55,6 +56,7 @@ import com.soffid.iam.api.Challenge;
 import com.soffid.iam.api.Host;
 import com.soffid.iam.api.User;
 import com.soffid.iam.federation.idp.RemoteServiceLocator;
+import com.soffid.iam.interp.Evaluator;
 
 import edu.internet2.middleware.shibboleth.idp.authn.provider.ExternalAuthnSystemLoginHandler;
 import es.caib.seycon.idp.config.IdpConfig;
@@ -70,14 +72,18 @@ import nl.basjes.parse.useragent.UserAgent.ImmutableUserAgent;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
 
 public class AuthenticationContext {
-	public String getActualAuthenticationContext() {
-		return actualAuthenticationContext;
-	}
 
-	public void setActualAuthenticationContext(String actualAuthenticationContext) {
-		this.actualAuthenticationContext = actualAuthenticationContext;
-	}
+	static Log log = LogFactory.getLog(AuthenticationContext.class);
 
+	private boolean alwaysAskForCredentials;
+	private String radiusState;
+	private long created;
+	boolean underAttack = false;
+	private String device; 
+	private String os;
+	private String browser;
+	private String cpu;
+	private RecoverPasswordChallenge recoverChallenge;
 	String publicId;
 	Set<String> requestedAuthenticationMethod;
 	int step;
@@ -102,6 +108,8 @@ public class AuthenticationContext {
 	LevelOfAssuranceEnum levelOfAssurance = null;
 	String actualAuthenticationContext = null;
 	String userAgent;
+	ProgressiveProfile progressiveProfile;
+	boolean progressiveProfileCompleted;
 	
 	public LevelOfAssuranceEnum getLevelOfAssurance() throws UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException, InternalErrorException {
 		if (levelOfAssurance != null) {
@@ -118,21 +126,17 @@ public class AuthenticationContext {
 			return fm.getLevelOfAssurance();
 	}
 
+	public String getActualAuthenticationContext() {
+		return actualAuthenticationContext;
+	}
+
+	public void setActualAuthenticationContext(String actualAuthenticationContext) {
+		this.actualAuthenticationContext = actualAuthenticationContext;
+	}
+
 	public void setLevelOfAssurance(LevelOfAssuranceEnum levelOfAssurance) {
 		this.levelOfAssurance = levelOfAssurance;
 	}
-
-	static Log log = LogFactory.getLog(AuthenticationContext.class);
-
-	private boolean alwaysAskForCredentials;
-	private String radiusState;
-	private long created;
-	boolean underAttack = false;
-	private String device; 
-	private String os;
-	private String browser;
-	private String cpu;
-	private RecoverPasswordChallenge recoverChallenge;
 
 	public String getSelectedHolderGroup() {
 		return selectedHolderGroup;
@@ -143,6 +147,8 @@ public class AuthenticationContext {
 	}
 
 	private String selectedHolderGroup;
+
+	private String currentRelyingParty;
 
 	public static AuthenticationContext fromRequest (HttpServletRequest r)
 	{
@@ -212,7 +218,8 @@ public class AuthenticationContext {
         	FederationMember ip = config.findIdentityProviderForRelyingParty(relyingParty);
         	if (ip != null) idp = ip;
         }
-
+        
+        currentRelyingParty = relyingParty;
     	currentUser = null;
     	if (cookieName != null && request != null && request.getCookies() != null)
     	{
@@ -1105,6 +1112,52 @@ public class AuthenticationContext {
 
 	public void setOtpDeviceChallenge(Challenge otpDeviceChallenge) {
 		this.otpDeviceChallenge = otpDeviceChallenge;
+	}
+	
+	public void completeProgressiveProfile() {
+		progressiveProfileCompleted = true;
+		progressiveProfile = null;
+	}
+	
+	public ProgressiveProfile getProgressiveProfile() throws InternalErrorException, UnrecoverableKeyException, InvalidKeyException, FileNotFoundException, KeyStoreException, NoSuchAlgorithmException, CertificateException, IllegalStateException, NoSuchProviderException, SignatureException, IOException {
+		if (progressiveProfile == null && ! progressiveProfileCompleted) {
+	    	IdpConfig config = IdpConfig.getConfig();
+			FederationMember idp = config.getFederationMember();
+	        levelOfAssurance = null;
+	        
+	        if (currentRelyingParty != null) {
+	        	FederationMember ip = config.findIdentityProviderForRelyingParty(currentRelyingParty);
+	        	if (ip != null) idp = ip;
+	        }
+	        
+	        for (ProgressiveProfile profile: idp.getProgressiveProfiles()) {
+	        	if (appliesCondition(profile)) {
+	        		progressiveProfile = profile;
+	        		break;
+	        	}
+	        }
+		}
+		return progressiveProfile;
+	}
+
+	private boolean appliesCondition(ProgressiveProfile profile) {
+		if (profile.getCondition() == null || profile.getCondition().trim().isEmpty())
+			return false;
+		
+		User user = getCurrentUser();
+		if (user == null)
+			return false;
+		
+		Map<String, Object> vars = new HashMap<String, Object>();
+		vars.put("user", user);
+		
+		try {
+			Object o = Evaluator.instance().evaluate(profile.getCondition(), vars , "Progressive profile "+profile.getName());
+			return Boolean.TRUE.equals(o);
+		} catch (Exception e) {
+			log.warn("Error evaluating progressive profile", e);
+		}
+		return false;
 	}
 
 }

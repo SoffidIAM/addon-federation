@@ -26,6 +26,7 @@ import com.soffid.iam.addons.federation.api.LevelOfAssuranceEnum;
 import com.soffid.iam.addons.federation.common.FederationMember;
 import com.soffid.iam.addons.federation.common.FederationMemberSession;
 import com.soffid.iam.addons.federation.common.OauthToken;
+import com.soffid.iam.addons.federation.common.ProgressiveProfile;
 import com.soffid.iam.addons.federation.common.SamlValidationResults;
 import com.soffid.iam.addons.federation.common.TacacsPlusAuthRule;
 import com.soffid.iam.addons.federation.common.UserConsent;
@@ -40,6 +41,8 @@ import com.soffid.iam.addons.federation.model.ImpersonationEntity;
 import com.soffid.iam.addons.federation.model.KerberosKeytabEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenEntity;
 import com.soffid.iam.addons.federation.model.OauthTokenScopeEntity;
+import com.soffid.iam.addons.federation.model.ProgressiveProfileEntity;
+import com.soffid.iam.addons.federation.model.ProgressiveProfileFieldEntity;
 import com.soffid.iam.addons.federation.model.RadiusProfileEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderReturnUrlEntity;
 import com.soffid.iam.addons.federation.model.ServiceProviderRoleEntity;
@@ -142,7 +145,9 @@ import roles.Tothom;
 	IdpNetworkConfigEntity.class,
 	es.caib.seycon.ng.model.TipusUnitatOrganitzativaEntity.class,
 	es.caib.seycon.ng.servei.TipusUnitatOrganitzativaService.class,
-	GrupService.class
+	GrupService.class,
+	ProgressiveProfileEntity.class,
+	ProgressiveProfileFieldEntity.class
 })
 public abstract class FederationService {
 
@@ -713,4 +718,10 @@ public abstract class FederationService {
 	@Operation(grantees={com.soffid.iam.addons.federation.roles.federation_delete.class})
 	@Transactional(rollbackFor={java.lang.Exception.class})
 	public void deleteExpiredOauthTokens() {}
+
+	@Description("Complete a user profile")
+	@Transactional(rollbackFor={java.lang.Exception.class})
+	public void completeUserProfile(String user, 
+			Map<String,String> params, 
+			ProgressiveProfile profile ) {}
 }

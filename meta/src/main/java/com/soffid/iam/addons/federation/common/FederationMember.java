@@ -370,4 +370,7 @@ public class FederationMember {
 	@Nullable
 	String restrictToRole;
 
+	@Nullable
+	@Attribute(defaultValue = "new java.util.LinkedList()")
+	public java.util.List<ProgressiveProfile> progressiveProfiles;
 }
