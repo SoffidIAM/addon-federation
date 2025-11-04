@@ -385,6 +385,7 @@ public class Main {
     	httpConfig.setRelativeRedirectAllowed(true);    	
     	SecureRequestCustomizer src = new SecureRequestCustomizer(false);
     	httpConfig.addCustomizer(src);
+    	httpConfig.setRequestHeaderSize(128000);
     	
     	HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
     	AbstractConnectionFactory factory ;
